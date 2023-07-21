@@ -1,0 +1,1 @@
+ALTER TABLE `detalle_orden` ADD `fecha_creacion` DATETIME NULL AFTER `cantidad_preparada`;

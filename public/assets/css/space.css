@@ -1,0 +1,64 @@
+.space_input_buscar{
+    border-radius: 40px;
+    outline: none;
+    text-align: center; 
+    width: 100%;
+}
+
+.space_input_buscar::placeholder{
+    text-align: center; 
+}
+
+.space_btn_add{
+    cursor: pointer; 
+    font-size:22px; 
+    color:rgba(0, 167, 0, 0.815);
+    margin:10px;
+}
+
+.space-align-center{
+    text-align: center;
+    align-content: center;
+}
+
+.space_input_modal{
+    background: transparent !important;
+}
+
+
+@media (max-width: 1024px)
+    .space-navbar {
+        left: 0px;
+        right: 0;
+    }
+}
+
+
+.space_row_table:hover{
+    background-color: #f0cece; 
+}
+
+.space_button_minus{
+    background: red; 
+    cursor: pointer;
+    font-size: 10px;
+    padding: 1px;
+    padding-right:5px; 
+    padding-top: 2px;
+    border-radius:60px;
+}
+
+.space_disabled{
+    pointer-events:none;
+    background:#E9ECEF;
+}
+
+.space_td_total{
+    background: rgb(226, 196, 196);
+}
+
+/*Facturación*/
+.tab_familia{
+    background-color: white;
+    color: tan;
+}

@@ -1,0 +1,78 @@
+Estados de Orden 
+- EP : EN PREPARACION : Pedido en comandas de cocina , esperando ser preparado
+- PT : Preparacion terminada : Pedido en comandas de salon, ya fue preparado, esperando a ser servido
+- LF : Listo para facturar
+- EPF : En preparacion facturado
+- PTF : Pepraracion terminada : Prepraracion terminada facutarada.
+- CR : Caja rapida : Ordenes para llevarse rapido
+- FC : Facturado : La orden ya fue facturada
+- FCP : Facturado Parcial: La orden ya fue facturada pero parcialmente
+
+Estado detalles de Orden
+Tipo Comanda : CO : se dirige a la comanda de cocina , BE : Se dirigie a la de bebidas
+
+
+Permisos server
+ sudo chown -R www-data:www-data space-offer-v2/
+sudo find space-offer-v2 -type f -exec chmod 644 {} \;
+sudo find space-offer-v2 -type d -exec chmod 755 {} \;
+sudo chgrp -R www-data storage bootstrap/cache
+sudo chmod -R ug+rwx storage bootstrap/cache
+sudo usermod -a -G www-data ubuntu
+Permisos para carpetas que guardan y leen archivos
+ 
+chmod 755 /var/www/html/el_amanecer/public/gastos
+
+chown www-data:www-data /var/www/html/el_amanecer/public/gastos
+
+sudo chmod 755 /etc/letsencrypt/live/
+
+
+sudo chmod 755 /etc/letsencrypt/live/el-amanecer.com/fullchain.pem
+
+sudo chmod 755 /etc/letsencrypt/live/el-amanecer.com/privkey.pem
+
+
+
+<input type="text" id="scanner" placeholder="scanner">
+Here is working fine.
+It's working when input has focus and input hasn't focus
+
+on_scanner() // init function
+
+function on_scanner() {
+    let is_event = false; // for check just one event declaration
+    let input = document.getElementById("scanner");
+    input.addEventListener("focus", function () {
+        if (!is_event) {
+            is_event = true;
+            input.addEventListener("keypress", function (e) {
+                setTimeout(function () {
+                    if (e.keyCode == 13) {
+                        scanner(input.value); // use value as you need
+                        input.select();
+                    }
+                }, 500)
+            })
+        }
+    });
+    document.addEventListener("keypress", function (e) {
+        if (e.target.tagName !== "INPUT") {
+            input.focus();
+        }
+    });
+}
+
+function scanner(value) {
+    if (value == '') return;
+    console.log(value)
+}
+HTML
+
+<input type="text" id="scanner" placeholder="scanner">
+
+TOKEN GIT =  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 
+
+chown -R www-data.www-data /var/www/html/PV_POS
+chmod -R 755 /var/www/html/PV_POS
+chmod -R 777 /var/www/html/PV_POS/storage
