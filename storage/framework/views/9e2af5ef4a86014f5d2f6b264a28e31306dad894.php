@@ -102,4 +102,4 @@
     <script src="<?php echo e(asset('assets/js/cocina/cocina/comandas.js')); ?>"></script>
 <?php $__env->stopSection(); ?>
 
-<?php echo $__env->make('layout.master-facturacion', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\Proyectos\2023\Laravel\Space Rest\resources\views/cocina/cocina/comandas.blade.php ENDPATH**/ ?>
+<?php echo $__env->make('layout.master', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\Proyectos\2023\Laravel\Space Rest\resources\views/cocina/cocina/comandas.blade.php ENDPATH**/ ?>

@@ -138,6 +138,8 @@ Route::post('ingresos/gastos/rechazar', 'IngresosController@rechazarIngresoGasto
 
 Route::get('caja/cierre', 'CajaController@goCierre');
 Route::post('caja/cerrarcaja', 'CajaController@cerrarCaja');
+Route::post('caja/cajaPrevia', 'CajaController@getCajaPrevia');
+Route::post('caja/abrirCaja', 'CajaController@abrirCaja');
 
 /******************Informes ********************** */
 Route::post('informes/resumencontable/filtro', 'InformesController@goResumenContableFiltro');
@@ -215,8 +217,11 @@ Route::post('menu/producto/guardar', 'ProductosMenuController@guardarProducto');
 Route::get('menu/productos', 'ProductosMenuController@goProductosMenu');
 Route::post('menu/productos/filtro', 'ProductosMenuController@goProductosMenuFiltro');
 Route::post('menu/productos/guardarMpProd', 'ProductosMenuController@guardarMpProd');
+Route::post('menu/productos/guardarExtProd', 'ProductosMenuController@guardarExtras');
 Route::post('menu/productos/eliminarMpProd', 'ProductosMenuController@eliminarMpProd');
+Route::post('menu/productos/eliminarExtra', 'ProductosMenuController@eliminarExtra');
 Route::get('menu/productos/cargarMpProd', 'ProductosMenuController@cargarMpProd');
+Route::get('menu/productos/cargarExtras', 'ProductosMenuController@cargarExtras');
 Route::get('menu/producto/nuevo', 'ProductosMenuController@goNuevoProducto');
 Route::post('menu/producto/editar', 'ProductosMenuController@goEditarProducto');
 Route::post('menu/producto/eliminar', 'ProductosMenuController@eliminarProducto');
@@ -265,7 +270,18 @@ Route::post('restaurante/salon/guardar', 'RestauranteController@guardarSalon');
 Route::post('restaurante/salon/eliminar', 'RestauranteController@eliminarSalon');
 
 /*****************Facturación**************************** */
-Route::get('facturacion/facturar', 'FacturacionController@index');
+Route::get('facturacion/pos', 'FacturacionController@goPos');
+Route::get('facturacion/ordenesEntrega', 'OrdenesListasController@goOrdenesEntrega');
+Route::get('facturacion/ordenesPreparacion', 'OrdenesListasController@goOrdenesPreparacion');
+Route::post('facturacion/ordenesPreparacion/terminarPreparacionOrden', 'OrdenesListasController@terminarPreparacionOrden');
+
+Route::post('facturacion/ordenesPreparacion/recargar', 'OrdenesListasController@recargarOrdenesPreparacion');
+Route::post('facturacion/ordenesEntrega/recargar', 'OrdenesListasController@recargarOrdenesEntrega'); 
+Route::post('facturacion/ordenesPreparacion/terminarEntregaOrden', 'OrdenesListasController@terminarEntregaOrden');
+Route::post('facturacion/pos/recargarOrdenes', 'FacturacionController@recargarOrdenes');
+Route::post('facturacion/pos/validarCodDescuento', 'FacturacionController@validarCodDescuento');
+Route::post('facturacion/pos/crearFactura', 'FacturacionController@crearFactura');
+Route::post('facturacion/pos/anularOrden', 'FacturacionController@anularOrden');
 Route::post('facturacion/factura', 'FacturacionController@goFactura');
 Route::post('facturacion/mobiliario', 'FacturacionController@getMobiliarioDisponibleSalon');
 Route::post('facturacion/dividirFactura', 'FacturacionController@dividirFactura');

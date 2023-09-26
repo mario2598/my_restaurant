@@ -712,6 +712,13 @@ class ProductosMenuController extends Controller
                 )
                 ->where('mt_x_producto.producto', '=', $p->id)
                 ->get();
+
+            $p->extras = DB::table('extra_producto_menu')
+                ->select(
+                    'extra_producto_menu.*'
+                )
+                ->where('extra_producto_menu.producto', '=', $p->id)
+                ->get();
         }
         $filtros = [
             'impuesto' => $impuesto,
@@ -1410,6 +1417,57 @@ class ProductosMenuController extends Controller
         }
     }
 
+    public function eliminarExtra(Request $request)
+    {
+        if (!$this->validarSesion("prod_mnu")) {
+            $this->setMsjSeguridad();
+            return $this->responseAjaxServerError("Error de Seguridad");
+        }
+
+        $id_prod_mp = $request->input('id_prod');
+
+        if ($this->isNull($id_prod_mp) || $id_prod_mp == '-1') {
+            return $this->responseAjaxServerError("No se puede cargar el producto de menú");
+        }
+
+        try {
+            DB::beginTransaction();
+            DB::table('extra_producto_menu')->where('id', '=', $id_prod_mp)->delete();
+
+            DB::commit();
+            return $this->responseAjaxSuccess();
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            return $this->responseAjaxServerError("Algo salio mal", $ex);
+        }
+    }
+
+    public function cargarExtras(Request $request)
+    {
+        if (!$this->validarSesion("prod_mnu")) {
+            $this->setMsjSeguridad();
+            return $this->responseAjaxServerError("Error de Seguridad");
+        }
+
+        $id_prod_seleccionado = $request->input('id_prod_seleccionado');
+
+        if ($this->isNull($id_prod_seleccionado) || $id_prod_seleccionado == '-1') {
+            return $this->responseAjaxServerError("No se puede cargar el producto de menú");
+        }
+
+        try {
+            $mat_prim = DB::table('extra_producto_menu')
+                ->select(
+                    'extra_producto_menu.*'
+                )
+                ->where('extra_producto_menu.producto', '=', $id_prod_seleccionado)
+                ->get();
+            return $this->responseAjaxSuccess("", $mat_prim);
+        } catch (QueryException $ex) {
+            return $this->responseAjaxServerError("Algo salio mal", $ex);
+        }
+    }
+
     public function cargarMpProd(Request $request)
     {
         if (!$this->validarSesion("prod_mnu")) {
@@ -1435,6 +1493,80 @@ class ProductosMenuController extends Controller
                 ->get();
             return $this->responseAjaxSuccess("", $mat_prim);
         } catch (QueryException $ex) {
+            return $this->responseAjaxServerError("Algo salio mal", $ex);
+        }
+    }
+
+    public function guardarExtras(Request $request)
+    {
+        if (!$this->validarSesion("prod_mnu")) {
+            $this->setMsjSeguridad();
+            return $this->responseAjaxServerError("Error de Seguridad");
+        }
+
+        $id = $request->input('id');
+        $producto = $request->input('producto');
+        $precio = $request->input('precio');
+        $dsc = $request->input('dsc');
+        $dsc_grupo = $request->input('dsc_grupo');
+        $es_Requerido = $request->input('es_Requerido');
+        $multiple = $request->input('multiple');
+        $nuevo = true;
+
+        if ($this->isNull($producto) || $producto == '-1') {
+            return $this->responseAjaxServerError("No se puede cargar el producto de menú");
+        }
+
+        $producto_menu = DB::table('producto_menu')
+            ->select('producto_menu.id', 'producto_menu.estado')
+            ->where('producto_menu.id', '=', $producto)
+            ->get()->first();
+
+        if ($this->isNull($producto_menu)) {
+            return $this->responseAjaxServerError("No se puede cargar el producto de menú");
+        }
+
+        if ($this->isNull($precio) || $precio < 0) {
+            return $this->responseAjaxServerError("Precio incorrecto");
+        }
+
+        if ($this->isNull($dsc) || $dsc == '') {
+            return $this->responseAjaxServerError("Debe indicar una descripción para el extra");
+        }
+
+        if ($this->isNull($dsc_grupo) || $dsc_grupo == '') {
+            return $this->responseAjaxServerError("Debe indicar una descripción para el grupo del extra");
+        }
+
+        $extra = DB::table('extra_producto_menu')
+            ->select('extra_producto_menu.*')
+            ->where('extra_producto_menu.descripcion', '=', $dsc)
+            ->where('extra_producto_menu.producto', '=', $producto)
+            ->where('extra_producto_menu.dsc_grupo', '=', $dsc_grupo)
+            ->where('extra_producto_menu.multiple', '=', ($multiple ? 1 : 0))
+            ->get()->first();
+
+        if (!$this->isNull($extra)) {
+            return $this->responseAjaxServerError("Ya existe el extra para el producto en el grupo indicado");
+        }
+        try {
+            DB::beginTransaction();
+            if ($nuevo) {
+                $mt_x_producto1 = DB::table('extra_producto_menu')
+                    ->insertGetId([
+                        'id' => null, 'descripcion' => $dsc, 'precio' => $precio,
+                        'producto' => $producto, 'dsc_grupo' => $dsc_grupo,'es_requerido' =>($es_Requerido ? 1 : 0),'multiple' =>($multiple ? 1 : 0)
+                    ]);
+            } else {
+                DB::table('extra_producto_menu')
+                    ->where('id', '=', $id)
+                    ->update(['precio' => $precio, 'descripcion' => $dsc, 'dsc_grupo ' => $dsc_grupo,'es_requerido' =>($es_Requerido ? 1 : 0),'multiple' =>($multiple ? 1 : 0)]);
+            }
+
+            DB::commit();
+            return $this->responseAjaxSuccess();
+        } catch (QueryException $ex) {
+            DB::rollBack();
             return $this->responseAjaxServerError("Algo salio mal", $ex);
         }
     }

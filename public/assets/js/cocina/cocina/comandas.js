@@ -1,22 +1,5 @@
 window.addEventListener("load", initialice, false);
 
-
-function initialice() { 
-    window.Echo.channel('ordenesChanel').listen('ordenesEvent',(e)=>{
-      let entrar = false;
-      e['data'].destinatarios.forEach(element => {
-          if (element == 'COM_COC') {
-              entrar = true;
-          }
-      });
-      if (entrar) {
-        soundNewOrder();
-        recargarOrdenes();
-      }
-    });
-
-}
-
 function agregarComanda(comanda){
 
 }

@@ -100,7 +100,7 @@
                                                 Impuestos %
                                             </th>
                                             <th class="text-center">Precio</th>
-                                            <th class="text-center">Materia Prima</th>
+                                            <th class="text-center">Acciones</th>
 
                                         </tr>
                                     </thead>
@@ -128,12 +128,17 @@
                                                 <td class="text-center">
                                                     <a class="btn btn-primary btn-icon" title="Composición del producto"
                                                         onclick='clickMateriaPrima("{{ $g->id }}")'
+                                                        style="cursor: pointer;"><i class="fas fa-cog"></i></a>
+
+                                                    <a class="btn btn-secondary btn-icon" title="Extras del producto"
+                                                        onclick='clickExtras("{{ $g->id }}")'
                                                         style="cursor: pointer;"><i class="fas fa-list"></i></a>
 
                                                 </td>
                                             </tr>
                                             <script>
                                                 var inv = [];
+                                                var ext = [];
                                             </script>
                                             @foreach ($g->materia_prima as $mp)
                                                 <script>
@@ -146,10 +151,24 @@
                                                 </script>
                                             @endforeach
 
+                                            @foreach ($g->extras as $e)
+                                                <script>
+                                                    ext.push({
+                                                        "id": "{{ $e->id }}",
+                                                        "descripcion": "{{ $e->descripcion }}",
+                                                        "precio": "{{ $e->precio }}",
+                                                        "dsc_grupo": "{{ $e->dsc_grupo }}",
+                                                        "es_requerido": "{{ $e->es_requerido }}",
+                                                        "multiple": "{{ $e->multiple }}"
+                                                    });
+                                                </script>
+                                            @endforeach
+
                                             <script>
                                                 productos.push({
                                                     "id_producto": "{{ $g->id }}",
-                                                    "materia_prima": inv
+                                                    "materia_prima": inv,
+                                                    "extras": ext
                                                 });
                                             </script>
                                         @endforeach
@@ -184,7 +203,8 @@
                         <div class="col-sm-12 col-md-12 col-xl-12">
                             <div class="form-group">
                                 <label>Materia Prima</label>
-                                <select class="form-control" id="select_prod_mp" style="width: 100%" name="select_prod_mp">
+                                <select class="form-control" id="select_prod_mp" style="width: 100%"
+                                    name="select_prod_mp">
                                     @foreach ($data['materia_prima'] as $i)
                                         <option value="{{ $i->id ?? -1 }}" title="{{ $i->unidad_medida ?? '' }}">
                                             {{ $i->nombre ?? '' }} - {{ $i->unidad_medida ?? '' }}</option>
@@ -197,21 +217,18 @@
                                 <label>Cantidad requerida</label>
                                 <input type="number" class="form-control" id="ipt_cantidad_req" name="ipt_cantidad_req"
                                     value="" required step="0.01">
-                                    <input  type="hidden" id="ipt_id_prod_mp" name="ipt_id_prod_mp"
-                                    value="-1">
+                                <input type="hidden" id="ipt_id_prod_mp" name="ipt_id_prod_mp" value="-1">
                             </div>
                         </div>
                         <div class="col-sm-12 col-md-12 col-xl-12">
-                          <div class="form-group">
-                            <a class="btn btn-primary" title="Guardar Composición" 
-                            onclick="agregarMateriaPrimaProducto()"
-                            style="color:white;cursor:pointer;" 
-                            >Guardar Composición</a>
-                            <a class="btn btn-secondary btn-icon" title="Cerrar"
-                            onclick='cerrarMateriaPrima()'
-                            style="cursor: pointer;">Cerrar</a>
-                          </div>
-                      </div>
+                            <div class="form-group">
+                                <a class="btn btn-primary" title="Guardar Composición"
+                                    onclick="agregarMateriaPrimaProducto()" style="color:white;cursor:pointer;">Guardar
+                                    Composición</a>
+                                <a class="btn btn-secondary btn-icon" title="Cerrar" onclick='cerrarMateriaPrima()'
+                                    style="cursor: pointer;">Cerrar</a>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -226,6 +243,82 @@
                             </tr>
                         </thead>
                         <tbody id="tbody-inv">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade bs-example-modal-center" id='mdl-extras'  tabindex="-1" role="dialog"
+        aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="width: 100%">
+                    <div class="row" style="width: 100%">
+                        <div class="col-sm-12 col-md-12 col-xl-12">
+                            <h5 class="modal-title">Extras del producto</h5>
+
+                        </div>
+                        <div class="col-sm-12 col-md-12 col-xl-12">
+                            <div class="form-group">
+                                <label>Descripción extra</label>
+                                <input type="text" class="form-control" id="ipt_dsc_ext" name="ipt_dsc_ext"
+                                    value="" required>
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-md-12 col-xl-12">
+                            <div class="form-group">
+                                <label>Descripción grupo</label>
+                                <input type="text" class="form-control" id="ipt_dsc_gru_ext" name="ipt_dsc_gru_ext"
+                                    value="" required>
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-md-12 col-xl-12">
+                            <div class="form-group">
+                                <label>Precio</label>
+                                <input type="number" class="form-control" id="ipt_precio_ext" name="ipt_precio_ext"
+                                    value="" required step="0.01">
+                                <input type="hidden" id="ipt_id_prod_ext" name="ipt_id_prod_ext" value="-1">
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-md-12 col-xl-12">
+                            <div class="form-group">
+                                <label for="requisito">¿Es requerido?</label>
+                                <input type="checkbox" id="requisito">
+                            </div>
+                            <div class="form-group">
+                                <label for="multiple">¿Permite selección multiple?</label>
+                                <input type="checkbox" id="multiple">
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-md-12 col-xl-12">
+                            <div class="form-group">
+                                <a class="btn btn-primary" title="Guardar Composición"
+                                    onclick="agregarExtraProducto()" style="color:white;cursor:pointer;">Guardar
+                                    Extra</a>
+                                <a class="btn btn-secondary btn-icon" title="Cerrar" onclick='cerrarExtras()'
+                                    style="cursor: pointer;">Cerrar</a>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-body" style="padding: 5px !important;">
+                    <table class="table" id="tbl-inv"  >
+                        <thead class="thead-light">
+                            <tr>
+                                <th scope="col">Descripción</th>
+                                <th scope="col" style="text-align: center">Precio</th>
+                                <th scope="col" style="text-align: center">Grupo</th>
+                                <th scope="col" style="text-align: center">Es requerido</th>
+                                <th scope="col" style="text-align: center">Es Multiple</th>
+                                <th scope="col" style="text-align: center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-ext">
 
                         </tbody>
                     </table>
@@ -297,6 +390,7 @@
 
 
 @section('script')
+
     <script src="{{ asset('assets/bundles/datatables/datatables.min.js') }}"></script>
     <script src="{{ asset('assets/js/page/datatables.js') }}"></script>
     <script src="{{ asset('assets/js/restaurante/productos.js') }}"></script>

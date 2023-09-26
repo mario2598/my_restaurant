@@ -173,7 +173,7 @@
 
 @section('script')
 
-<script src="{{asset("assets/bundles/datatables/datatables.min.js")}}"></script>
+
 <script src="{{asset("assets/js/page/datatables.js")}}"></script>
 <script src="{{asset("assets/js/bitacora/monitoreoMovimientosInv.js")}}"></script>
 <script>

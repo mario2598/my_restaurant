@@ -25,10 +25,10 @@ class TicketesImpresosController extends Controller
 
     public function generarFacturacionOrdenPdf($idOrden)
     {
-        if (!$this->validarSesion(array("ordList_cmds", "fac_ord"))) {
+        /*if (!$this->validarSesion(array("ordList_cmds", "fac_ord"))) {
             $this->setMsjSeguridad();
             return redirect('/');
-        }
+        }*/
         $res = OrdenesController::getOrden($idOrden);
         if (!$res['estado']) {
             $this->setError("Imprimir tiquete", "Al parecer no se encontro la orden solicitada.");
@@ -36,29 +36,29 @@ class TicketesImpresosController extends Controller
         }
         $orden = $res['orden'];
         $detalles = $orden->detalles;
-        $tamPdf = 125;
+        $tamPdf = 110;
         $aumento = count($detalles) * 10;
-        $tamPdf = $tamPdf  + $aumento;
+        $aumento2 = 0;
+        foreach ($detalles as $d) {
+            $aumento2 = $aumento2 + count($d->extras) * 5;
+        }
+        $tamPdf = $tamPdf  + $aumento +$aumento2;
         /**
          * Header
          */
-        $titulo1 = iconv('UTF-8', 'ISO-8859-1', 'Panadería y Cafetería');
-        $titulo2 = iconv('UTF-8', 'ISO-8859-1', 'El Amanecer'); 
-        $titulo3 = iconv('UTF-8', 'ISO-8859-1', 'INVERSIONES FONSECA JIMÉNEZ EL AMANECER SOCIEDAD DE RESPONSABILIDAD LIMITADA'); 
-        $titulo4 = iconv('UTF-8', 'ISO-8859-1', 'Cédula jurídica : 3-102-862760');
-        $titulo5 = iconv('UTF-8', 'ISO-8859-1', 'Correo : panaderiamanecer@gmail.com');
+        $titulo1 = iconv('UTF-8', 'ISO-8859-1', 'COFFEE TO GO');
+        $titulo2 = iconv('UTF-8', 'ISO-8859-1', 'COFFEE TO GO'); 
+        $titulo3 = iconv('UTF-8', 'ISO-8859-1', 'MARIO ALBERTO FLORES SOLIS'); 
+        $titulo4 = iconv('UTF-8', 'ISO-8859-1', 'Cédula física : 1-1699-0433');
+        $titulo5 = iconv('UTF-8', 'ISO-8859-1', 'Correo : admin@coffeetogocr.com');
         $sucursal = iconv('UTF-8', 'ISO-8859-1', 'Sucursal : ' . $orden->nombre_sucursal);
-        $numero_orden = iconv('UTF-8', 'ISO-8859-1', 'No.Orden : ORD-' . $orden->numero_orden);
+        $numero_orden = iconv('UTF-8', 'ISO-8859-1', 'No.Orden : ' . $orden->numero_orden);
         if ($orden->nombre_cliente == null || $orden->nombre_cliente == "") {
             $cliente = null;
         } else {
             $cliente = iconv('UTF-8', 'ISO-8859-1', 'Cliente : ' . $orden->nombre_cliente);
         }
-        if ($orden->numero_mesa == null || $orden->numero_mesa == "") {
-            $numero_mesa = null;
-        } else {
-            $numero_mesa = iconv('UTF-8', 'ISO-8859-1', 'No.Mesa : #' . $orden->numero_mesa);
-        }
+       
         $fecha = iconv('UTF-8', 'ISO-8859-1', 'Fecha : ' . $this->fechaFormat($orden->fecha_fin));
 
         $path = public_path() . '/logo_blanco_negro.png';
@@ -70,15 +70,14 @@ class TicketesImpresosController extends Controller
         $this->pdf->AddPage();
 
         $this->pdf->SetFont('Arial', 'B', 10);
-        $this->pdf->Image($path, '23', '0', '30', '30');
+        $this->pdf->Image($path, '2', '0', '73', '30');
 
         // $this->pdf->SetTextColor(220, 50, 50);
 
-        $this->pdf->Ln(23);
+        $this->pdf->Ln(15);
         $this->pdf->SetFont('Helvetica', '', 7);
         $this->pdf->setX(6);
         $this->pdf->MultiCell(63, 4, $titulo3, 0);
-        $this->pdf->SetFont('Helvetica', '', 9);
         $this->pdf->setX(6);
         $this->pdf->MultiCell(63, 4, $titulo4, 0);
         $this->pdf->setX(6);
@@ -86,19 +85,14 @@ class TicketesImpresosController extends Controller
         $this->pdf->setX(6);
         $this->pdf->MultiCell(63, 4, $sucursal, 0);
         $this->pdf->Ln(1);
-        if ($numero_mesa != null && $numero_mesa != "") {
-            $this->pdf->setX(6);
-            $this->pdf->MultiCell(63, 4, $numero_mesa, 0);
-            $this->pdf->Ln(1);
-        }
+       
+        $this->pdf->SetFont('Helvetica', '', 8);
         $this->pdf->Ln(1);
         $this->pdf->setX(6);
         $this->pdf->MultiCell(63, 4, $numero_orden, 0);
-        $this->pdf->Ln(1);
         if ($cliente != null && $cliente != "") {
             $this->pdf->setX(6);
             $this->pdf->MultiCell(63, 4, $cliente, 0);
-            $this->pdf->Ln(1);
         }
         $this->pdf->setX(6);
         $this->pdf->MultiCell(63, 4, $fecha, 0);
@@ -124,42 +118,54 @@ class TicketesImpresosController extends Controller
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 0, '', 'T');
         $this->pdf->SetFont('Helvetica', '', 9);
-        $this->pdf->Ln(1);
+        
 
         foreach ($detalles as $d) {
+            $this->pdf->Ln(1);
             $this->pdf->setX(6);
             $producto = $d->nombre_producto;
             if ($d->servicio_mesa == 'S') {
                 $producto .= ' (10%)';
             }
+            $totalExtra =0;
             $this->pdf->MultiCell(63, 4, iconv('UTF-8', 'ISO-8859-1', $producto), 0);
+            foreach ($d->extras as $e) {
+                $this->pdf->Ln(1);
+                $this->pdf->setX(10);
+                $this->pdf->Cell(63, 4,  $e->descripcion_extra, 0);
+                $this->pdf->setX(32);
+                $this->pdf->Cell(63, 4,"", 0);
+                $this->pdf->setX(53);
+                $this->pdf->Cell(63, 4, number_format($e->total, 2, ".", ","), 0);
+                $this->pdf->Ln(4);
+                $totalExtra =$totalExtra  + $e->total;
+            }
             $this->pdf->Ln(1);
             $this->pdf->setX(10);
             $this->pdf->Cell(63, 4,  $d->cantidad, 0);
             $this->pdf->setX(32);
             $this->pdf->Cell(63, 4, number_format($d->precio_unidad, 2, ".", ","), 0);
             $this->pdf->setX(53);
-            $this->pdf->Cell(63, 4, number_format($d->precio_unidad * $d->cantidad, 2, ".", ","), 0);
+            $this->pdf->Cell(63, 4, number_format(($d->precio_unidad * $d->cantidad)+$totalExtra, 2, ".", ","), 0);
             $this->pdf->Ln(4);
             $this->pdf->setX(6);
             $this->pdf->Cell(63, 0, '', 'T');
         }
+        
         $this->pdf->Ln(4);
         $this->pdf->SetFont('Arial', 'B', 9);    //Letra Arial, negrita (Bold), tam. 20
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 4, 'SubTotal', 0);
         $this->pdf->setX(52);
-        $this->pdf->Cell(63, 4, number_format($orden->subtotal , 2, ".", ","), 0);
+        $this->pdf->Cell(63, 4, number_format($orden->subtotal - $orden->impuesto, 2, ".", ","), 0);
+
         $this->pdf->Ln(4);
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 4, 'Impuesto (IVA)', 0);
         $this->pdf->setX(52);
         $this->pdf->Cell(63, 4, number_format($orden->impuesto, 2, ".", ","), 0);
-        $this->pdf->Ln(4);
-        $this->pdf->setX(6);
-        $this->pdf->Cell(63, 4, 'Impuesto Servicio (10%)', 0);
-        $this->pdf->setX(52);
-        $this->pdf->Cell(63, 4, number_format($orden->comision_restaurante, 2, ".", ","), 0);
+    
+        
         $this->pdf->Ln(4);
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 4, 'Descuento', 0);
@@ -169,7 +175,7 @@ class TicketesImpresosController extends Controller
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 4, 'Total', 0);
         $this->pdf->setX(52);
-        $this->pdf->Cell(63, 4, number_format($orden->total, 2, ".", ","), 0);
+        $this->pdf->Cell(63, 4, number_format($orden->total_con_descuento, 2, ".", ","), 0);
 
         $this->pdf->Ln(10);
         $this->pdf->setX(14);
@@ -177,8 +183,8 @@ class TicketesImpresosController extends Controller
         $this->pdf->MultiCell(63, 4, 'GRACIAS POR PREFERIRNOS ');
 
         $this->pdf->SetFont('Helvetica', 'B', 6);
-        $this->pdf->setX(24);
-        $this->pdf->Cell(63, 4, 'BY SPACE SOFTWARE CR');
+        $this->pdf->setX(28);
+        $this->pdf->Cell(63, 4, 'COFFEE TO GO CR');
         $this->pdf->Ln(10);
         // $this->footer();
 

@@ -1,4 +1,4 @@
-@extends('layout.master-facturacion')
+@extends('layout.master')
 
 @section('content')
     @include('layout.sidebar')

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
-use App\Events\ordenesEvent;
 use App\Traits\SpaceUtil;
 use Exception;
 
@@ -239,19 +238,6 @@ class PedidoBebidaController extends Controller
             }
 
             DB::commit();
-
-            if ($estado == 'PT') {
-                $destinatarios = array();
-                array_push($destinatarios, 'COM_PT'); // comandas pedidos terminados
-                $data = [
-                    'destinatarios' => $destinatarios,
-                ];
-                try {
-                    broadcast(new ordenesEvent($data));
-                } catch (Exception $ex) {
-                    return $this->setAjaxResponse(200, "", [], true);
-                }
-            }
 
             return $this->setAjaxResponse(200, "", [], true);
         } catch (QueryException $ex) {

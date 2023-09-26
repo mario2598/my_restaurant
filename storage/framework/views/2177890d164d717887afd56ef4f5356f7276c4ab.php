@@ -13,7 +13,7 @@
         <!-- Favicon -->
         
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="shortcut icon" type='image/x-icon' href="<?php echo e(asset("assets/images/default-image.jpg")); ?>">
+        <link rel="shortcut icon" type='image/x-icon' href="<?php echo e(asset("assets/images/coffeeMini.png")); ?>">
 
         <link rel="stylesheet" href="<?php echo e(asset("assets/css/app.min.css")); ?>">
         <link rel="stylesheet" href="<?php echo e(asset("assets/bundles/izitoast/css/iziToast.min.css")); ?>">
@@ -39,6 +39,11 @@
     <input type="hidden" value="<?php echo e($data['panel_configuraciones']->color_tema ?? 'white'); ?>" id="cp_color_tema">
     <input type="hidden" value="<?php echo e($data['panel_configuraciones']->mini_sidebar ?? 1); ?>" id="cp_mini_sidebar">
     <input type="hidden" value="<?php echo e($data['panel_configuraciones']->sticky_topbar ?? 1); ?>" id="cp_sticky_topbar">
+    <audio id="clicSound">
+      <source src="clic.mp3" type="audio/mpeg">
+      <source src="clic.ogg" type="audio/ogg">
+      Tu navegador no admite la reproducción de sonidos.
+    </audio>
         <!-- Begin page -->
         <div class="loader"></div>
             <div id="app">
@@ -64,8 +69,6 @@
         <!-- General JS Scripts -->
         <script src="<?php echo e(asset("assets/bundles/sweetalert/sweetalert.min.js")); ?>"></script>
         <script src="<?php echo e(asset("assets/js/app.min.js")); ?>"></script>
-        <!-- JS Libraies -->
-        <script src="<?php echo e(asset("assets/bundles/apexcharts/apexcharts.min.js")); ?>"></script>
         <!-- Page Specific JS File -->
         <script src="<?php echo e(asset("assets/js/page/index.js")); ?>"></script>
         <!-- Template JS File -->

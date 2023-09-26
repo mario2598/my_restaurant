@@ -1,11 +1,6 @@
 window.addEventListener("load", initialice, false);
 
 
-function initialice() {
-    window.Echo.channel('ordenesChanel').listen('ordenesEvent',(e)=>{
-        recargarOrdenes();
-      });
-}
 
 
 function recargarOrdenes(){

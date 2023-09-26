@@ -263,25 +263,25 @@
         buttons: [
           {
             extend: 'excel',
-            title: 'SPACE REST',
+            title: 'COFFEE TO GO',
             messageTop:topMesage,
             footer: true,
             messageBottom:bottomMesage,
-            filename: 'reporte_ingresos_el_amanecer'
+            filename: 'reporte_ingresos_coffee_to_go'
           }, {
             extend: 'pdf',
-            title: 'SPACE REST',
+            title: 'COFFEE TO GO',
             footer: true,
             messageTop:topMesage,
             messageBottom:bottomMesage,
-            filename: 'reporte_ingresos_el_amanecer'
+            filename: 'reporte_ingresos_coffee_to_go'
           }, {
             extend: 'print',
-            title: 'SPACE REST',
+            title: 'COFFEE TO GO',
             footer: true,
             messageTop:topMesage,
             messageBottom:bottomMesage,
-            filename: 'reporte_ingresos_el_amanecer'
+            filename: 'reporte_ingresos_coffee_to_go'
           }
         ]
       });

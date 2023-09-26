@@ -99,7 +99,7 @@
                                                 Impuestos %
                                             </th>
                                             <th class="text-center">Precio</th>
-                                            <th class="text-center">Materia Prima</th>
+                                            <th class="text-center">Acciones</th>
 
                                         </tr>
                                     </thead>
@@ -130,12 +130,17 @@
                                                 <td class="text-center">
                                                     <a class="btn btn-primary btn-icon" title="Composición del producto"
                                                         onclick='clickMateriaPrima("<?php echo e($g->id); ?>")'
+                                                        style="cursor: pointer;"><i class="fas fa-cog"></i></a>
+
+                                                    <a class="btn btn-secondary btn-icon" title="Extras del producto"
+                                                        onclick='clickExtras("<?php echo e($g->id); ?>")'
                                                         style="cursor: pointer;"><i class="fas fa-list"></i></a>
 
                                                 </td>
                                             </tr>
                                             <script>
                                                 var inv = [];
+                                                var ext = [];
                                             </script>
                                             <?php $__currentLoopData = $g->materia_prima; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                                 <script>
@@ -148,10 +153,24 @@
                                                 </script>
                                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
+                                            <?php $__currentLoopData = $g->extras; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $e): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <script>
+                                                    ext.push({
+                                                        "id": "<?php echo e($e->id); ?>",
+                                                        "descripcion": "<?php echo e($e->descripcion); ?>",
+                                                        "precio": "<?php echo e($e->precio); ?>",
+                                                        "dsc_grupo": "<?php echo e($e->dsc_grupo); ?>",
+                                                        "es_requerido": "<?php echo e($e->es_requerido); ?>",
+                                                        "multiple": "<?php echo e($e->multiple); ?>"
+                                                    });
+                                                </script>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+
                                             <script>
                                                 productos.push({
                                                     "id_producto": "<?php echo e($g->id); ?>",
-                                                    "materia_prima": inv
+                                                    "materia_prima": inv,
+                                                    "extras": ext
                                                 });
                                             </script>
                                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
@@ -187,7 +206,8 @@
                         <div class="col-sm-12 col-md-12 col-xl-12">
                             <div class="form-group">
                                 <label>Materia Prima</label>
-                                <select class="form-control" id="select_prod_mp" style="width: 100%" name="select_prod_mp">
+                                <select class="form-control" id="select_prod_mp" style="width: 100%"
+                                    name="select_prod_mp">
                                     <?php $__currentLoopData = $data['materia_prima']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                         <option value="<?php echo e($i->id ?? -1); ?>" title="<?php echo e($i->unidad_medida ?? ''); ?>">
                                             <?php echo e($i->nombre ?? ''); ?> - <?php echo e($i->unidad_medida ?? ''); ?></option>
@@ -200,21 +220,18 @@
                                 <label>Cantidad requerida</label>
                                 <input type="number" class="form-control" id="ipt_cantidad_req" name="ipt_cantidad_req"
                                     value="" required step="0.01">
-                                    <input  type="hidden" id="ipt_id_prod_mp" name="ipt_id_prod_mp"
-                                    value="-1">
+                                <input type="hidden" id="ipt_id_prod_mp" name="ipt_id_prod_mp" value="-1">
                             </div>
                         </div>
                         <div class="col-sm-12 col-md-12 col-xl-12">
-                          <div class="form-group">
-                            <a class="btn btn-primary" title="Guardar Composición" 
-                            onclick="agregarMateriaPrimaProducto()"
-                            style="color:white;cursor:pointer;" 
-                            >Guardar Composición</a>
-                            <a class="btn btn-secondary btn-icon" title="Cerrar"
-                            onclick='cerrarMateriaPrima()'
-                            style="cursor: pointer;">Cerrar</a>
-                          </div>
-                      </div>
+                            <div class="form-group">
+                                <a class="btn btn-primary" title="Guardar Composición"
+                                    onclick="agregarMateriaPrimaProducto()" style="color:white;cursor:pointer;">Guardar
+                                    Composición</a>
+                                <a class="btn btn-secondary btn-icon" title="Cerrar" onclick='cerrarMateriaPrima()'
+                                    style="cursor: pointer;">Cerrar</a>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -229,6 +246,82 @@
                             </tr>
                         </thead>
                         <tbody id="tbody-inv">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade bs-example-modal-center" id='mdl-extras'  tabindex="-1" role="dialog"
+        aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="width: 100%">
+                    <div class="row" style="width: 100%">
+                        <div class="col-sm-12 col-md-12 col-xl-12">
+                            <h5 class="modal-title">Extras del producto</h5>
+
+                        </div>
+                        <div class="col-sm-12 col-md-12 col-xl-12">
+                            <div class="form-group">
+                                <label>Descripción extra</label>
+                                <input type="text" class="form-control" id="ipt_dsc_ext" name="ipt_dsc_ext"
+                                    value="" required>
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-md-12 col-xl-12">
+                            <div class="form-group">
+                                <label>Descripción grupo</label>
+                                <input type="text" class="form-control" id="ipt_dsc_gru_ext" name="ipt_dsc_gru_ext"
+                                    value="" required>
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-md-12 col-xl-12">
+                            <div class="form-group">
+                                <label>Precio</label>
+                                <input type="number" class="form-control" id="ipt_precio_ext" name="ipt_precio_ext"
+                                    value="" required step="0.01">
+                                <input type="hidden" id="ipt_id_prod_ext" name="ipt_id_prod_ext" value="-1">
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-md-12 col-xl-12">
+                            <div class="form-group">
+                                <label for="requisito">¿Es requerido?</label>
+                                <input type="checkbox" id="requisito">
+                            </div>
+                            <div class="form-group">
+                                <label for="multiple">¿Permite selección multiple?</label>
+                                <input type="checkbox" id="multiple">
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-md-12 col-xl-12">
+                            <div class="form-group">
+                                <a class="btn btn-primary" title="Guardar Composición"
+                                    onclick="agregarExtraProducto()" style="color:white;cursor:pointer;">Guardar
+                                    Extra</a>
+                                <a class="btn btn-secondary btn-icon" title="Cerrar" onclick='cerrarExtras()'
+                                    style="cursor: pointer;">Cerrar</a>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-body" style="padding: 5px !important;">
+                    <table class="table" id="tbl-inv"  >
+                        <thead class="thead-light">
+                            <tr>
+                                <th scope="col">Descripción</th>
+                                <th scope="col" style="text-align: center">Precio</th>
+                                <th scope="col" style="text-align: center">Grupo</th>
+                                <th scope="col" style="text-align: center">Es requerido</th>
+                                <th scope="col" style="text-align: center">Es Multiple</th>
+                                <th scope="col" style="text-align: center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-ext">
 
                         </tbody>
                     </table>
@@ -300,6 +393,7 @@
 
 
 <?php $__env->startSection('script'); ?>
+
     <script src="<?php echo e(asset('assets/bundles/datatables/datatables.min.js')); ?>"></script>
     <script src="<?php echo e(asset('assets/js/page/datatables.js')); ?>"></script>
     <script src="<?php echo e(asset('assets/js/restaurante/productos.js')); ?>"></script>

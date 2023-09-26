@@ -1,7 +1,17 @@
 window.addEventListener("load", initialice, false);
 var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
 
+var currencyFormat = amount => {
+    return dollarUSLocale.format(parseFloat(amount));
+};
 
+var currencyCRFormat = amount => {
+    return "CRC " + parseFloat(amount).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,");
+};
+
+var amountFormat = amount => {
+    return "CRC " + parseFloat(amount.replace("CRC ", "")).toFixed(2);
+};
 
 function initialice() {
 
@@ -210,11 +220,17 @@ function goMovimientoInv(mov) {
     $("#formVerMovimiento").submit();
 }
 
+
+
 function soundNewOrder() {
     var audio = new Audio(`${base_path}/assets/sounds/not.mp3`);
     audio.play();
 }
 
+function soundClic() {
+    var audio = new Audio(`${base_path}/assets/sounds/clic.mp3`);
+    audio.play();
+}
 
 function showError(error){
     iziToast.error({

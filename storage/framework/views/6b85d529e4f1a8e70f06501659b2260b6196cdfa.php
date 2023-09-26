@@ -315,6 +315,7 @@
 
 
 <?php $__env->startSection('script'); ?>
+
     <script src="<?php echo e(asset('assets/bundles/datatables/datatables.min.js')); ?>"></script>
     <script src="<?php echo e(asset('assets/js/page/datatables.js')); ?>"></script>
     <script src="<?php echo e(asset('assets/js/materiaPrima/inventario/inventarios.js')); ?>"></script>

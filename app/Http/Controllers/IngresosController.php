@@ -56,46 +56,11 @@ class IngresosController extends Controller
             return redirect('ingresos/administracion');
         }
 
-        $ventasParciales = DB::table('pago_parcial_h')
-        ->select('pago_parcial_h.*')
-        ->where('pago_parcial_h.ingreso', '=',  $id )
-        ->where('pago_parcial_h.estado', '=',  "PROCESADO" )->get();
-
-        foreach ($ventasParciales as $v) {
-            $v->ordenObj = DB::table('orden')
-            ->select('orden.*')
-            ->where('orden.id', '=', $v->orden)->get()->first();
-
-            $v->cancelado = $v->monto_tarjeta + $v->monto_sinpe +$v->monto_efectivo ;
-        }
-
-        foreach ($ventasParciales as $v) {
-            $v->ordenObj->fecha_inicio = $this->fechaFormat($v->ordenObj->fecha_inicio);
-            $v->ordenObj->fecha_preparado = $this->fechaFormat($v->ordenObj->fecha_preparado);
-            $v->ordenObj->fecha_entregado = $this->fechaFormat($v->ordenObj->fecha_entregado);
-            $v->ordenObj->detalles =  DB::table('detalle_orden')
-                ->select('detalle_orden.*')
-                ->where('detalle_orden.orden', '=', $v->ordenObj->id)->get();
-        }
-
-        $gastosCaja = DB::table('gasto')
-            ->leftJoin('proveedor', 'proveedor.id', '=', 'gasto.proveedor')
-            ->select('gasto.*', 'proveedor.nombre as nombreProveedor')
-            ->where('gasto.aprobado', '<>', "E")
-            ->where('gasto.aprobado', '<>', "R")
-            ->where('gasto.ingreso', '=', $id)->get();
-
         $ventas = DB::table('orden')
             ->select('orden.*')
-            ->where('orden.caja_cerrada', '=', "S")
             ->where('orden.ingreso', '=', $id)->get();
-        $tieneVentas = $ventas == null;
-        $tieneVentas = count($ventas) > 0;
 
-        if(!$tieneVentas){
-            $tieneVentas = $ventasParciales == null;
-            $tieneVentas = count($ventasParciales) > 0;
-        }
+        $tieneVentas = count($ventas) > 0;
 
         foreach ($ventas as $v) {
             $v->fecha_inicio = $this->fechaFormat($v->fecha_inicio);
@@ -111,21 +76,14 @@ class IngresosController extends Controller
             ->where('cierre_caja.ingreso', '=', $id)->get()->first();
 
         $tieneReporteCajero = $reporte_cajero != null;
-        $estadisticas = $this->totalIngresosMes($ingreso->fecha, $ingreso->tipo);
-
+       
         $ingreso->fecha = $this->fechaFormat($ingreso->fecha);
-        $totalGastos = 0;
-        foreach ($gastosCaja as $i) {
-            $i->fecha = $this->fechaFormat($i->fecha);
-            $totalGastos = $totalGastos + $i->monto;
-        }
-
-        $ingreso->totalGastos = $totalGastos;
+    
         $sinpe = $ingreso->monto_sinpe ?? 0;
         $efectivo = $ingreso->monto_efectivo ?? 0;
         $tarjeta = $ingreso->monto_tarjeta ?? 0;
         $ingreso->subtotal = $sinpe + $efectivo + $tarjeta;
-        $ingreso->totalGeneral = $ingreso->subtotal - $ingreso->totalGastos;
+        $ingreso->totalGeneral = $ingreso->subtotal;
         $ingreso->monto_tarjeta  = preg_replace('/\,/', '.', $ingreso->monto_tarjeta);
         $ingreso->monto_efectivo  = preg_replace('/\,/', '.', $ingreso->monto_efectivo);
         $ingreso->monto_sinpe  = preg_replace('/\,/', '.', $ingreso->monto_sinpe);
@@ -137,19 +95,12 @@ class IngresosController extends Controller
             'tieneReporteCajero' => $tieneReporteCajero,
             'tieneVentas' => $tieneVentas,
             'reporte_cajero' => $reporte_cajero,
-            'estadisticas' => $estadisticas,
-            'ventasParciales' => $ventasParciales,
-            'gastosCaja' => $gastosCaja,
             'tipos_ingreso' => $this->getTiposIngreso(),
             'clientes' => $this->getClientes(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
         //dd( $data );
-        if (count($gastosCaja) > 0) {
-            return view('ingresos.ingreso.ingresoConGastos', compact('data'));
-        } else {
-            return view('ingresos.ingreso.ingresoSinGastos', compact('data'));
-        }
+        return view('ingresos.ingreso.ingreso', compact('data'));
     }
 
     public function goIngresoById($id)
@@ -404,19 +355,11 @@ class IngresosController extends Controller
             ->where('aprobado', 'like', 'N')->orderby('ingreso.id', 'desc')->get();
 
         foreach ($ingresosSinAprobar as $i) {
-            $gastosRelacionados = DB::table('gasto')->where('ingreso', '=', $i->id)
-                ->where('aprobado', '<>', 'E')
-                ->where('aprobado', '<>', 'R')->get();
-            $totalGastos = 0;
-            foreach ($gastosRelacionados as $g) {
-                $totalGastos = $totalGastos + $g->monto;
-            }
             $sinpe = $i->monto_sinpe ?? 0;
             $efectivo = $i->monto_efectivo ?? 0;
             $tarjeta = $i->monto_tarjeta ?? 0;
             $i->subTotal = $sinpe + $efectivo + $tarjeta;
-            $i->total = $i->subTotal - $totalGastos;
-            $i->totalGastos =  $totalGastos;
+            $i->total = $i->subTotal ;
             $i->fecha = $this->fechaFormat($i->fecha);
         }
 
@@ -675,44 +618,37 @@ class IngresosController extends Controller
     public function aprobarIngreso(Request $request)
     {
         if (!$this->validarSesion("ingTodos")) {
-            $this->setMsjSeguridad();
-            return redirect('/');
+            return $this->responseAjaxServerError("No tienes permisos para realizar la acción.", []);
         }
 
-        $id = $request->input('idIngresoAprobar');
+        $id = $request->input('idIngreso');
         $ingreso = DB::table('ingreso')->where('id', '=', $id)->get()->first();
 
         if ($ingreso == null) {
-            $this->setError('Aprobar ingreso', "El ingreso no existe.");
-            return redirect('/');
+            return $this->responseAjaxServerError("El ingreso no existe.", []);
         }
 
-        $sinpe = $ingreso->monto_sinpe ?? 0;
-        $efectivo = $ingreso->monto_efectivo ?? 0;
-        $tarjeta = $ingreso->monto_tarjeta ?? 0;
+        $sinpe = $request->input('pago_sinpe');
+        $efectivo = $request->input('pago_efectivo');
+        $tarjeta = $request->input('pago_tarjeta');
         $total = $sinpe + $efectivo + $tarjeta;
 
 
         try {
             DB::beginTransaction();
 
-            DB::table('gasto')
-                ->where('aprobado', '<>', 'E')
-                ->where('aprobado', '<>', 'R')
-                ->where('ingreso', '=', $id)->update(['aprobado' => 'S']);
+          
 
             DB::table('ingreso')
-                ->where('id', '=', $id)->update(['aprobado' => 'S']);
+                ->where('id', '=', $id)->update(['aprobado' => 'S','monto_tarjeta' =>  $tarjeta,'monto_sinpe' => $sinpe,'monto_efectivo' =>  $efectivo]);
 
-            $this->bitacoraMovimientos('ingreso', 'aprobar', $id, $total);
+            $this->bitacoraMovimientos('ingreso', 'Aprobar', $id, $total);
 
             DB::commit();
-            $this->setSuccess('Aprobar ingreso', "El ingreso se aprobo correctamente.");
-            return $this->goIngresoById($id);
+            return $this->responseAjaxSuccess("El ingreso se aprobo correctamente.",[]);
         } catch (QueryException $ex) {
             DB::rollBack();
-            $this->setError('Aprobar ingreso', "Algo salío mal, reintentalo.");
-            return $this->goIngresoById($id);
+            return $this->responseAjaxServerError("Algo salío mal, reintentalo.", []);
         }
     }
 

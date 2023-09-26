@@ -44,6 +44,7 @@
                       
                       <th class="space-align-center">#Id</th>
                       <th class="space-align-center">Tipo Ingreso</th>
+                      <th class="space-align-center">Código</th>
                       <th class="space-align-center">Acciones</th>
                      
                     </tr>
@@ -59,9 +60,13 @@
                     <td class="space-align-center">
                       {{$g->tipo ?? ""}}
                     </td>
+
+                    <td class="space-align-center">
+                      {{$g->cod_general ?? ""}}
+                    </td>
                     
                     <td class="space-align-center" >
-                      <a onclick='editarGenerico("{{$g->id}}","{{$g->tipo ?? ""}}")'  title="Editar" class="btn btn-primary" style="color:white"><i class="fas fa-cog"></i></a> 
+                      <a onclick='editarGenerico("{{$g->id}}","{{$g->tipo ?? ""}}","{{$g->cod_general ?? ""}}")'  title="Editar" class="btn btn-primary" style="color:white"><i class="fas fa-cog"></i></a> 
                       <a onclick="eliminarGenerico({{$g->id}})" title="Eliminar" class="btn btn-danger" style="color:white"> <i class="fa fa-trash"></i></a>
                     </td>
                   </tr>
@@ -109,6 +114,14 @@
                       
                        </div>
                    </div>
+                   <div class="col-xl-12 col-sm-12">
+                    <div class="form-group form-float">
+                      <div class="form-line">
+                        <label class="form-label">Codigo general</label>
+                        <input type="text" class="form-control space_input_modal" id="mdl_generico_ipt_codGen" name="mdl_generico_ipt_codGen" required maxlength="50">
+                     
+                      </div>
+                  </div>
                    </div>
 
                </div>

@@ -60,6 +60,13 @@ function clickMateriaPrima(id) {
     $("#mdl-materia-prima").modal("show");
 }
 
+function clickExtras(id) {
+    id_prod_seleccionado = id;
+    cargarExtras() ;
+    $("#mdl-extras").modal("show");
+}
+
+
 function cargarMateriaPrima() {
 
     $.ajax({
@@ -86,6 +93,47 @@ function cargarMateriaPrima() {
     });
 }
 
+function cargarExtras() {
+
+    $.ajax({
+        url: '/menu/productos/cargarExtras',
+        type: 'get',
+        data: {
+            _token: CSRF_TOKEN,
+            id_prod_seleccionado: id_prod_seleccionado
+        }
+    }).done(function (respuesta) {
+
+        if (!respuesta.estado) {
+            showError(respuesta.mensaje);
+            return;
+        }
+
+        $("#tbody-ext").html("");
+        respuesta.datos.forEach(p => {
+            crearExtras(p);
+        });
+
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+        showError("Ocurrió un error consultando el servidor");
+    });
+}
+
+function crearExtras(producto) {
+    let texto = "<tr>";
+    texto += "<td class='text-center'>" + producto.descripcion + "</td>";
+    texto += "<td class='text-center'>" + producto.precio + "</td>";
+    texto += "<td class='text-center'>" + producto.dsc_grupo + "</td>";
+    texto += "<td class='text-center'>" + (producto.es_requerido == 0 ? "No" : "Sí") + "</td>";
+    texto += "<td class='text-center'>" + (producto.multiple == 0 ? "No" : "Sí") + "</td>";
+    texto += '<td class="text-center"><button  class="btn btn-icon btn-secondary" onclick="eliminarExtra(' + producto.id + ')"' +
+        '><i class="fas fa-trash"></i></button></td>';
+    texto += "</tr>";
+
+    $("#tbody-ext").append(texto);
+
+}
+
 function crearMateriaPrima(producto) {
     let texto = "<tr>";
     texto += "<td class='text-center'>" + producto.nombre + "</td>";
@@ -102,6 +150,10 @@ function crearMateriaPrima(producto) {
 function cerrarMateriaPrima(){
   $("#mdl-materia-prima").modal("hide");
 }
+
+function cerrarExtras(){
+    $("#mdl-extras").modal("hide");
+  }
 
 function limpiarMateriaPrimaProducto() {
     $('#select_prod_mp').val(1);
@@ -139,6 +191,41 @@ function agregarMateriaPrimaProducto() {
     });
 }
 
+function agregarExtraProducto() {
+    let ipt_dsc_ext = $('#ipt_dsc_ext').val();
+    let ipt_precio_ext = $('#ipt_precio_ext').val();
+    let ipt_id_prod_ext = $('#ipt_id_prod_ext').val();
+    let ipt_dsc_gru_ext = $('#ipt_dsc_gru_ext').val();
+    let esRequerido = $("#requisito").is(':checked');
+    let multiple = $("#multiple").is(':checked');
+    $.ajax({
+        url: '/menu/productos/guardarExtProd',
+        type: 'post',
+        data: {
+            _token: CSRF_TOKEN,
+            id: ipt_id_prod_ext,
+            precio: ipt_precio_ext,
+            dsc: ipt_dsc_ext,
+            dsc_grupo: ipt_dsc_gru_ext,
+            producto : id_prod_seleccionado,
+            es_Requerido : esRequerido,
+            multiple : multiple
+        }
+    }).done(function (respuesta) {
+
+        if (!respuesta.estado) {
+            showError(respuesta.mensaje);
+            return;
+        }
+
+        showSuccess("Se agregó correctamente");
+        cargarExtras();
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+        showError("Ocurrió un error consultando el servidor");
+    });
+}
+
+
 
 function eliminarProdMp(id_prod_mp) {
     $.ajax({
@@ -157,6 +244,28 @@ function eliminarProdMp(id_prod_mp) {
 
         showSuccess("Se elimino correctamente");
         cargarMateriaPrima();
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+        showError("Ocurrió un error consultando el servidor");
+    });
+}
+
+function eliminarExtra(id_prod_mp) {
+    $.ajax({
+        url: '/menu/productos/eliminarExtra',
+        type: 'post',
+        data: {
+            _token: CSRF_TOKEN,
+            id_prod: id_prod_mp
+        }
+    }).done(function (respuesta) {
+
+        if (!respuesta.estado) {
+            showError(respuesta.mensaje);
+            return;
+        }
+
+        showSuccess("Se elimino correctamente");
+        cargarExtras();
     }).fail(function (jqXHR, textStatus, errorThrown) {
         showError("Ocurrió un error consultando el servidor");
     });

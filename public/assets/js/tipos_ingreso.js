@@ -29,10 +29,11 @@ function initialice() {
  * @param {nombre proveedor} id 
  * @param {descripcion  del proveedor} desc 
  */
-function editarGenerico(id,tipo) {
+function editarGenerico(id,tipo,codGen) {
 
   $('#mdl_generico_ipt_id').val(id);
   $('#mdl_generico_ipt_tipo').val(tipo);
+  $('#mdl_generico_ipt_codGen').val(codGen);
   $('#mdl_generico').modal('show');
 }
 

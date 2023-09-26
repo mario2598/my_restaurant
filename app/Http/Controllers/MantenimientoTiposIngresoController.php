@@ -41,15 +41,16 @@ class MantenimientoTiposIngresoController extends Controller
 
             $tipo = $request->input('mdl_generico_ipt_tipo');
             $id = $request->input('mdl_generico_ipt_id');
+            $cod_gen = $request->input('mdl_generico_ipt_codGen');
            
             try { 
                 DB::beginTransaction();
                 if($id == '-1' || $id == null || $this->isEmpty($id)){
-                    $tipo = DB::table('tipo_ingreso')->insertGetId( ['id' => null ,'tipo'=>$tipo,'estado'=> 'A'] );
+                    $tipo = DB::table('tipo_ingreso')->insertGetId( ['id' => null ,'tipo'=>$tipo,'estado'=> 'A','cod_general'=> $cod_gen] );
                 }else{
                     DB::table('tipo_ingreso')
                         ->where('id', '=', $id)
-                        ->update(['tipo'=>$tipo]);
+                        ->update(['tipo'=>$tipo,'cod_general'=> $cod_gen]);
                 }
                 DB::commit();
                 $this->setSuccess('Guardar Tipo Ingreso','El tipo de ingreso se guardo correctamente.');
@@ -64,6 +65,13 @@ class MantenimientoTiposIngresoController extends Controller
         }else{
             return redirect('mant/tiposingreso');
         }
+    }
+
+    public static function getIdByCodGeneral($codGeneral){
+        return DB::table('tipo_ingreso')
+        ->select('tipo_ingreso.id')
+        ->where('cod_general', '=', $codGeneral)
+        ->get()->first()->id;
     }
 
     /**

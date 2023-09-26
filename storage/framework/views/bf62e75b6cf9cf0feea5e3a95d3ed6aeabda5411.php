@@ -102,4 +102,4 @@
 
 
 </html>
-<?php /**PATH D:\Proyectos\2023\Laravel\Space Rest\resources\views/layout/master-facturacion.blade.php ENDPATH**/ ?>
+<?php /**PATH D:\Proyectos\2023\Laravel\Space Rest\resources\views/layout/master.blade.php ENDPATH**/ ?>
