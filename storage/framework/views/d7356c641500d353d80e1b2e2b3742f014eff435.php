@@ -13,7 +13,7 @@
         <!-- Favicon -->
         
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="shortcut icon" type='image/x-icon' href="<?php echo e(asset("assets/images/favicon.ico")); ?>">
+        <link rel="shortcut icon" type='image/x-icon' href="<?php echo e(asset("assets/images/coffeeMini.png")); ?>">
 
         <link rel="stylesheet" href="<?php echo e(asset("assets/css/app.min.css")); ?>">
         <!-- Template CSS -->
@@ -46,7 +46,6 @@
         <!-- General JS Scripts -->
         <script src="<?php echo e(asset("assets/js/app.min.js")); ?>"></script>
         <!-- JS Libraies -->
-        <script src="<?php echo e(asset("assets/bundles/apexcharts/apexcharts.min.js")); ?>"></script>
         <!-- Page Specific JS File -->
         <script src="<?php echo e(asset("assets/js/page/index.js")); ?>"></script>
         <!-- Template JS File -->
