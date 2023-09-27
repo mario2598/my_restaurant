@@ -1511,6 +1511,7 @@ class ProductosMenuController extends Controller
         $dsc_grupo = $request->input('dsc_grupo');
         $es_Requerido = $request->input('es_Requerido');
         $multiple = $request->input('multiple');
+        
         $nuevo = true;
 
         if ($this->isNull($producto) || $producto == '-1') {
@@ -1543,7 +1544,7 @@ class ProductosMenuController extends Controller
             ->where('extra_producto_menu.descripcion', '=', $dsc)
             ->where('extra_producto_menu.producto', '=', $producto)
             ->where('extra_producto_menu.dsc_grupo', '=', $dsc_grupo)
-            ->where('extra_producto_menu.multiple', '=', ($multiple ? 1 : 0))
+            ->where('extra_producto_menu.multiple', '=', ($multiple == 'true' ? 1 : 0))
             ->get()->first();
 
         if (!$this->isNull($extra)) {
@@ -1555,12 +1556,12 @@ class ProductosMenuController extends Controller
                 $mt_x_producto1 = DB::table('extra_producto_menu')
                     ->insertGetId([
                         'id' => null, 'descripcion' => $dsc, 'precio' => $precio,
-                        'producto' => $producto, 'dsc_grupo' => $dsc_grupo,'es_requerido' =>($es_Requerido ? 1 : 0),'multiple' =>($multiple ? 1 : 0)
+                        'producto' => $producto, 'dsc_grupo' => $dsc_grupo,'es_requerido' =>($es_Requerido == 'true' ? 1 : 0),'multiple' =>($multiple == 'true' ? 1 : 0)
                     ]);
             } else {
                 DB::table('extra_producto_menu')
                     ->where('id', '=', $id)
-                    ->update(['precio' => $precio, 'descripcion' => $dsc, 'dsc_grupo ' => $dsc_grupo,'es_requerido' =>($es_Requerido ? 1 : 0),'multiple' =>($multiple ? 1 : 0)]);
+                    ->update(['precio' => $precio, 'descripcion' => $dsc, 'dsc_grupo ' => $dsc_grupo,'es_requerido' =>($es_Requerido == 'true' ? 1 : 0),'multiple' =>($multiple == 'true'  ? 1 : 0)]);
             }
 
             DB::commit();
