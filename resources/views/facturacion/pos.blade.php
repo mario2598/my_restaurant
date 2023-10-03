@@ -130,7 +130,8 @@
                     <div class="col-12 col-md-12 col-lg-12">
                         <div class="row">
 
-                            <div class="col-sm-12 col-md-4 col-lg-3" id="contEscogerProductos">
+                            <div class="col-sm-12 col-md-4 col-lg-3" id="contEscogerProductos" 
+                            style="padding-right: 0px !important;padding-left: 0px !important;">
 
                                 <div class="col-lg-12 col-md-12 pr-25">
 
@@ -168,7 +169,7 @@
                                 </div>
 
                             </div>
-                            <div class="col-sm-12 col-md-4 col-lg-5">
+                            <div class="col-sm-12 col-md-4 col-lg-5" style="padding-right: 0px !important;padding-left: 0px !important;">
                                 <!-- Panel orden -->
                                 <div class="col-lg-12 col-md-12 pl-0">
                                     <!-- Acciones -->
@@ -239,7 +240,8 @@
                                 </div>
                             </div>
 
-                            <div class="col-sm-12 col-md-4 col-lg-4" id="contFacturar">
+                            <div class="col-sm-12 col-md-4 col-lg-4" id="contFacturar" 
+                            style="padding-right: 0px !important;padding-left: 0px !important;">
                                 <div class="col-lg-12 col-md-12 pl-0">
 
                                     <div class="col-12">

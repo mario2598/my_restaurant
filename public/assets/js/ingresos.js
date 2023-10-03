@@ -105,7 +105,7 @@ function confirmarIngreso(ingreso) {
                         return;
                     }
                     showSuccess("Se Aprobó el ingreso");
-                    window.location.href = window.location.url;
+                    location.reload();
                 }).fail(function (jqXHR, textStatus, errorThrown) {
                     showError("Algo salió mal");
                 });
