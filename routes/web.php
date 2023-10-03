@@ -30,6 +30,11 @@ Route::get('mant/impuestos', 'MantenimientoImpuestosController@index');
 Route::post('guardarimpuesto', 'MantenimientoImpuestosController@guardarImpuesto');
 Route::post('eliminarimpuesto', 'MantenimientoImpuestosController@eliminarImpuesto');
 
+/*** Cod promocion */
+Route::get('mant/codPromocion', 'CodigosPromocionController@goMantPromos');
+Route::post('mant/guardarPromocion', 'CodigosPromocionController@guardarPromocion');
+Route::post('eliminarimpuesto', 'MantenimientoImpuestosController@eliminarImpuesto');
+
 /*** tiposingreso */
 Route::get('mant/tiposingreso', 'MantenimientoTiposIngresoController@index');
 Route::post('guardartipoingreso', 'MantenimientoTiposIngresoController@guardarTipoIngreso');

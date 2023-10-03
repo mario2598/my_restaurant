@@ -298,6 +298,7 @@ class FacturacionController extends Controller
             ->where('fecha_inicio', '<=', $fecha_actual)
             ->where('codigo', '=', $codigo_descuento)
             ->where('fecha_fin', '>=', $fecha_actual)
+            ->where('cant_codigos', '>', 0)
             ->where('activo', 1)
             ->get()
             ->first();
@@ -517,7 +518,7 @@ class FacturacionController extends Controller
         return [
             'total' => $total,
             'detalles' => $listaDetallesNueva,
-            'total_pagar' => $total - $descuento,
+            'total_pagar' => $total ,
             'subtotal' => $subtotal,
             'descuento' => $descuento,
             'montoImpuestos' => $montoImpuestos,

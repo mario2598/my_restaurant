@@ -28,6 +28,14 @@ class SisTipoController extends Controller
         ->get()->first()->id;
     }
 
+    public static function getByCodGeneralGrupo($codGeneral){
+        return DB::table('sis_tipo')
+        ->leftjoin('sis_clase', 'sis_clase.id', '=', 'sis_tipo.clase')
+        ->select('sis_tipo.*')
+        ->where('sis_clase.cod_general', '=', $codGeneral)
+        ->get();
+    }
+
    
 
 }

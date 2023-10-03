@@ -130,7 +130,7 @@
                     <div class="col-12 col-md-12 col-lg-12">
                         <div class="row">
 
-                            <div class="col-sm-12 col-md-4 col-lg-3" id="contEscogerProductos" 
+                            <div class="col-sm-12 col-md-4 col-lg-4" id="contEscogerProductos" 
                             style="padding-right: 0px !important;padding-left: 0px !important;">
 
                                 <div class="col-lg-12 col-md-12 pr-25">
@@ -240,7 +240,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-sm-12 col-md-4 col-lg-4" id="contFacturar" 
+                            <div class="col-sm-12 col-md-3 col-lg-3" id="contFacturar" 
                             style="padding-right: 0px !important;padding-left: 0px !important;">
                                 <div class="col-lg-12 col-md-12 pl-0">
 
@@ -252,39 +252,39 @@
 
 
                                                         <div class="col-sm-12 col-md-12 col-lg-12">
-                                                            <h5 id="txt-subtotal-pagar" class="text-muted"
+                                                            <h6 id="txt-subtotal-pagar" class="text-muted"
                                                                 style="margin-left: 3%">
-                                                                SubTotal: 0,00</h5>
+                                                                SubTotal: 0,00</h6>
                                                         </div>
 
                                                         <div class="col-sm-12 col-md-12 col-lg-12">
-                                                            <h5 id="txt-descuento-pagar" class="text-muted"
+                                                            <h6 id="txt-descuento-pagar" class="text-muted"
                                                                 style="margin-left: 3%">
-                                                                Descuento: 0,00</h5>
+                                                                Descuento: 0,00</h6>
                                                         </div>
 
                                                         <div class="col-sm-12 col-md-12 col-lg-12">
-                                                            <h5 id="txt-total-pagar" class="text-muted"
+                                                            <h6 id="txt-total-pagar" class="text-muted"
                                                                 style="margin-left: 3%">
-                                                                Total: 0,00</h5>
+                                                                Total: 0,00</h6>
                                                         </div>
 
-                                                        <div class="col-sm-12 col-md-12 col-lg-12">
+                                                        <div class="col-sm-12 col-md-12 col-lg-12" >
                                                             <div class="row">
-                                                                <div class="col-sm-12 col-md-12 col-lg-9">
+                                                                <div class="col-sm-12 col-md-12 col-lg-8">
                                                                     <input type="text" class="form-control h-75"
                                                                         name="txt_codigo_descuento"
                                                                         onkeyup="enterDescuento(event)"
                                                                         id="txt_codigo_descuento"
                                                                         placeholder="Código de Descuento">
                                                                 </div>
-                                                                <div class="col-sm-12 col-md-6 col-lg-3"
+                                                                <div class="col-sm-12 col-md-6 col-lg-4"
                                                                     style="padding-left:0px; ">
-                                                                    <a class="btn btn-success " style="color: white"
+                                                                    <a class="btn btn-success " style="color: white;padding: 2px 6px !important;"
                                                                         onclick="validarCodDescuento()"><i
                                                                             class="fas fa-check"
                                                                             aria-hidden="true"></i></a>
-                                                                    <a class="btn btn-danger " style="color: white"
+                                                                    <a class="btn btn-danger " style="color: white;padding: 2px 6px !important;"
                                                                         onclick="eliminarCodDescuento()"><i
                                                                             class="fas fa-trash"
                                                                             aria-hidden="true"></i></a>
