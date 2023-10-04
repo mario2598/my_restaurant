@@ -518,7 +518,7 @@ class FacturacionController extends Controller
         return [
             'total' => $total,
             'detalles' => $listaDetallesNueva,
-            'total_pagar' => $total ,
+            'total_pagar' => $total,
             'subtotal' => $subtotal,
             'descuento' => $descuento,
             'montoImpuestos' => $montoImpuestos,
@@ -580,6 +580,7 @@ class FacturacionController extends Controller
         $totalFacturaGen = $infoFacturacionSinDescuento['total'];
         $totalFacturaGenDescuento = $totalFacturaGen;
         $totalDescuentoGen = 0;
+        $descuentoObj = null;
         if ($existeDescuento) {
             $descuentoObj = $verificaCodDesc['datos'];
             if ($descuentoObj->cod_general == 'DESCUENTO_ABSOLUTO') {
@@ -645,6 +646,9 @@ class FacturacionController extends Controller
             }
 
             $res = $this->restarInventarioOrden($id_orden);
+            if ($existeDescuento) {
+                CodigosPromocionController::usarPromocion($descuentoObj->id);
+            }
 
             if (!$res['estado']) {
                 DB::rollBack();
@@ -677,7 +681,7 @@ class FacturacionController extends Controller
             ->select('orden.*', 'sis_estado.cod_general')
             ->where('orden.id', '=', $idOrden)->get()->first();
 
-            
+
         if ($orden == null) {
             return $this->responseAjaxServerError("Número de orden invalido", []);
         }
@@ -693,7 +697,7 @@ class FacturacionController extends Controller
                 ->where('id', '=', $idOrden)
                 ->update(['estado' =>  SisEstadoController::getIdEstadoByCodGeneral('ORD_ANULADA')]);
 
-            $res = $this->devolverInventarioOrden($idOrden,$enteros);
+            $res = $this->devolverInventarioOrden($idOrden, $enteros);
 
             if (!$res['estado']) {
                 DB::rollBack();
@@ -728,10 +732,10 @@ class FacturacionController extends Controller
     }
 
 
-    public function devolverInventarioOrden($id_orden,$lineas)
+    public function devolverInventarioOrden($id_orden, $lineas)
     {
-    
-        
+
+
         $detalles = DB::table('detalle_orden')->select('detalle_orden.*')->where('orden', '=', $id_orden)->whereIn('detalle_orden.id', $lineas)->get();
         foreach ($detalles as $d) {
             if ($d->tipo_producto == 'R') {

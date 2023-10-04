@@ -285,7 +285,7 @@ class ProductosExternosController extends Controller
     public function guardarProductoSucursal(Request $request)
     {
         if (!$this->validarSesion("prod_ext_prods")) {
-            return redirect('/');
+            return $this->responseAjaxServerError("No tienes permisos", []);
         }
 
         $id = $request->input('pe_id');
@@ -294,27 +294,22 @@ class ProductosExternosController extends Controller
         $cantidad_agregar = $request->input('cantidad_agregar');
         $fecha_actual = date("Y-m-d H:i:s");
         if ($sucursal < 1 || $this->isNull($sucursal)) { //  
-            $this->setError('Agregar Producto', 'Debe seleccionar la sucursal.');
-            return redirect('productoExterno/inventario/inventarios');
+            return $this->responseAjaxServerError("Debe seleccionar la sucursal", []);
         }
         $sucursalAux = DB::table('sucursal')->select('sucursal.*')->where('id', '=', $sucursal)->get()->first();
         if ($sucursalAux == null) { //  
-            $this->setError('Agregar Producto', 'Debe seleccionar la sucursal.');
-            return redirect('productoExterno/inventario/inventarios');
+            return $this->responseAjaxServerError("Debe seleccionar la sucursal", []);
         }
 
         if ($producto_externo < 1 || $this->isNull($producto_externo)) { //  
-            $this->setError('Agregar Producto', 'Debe seleccionar el producto.');
-            return redirect('productoExterno/inventario/inventarios');
+            return $this->responseAjaxServerError("Debe seleccionar el producto", []);
         }
         $producto_externoAux = DB::table('producto_externo')->select('producto_externo.*')->where('id', '=', $producto_externo)->get()->first();
         if ($producto_externoAux == null) { //  
-            $this->setError('Agregar Producto', 'Debe seleccionar el producto.');
-            return redirect('productoExterno/inventario/inventarios');
+            return $this->responseAjaxServerError("Debe seleccionar el producto", []);
         }
         if ($cantidad_agregar < 1 || $this->isNull($cantidad_agregar)) { //  
-            $this->setError('Agregar Producto', 'La cantidad debe ser mayor a 0.');
-            return redirect('productoExterno/inventario/inventarios');
+            return $this->responseAjaxServerError("La cantidad debe ser mayor a 0", []);
         }
 
         if ($id < 1 || $this->isNull($id)) { //
@@ -323,15 +318,13 @@ class ProductosExternosController extends Controller
             if ($productoExistente == null) { //  
                 $actualizar = false;
             } else {
-                $this->setError('Agregar Producto', 'Ya existe un producto registrado para la sucursal.');
-                return redirect('productoExterno/inventario/inventarios');
+                return $this->responseAjaxServerError("Ya existe un producto registrado para la sucursal", []);
             }
         } else { // Editar usuario
             $producto = DB::table('pe_x_sucursal')->select('pe_x_sucursal.*')->where('id', '=', $id)->get()->first();
 
             if ($producto == null) {
-                $this->setError('Agregar Producto', 'No existe un producto con los credenciales.');
-                return redirect('productoExterno/inventario/inventarios');
+                return $this->responseAjaxServerError("No existe un producto con los credenciales", []);
             }
             $actualizar = true;
         }
@@ -357,14 +350,12 @@ class ProductosExternosController extends Controller
             if ($actualizar) { // Editar usuario
                 $this->setSuccess('Agregar Producto', 'Se actualizo el producto correctamente.');
             } else { // Nuevo usuario
-
                 $this->setSuccess('Agregar Producto', 'Producto agregado correctamente.');
             }
-            return redirect('productoExterno/inventario/inventarios');
+            return $this->responseAjaxSuccess("","");
         } catch (QueryException $ex) {
             DB::rollBack();
-            $this->setError('Agregar Producto', 'Algo salio mal...');
-            return redirect('productoExterno/inventario/inventarios');
+            return $this->responseAjaxServerError("Algo salio mal...", []);
         }
     }
 

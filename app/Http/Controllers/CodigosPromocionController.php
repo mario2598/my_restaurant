@@ -51,6 +51,28 @@ class CodigosPromocionController extends Controller
             ->first() != null);
     }
 
+    public static function usarPromocion($idPromocion)
+    {
+        $params = DB::table('codigo_descuento')
+            ->select('codigo_descuento.cant_codigos')
+            ->where('id', '=', $idPromocion)
+            ->get()->first();
+        DB::table('codigo_descuento')
+            ->where('id', '=', $idPromocion)
+            ->update(['cant_codigos' => $params->cant_codigos - 1]);
+    }
+
+    public static function aumentarConsecutivoOrden($sucursal)
+    {
+        $params = DB::table('sucursal')
+            ->select('sucursal.cont_ordenes')
+            ->where('id', '=', $sucursal)
+            ->get()->first();
+        DB::table('sucursal')
+            ->where('id', '=', $sucursal)
+            ->update(['cont_ordenes' => $params->cont_ordenes + 1]);
+    }
+
     /**
      * Guarda o actualiza un impuestos.
      */
@@ -91,7 +113,7 @@ class CodigosPromocionController extends Controller
                         'cant_codigos' => $promocion["cant_codigos"]
                     ]);
             }
-            $this->setSuccess("Guarda Promoción","Se guardo la promoción correctamente");
+            $this->setSuccess("Guarda Promoción", "Se guardo la promoción correctamente");
             DB::commit();
             return $this->responseAjaxSuccess("", []);
         } catch (QueryException $ex) {

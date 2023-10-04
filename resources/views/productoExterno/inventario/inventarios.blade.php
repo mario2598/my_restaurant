@@ -128,9 +128,6 @@
         aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <form action="{{ URL::to('productoExterno/inventario/inventarios/guardar') }}" autocomplete="off"
-                    method="POST">
-                    {{ csrf_field() }}
                     <input type="hidden" id="pe_id" name="pe_id" value="-1">
                     <input type="hidden" name="sucursal_agregar_id" id="sucursal_agregar_id" value="-1">
                     <div class="modal-header">
@@ -176,12 +173,11 @@
                         </div>
 
                     </div>
-                    <div id='footerContiner' class="modal-footer" style="margin-top:-5%;">
+                    <div id='footerContiner' class="modal-footer" >
                         <a href="#" class="btn btn-secondary" data-dismiss="modal">Volver</a>
-                        <input type="submit" class="btn btn-primary" value="Guardar" />
+                        <input type="button" class="btn btn-primary" onclick="guardarProductoSucursal()" value="Guardar" />
 
                     </div>
-                </form>
             </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -- fin modal de agregar producto-->
