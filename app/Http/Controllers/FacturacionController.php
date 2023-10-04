@@ -655,7 +655,7 @@ class FacturacionController extends Controller
                 return $this->responseAjaxServerError($res['mensaje'], []);
             }
             DB::commit();
-
+            $this->setSuccess("Orden Creada","Se creo la factura correctamente");
             return $this->responseAjaxSuccess("Pedido creado correctamente.", $id_orden);
         } catch (QueryException $ex) {
             DB::rollBack();

@@ -279,7 +279,7 @@ function generarProductos() {
     $(contenedores.get("productos")).html("");
     //Por cada categoría, genera el HTML correspondiente para el card que será insertado en el scroller
     categoria.productos.forEach(producto => {
-        cards += generarHTMLProducto(producto.nombre, producto.codigo, producto.precio);
+        cards += generarHTMLProducto(producto.nombre, producto.codigo, producto.precio, producto.cantidad, producto.tipoProducto);
         contador++;
     });
 
@@ -289,11 +289,19 @@ function generarProductos() {
 /**
  * Genera el elemento HTML correspondiente a la categoría
  */
-function generarHTMLProducto(nombre, codigo, precio) {
-    return `<tr class="filaProductos" onclick="seleccionarProducto('N','${codigo}')">
-                <td width="40%">${nombre}</td>
-                <td width="30%" style="text-align: center">${parseFloat(precio).toFixed(2)}</td>
-            </tr>`;
+function generarHTMLProducto(nombre, codigo, precio, cantidad, tipoProd) {
+    var text = `<tr class="filaProductos" onclick="seleccionarProducto('N','${codigo}')">
+    <td width="40%">${nombre}`;
+    if (tipoProd == "E") {
+        text += `<br> <small `;
+        if(cantidad < 15){
+            text += `style="color:red;"`;
+        }
+        text +=`> Cantidad : <strong> ${cantidad}</strong></small>`;
+    }
+    text += `</td><td width="30%" style="text-align: center">${parseFloat(precio).toFixed(2)}</td></tr>`;
+
+    return text;
 }
 
 function generarHTMLExtras() {
@@ -608,7 +616,7 @@ function buscarProductoCodigo(codigo, todos = false) {
 function validarCantidadProducto(producto) {
     let cantidad = parseInt(producto.cantidad);
     //No requiere validación
-    if (cantidad == -1) {
+    if (producto.tipoProducto == "R") {
         return true;
     } else if (cantidad == 0) {
         return false;
@@ -661,6 +669,7 @@ function actualizarDetalleOrden(indice, aumenta = true) {
             detalle.total = detalle.total + impuestoMesa;
         }
         detalles[indice] = detalle;
+        reducirCantidadProducto(detalle.producto.codigo);
     } else {
         detalle.cantidad = detalle.cantidad - 1;
         if (detalle.cantidad <= 0) {
@@ -677,6 +686,7 @@ function actualizarDetalleOrden(indice, aumenta = true) {
         aumentarCantidadProducto(detalle.producto.codigo);
     }
     actualizarOrden();
+    generarProductos();
 }
 
 
@@ -877,6 +887,8 @@ function reducirCantidadProducto(codigo) {
             producto.cantidad = cantidad;
         }
     }
+    
+    generarProductos();
 }
 
 
@@ -1152,12 +1164,12 @@ function verificarAbrirModalPagoEfectivo() {
     }
     $('#monto_sinpe').val(ordenGestion.total);
     var ordenGestionTotal = parseFloat(ordenGestion.total); // Supongo que ordenGestion.total es el total de la orden
-    var  pago_efectivo= ordenGestionTotal;
+    var pago_efectivo = ordenGestionTotal;
     $('#monto_tarjeta').val("0");
     var pago_sinpe = 0;
 
     $('#monto_efectivo').val("0");
-    var pago_tarjeta= 0;
+    var pago_tarjeta = 0;
 
     var sumaPagos = pago_sinpe + pago_tarjeta + pago_efectivo;
 
@@ -1228,7 +1240,7 @@ function verificarAbrirModalPagoSinpe() {
     var ordenGestionTotal = parseFloat(ordenGestion.total); // Supongo que ordenGestion.total es el total de la orden
     var pago_sinpe = ordenGestionTotal;
     $('#monto_tarjeta').val("0");
-    var  pago_tarjeta= 0;
+    var pago_tarjeta = 0;
 
     $('#monto_efectivo').val("0");
     var pago_efectivo = 0;
@@ -1268,13 +1280,14 @@ function procesarPago(mto_sinpe, mto_efectivo, mto_tarjeta) {
         console.log(res);
         if (!res['estado']) {
             showError(res['mensaje']);
+            return;
         } else {
             id = res['datos'];
             imprimirTicket(id);
-            limpiarOrden();
             showSuccess("Orden realizada!");
         }
         $('#mdl-loader-pago').modal("hide");
+        location.reload();
     }).fail(function (jqXHR, textStatus, errorThrown) {
         showError("Algo salió mal");
         $('#mdl-loader-pago').modal("hide");
