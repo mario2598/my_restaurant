@@ -38,8 +38,9 @@ function editarProductoInventario(id_pe,id_prod,cantidad){
 function guardarProductoSucursal() {
     var id = $('#pe_id').val();
     var idSuc = $('#sucursal_agregar_id').val( );
-    var prodExt = $('#producto_externo').val('-1');
-    var cant = $('#cantidad_agregar').val(0);
+    var prodExt = $('#producto_externo').val();
+    var cant = $('#cantidad_agregar').val();
+    
     $.ajax({
         url: `${base_path}/productoExterno/inventario/inventarios/guardar`,
         type: 'post',
