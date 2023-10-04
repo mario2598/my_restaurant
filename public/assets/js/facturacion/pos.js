@@ -153,37 +153,10 @@ function init() {
     generarTipos();
     seleccionarTipo(0);
 
-    inicializarEventoScanner();
 }
 
-function inicializarEventoScanner() {
-    let is_event = false; // for check just one event declaration
-    let input = document.getElementById("scanner");
 
-    input.addEventListener("focus", function () {
-        if (!is_event) {
-            is_event = true;
-            input.addEventListener("keypress", function (e) {
-                setTimeout(function () {
-                    if (e.keyCode == 13) {
-                        scanner(input.value); // use value as you need
-                        input.select();
-                    }
-                }, 500)
-            })
-        }
-    });
-    document.addEventListener("keypress", function (e) {
-        if (e.target.tagName !== "INPUT") {
-            input.focus();
-        }
-    });
-}
 
-function scanner(value) {
-    if (value == '') return;
-    seleccionarProducto('N', value, true);
-}
 
 /**
  * Asigna el valor por defecto de las variables
@@ -294,10 +267,10 @@ function generarHTMLProducto(nombre, codigo, precio, cantidad, tipoProd) {
     <td width="40%">${nombre}`;
     if (tipoProd == "E") {
         text += `<br> <small `;
-        if(cantidad < 15){
+        if (cantidad < 15) {
             text += `style="color:red;"`;
         }
-        text +=`> Cantidad : <strong> ${cantidad}</strong></small>`;
+        text += `> Cantidad : <strong> ${cantidad}</strong></small>`;
     }
     text += `</td><td width="30%" style="text-align: center">${parseFloat(precio).toFixed(2)}</td></tr>`;
 
@@ -582,6 +555,7 @@ function agregarProducto(producto, impuestoServicio) {
         actualizarDetalleOrden(indice);
     } else {
         detalles.push(crearDetalleOrden(detalles.length, 1, impuestoServicio, producto, ""));
+        reducirCantidadProducto(producto.codigo);
     }
 
     productoSeleccionado.extras.forEach(extra => {
@@ -589,7 +563,6 @@ function agregarProducto(producto, impuestoServicio) {
             extra1.seleccionado = false;
         });
     });
-    reducirCantidadProducto(producto.codigo);
     actualizarOrden();
 }
 
@@ -653,12 +626,20 @@ function eliminarLineaDetalleOrden(indice) {
     soundClic();
     var detalle = detalles[indice];
     detalles.splice(indice, 1);
-    aumentarCantidadProducto(detalle.producto.codigo);
+
+    var producto = buscarProductoCodigo(detalle.producto.codigo);
+    if (producto !== undefined) {
+        let cantidad = parseInt(producto.cantidad);
+        if (cantidad > -1) {
+            producto.cantidad += detalle.cantidad;
+        }
+    }
     actualizarOrden();
+    generarProductos();
 }
 
 function actualizarDetalleOrden(indice, aumenta = true) {
-    soundClic();
+    
     var detalle = detalles[indice];
     if (aumenta) {
         detalle.cantidad = detalle.cantidad + 1;
@@ -887,7 +868,7 @@ function reducirCantidadProducto(codigo) {
             producto.cantidad = cantidad;
         }
     }
-    
+
     generarProductos();
 }
 
