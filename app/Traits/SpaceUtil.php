@@ -231,6 +231,8 @@ trait SpaceUtil
     return DB::table('sucursal')->where('estado', 'like', 'A')->get();
   }
 
+  
+
   /**
    * Obtiene las sucursales activas sin bodega
 

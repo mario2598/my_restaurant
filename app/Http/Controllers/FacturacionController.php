@@ -41,6 +41,75 @@ class FacturacionController extends Controller
         return view("facturacion.facturar", compact("data"));
     }
 
+    public function goOrdenesAdmin()
+    {
+        if (!$this->validarSesion("adm_ord")) {
+            $this->setMsjSeguridad();
+            return redirect('/');
+        }
+
+        $data = [
+            'menus' => $this->cargarMenus(),
+            'sucursales' => $this->getSucursales(),
+            'clientes' => $this->getClientes(),
+            'panel_configuraciones' => $this->getPanelConfiguraciones()
+        ];
+
+        return view("facturacion.ordenesAdmin", compact("data"));
+    }
+
+    public function filtrarOrdenesAdmin(Request $request)
+    {
+        if (!$this->validarSesion("adm_ord")) {
+            return $this->responseAjaxServerError("No tienes permisos para ingresar.", []);
+        }
+
+        $filtro = $request->input('filtro');
+
+        $filtroCliente = $filtro['cliente'];
+        $filtroSucursal =  $filtro['sucursal'];
+        $hasta = $filtro['hasta'];
+        $desde = $filtro['desde'];
+
+        $ordenes = DB::table('orden')
+            ->leftjoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+            ->leftjoin('sucursal', 'sucursal.id', '=', 'orden.sucursal')
+            ->select(
+                'orden.*',
+                'sis_estado.nombre as estadoOrden',
+                'sis_estado.cod_general',
+                'sucursal.descripcion as nombreSucursal'
+            );
+
+
+        if ($filtroCliente >= 1  && !$this->isNull($filtroCliente)) {
+            $ordenes = $ordenes->where('orden.cliente', '=', $filtroCliente);
+        }
+
+        if (!$this->isNull($filtroSucursal) && $filtroSucursal != 'T') {
+            $ordenes = $ordenes->where('orden.sucursal', '=',  $filtroSucursal);
+        }
+
+        if (!$this->isNull($desde)) {
+            $ordenes = $ordenes->where('orden.fecha_inicio', '>=', $desde);
+        }
+
+        if (!$this->isNull($hasta)) {
+            $mod_date = strtotime($hasta . "+ 1 days");
+            $mod_date = date("Y-m-d", $mod_date);
+            $ordenes = $ordenes->where('orden.fecha_inicio', '<', $mod_date);
+        }
+
+        $ordenes = $ordenes->orderBy('orden.fecha_inicio', 'DESC')->get();
+
+        foreach ($ordenes as $o) {
+            $o->detalles = DB::table('detalle_orden')->where('orden', '=', $o->id)->get();
+        }
+
+        return  $this->responseAjaxSuccess("", $ordenes);
+    }
+
+
     public function goPos()
     {
         if (!$this->validarSesion("facFac")) {
@@ -655,7 +724,7 @@ class FacturacionController extends Controller
                 return $this->responseAjaxServerError($res['mensaje'], []);
             }
             DB::commit();
-            $this->setSuccess("Orden Creada","Se creo la factura correctamente");
+            $this->setSuccess("Orden Creada", "Se creo la factura correctamente");
             return $this->responseAjaxSuccess("Pedido creado correctamente.", $id_orden);
         } catch (QueryException $ex) {
             DB::rollBack();
@@ -728,7 +797,7 @@ class FacturacionController extends Controller
         foreach ($ordenes as $o) {
             $o->detalles = DB::table('detalle_orden')->where('orden', '=', $o->id)->get();
         }
-        return $this->responseAjaxSuccess("Pedido creado correctamente.", $ordenes);
+        return $this->responseAjaxSuccess("", $ordenes);
     }
 
 

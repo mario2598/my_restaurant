@@ -276,6 +276,8 @@ Route::post('restaurante/salon/eliminar', 'RestauranteController@eliminarSalon')
 
 /*****************Facturación**************************** */
 Route::get('facturacion/pos', 'FacturacionController@goPos');
+Route::get('facturacion/ordenesAdmin', 'FacturacionController@goOrdenesAdmin');
+Route::post('facturacion/filtrarOrdenesAdmin', 'FacturacionController@filtrarOrdenesAdmin');
 Route::get('facturacion/ordenesEntrega', 'OrdenesListasController@goOrdenesEntrega');
 Route::get('facturacion/ordenesPreparacion', 'OrdenesListasController@goOrdenesPreparacion');
 Route::post('facturacion/ordenesPreparacion/terminarPreparacionOrden', 'OrdenesListasController@terminarPreparacionOrden');

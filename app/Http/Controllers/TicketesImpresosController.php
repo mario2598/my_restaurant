@@ -48,8 +48,8 @@ class TicketesImpresosController extends Controller
          */
         $titulo1 = iconv('UTF-8', 'ISO-8859-1', 'COFFEE TO GO');
         $titulo2 = iconv('UTF-8', 'ISO-8859-1', 'COFFEE TO GO'); 
-        $titulo3 = iconv('UTF-8', 'ISO-8859-1', 'MARIO ALBERTO FLORES SOLIS'); 
-        $titulo4 = iconv('UTF-8', 'ISO-8859-1', 'Cédula física : 1-1699-0433');
+        $titulo3 = iconv('UTF-8', 'ISO-8859-1', 'S&M COMERCIOS UNIDOS S.R.L'); 
+        $titulo4 = iconv('UTF-8', 'ISO-8859-1', 'Cédula juridica : 3-169-40433');
         $titulo5 = iconv('UTF-8', 'ISO-8859-1', 'Correo : admin@coffeetogocr.com');
         $sucursal = iconv('UTF-8', 'ISO-8859-1', 'Sucursal : ' . $orden->nombre_sucursal);
         $numero_orden = iconv('UTF-8', 'ISO-8859-1', 'No.Orden : ' . $orden->numero_orden);
