@@ -167,7 +167,6 @@ function limpiar() {
     categoriaSeleccionada = 0;
     productoSeleccionado = null;
     clienteSeleccionado = 0;
-    soundClic();
 }
 
 function inicializarMapaContenedores() {
@@ -204,7 +203,6 @@ function generarHTMLTipo(indice, nombre, color = "#0DA8EE") {
  * @param {Integer} indice Índice del tipo a seleccionar
  */
 function seleccionarTipo(indice) {
-    soundClic();
     tipoSeleccionado = indice;
     categoriaSeleccionada = 0;
     generarCategorias();
@@ -241,7 +239,6 @@ function generarHTMLCategoria(indice, nombre, color = "#0DA8EE") {
 function seleccionarCategoria(indice) {
     categoriaSeleccionada = indice;
     generarProductos();
-    soundClic();
 }
 
 function generarProductos() {
@@ -391,7 +388,6 @@ function generarHTMLExtrasDetalle() {
 
 
 function seleccionarExtraRadio(radio, grupo, multiple, extra1) {
-    soundClic();
     const found = productoSeleccionado.extras.find(s => s.dsc_grupo == grupo && s.multiple == multiple);
     if (found == null || found == undefined) {
         showError("Grupo extra invalido");
@@ -416,7 +412,6 @@ function seleccionarExtraRadio(radio, grupo, multiple, extra1) {
 }
 
 function seleccionarExtraCheck(check, extraAux) {
-    soundClic();
     productoSeleccionado.extras.forEach(extra => {
         extra.extras.forEach(extra1 => {
             if (extra1.id == extraAux) {
@@ -433,7 +428,6 @@ function seleccionarExtraCheck(check, extraAux) {
 
 
 function abrirModalExtrasProd(producto) {
-    soundClic();
     productoSeleccionado = producto;
     generarHTMLExtras();
     $("#mdl-extras").modal("show");
@@ -528,7 +522,6 @@ function cerrarExtras() {
  * @param {Boolean} todos Indica si debe buscar el producto en la lista de todos los productos.
  */
 function seleccionarProducto(impuestoServicio, codigo, todos = false) {
-    soundClic();
     let producto = buscarProductoCodigo(codigo, todos);
     if (producto !== undefined) {
 
@@ -623,7 +616,6 @@ function buscarDetallePrevio(impuestoServicio, producto) {
 }
 
 function eliminarLineaDetalleOrden(indice) {
-    soundClic();
     var detalle = detalles[indice];
     detalles.splice(indice, 1);
 
