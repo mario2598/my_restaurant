@@ -37,7 +37,7 @@ class UsuarioExternoController extends Controller
             ->join('impuesto', 'producto_menu.impuesto', '=', 'impuesto.id')
             ->join('pm_x_sucursal', 'producto_menu.id', '=', 'pm_x_sucursal.producto_menu')
             ->select('producto_menu.id', 'producto_menu.codigo', 'producto_menu.nombre',
-             'producto_menu.precio', 'impuesto.impuesto as impuesto', 'producto_menu.tipo_comanda', 'producto_menu.url_imagen')->get();
+             'producto_menu.precio','producto_menu.descripcion', 'impuesto.impuesto as impuesto', 'producto_menu.tipo_comanda', 'producto_menu.url_imagen')->get();
 
         $data = [
             'menus' => $this->cargarMenus(),

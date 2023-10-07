@@ -51,10 +51,10 @@
                                         <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12" style="padding: 10px;">
                                             <div class="card-mario" style="padding: 10px;">
                                                 <a href="{{ asset('storage/'.$p->url_imagen) }}"
-                                                    data-sub-html="{{$p->nombre . ' | CRC ' . number_format($p->precio, 2, ".", ",") }}">
+                                                    data-sub-html="{{$p->nombre . ' | CRC ' . number_format($p->precio, 2, ".", ",") . ' | '.$p->descripcion }} ">
                                                     <img class="img-responsive thumbnail imagen-cuadrada"
                                                         src="{{ asset('storage/'.$p->url_imagen) }}"
-                                                        alt="{{$p->nombre}}">
+                                                        alt="{{$p->descripcion}}">
                                                 </a>
                                                 <p> <small>{{$p->nombre}}</small> <br>
                                                     <strong>{{'CRC ' . number_format($p->precio, 2, ".", ",") }}</strong>
