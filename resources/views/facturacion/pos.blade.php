@@ -130,8 +130,8 @@
                     <div class="col-12 col-md-12 col-lg-12">
                         <div class="row">
 
-                            <div class="col-sm-12 col-md-4 col-lg-4" id="contEscogerProductos"
-                                style="padding-right: 0px !important;padding-left: 0px !important;">
+                            <div class="col-sm-12 col-md-4 col-lg-4" id="contEscogerProductos" 
+                            style="padding-right: 0px !important;padding-left: 0px !important;">
 
                                 <div class="col-lg-12 col-md-12 pr-25">
 
@@ -169,8 +169,7 @@
                                 </div>
 
                             </div>
-                            <div class="col-sm-12 col-md-4 col-lg-5"
-                                style="padding-right: 0px !important;padding-left: 0px !important;">
+                            <div class="col-sm-12 col-md-4 col-lg-5" style="padding-right: 0px !important;padding-left: 0px !important;">
                                 <!-- Panel orden -->
                                 <div class="col-lg-12 col-md-12 pl-0">
                                     <!-- Acciones -->
@@ -241,8 +240,8 @@
                                 </div>
                             </div>
 
-                            <div class="col-sm-12 col-md-3 col-lg-3" id="contFacturar"
-                                style="padding-right: 0px !important;padding-left: 0px !important;">
+                            <div class="col-sm-12 col-md-3 col-lg-3" id="contFacturar" 
+                            style="padding-right: 0px !important;padding-left: 0px !important;">
                                 <div class="col-lg-12 col-md-12 pl-0">
 
                                     <div class="col-12">
@@ -270,7 +269,7 @@
                                                                 Total: 0,00</h6>
                                                         </div>
 
-                                                        <div class="col-sm-12 col-md-12 col-lg-12">
+                                                        <div class="col-sm-12 col-md-12 col-lg-12" >
                                                             <div class="row">
                                                                 <div class="col-sm-12 col-md-12 col-lg-8">
                                                                     <input type="text" class="form-control h-75"
@@ -281,13 +280,11 @@
                                                                 </div>
                                                                 <div class="col-sm-12 col-md-6 col-lg-4"
                                                                     style="padding-left:0px; ">
-                                                                    <a class="btn btn-success "
-                                                                        style="color: white;padding: 2px 6px !important;"
+                                                                    <a class="btn btn-success " style="color: white;padding: 2px 6px !important;"
                                                                         onclick="validarCodDescuento()"><i
                                                                             class="fas fa-check"
                                                                             aria-hidden="true"></i></a>
-                                                                    <a class="btn btn-danger "
-                                                                        style="color: white;padding: 2px 6px !important;"
+                                                                    <a class="btn btn-danger " style="color: white;padding: 2px 6px !important;"
                                                                         onclick="eliminarCodDescuento()"><i
                                                                             class="fas fa-trash"
                                                                             aria-hidden="true"></i></a>
@@ -319,14 +316,13 @@
                                                         <div class="form-group">
                                                             <label>Monto Tarjeta (₡)</label>
                                                             <input type="number" class="form-control" step=any
-                                                                onkeyup="enterCampoPago(event)" id="monto_tarjeta"
-                                                                name="monto_tarjeta" value="" placeholder="0.00"
-                                                                min="0">
-                                                            <button type="button" class="btn btn-info "
-                                                                id="btnPagoTarjeta"
+                                                            onkeyup="enterCampoPago(event)"
+                                                                id="monto_tarjeta" name="monto_tarjeta" value=""
+                                                                placeholder="0.00" min="0">
+                                                                <button type="button" class="btn btn-info " id="btnPagoTarjeta"
                                                                 style="width: 100% !important; margin-bottom:20px;"
-                                                                onclick="verificarAbrirModalPagoTarjeta()">Pagar con
-                                                                tarjeta<i class="fas fa-payment"
+                                                                onclick="verificarAbrirModalPagoTarjeta()">Pagar con tarjeta<i
+                                                                    class="fas fa-payment"
                                                                     aria-hidden="true"></i></button>
                                                         </div>
                                                     </div>
@@ -334,14 +330,13 @@
                                                         <div class="form-group">
                                                             <label>Monto Efectivo (₡)</label>
                                                             <input type="number" class="form-control" step=any
-                                                                onkeyup="enterCampoPago(event)" id="monto_efectivo"
-                                                                name="monto_efectivo" value="" placeholder="0.00"
-                                                                min="0">
-                                                            <button type="button" class="btn btn-info "
-                                                                id="btnPagoEfectivo"
+                                                            onkeyup="enterCampoPago(event)"
+                                                                id="monto_efectivo" name="monto_efectivo" value=""
+                                                                placeholder="0.00" min="0">
+                                                                <button type="button" class="btn btn-info " id="btnPagoEfectivo"
                                                                 style="width: 100% !important; margin-bottom:20px;"
-                                                                onclick="verificarAbrirModalPagoEfectivo()">Pagar con
-                                                                efectivo<i class="fas fa-payment"
+                                                                onclick="verificarAbrirModalPagoEfectivo()">Pagar con efectivo<i
+                                                                    class="fas fa-payment"
                                                                     aria-hidden="true"></i></button>
                                                         </div>
                                                     </div>
@@ -349,11 +344,10 @@
                                                         <div class="form-group">
                                                             <label>Monto Sinpe (₡)</label>
                                                             <input type="number" class="form-control" step=any
-                                                                onkeyup="enterCampoPago(event)" id="monto_sinpe"
-                                                                name="monto_sinpe" value="" placeholder="0.00"
-                                                                min="0">
-                                                            <button type="button" class="btn btn-info "
-                                                                id="btnPagoSinpe"
+                                                            onkeyup="enterCampoPago(event)"
+                                                                id="monto_sinpe" name="monto_sinpe" value=""
+                                                                placeholder="0.00" min="0">
+                                                                <button type="button" class="btn btn-info " id="btnPagoSinpe"
                                                                 style="width: 100% !important; margin-bottom:20px;"
                                                                 onclick="verificarAbrirModalPagoSinpe()">Pagar con sinpe<i
                                                                     class="fas fa-payment"
@@ -601,8 +595,54 @@
                 </div>
 
                 <a href="" target='_blank' class="btn btn-primary" id='btn-pdf' style="display:none"></a>
+
+                <!--
+                                                                                                                                                    <div class="modal fade bs-example-modal-center" id='mdl-cliente' tabindex="-1" role="dialog"
+                                                                                                                                                        aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                                                                                                                                                        <div class="modal-dialog modal-dialog-centered">
+                                                                                                                                                            <div class="modal-content">
+                                                                                                                                                                <div class="modal-header">
+                                                                                                                                                                    <h5 class="modal-title">Buscar clientes</h5>
+                                                                                                                                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                                                                                                                        <span aria-hidden="true">&times;</span>
+                                                                                                                                                                    </button>
+                                                                                                                                                                </div>
+                                                                                                                                                                <div class="modal-body">
+                                                                                                                                                                    <table class="table" id="tbl-clientes" style="max-height: 100%;">
+                                                                                                                                                                        <thead class="thead-light">
+                                                                                                                                                                            <tr>
+                                                                                                                                                                                <th scope="col">Nombre</th>
+                                                                                                                                                                                <th scope="col" style="text-align: center">Teléfono</th>
+                                                                                                                                                                                <th scope="col" style="text-align: center">Correo</th>
+                                                                                                                                                                                <th scope="col" style="text-align: center">Ubicación</th>
+                                                                                                                                                                                <th scope="col" style="text-align: center">Seleccionar</th>
+                                                                                                                                                                            </tr>
+                                                                                                                                                                        </thead>
+                                                                                                                                                                        <tbody id="tbody-clientes">
+                                                                                                                                                                         foreach ($data['clientes'] as $cliente)
+                                                                                                                                                                                <tr>
+                                                                                                                                                                                    <td> $cliente->nombre </td>
+                                                                                                                                                                                    <td class="text-center"> $cliente->telefono }}</td>
+                                                                                                                                                                                    <td class="text-center">$cliente->correo }}</td>
+                                                                                                                                                                                    <td class="text-center"> $cliente->ubicacion }}</td>
+                                                                                                                                                                                    <td class="text-center"><button type="button" class="btn btn-info"
+                                                                                                                                                                                            onclick="seleccionarCliente(' $cliente->id }}',' $cliente->nombre }}')"
+                                                                                                                                                                                            data-dismiss="modal">
+                                                                                                                                                                                            <i class="fas fa-check" aria-hidden="true"></i>
+                                                                                                                                                                                        </button></td>
+                                                                                                                                                                                </tr>
+                                                                                                                                                                            endforeach
+                                                                                                                                                                        </tbody>
+                                                                                                                                                                    </table>
+                                                                                                                                                                </div>
+                                                                                                                                                            </div>
+                                                                                                                                                        </div>
+                                                                                                                                                    </div>
+                                                                                                                                                -->
             @endsection
             @section('script')
+                <script src="{{ asset('assets/bundles/datatables/datatables.min.js') }}"></script>
+                <script src="{{ asset('assets/js/page/datatables.js') }}"></script>
 
                 <script src="{{ asset('assets/js/facturacion/pos.js') }}"></script>
             @endsection

@@ -238,6 +238,17 @@ class ProductosExternosController extends Controller
             $impuesto = $request->input('impuesto');
             $precio_compra = $request->input('precio_compra');
 
+            $image = $request->file('foto_producto');
+            if ($image != null) {
+                $path = $image->store('productos', 'public');
+            } else {
+                if ($actualizar) {
+                    $path = $producto->url_imagen;
+                }else{
+                    $path = "";
+                }
+               
+            }
             try {
                 DB::beginTransaction();
 
@@ -246,12 +257,14 @@ class ProductosExternosController extends Controller
                         ->where('id', '=', $id)
                         ->update([
                             'nombre' => $nombre, 'categoria' => $categoria, 'precio' => $precio,
-                            'impuesto' => $impuesto, 'precio_compra' => $precio_compra, 'codigo_barra' => $codigo_barra, 'proveedor' => $proveedor, 'descripcion' => $descripcion
+                            'impuesto' => $impuesto, 'precio_compra' => $precio_compra, 'codigo_barra' => $codigo_barra, 'proveedor' => $proveedor,
+                             'descripcion' => $descripcion, 'url_imagen' => $path
                         ]);
                 } else { // Nuevo usuario
                     $id = DB::table('producto_externo')->insertGetId([
                         'id' => null, 'nombre' => $nombre, 'categoria' => $categoria, 'precio' => $precio,
-                        'impuesto' => $impuesto, 'precio_compra' => $precio_compra, 'codigo_barra' => $codigo_barra, 'proveedor' => $proveedor, 'estado' => 'A', 'descripcion' => $descripcion ?? ""
+                        'impuesto' => $impuesto, 'precio_compra' => $precio_compra, 'codigo_barra' => $codigo_barra, 
+                        'proveedor' => $proveedor, 'estado' => 'A', 'descripcion' => $descripcion ?? "", 'url_imagen' => $path
                     ]);
                 }
 

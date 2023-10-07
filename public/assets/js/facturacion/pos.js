@@ -1341,57 +1341,12 @@ function generarHTMLOrdenes(ordenes) {
             </td> <td class="text-center">
             ${orden.estadoOrden ?? ""}
         </td>`;
-        if (orden.cod_general == 'ORD_FACTURADA') {
-            texto = texto + `<td class="text-center">
-                <button type="button" class="btn btn-danger px-2" onclick="abrirModalAnularOrden('${orden.id ?? 0}','${lineas.slice(0, -1)}','${tablaDetalles}')" 
-                    title="Anular Orden">
-                    <i class="fas fa-trash" aria-hidden="true"></i>
-                </button>
-            </td>`;
-        }
+       
         texto = texto + `</tr>`;
     });
 
     $('#tbody-ordenes').html(texto);
     $('#mdl-ordenes').modal('show');
-}
-
-function abrirModalAnularOrden(idOrden, detalles, detallesTabla) {
-    idOrdenAnular = idOrden;
-    detallesAnular = detalles;
-    $('#tbody-detallesAnular').html(detallesTabla);
-    $('#mdl-detallesAnular').modal('show');
-}
-
-function anularOrden() {
-    if (idOrdenAnular == null || idOrdenAnular == 0) {
-        showError("No existe la orden");
-        return;
-    }
-    var arrayDeCadenas = detallesAnular.split(',');
-    var detallesAux = arrayDeCadenas.map(function (numero) {
-        return parseInt(numero, 10);
-    });
-
-    $.ajax({
-        url: `${base_path}/facturacion/pos/anularOrden`,
-        type: 'post',
-        dataType: "json",
-        data: {
-            _token: CSRF_TOKEN,
-            idOrden: idOrdenAnular,
-            lineas: detallesAux
-        }
-    }).done(function (response) {
-        console.log(response);
-        if (!response['estado']) {
-            showError(response['mensaje']);
-            return;
-        }
-        generarHTMLOrdenes(response['datos']);
-    }).fail(function (jqXHR, textStatus, errorThrown) {
-        showError("Algo salió mal");
-    });
 }
 
 function cerrarMdlOrdenes() {

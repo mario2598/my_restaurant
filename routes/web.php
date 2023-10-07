@@ -353,3 +353,14 @@ Route::get('impresora/tiquete/ruta/parcial/{id_orden}','TicketesImpresosControll
 Route::get('impresora/pretiquete/{id_orden}','TicketesImpresosController@generarPreFacturacionOrdenPdf');
 
 Route::post('comandaBar/recargar', 'ComandaBarController@recargar');
+
+/*****************Grupos Promociones**************************** */
+Route::get('mant/grupoPromocion', 'MantGrupoPromocionesController@goGruposPromociones');
+Route::post('mant/grupoPromocion/filtro', 'MantGrupoPromocionesController@filtrarGruposPromociones');
+Route::post('mant/grupoPromocion/guardarPromocion', 'MantGrupoPromocionesController@guardarPromocion');
+Route::post('mant/grupoPromocion/guardarDetallePromocion', 'MantGrupoPromocionesController@guardarDetallePromocion');
+Route::post('mant/grupoPromocion/eliminarDetallePromocion', 'MantGrupoPromocionesController@eliminarDetallePromocion');
+
+
+/*****************Grupos Promociones**************************** */
+Route::get('usuarioExterno/menu', 'UsuarioExternoController@goMenu');

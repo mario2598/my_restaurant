@@ -48,6 +48,13 @@ return [
             'root' => storage_path('app'),
         ],
 
+        'productos' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/imagenes'),
+            'url' => env('APP_URL').'/storage/imagenes',
+            'visibility' => 'public',
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

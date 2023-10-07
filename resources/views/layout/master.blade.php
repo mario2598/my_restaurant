@@ -39,11 +39,7 @@
     <input type="hidden" value="{{$data['panel_configuraciones']->color_tema ?? 'white'}}" id="cp_color_tema">
     <input type="hidden" value="{{$data['panel_configuraciones']->mini_sidebar ?? 1}}" id="cp_mini_sidebar">
     <input type="hidden" value="{{$data['panel_configuraciones']->sticky_topbar ?? 1}}" id="cp_sticky_topbar">
-    <audio id="clicSound">
-      <source src="clic.mp3" type="audio/mpeg">
-      <source src="clic.ogg" type="audio/ogg">
-      Tu navegador no admite la reproducción de sonidos.
-    </audio>
+   
         <!-- Begin page -->
         <div class="loader"></div>
             <div id="app">

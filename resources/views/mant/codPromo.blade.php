@@ -154,7 +154,6 @@
         </section>
     </div>
 
-    <!-- modal modal de agregar proveedor -->
     <div class="modal fade bs-example-modal-center" id='mdl_generico' tabindex="-1" role="dialog"
         aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-lg">

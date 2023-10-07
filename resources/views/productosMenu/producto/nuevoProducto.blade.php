@@ -9,7 +9,7 @@
 
     <div class="main-content">
         <section class="section">
-            <form method="POST" action="{{ URL::to('menu/producto/guardar') }}" autocomplete="off">
+            <form method="POST" action="{{ URL::to('menu/producto/guardar') }}" enctype="multipart/form-data" autocomplete="off">
                 {{ csrf_field() }}
                 <input type="hidden" name="id" value="-1">
 
@@ -80,7 +80,29 @@
                                 </div>
                             </div>
 
-                          
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <div class="form-group ">
+                                    <label>Foto Producto</label>
+                                    <input type="file"id="foto_producto" name="foto_producto"
+                                        accept="image/png, image/jpeg, image/jpg">
+                                </div>
+                            </div>
+
+
+                            <div class="col-sm-12 col-md-6 col-xl-4">
+                                <div class="form-group">
+                                    <label>Impuesto</label>
+                                    <select class="form-control" id="impuesto" name="impuesto">
+                                        @foreach ($data['impuestos'] as $i)
+                                            <option value="{{ $i->id }}"
+                                                @if ($i->id == ($data['datos']['impuesto'] ?? -1)) selected @endif>{{ $i->descripcion }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+
 
 
                             <!-- enviar -->

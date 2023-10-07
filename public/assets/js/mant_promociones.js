@@ -56,7 +56,6 @@ function cargarPromoModal() {
         activo = true;
     }
     $("#activo").prop("checked", activo);
-
 }
 
 function cargarModalPromo() {

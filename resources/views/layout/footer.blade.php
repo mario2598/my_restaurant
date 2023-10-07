@@ -1,6 +1,6 @@
 
 <footer class="main-footer">
-  <div class="footer-left">
+  <div class="footer-right">
     Coffee To Go | The coffee experience
   </div>
   
