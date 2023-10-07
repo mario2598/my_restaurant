@@ -364,3 +364,4 @@ Route::post('mant/grupoPromocion/eliminarDetallePromocion', 'MantGrupoPromocione
 
 /*****************Grupos Promociones**************************** */
 Route::get('usuarioExterno/menu', 'UsuarioExternoController@goMenu');
+Route::post('usuarioExterno/menu/cargarTiposGeneral', 'UsuarioExternoController@cargarTiposGeneral');

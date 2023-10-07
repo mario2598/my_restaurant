@@ -23,32 +23,30 @@ class UsuarioExternoController extends Controller
         if (!$this->validarSesion("usuExtMnu")) {
             return redirect('/');
         }
+
         $contro = new FacturacionController();
-        $tipos =  $contro->getTiposCategoriasProductos();
-        foreach ($tipos as $i => $t) {
-            if (count($t['categorias']) < 1) {
-                unset($tipos[$i]);
-            }
-        }
-
-        $prodcutosMenu = DB::table("producto_menu")
-            ->where('producto_menu.estado', "A")
-            ->where('pm_x_sucursal.sucursal', $this->getUsuarioSucursal()) 
-            ->join('impuesto', 'producto_menu.impuesto', '=', 'impuesto.id')
-            ->join('pm_x_sucursal', 'producto_menu.id', '=', 'pm_x_sucursal.producto_menu')
-            ->select('producto_menu.id', 'producto_menu.codigo', 'producto_menu.nombre',
-             'producto_menu.precio','producto_menu.descripcion', 'impuesto.impuesto as impuesto', 'producto_menu.tipo_comanda', 'producto_menu.url_imagen')->get();
-
+        $categorias =  $contro->getCategoriasTodosProductos($this->getUsuarioSucursal());
+       
         $data = [
             'menus' => $this->cargarMenus(),
-            'tipos' => $tipos,
-            'prodcutosMenu' => $prodcutosMenu,
-            'categorias' => $this->getCategorias(),
+            'categorias' =>$categorias,
             'impuestos' => $this->getImpuestos(),
             'proveedores' => $this->getProveedores(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
-
         return view('usuarioExterno.menu', compact('data'));
+    }
+
+    public function cargarTiposGeneral(Request $request)
+    {
+        if (!$this->validarSesion("usuExtMnu")) {
+            return redirect('/');
+            return $this->responseAjaxServerError("No tienes permisos", "");
+        }
+        $contro = new FacturacionController();
+        $categorias =  $contro->getCategoriasTodosProductos($this->getUsuarioSucursal());
+
+
+        return $this->responseAjaxSuccess("", $categorias);
     }
 }
