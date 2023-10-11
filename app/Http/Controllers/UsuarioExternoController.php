@@ -26,7 +26,7 @@ class UsuarioExternoController extends Controller
 
         $contro = new FacturacionController();
         $categorias =  $contro->getCategoriasTodosProductos($this->getUsuarioSucursal());
-       
+       dd($categorias);
         $data = [
             'menus' => $this->cargarMenus(),
             'categorias' =>$categorias,
