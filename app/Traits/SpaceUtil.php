@@ -114,9 +114,14 @@ trait SpaceUtil
    */
   public function getCategorias()
   {
-    return DB::table('categoria')
+    $categorias = DB::table('categoria')
       ->where('estado', '=', 'A')
       ->get();
+
+      foreach ($categorias as $c) {
+        $c->url_imagen = asset('storage/' . $c->url_imagen );
+      }
+      return $categorias;
   }
 
 

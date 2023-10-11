@@ -31,6 +31,9 @@ function cargarTiposGeneral() {
 
 function generarHTMLTipos() {
     var texto = "";
+    texto = texto + `<li class="nav-item" onclick="seleccionarCategorias()" style="cursor:pointer;">
+            <a class="nav-link"><i ></i> <span>Categorías</span></a>
+        </li>`;
     for (var index in tipos) {
         var tipo = tipos[index];
         texto = texto + `<li class="nav-item" onclick="seleccionarTipo(${index})" style="cursor:pointer;">
@@ -43,8 +46,35 @@ function generarHTMLTipos() {
 
 function seleccionarTipo(index) {
     tipoSeleccionado = tipos[index];
-
+    $("#lblNombreCategiriaSeleccionada").html(tipoSeleccionado.categoria);
     generarHTMLProductos();
+}
+
+function seleccionarCategorias() {
+    generarHTMLCategorias();
+    $("#lblNombreCategiriaSeleccionada").html("Todas las categorías");
+}
+
+function generarHTMLCategorias() {
+    var texto = "";
+
+    for (var index in tipos) {
+        var tipo = tipos[index];
+        texto = texto + `<div class="col-lg-3 col-md-4 col-sm-6 col-xs-12" 
+         onclick="seleccionarTipo(${index})"
+        style="padding: 10px;">
+            <div class="card-mario" style="padding: 10px;">
+                    <img class="img-responsive thumbnail imagen-cuadrada"
+                        src="${tipo.url_imagen}"
+                        alt="${ tipo.categoria}">
+                </a>
+                <p style="text-align: center;"> <small>${tipo.categoria}</small> <br>
+                </p>
+            </div>
+        </div>`;
+    }
+
+    $('#aniimated-thumbnials').html(texto);
 }
 
 function generarHTMLProductos() {
@@ -66,5 +96,18 @@ function generarHTMLProductos() {
             </div>
         </div>`;
     }
+ 
     $('#aniimated-thumbnials').html(texto);
+    cargarScriptsJavaScript();
+
+}
+
+
+function cargarScriptsJavaScript() {
+    $('#aniimated-thumbnials').data('lightGallery').destroy(true);
+
+    $('#aniimated-thumbnials').lightGallery({
+        thumbnail: true,
+        selector: 'a'
+    });
 }

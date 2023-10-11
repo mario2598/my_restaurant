@@ -249,8 +249,10 @@ class FacturacionController extends Controller
 
     public function getCategoriasTodosProductos($idSucursal)
     {
-        $categorias = DB::table('categoria')->select('id', 'categoria', 'logo')->get();
+        $categorias = DB::table('categoria')->select('id', 'categoria', 'logo', 'url_imagen')->get();
         foreach ($categorias as $categoria) {
+
+            $categoria->url_imagen = asset('storage/' . $categoria->url_imagen);
             $categoria->productos = [];
             $prods = [];
             $prods =   DB::table("producto_menu")
@@ -271,7 +273,7 @@ class FacturacionController extends Controller
                 )->get();
 
             foreach ($prods as $p) {
-                $p->url_imagen = asset('storage/' . $p->url_imagen );
+                $p->url_imagen = asset('storage/' . $p->url_imagen);
                 $p->tipoProducto = 'R';
                 $grupos = DB::table('extra_producto_menu')
                     ->select(
@@ -332,7 +334,7 @@ class FacturacionController extends Controller
                 )->get();
 
             foreach ($prods2 as $p) {
-                $p->url_imagen = asset('storage/' . $p->url_imagen );
+                $p->url_imagen = asset('storage/' . $p->url_imagen);
                 $p->tipoProducto = 'E';
                 $grupos = DB::table('extra_producto_externo')
                     ->select(

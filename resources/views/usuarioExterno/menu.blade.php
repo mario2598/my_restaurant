@@ -46,23 +46,20 @@
                                 <h4 id="lblNombreCategiriaSeleccionada">Todas las Categorías</h4>
                             </div>
                             <div class="card-body">
-                                <div id="aniimated-thumbnials" class="list-unstyled row clearfix" >
-                                    @foreach ($data['categorias'] as $cat)
-                                        @foreach ($cat->productos as $p)
-                                            <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12" style="padding: 10px;">
-                                                <div class="card-mario" style="padding: 10px;">
-                                                    <a href="{{$p->url_imagen}}"
-                                                        data-sub-html="{{ $p->nombre . ' | CRC ' . number_format($p->precio, 2, '.', ',') . ' | ' . $p->descripcion }} ">
-                                                        <img class="img-responsive thumbnail imagen-cuadrada"
-                                                            src="{{$p->url_imagen }}"
-                                                            alt="{{ $p->descripcion }}">
-                                                    </a>
-                                                    <p> <small>{{ $p->nombre }}</small> <br>
-                                                        <strong>{{ 'CRC ' . number_format($p->precio, 2, '.', ',') }}</strong>
-                                                    </p>
-                                                </div>
+                                <div id="aniimated-thumbnials" class="list-unstyled row clearfix">
+                                    @foreach ($data['categorias']  as $index  => $cat)
+                                        <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12"
+                                        onclick="seleccionarTipo({{ $index }})"
+                                        style="padding: 10px;">
+                                            <div class="card-mario" style="padding: 10px;">
+                                                <img class="img-responsive thumbnail imagen-cuadrada"
+                                                    src="{{ $cat->url_imagen }}" alt="{{ $cat->categoria }}">
+
+                                                <p style="text-align: center;"> <small>{{ $cat->categoria }}</small> <br>
+
+                                                </p>
                                             </div>
-                                        @endforeach
+                                        </div>
                                     @endforeach
                                 </div>
                             </div>

@@ -17,7 +17,9 @@
 
     <link rel="stylesheet" href="{{ asset('assets/css/app.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/bundles/izitoast/css/iziToast.min.css') }}">
-    <link href="{{ asset('assets/bundles/lightgallery/dist/css/lightgallery.css') }}" rel="stylesheet">
+    <link 
+    id="ligthStyle"
+    href="{{ asset('assets/bundles/lightgallery/dist/css/lightgallery.css') }}" rel="stylesheet">
     <!-- Template CSS -->
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/components.css') }}">
@@ -55,9 +57,10 @@
     <script src="{{ asset('assets/js/space.js') }}"></script>
     <script src="{{ asset('assets/js/page/ion-icons.js') }}"></script>
     <!-- JS Libraies -->
-    <script src="{{ asset('assets/bundles/lightgallery/dist/js/lightgallery-all.js') }}"></script>
+    <script id="script1"
+    src="{{ asset('assets/bundles/lightgallery/dist/js/lightgallery-all.js') }}"></script>
     <!-- Page Specific JS File -->
-    <script src="{{ asset('assets/js/page/light-gallery.js') }}"></script>
+    <script id="script2" src="{{ asset('assets/js/page/light-gallery.js') }}"></script>
     @yield('script')
 </body>
 
