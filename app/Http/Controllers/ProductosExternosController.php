@@ -457,7 +457,7 @@ class ProductosExternosController extends Controller
             $this->setError('Tamaño exedido', "El código de barra debe ser de máximo 15 caracteres.");
             return false;
         }
-        if (!$this->isLengthMinor($r->input('nombre'), 30)) {
+        if (!$this->isLengthMinor($r->input('nombre'), 50)) {
             $this->setError('Tamaño exedido', "El nombre debe ser de máximo 30 caracteres.");
             return false;
         }
