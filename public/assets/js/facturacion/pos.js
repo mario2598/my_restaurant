@@ -890,21 +890,27 @@ function limpiarOrden() {
     $('#monto_sinpe').val(""); // Supongo que txt-sinpe es el campo para el pago con SINPE
     $('#monto_tarjeta').val(""); // Supongo que txt-tarjeta es el campo para el pago con tarjeta
     $('#monto_efectivo').val("");
-    detalles = [];
     reiniciarCantidadesProductos();
+    detalles = [];
     actualizarOrden();
+    generarProductos();
     $("#txt-cliente").val("");
     guardandoOrden = false;
 }
 
 function reiniciarCantidadesProductos() {
-    tipos.forEach(tipo => {
-        tipo.categorias.forEach(categoria => {
-            categoria.productos.forEach(producto => {
-                producto.cantidad = producto.cantidad_original;
+    detalles.forEach(detalle => {
+        tipos.forEach(tipo => {
+            tipo.categorias.forEach(categoria => {
+                categoria.productos.forEach(producto => {
+                    if(producto.id == detalle.producto.id){
+                        producto.cantidad = producto.cantidad + detalle.cantidad;
+                    }
+                })
             })
-        })
-    })
+        });
+    });
+    
 }
 
 function confirmarOrden() {
@@ -1051,10 +1057,6 @@ function redirigirCobro(id) {
 }
 
 function validarFormularioOrden() {
-    if (tienePedidosMesa() && $('#sel-mobiliario').val() < 1) {
-        swal('Datos incompletos', 'Debe seleccionar la mesa.', 'error');
-        return false;
-    }
 
     if (detalles.length < 1) {
         swal('Datos incompletos', 'Debe seleccionar los productos para generar la orden.', 'error');
@@ -1062,17 +1064,6 @@ function validarFormularioOrden() {
     }
 
     return true;
-}
-
-function tienePedidosMesa() {
-    let tienePedidosMesa = false;
-    detalles.forEach(detalle => {
-        if (detalle.impuestoServicio == "S") {
-            tienePedidosMesa = true;
-        }
-    });
-
-    return tienePedidosMesa;
 }
 
 function verificarAbrirModalPago() {
