@@ -147,7 +147,7 @@ class ProductosExternosController extends Controller
         }
 
         $producto = DB::table('producto_externo')
-            ->where('producto.id', '=', $id)->get()->first();
+            ->where('producto_externo.id', '=', $id)->get()->first();
 
         if ($producto == null) {
             $this->setError('Editar Producto', 'No existe el producto a editar.');
