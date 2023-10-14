@@ -14,8 +14,8 @@ $(document).ready(function () {
 function initialice() {
   var t=  document.getElementById('nombre');
   t.addEventListener('input',function(){ // 
-    if (this.value.length > 30) 
-       this.value = this.value.slice(0,30); 
+    if (this.value.length > 50) 
+       this.value = this.value.slice(0,50); 
   });
 
   t=  document.getElementById('codigo');
