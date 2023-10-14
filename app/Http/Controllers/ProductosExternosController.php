@@ -146,7 +146,7 @@ class ProductosExternosController extends Controller
             return redirect('productoExterno/productos');
         }
 
-        $producto = DB::table('producto')
+        $producto = DB::table('producto_externo')
             ->where('producto.id', '=', $id)->get()->first();
 
         if ($producto == null) {
