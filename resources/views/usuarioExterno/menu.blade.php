@@ -34,6 +34,10 @@
             object-fit: cover;
             /* Ajusta la imagen para que cubra completamente el cuadrado sin distorsión */
         }
+
+        .lg-outer .lg-thumb-item {
+            border: 0px solid #FFF!important;
+        }
     </style>
 
     <div class="main-content" style="padding-left: 30px;">
@@ -47,10 +51,9 @@
                             </div>
                             <div class="card-body">
                                 <div id="aniimated-thumbnials" class="list-unstyled row clearfix">
-                                    @foreach ($data['categorias']  as $index  => $cat)
+                                    @foreach ($data['categorias'] as $index => $cat)
                                         <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12"
-                                        onclick="seleccionarTipo({{ $index }})"
-                                        style="padding: 10px;">
+                                            onclick="seleccionarTipo({{ $index }})" style="padding: 10px;">
                                             <div class="card-mario" style="padding: 10px;">
                                                 <img class="img-responsive thumbnail imagen-cuadrada"
                                                     src="{{ $cat->url_imagen }}" alt="{{ $cat->categoria }}">
