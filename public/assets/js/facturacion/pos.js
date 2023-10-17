@@ -631,7 +631,7 @@ function eliminarLineaDetalleOrden(indice) {
 }
 
 function actualizarDetalleOrden(indice, aumenta = true) {
-    
+
     var detalle = detalles[indice];
     if (aumenta) {
         detalle.cantidad = detalle.cantidad + 1;
@@ -662,6 +662,23 @@ function actualizarDetalleOrden(indice, aumenta = true) {
     generarProductos();
 }
 
+function agregarDetalleInpt(indice, codigo, aumenta = true) {
+    if (!aumenta) {
+        actualizarDetalleOrden(indice, aumenta);
+        return;
+    }
+    let producto = buscarProductoCodigo(codigo, false);
+    if (producto !== undefined) {
+        if (validarCantidadProducto(producto)) {
+            actualizarDetalleOrden(indice, aumenta);
+        } else {
+            swal('Agregar producto', "Existencias agotadas para este producto.", 'error');
+        }
+    } else {
+        swal('Agregar producto', "No se encontro el producto.", 'error');
+    }
+
+}
 
 function actualizarDetalleOrdenInput(indice, cantidad) {
     var detalle = detalles[indice];
@@ -809,13 +826,13 @@ function generarHTMLProductoOrden(indice, detalle, precio, cantidad, total, codi
                     <div class="input-group w-auto justify-content-center align-items-center" style="padding: 0px !important;display: block!important; margin-top:2px;margin-bottom:2px;">
                                     <input type="button" value="-" 
                                         class="button-minus border rounded-circle  icon-shape icon-sm mx-1 " 
-                                        data-field="quantity" onclick="actualizarDetalleOrden(${indice},false)">
+                                        data-field="quantity" onclick="agregarDetalleInpt(${indice},${codigo},false)">
                                     <input type="number" step="1" min=1 value="${cantidad}"
-                                        onchange="actualizarDetalleOrdenInput(${indice},this.value)"
+                                        readonly
                                        name="quantity" class="quantity-field border-0 text-center w-25"
                                        style="width:18%!important;">
                                     <input type="button" value="+" class="button-plus border rounded-circle icon-shape icon-sm "
-                                     data-field="quantity" onclick="actualizarDetalleOrden(${indice},true)">
+                                     data-field="quantity" onclick="agregarDetalleInpt(${indice},${codigo},true)">
                     </div>
                     
                     <p style="line-height: 1.5;">
@@ -903,14 +920,14 @@ function reiniciarCantidadesProductos() {
         tipos.forEach(tipo => {
             tipo.categorias.forEach(categoria => {
                 categoria.productos.forEach(producto => {
-                    if(producto.id == detalle.producto.id){
+                    if (producto.id == detalle.producto.id) {
                         producto.cantidad = producto.cantidad + detalle.cantidad;
                     }
                 })
             })
         });
     });
-    
+
 }
 
 function confirmarOrden() {
@@ -1255,8 +1272,8 @@ function procesarPago(mto_sinpe, mto_efectivo, mto_tarjeta) {
     }).fail(function (jqXHR, textStatus, errorThrown) {
         showError("Algo salió mal");
         $('#mdl-loader-pago').modal("hide");
-
     });
+    $('#mdl-loader-pago').modal("hide");
 
 }
 
@@ -1324,7 +1341,7 @@ function generarHTMLOrdenes(ordenes) {
             </td> <td class="text-center">
             ${orden.estadoOrden ?? ""}
         </td>`;
-       
+
         texto = texto + `</tr>`;
     });
 

@@ -1,12 +1,13 @@
 window.addEventListener("load", initialice, false);
 function initialice() {
-    $("#btn_buscar_producto_ayuda").on("keyup", function () {
+    $("#btn_buscar_pro").on("keyup", function () {
         var value = $(this).val().toLowerCase();
         $("#tbody_productos tr").filter(function () {
           $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
         });
       });
 }
+
 
 
 function abrirAgregarProducto(){

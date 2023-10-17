@@ -39,6 +39,7 @@ class ProductosExternosController extends Controller
             'menus' => $this->cargarMenus(),
             'filtros' => $filtros,
             'productos' => [],
+            'materia_prima' => MateriaPrimaController::getProductos(),
             'categorias' => $this->getCategorias(),
             'impuestos' => $this->getImpuestos(),
             'proveedores' => $this->getProveedores(),
@@ -47,6 +48,139 @@ class ProductosExternosController extends Controller
 
         return view('productoExterno.productos', compact('data'));
     }
+
+    public function cargarMpProd(Request $request)
+    {
+        if (!$this->validarSesion("prod_ext_prods")) {
+            $this->setMsjSeguridad();
+            return $this->responseAjaxServerError("Error de Seguridad");
+        }
+
+        $id_prod_seleccionado = $request->input('id_prod_seleccionado');
+
+        if ($this->isNull($id_prod_seleccionado) || $id_prod_seleccionado == '-1') {
+            return $this->responseAjaxServerError("No se puede cargar el producto de menú");
+        }
+
+        try {
+            $mat_prim = DB::table('materia_prima')
+                ->leftjoin('mt_x_producto_ext', 'mt_x_producto_ext.materia_prima', '=', 'materia_prima.id')
+                ->select(
+                    'materia_prima.*',
+                    'mt_x_producto_ext.cantidad',
+                    'mt_x_producto_ext.id as id_mp_x_prod'
+                )
+                ->where('mt_x_producto_ext.producto', '=', $id_prod_seleccionado)
+                ->get();
+            return $this->responseAjaxSuccess("", $mat_prim);
+        } catch (QueryException $ex) {
+            return $this->responseAjaxServerError("Algo salio mal", $ex);
+        }
+    }
+
+    public function eliminarMpProd(Request $request)
+    {
+        if (!$this->validarSesion("prod_ext_prods")) {
+            $this->setMsjSeguridad();
+            return $this->responseAjaxServerError("Error de Seguridad");
+        }
+
+        $id_prod_mp = $request->input('id_prod_mp');
+
+        if ($this->isNull($id_prod_mp) || $id_prod_mp == '-1') {
+            return $this->responseAjaxServerError("No se puede cargar el producto de menú");
+        }
+
+        try {
+            DB::beginTransaction();
+            DB::table('mt_x_producto_ext')->where('id', '=', $id_prod_mp)->delete();
+
+            DB::commit();
+            return $this->responseAjaxSuccess();
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            return $this->responseAjaxServerError("Algo salio mal", $ex);
+        }
+    }
+
+    public function guardarMpProd(Request $request)
+    {
+        if (!$this->validarSesion("prod_ext_prods")) {
+            $this->setMsjSeguridad();
+            return $this->responseAjaxServerError("Error de Seguridad");
+        }
+
+        $id_prod_mp = $request->input('id_mp_prod');
+        $id_prod = $request->input('id_prod');
+        $id_prod_seleccionado = $request->input('id_prod_seleccionado');
+        $cant = $request->input('cant');
+        $nuevo = false;
+
+        if ($this->isNull($id_prod_seleccionado) || $id_prod_seleccionado == '-1') {
+            return $this->responseAjaxServerError("No se puede cargar el producto de menú");
+        }
+
+        $producto_menu = DB::table('producto_externo')
+            ->select('producto_externo.id', 'producto_externo.estado')
+            ->where('producto_externo.id', '=', $id_prod_seleccionado)
+            ->get()->first();
+
+        if ($this->isNull($producto_menu)) {
+            return $this->responseAjaxServerError("No se puede cargar el producto de menú");
+        }
+
+        if ($this->isNull($cant) || $cant <= 0) {
+            return $this->responseAjaxServerError("Cantidad incorrecta");
+        }
+
+        if ($this->isNull($id_prod)) {
+            return $this->responseAjaxServerError("No se encontró el producto de materia prima");
+        }
+
+        $materia_prima = DB::table('materia_prima')
+            ->select('materia_prima.*')
+            ->where('materia_prima.id', '=', $id_prod)
+            ->get()->first();
+
+        if ($this->isNull($materia_prima)) {
+            return $this->responseAjaxServerError("No se encontró el producto de materia prima");
+        }
+
+
+        $mt_x_producto = DB::table('mt_x_producto_ext')
+            ->select('mt_x_producto_ext.*')
+            ->where('mt_x_producto_ext.materia_prima', '=', $id_prod)
+            ->where('mt_x_producto_ext.producto', '=', $id_prod_seleccionado)
+            ->get()->first();
+
+        if ($this->isNull($mt_x_producto)) {
+            $nuevo = true;
+        } else {
+            $nuevo = false;
+        }
+
+        try {
+            DB::beginTransaction();
+            if ($nuevo) {
+                $mt_x_producto1 = DB::table('mt_x_producto_ext')
+                    ->insertGetId([
+                        'id' => null, 'materia_prima' => $id_prod, 'producto' => $id_prod_seleccionado,
+                        'cantidad' => $cant
+                    ]);
+            } else {
+                DB::table('mt_x_producto_ext')
+                    ->where('id', '=', $mt_x_producto->id)
+                    ->update(['cantidad' => $cant]);
+            }
+
+            DB::commit();
+            return $this->responseAjaxSuccess();
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            return $this->responseAjaxServerError("Algo salio mal", $ex);
+        }
+    }
+
 
 
     public function goProductosExternosFiltro(Request $request)
@@ -91,6 +225,7 @@ class ProductosExternosController extends Controller
             'productos' => $productos,
             'categorias' => $this->getCategorias(),
             'impuestos' => $this->getImpuestos(),
+            'materia_prima' => MateriaPrimaController::getProductos(),
             'proveedores' => $this->getProveedores(),
             'filtros' => $filtros,
             'panel_configuraciones' => $this->getPanelConfiguraciones()

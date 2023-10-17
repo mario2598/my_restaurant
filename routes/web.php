@@ -309,6 +309,9 @@ Route::post('productoExterno/productos/filtro', 'ProductosExternosController@goP
 Route::post('productoExterno/producto/guardar', 'ProductosExternosController@guardarProducto');
 Route::get('productoExterno/inventario/inventarios', 'ProductosExternosController@goInventarios'); 
 Route::post('productoExterno/inventario/inventarios/filtro', 'ProductosExternosController@goInventariosFiltro'); 
+Route::get('productoExterno/productos/cargarMpProd', 'ProductosExternosController@cargarMpProd');
+Route::post('productoExterno/productos/eliminarMpProd', 'ProductosExternosController@eliminarMpProd');
+Route::post('productoExterno/productos/guardarMpProd', 'ProductosExternosController@guardarMpProd');
 
 Route::post('productoExterno/inventario/inventarios/guardar', 'ProductosExternosController@guardarProductoSucursal'); 
 
