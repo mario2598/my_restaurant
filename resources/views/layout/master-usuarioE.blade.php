@@ -32,14 +32,13 @@
     @yield('styles')
 </head>
 
-<body style="sidebar-gone">
+<body style="sidebar-gone" style="background:white;"  >
     <input type="hidden" value="{{ url('/') }}" id="base_path">
 
     <!-- Begin page -->
     <div class="loader"></div>
     <div id="app">
         <div class="main-wrapper main-wrapper-1">
-            @include('layout.topbarUsuarioE')
             @yield('content')
             @yield('popup')
             @include('layout.footer')

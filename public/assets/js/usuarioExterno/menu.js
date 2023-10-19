@@ -1,5 +1,6 @@
 var tipos = [];
 var tipoSeleccionado = null;
+var indexCategoriaSeleccionada = -1;
 
 var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
 
@@ -31,26 +32,38 @@ function cargarTiposGeneral() {
 
 function generarHTMLTipos() {
     var texto = "";
-    texto = texto + `<li class="nav-item" onclick="seleccionarCategorias()" style="cursor:pointer;">
-            <a class="nav-link"><i ></i> <span>Categorías</span></a>
-        </li>`;
+    var clase = "";
+    if (indexCategoriaSeleccionada == -1) {
+        clase = "class='active'";
+    }
+    texto = texto + `<li ${clase} onclick="seleccionarCategorias()">
+                        <a href="#" ><span>Categorías</span></a>
+                    </li> `;
     for (var index in tipos) {
         var tipo = tipos[index];
-        texto = texto + `<li class="nav-item" onclick="seleccionarTipo(${index})" style="cursor:pointer;">
-            <a class="nav-link"><i class="${tipo.logo}"></i> <span>${tipo.categoria}</span></a>
-        </li>`;
+        clase = "";
+        if (indexCategoriaSeleccionada == index) {
+            clase = "class='active'";
+        }
+        texto = texto + `<li ${clase} onclick="seleccionarTipo(${index})" style="cursor:pointer;">
+                             <a href="#" ><i class="${tipo.logo}"></i> 
+                             <span>${tipo.categoria}</span></a>
+                        </li> `;
     }
 
-    $('#navMnu').html(texto);
+    $('#categoriasNav').html(texto);
 }
 
 function seleccionarTipo(index) {
+    indexCategoriaSeleccionada = index;
     tipoSeleccionado = tipos[index];
     $("#lblNombreCategiriaSeleccionada").html(tipoSeleccionado.categoria);
     generarHTMLProductos();
+    generarHTMLTipos();
 }
 
 function seleccionarCategorias() {
+    indexCategoriaSeleccionada = -1;
     generarHTMLCategorias();
     $("#lblNombreCategiriaSeleccionada").html("Todas las categorías");
 }
@@ -96,7 +109,7 @@ function generarHTMLProductos() {
             </div>
         </div>`;
     }
- 
+
     $('#aniimated-thumbnials').html(texto);
     cargarScriptsJavaScript();
 

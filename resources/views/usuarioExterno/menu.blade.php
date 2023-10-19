@@ -36,40 +36,70 @@
         }
 
         .lg-outer .lg-thumb-item {
-            border: 0px solid #FFF!important;
+            border: 0px solid #FFF !important;
+        }
+
+
+        .categories ul li a:hover {
+            color: white;
+            background: black;
+        }
+
+        .categories ul li.active a {
+            color: white;
+            background: black;
+        }
+
+        .categories ul {
+            text-align: left;
         }
     </style>
 
-    <div class="main-content" style="padding-left: 30px;">
+    <div class="main-content" style="padding-left: 10px;padding-top: 10px;">
         <section class="section">
-            <div class="section-body">
-                <div class="row clearfix">
-                    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 col-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <h4 id="lblNombreCategiriaSeleccionada">Todas las Categorías</h4>
-                            </div>
-                            <div class="card-body">
-                                <div id="aniimated-thumbnials" class="list-unstyled row clearfix">
-                                    @foreach ($data['categorias'] as $index => $cat)
-                                        <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12"
-                                            onclick="seleccionarTipo({{ $index }})" style="padding: 10px;">
-                                            <div class="card-mario" style="padding: 10px;">
-                                                <img class="img-responsive thumbnail imagen-cuadrada"
-                                                    src="{{ $cat->url_imagen }}" alt="{{ $cat->categoria }}">
+            <div class="row">
+                <div class="col-md-2">
+                    <a href="{{ url('/') }}"> <img title="Nombre empresa" alt="Nombre empresa"
+                            src="{{ asset('assets/images/default-image_small.png') }}"
+                            style="background-color: transparent;border-color: transparent;" class="img-thumbnail" /> 
+                    </a>
+                    <div class="categories">
+                        <ul id="categoriasNav" style="margin-bottom: 0px;margin-top: 5px;">
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-10">
+                    <div class="section-body" style="margin-top: 5px;">
+                        <div class="row clearfix">
+                            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 col-12">
+                                <div class="card">
 
-                                                <p style="text-align: center;"> <small>{{ $cat->categoria }}</small> <br>
+                                    <div class="card-body">
+                                        <div id="aniimated-thumbnials" class="list-unstyled row clearfix">
+                                            @foreach ($data['categorias'] as $index => $cat)
+                                                <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12"
+                                                    onclick="seleccionarTipo({{ $index }})" style="padding: 10px;">
+                                                    <div class="card-mario" style="padding: 10px;">
+                                                        <img class="img-responsive thumbnail imagen-cuadrada"
+                                                            src="{{ $cat->url_imagen }}" alt="{{ $cat->categoria }}">
 
-                                                </p>
-                                            </div>
+                                                        <p style="text-align: center;"> <small>{{ $cat->categoria }}</small>
+                                                            <br>
+
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            @endforeach
                                         </div>
-                                    @endforeach
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+
         </section>
     </div>
 @endsection
