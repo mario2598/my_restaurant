@@ -59,7 +59,7 @@
         <section class="section">
             <div class="row">
                 <div class="col-md-2">
-                    <a href="{{ url('/') }}"> <img title="Nombre empresa" alt="Nombre empresa"
+                    <a> <img title="Nombre empresa" alt="Nombre empresa"
                             src="{{ asset('assets/images/default-image_small.png') }}"
                             style="background-color: transparent;border-color: transparent;" class="img-thumbnail" /> 
                     </a>
