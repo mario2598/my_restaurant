@@ -332,7 +332,7 @@ class FacturacionController extends Controller
                     'pe_x_sucursal.cantidad',
                     'producto_externo.url_imagen',
                     'producto_externo.descripcion'
-                )->orderBy('producto_menu.nombre', 'asc')->get();
+                )->orderBy('producto_externo.nombre', 'asc')->get();
 
             foreach ($prods2 as $p) {
                 $p->url_imagen = asset('storage/' . $p->url_imagen);
