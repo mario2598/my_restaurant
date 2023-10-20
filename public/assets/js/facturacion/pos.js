@@ -826,13 +826,13 @@ function generarHTMLProductoOrden(indice, detalle, precio, cantidad, total, codi
                     <div class="input-group w-auto justify-content-center align-items-center" style="padding: 0px !important;display: block!important; margin-top:2px;margin-bottom:2px;">
                                     <input type="button" value="-" 
                                         class="button-minus border rounded-circle  icon-shape icon-sm mx-1 " 
-                                        data-field="quantity" onclick="agregarDetalleInpt(${indice},${codigo},false)">
+                                        data-field="quantity" onclick="agregarDetalleInpt(${indice},'${codigo}',false)">
                                     <input type="number" step="1" min=1 value="${cantidad}"
                                         readonly
                                        name="quantity" class="quantity-field border-0 text-center w-25"
                                        style="width:18%!important;">
                                     <input type="button" value="+" class="button-plus border rounded-circle icon-shape icon-sm "
-                                     data-field="quantity" onclick="agregarDetalleInpt(${indice},${codigo},true)">
+                                     data-field="quantity" onclick="agregarDetalleInpt(${indice},'${codigo}',true)">
                     </div>
                     
                     <p style="line-height: 1.5;">

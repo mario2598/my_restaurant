@@ -122,7 +122,12 @@
 
 
 
-
+                            <div class="col-sm-12 col-md-6 col-xl-4">
+                                <div class="form-group">
+                                    <label>Regresar</label>
+                                    <input type="button" onclick="window.history.back();" class="btn btn-secondary form-control" value="Regresar">
+                                </div>
+                            </div>
                             <!-- enviar -->
                             <div class="col-sm-12 col-md-6 col-xl-4">
                                 <div class="form-group">

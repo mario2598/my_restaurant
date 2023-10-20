@@ -82,21 +82,7 @@
               </div>
             </div>
 
-            <!-- tipo comanda BE : BEBIDA , CO >COCINA -->
-            <div class="col-sm-12 col-md-6 col-xl-4">
-              <div class="form-group">
-                <label>Tipo comanda</label>
-                <select class="form-control" id="tipo_comanda" name="tipo_comanda">
-                
-                  <option value="BE" 
-                    @if ("BE" == ($data['producto']->tipo_comanda))
-                        selected
-                    @endif
-                  >GEN BEB</option>
-                </select>
-              </div>
-            </div>
-
+          
             <div class="col-12 col-md-6 col-lg-4">
               <div class="form-group ">
                   <label>Foto Producto</label>
@@ -127,6 +113,13 @@
               <a  class="btn btn-danger form-control" onclick='eliminarProducto("{{$data["producto"]->id}}")' style="color: white;cursor: pointer;" >Eliminar </a>
               </div>
             </div>
+
+            <div class="col-sm-12 col-md-6 col-xl-4">
+              <div class="form-group">
+                  <label>Regresar</label>
+                  <input type="button" onclick="window.history.back();" class="btn btn-secondary form-control" value="Regresar">
+              </div>
+          </div>
 
           </div>
           

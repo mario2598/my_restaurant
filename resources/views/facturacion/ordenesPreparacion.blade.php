@@ -1,12 +1,18 @@
 @extends('layout.master')
 @section('style')
 
+
 @endsection
 
 
 @section('content')
 
     @include('layout.sidebar')
+    <style>
+        .table td,.table th{
+            height: 32px!important;
+        }
+        </style>
 
     <div class="main-content">
         <section class="section">
@@ -103,6 +109,7 @@
             </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -- fin modal de agregar producto-->
+   
 @endsection
 
 

@@ -47,7 +47,7 @@
                                     @if($d->tieneExtras)
                                     <tr>
                                         <td>
-                                        <table class="table table-hover mb-0" >
+                                        <table class="table table-hover mb-0" style="width: 100%" >
                                             <thead>
                                                 <tr>
                                                     <th></th>

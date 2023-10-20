@@ -88,28 +88,18 @@
                                 </div>
                             </div>
 
-
-                            <div class="col-sm-12 col-md-6 col-xl-4">
-                                <div class="form-group">
-                                    <label>Impuesto</label>
-                                    <select class="form-control" id="impuesto" name="impuesto">
-                                        @foreach ($data['impuestos'] as $i)
-                                            <option value="{{ $i->id }}"
-                                                @if ($i->id == ($data['datos']['impuesto'] ?? -1)) selected @endif>{{ $i->descripcion }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-
-
-
-
                             <!-- enviar -->
                             <div class="col-sm-12 col-md-6 col-xl-4">
                                 <div class="form-group">
                                     <label>Guardar producto</label>
                                     <input type="submit" class="btn btn-primary form-control" value="Guardar">
+                                </div>
+                            </div>
+
+                            <div class="col-sm-12 col-md-6 col-xl-4">
+                                <div class="form-group">
+                                    <label>Regresar</label>
+                                    <input type="button" onclick="window.history.back();" class="btn btn-secondary form-control" value="Regresar">
                                 </div>
                             </div>
 

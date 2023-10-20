@@ -414,6 +414,37 @@
         </div>
     </div>
 
+    <div class="modal fade bs-example-modal-center" id='mdl-extras-detalle' tabindex="-1" role="dialog"
+    aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body" style="width: 100%">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <label>Detalle </label>
+                        <textarea name="detAdicional" id="detAdicional"  style="width: 100%">
+                        </textarea>
+                    </div>
+                    <div class="col-sm-12">
+                        <label>Extras</label>
+                        <div class="row" id="cont-extras-detalle" style="width: 100%">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="form-group">
+                    <a class="btn btn-primary" title="Guardar" onclick="actualizarExtrasDetalle()"
+                        style="color:white;cursor:pointer;">Agregar</a>
+                    <a class="btn btn-secondary btn-icon" title="Cerrar" onclick='cerrarExtrasDetalle()'
+                        style="cursor: pointer;">Cerrar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
     <div class="modal fade bd-example-modal-lg" id='mdl-ordenes' tabindex="-1" role="dialog"
         aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered  modal-lg">
