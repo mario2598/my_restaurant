@@ -101,8 +101,6 @@ class OrdenesListasController extends Controller
             ->select('orden.*', 'sis_estado.nombre as descEstado')
             ->whereIn('orden.estado', array(SisEstadoController::getIdEstadoByCodGeneral('ORD_EN_PREPARACION')))
             ->where('orden.sucursal', '=', $sucursal)
-            ->where('orden.cierre_caja', '=', CajaController::getIdCaja(session('usuario')['id'], $sucursal))
-
             ->orderBy('orden.fecha_inicio', 'ASC')->get();
 
         foreach ($ordenes as $o) {
