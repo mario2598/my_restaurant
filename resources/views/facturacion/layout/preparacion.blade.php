@@ -38,9 +38,9 @@
                             </thead>
                             <tbody>
                                 @foreach ($p->detalles as $d)
-                                    <tr style="border-top:1px solid black ">
-                                        <td><i class="fas fa-box text-secondary" aria-hidden="true"></i>
-                                            - {{ $d->nombre_producto ?? '' }}</td>
+                                    <tr style="border-top:1px solid black;cursor: pointer;"
+                                    onclick="mostrarReceta(`{{$d->receta}}`)">
+                                        <td> {{ $d->nombre_producto ?? '' }}</td>
                                         <td>{{ $d->cantidad ?? '0' }} </td>
                                         <td>{{ $d->observacion ?? '' }}</td>
                                     </tr>
@@ -50,16 +50,13 @@
                                         <table class="table table-hover mb-0" style="width: 100%" >
                                             <thead>
                                                 <tr>
-                                                    <th></th>
                                                     <th>Extras </th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @foreach ($d->extras as $e)
                                                     <tr>
-                                                        <td></td>
-                                                        <td><i class="fas fa-box text-secondary" aria-hidden="true"></i>
-                                                            - {{ $e->descripcion_extra ?? '' }}</td>
+                                                        <td> {{ $e->descripcion_extra ?? '' }}</td>
                                                     </tr>
                                                 @endforeach
                                             </tbody>

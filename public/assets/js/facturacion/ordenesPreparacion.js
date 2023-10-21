@@ -1,15 +1,15 @@
 window.addEventListener("load", initialice, false);
 
 
-  
-  // Luego, configura un intervalo para seguir consultando cada 5 segundos
- // const intervalo = setInterval(recargarOrdenes, 5000);
 
-function agregarComanda(comanda){
+// Luego, configura un intervalo para seguir consultando cada 5 segundos
+// const intervalo = setInterval(recargarOrdenes, 5000);
 
+function initialice() {
+   
 }
 
-function recargarOrdenes(){
+function recargarOrdenes() {
     $.ajax({
         url: `${base_path}/facturacion/ordenesPreparacion/recargar`,
         type: 'post',
@@ -19,11 +19,12 @@ function recargarOrdenes(){
     }).done(function (comandas) {
         $('#contenedor_comandas').html(comandas);
     }).fail(function (jqXHR, textStatus, errorThrown) {
-        
+
         setError('Recargar Ordenes', 'Algo salió mal..');
-       
+
     });
 }
+
 function terminarPreparacion(orden) {
     swal({
         type: 'warning',
@@ -61,4 +62,15 @@ function terminarPreparacion(orden) {
         }
     });
 
+}
+
+
+function mostrarReceta(receta) {
+    $("#receta").html(receta);
+    $("#mdl_mostrar_receta").modal("show");
+}
+
+
+function ocultarReceta() {
+    $("#mdl_mostrar_receta").modal("hide");
 }

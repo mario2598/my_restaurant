@@ -113,12 +113,20 @@ class OrdenesListasController extends Controller
             $fechaAux .= ' - ' . date("g:i a", $phpdate);
             $o->fecha_inicio_hora_tiempo = date("g:i a", $phpdate);
             $o->fecha_inicio_texto =  $fechaAux;
-            $o->detalles = DB::table('detalle_orden')->select('detalle_orden.*')
+            $o->detalles = DB::table('detalle_orden')
+            ->select('detalle_orden.*')
                 ->where('detalle_orden.orden', '=', $o->id)
                 ->get();
                 
             foreach ($o->detalles as $d) {
-
+                if($d->tipo_producto == 'R'){
+                    $d->receta =  DB::table('producto_menu')
+                    ->select('producto_menu.receta')
+                        ->where('producto_menu.codigo', '=', $d->codigo_producto)
+                        ->get()->first()->receta ?? "";
+                }else{
+                    $d->receta = "";  
+                }
                 $d->extras = DB::table('extra_detalle_orden')->select('extra_detalle_orden.*')
                     ->where('extra_detalle_orden.orden', '=', $o->id)
                     ->where('extra_detalle_orden.detalle', '=', $d->id)
