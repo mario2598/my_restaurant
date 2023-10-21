@@ -218,7 +218,7 @@ Route::post('desechos/cambiarInventario', 'DesechosController@cambiarInventario'
 Route::post('desechos/confirmar', 'DesechosController@tirarDesechos');
 
 /*****************MENU**************************** */
-Route::post('menu/producto/guardar', 'ProductosMenuController@guardarProducto');
+
 Route::get('menu/productos', 'ProductosMenuController@goProductosMenu');
 Route::post('menu/productos/filtro', 'ProductosMenuController@goProductosMenuFiltro');
 Route::post('menu/productos/guardarMpProd', 'ProductosMenuController@guardarMpProd');
@@ -368,3 +368,8 @@ Route::post('mant/grupoPromocion/eliminarDetallePromocion', 'MantGrupoPromocione
 /*****************Grupos Promociones**************************** */
 Route::get('usuarioExterno/menu', 'UsuarioExternoController@goMenu');
 Route::post('usuarioExterno/menu/cargarTiposGeneral', 'UsuarioExternoController@cargarTiposGeneral');
+
+
+/** PRODUCTOS MENU */
+Route::post('productoMenu/producto/cargarProducto', 'ProductosMenuController@cargarProducto');
+Route::post('menu/producto/guardar', 'ProductosMenuController@guardarProducto');

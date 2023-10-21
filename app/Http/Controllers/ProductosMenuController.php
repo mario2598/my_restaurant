@@ -116,12 +116,12 @@ class ProductosMenuController extends Controller
         $datos = [];
         $data = [
             'menus' => $this->cargarMenus(),
-            'datos' => $datos,
+            'idProducto' => 0,
             'categorias' => $this->getCategorias(),
             'impuestos' => $this->getImpuestos(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
-        return view('productosMenu.producto.nuevoProducto', compact('data'));
+        return view('productosMenu.producto.producto', compact('data'));
     }
 
     /**
@@ -130,36 +130,30 @@ class ProductosMenuController extends Controller
     public function guardarProducto(Request $request)
     {
         if (!$this->validarSesion("prod_mnu")) {
-            return redirect('/');
+            return $this->responseAjaxServerError("Error en seguridad", "");
         }
 
         // dd($request->all());
-        $id = $request->input('id');
+        $id = $request->input('idProducto');
         $codigo = $request->input('codigo');
         $producto = DB::table('producto_menu')->select('producto_menu.*')->where('id', '=', $id)->get()->first();
-
         if ($id < 1 || $this->isNull($id)) { // Nuevo 
             if ($this->codigoBarraRegistrado($codigo)) {
-                $this->setError('Guardar Producto', 'El código de barra ya esta en uso.');
-                return $this->returnNuevoProductoWithData($request->all());
+                return $this->responseAjaxServerError("El código de barra ya esta en uso.", "");
             }
             $actualizar = false;
         } else { // Editar usuario
 
             if ($producto == null) {
-                $this->setError('Guardar Producto', 'No existe un producto con los credenciales.');
-                return $this->returnEditarProductoWithId($id);
+                return $this->responseAjaxServerError("No existe un producto con los credenciales", "");
             }
             if ($producto->codigo != $codigo) {
-                if ($this->codigoBarraRegistrado($codigo)) {
-                    $this->setError('Guardar Producto', 'El código de barra ya esta en uso.');
-                    return $this->returnEditarProductoWithId($id);
-                }
+                return $this->responseAjaxServerError("El código de barra ya esta en uso.", "");
             }
             $actualizar = true;
         }
-
-        if ($this->validarProducto($request)) {
+        $res = $this->validarProducto($request);
+        if ($res == null) {
 
             $categoria = $request->input('categoria');
             $nombre = $request->input('nombre');
@@ -167,6 +161,7 @@ class ProductosMenuController extends Controller
             $impuesto = $request->input('impuesto');
             $tipo_comanda = $request->input('tipo_comanda');
             $descripcion = $request->input('descripcion');
+            $receta = $request->input('receta');
 
             $image = $request->file('foto_producto');
             if ($image != null) {
@@ -174,10 +169,9 @@ class ProductosMenuController extends Controller
             } else {
                 if ($actualizar) {
                     $path = $producto->url_imagen;
-                }else{
+                } else {
                     $path = "";
                 }
-               
             }
 
             try {
@@ -188,34 +182,30 @@ class ProductosMenuController extends Controller
                         ->where('id', '=', $id)
                         ->update([
                             'nombre' => $nombre, 'categoria' => $categoria, 'precio' => $precio,
-                            'impuesto' => $impuesto, 'descripcion' => $descripcion, 'codigo' => $codigo, 'tipo_comanda' => $tipo_comanda, 'url_imagen' => $path
+                            'impuesto' => $impuesto, 'descripcion' => $descripcion,
+                            'codigo' => $codigo, 'tipo_comanda' => $tipo_comanda,
+                            'url_imagen' => $path, 'receta' => $receta
                         ]);
                 } else { // Nuevo usuario
                     $id = DB::table('producto_menu')->insertGetId([
                         'id' => null, 'nombre' => $nombre, 'categoria' => $categoria, 'precio' => $precio,
-                        'impuesto' => $impuesto, 'descripcion' => $descripcion, 'codigo' => $codigo, 'estado' => 'A', 'tipo_comanda' => $tipo_comanda, 'url_imagen' => $path
+                        'impuesto' => $impuesto, 'descripcion' => $descripcion,
+                        'codigo' => $codigo, 'estado' => 'A',
+                        'tipo_comanda' => $tipo_comanda, 'url_imagen' => $path, 'receta' => $receta
                     ]);
                 }
 
                 DB::commit();
+                $this->setSuccess('Guardar Producto', 'El producto se guardo correctamente.');
 
-                if ($actualizar) { // Editar usuario
-                    $this->setSuccess('Guardar Producto', 'Se actualizo el producto correctamente.');
-                } else { // Nuevo usuario
-                    $this->setSuccess('Guardar Producto', 'Producto creado correctamente.');
-                }
-                return $this->returnEditarProductoWithId($id);
+
+                return $this->responseAjaxSuccess('', $id);
             } catch (QueryException $ex) {
                 DB::rollBack();
-                $this->setError('Guardar Producto', 'Algo salio mal...');
-                return redirect('restaurante/productos');
+                return $this->responseAjaxServerError("Algo salio mal...", "");
             }
         } else {
-            if ($actualizar) {
-                return $this->returnEditarProductoWithId($id);
-            } else {
-                return $this->returnNuevoProductoWithData($request->all());
-            }
+            return $this->responseAjaxServerError($res, "");
         }
     }
 
@@ -268,6 +258,7 @@ class ProductosMenuController extends Controller
     {
         $requeridos = "[";
         $valido = true;
+        $error = "";
 
         if ($this->isNull($r->input('codigo')) || $this->isEmpty($r->input('codigo'))) {
             $requeridos .= " Código ";
@@ -297,30 +288,25 @@ class ProductosMenuController extends Controller
 
         $requeridos .= "] ";
         if (!$valido) {
-            $this->setError('Campos Requeridos', $requeridos);
-            return false;
+            return $requeridos;
         }
 
         if (!$this->isLengthMinor($r->input('codigo'), 15)) {
-            $this->setError('Tamaño exedido', "El código de barra debe ser de máximo 15 caracteres.");
-            return false;
+            return "El código de barra debe ser de máximo 15 caracteres.";
         }
         if (!$this->isLengthMinor($r->input('nombre'), 50)) {
-            $this->setError('Tamaño exedido', "El nombre debe ser de máximo 30 caracteres.");
-            return false;
+            return  "El nombre debe ser de máximo 30 caracteres.";
         }
 
         if (!$this->isLengthMinor($r->input('descripcion'), 400)) {
-            $this->setError('Tamaño exedido', "La descripción debe ser de máximo 400 caracteres.");
-            return false;
+            return  "La descripción debe ser de máximo 400 caracteres.";
         }
 
         if (!$this->isNumber($r->input('precio')) || $r->input('precio') < 0) {
-            $this->setError('Número incorrecto', "El precio debe ser mayor que 0.00 CRC.");
-            return false;
+            return "El precio debe ser mayor que 0.00 CRC.";
         }
 
-        return $valido;
+        return null;
     }
 
     public function goEditarProducto(Request $request)
@@ -331,22 +317,34 @@ class ProductosMenuController extends Controller
 
 
         $id = $request->input('idProductoEditar');
-        $producto = DB::table('producto_menu')
-            ->where('producto_menu.id', '=', $id)->get()->first();
-
-        if ($producto == null) {
-            $this->setError('Editar Producto', 'No existe el producto a editar.');
-            return redirect('menu/productos');
-        }
 
         $data = [
             'menus' => $this->cargarMenus(),
-            'producto' => $producto,
+            'idProducto' => $id,
             'categorias' => $this->getCategorias(),
             'impuestos' => $this->getImpuestos(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
-        return view('productosMenu.producto.editarProducto', compact('data'));
+        return view('productosMenu.producto.producto', compact('data'));
+    }
+
+    public function cargarProducto(Request $request)
+    {
+        if (!$this->validarSesion("prod_mnu")) {
+            return $this->responseAjaxServerError("Error en seguridad", "");
+        }
+        $id = $request->input('idProducto');
+
+        $producto = DB::table('producto_menu')
+            ->where('producto_menu.id', '=', $id)->get()->first();
+
+        if ($producto == null) {
+            return $this->responseAjaxServerError('No existe el producto.', "");
+        }
+
+        $producto->url_imagen =  asset('storage/' . $producto->url_imagen);
+
+        return $this->responseAjaxSuccess("", $producto);
     }
 
     /**
