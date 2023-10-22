@@ -373,3 +373,4 @@ Route::post('usuarioExterno/menu/cargarTiposGeneral', 'UsuarioExternoController@
 /** PRODUCTOS MENU */
 Route::post('productoMenu/producto/cargarProducto', 'ProductosMenuController@cargarProducto');
 Route::post('menu/producto/guardar', 'ProductosMenuController@guardarProducto');
+Route::get('menu', 'UsuarioExternoController@goMenuMobile');

@@ -395,6 +395,148 @@ class FacturacionController extends Controller
         return $categorias;
     }
 
+    public function getCategoriasTodosProductosMobile()
+    {
+        $categorias = DB::table('categoria')->select('id', 'categoria', 'logo', 'url_imagen')->orderBy('posicion_menu', 'asc')->get();
+        foreach ($categorias as $categoria) {
+
+            $categoria->url_imagen = asset('storage/' . $categoria->url_imagen);
+            $categoria->productos = [];
+            $prods = [];
+            $prods =   DB::table("producto_menu")
+                ->where('categoria', $categoria->id)
+                ->where('producto_menu.estado', "A")
+                ->join('impuesto', 'producto_menu.impuesto', '=', 'impuesto.id')
+                ->select(
+                    'producto_menu.id',
+                    'producto_menu.codigo',
+                    'producto_menu.nombre',
+                    'producto_menu.precio',
+                    'impuesto.impuesto as impuesto',
+                    'producto_menu.tipo_comanda',
+                    'producto_menu.url_imagen',
+                    'producto_menu.descripcion'
+                )->orderBy('producto_menu.nombre', 'asc')->get();
+
+            foreach ($prods as $p) {
+                $p->url_imagen = asset('storage/' . $p->url_imagen);
+                $p->tipoProducto = 'R';
+                $grupos = DB::table('extra_producto_menu')
+                    ->select(
+                        'extra_producto_menu.dsc_grupo',
+                        'extra_producto_menu.multiple'
+                    )->distinct()
+                    ->where('extra_producto_menu.producto', '=', $p->id)
+                    ->get();
+                $extrasAux = [];
+                foreach ($grupos as $g) {
+                    $requerido = false;
+                    $multiple = false;
+                    $listExtras = DB::table('extra_producto_menu')
+                        ->select(
+                            'extra_producto_menu.*'
+                        )
+                        ->where('extra_producto_menu.producto', '=', $p->id)
+                        ->where('extra_producto_menu.dsc_grupo', '=', $g->dsc_grupo)
+                        ->where('extra_producto_menu.multiple', '=', $g->multiple)
+                        ->get() ?? [];
+                    foreach ($listExtras as $le) {
+                        if ($le->es_requerido) {
+                            $requerido = true;
+                        }
+
+                        if ($le->multiple) {
+                            $multiple = true;
+                        }
+                    }
+                    $extras = [
+                        'grupo' => $g->dsc_grupo,
+                        'requerido' =>  $requerido ? 1 : 0,
+                        'multiple' =>  $multiple ? 1 : 0,
+                        'extras' =>  $listExtras
+                    ];
+                    array_push($extrasAux, $extras);
+                }
+                $p->extras = $extrasAux;
+                array_push($categoria->productos, $p);
+            }
+            $prods2 = [];
+            $prods2  = DB::table("producto_externo")
+                ->where('categoria', $categoria->id)
+                ->where('producto_externo.estado', "A")
+                ->join('impuesto', 'producto_externo.impuesto', '=', 'impuesto.id')
+                ->join('pe_x_sucursal', 'producto_externo.id', '=', 'pe_x_sucursal.producto_externo')
+                ->select(
+                    'producto_externo.id',
+                    'producto_externo.codigo_barra as codigo',
+                    'producto_externo.nombre',
+                    'producto_externo.precio',
+                    'impuesto.impuesto as impuesto',
+                    'producto_externo.url_imagen',
+                    'producto_externo.descripcion'
+                )->orderBy('producto_externo.nombre', 'asc')->get();
+
+            foreach ($prods2 as $p) {
+                $p->url_imagen = asset('storage/' . $p->url_imagen);
+                $p->tipoProducto = 'E';
+                $grupos = DB::table('extra_producto_externo')
+                    ->select(
+                        'extra_producto_externo.dsc_grupo',
+                        'extra_producto_externo.multiple'
+                    )->distinct()
+                    ->where('extra_producto_externo.producto', '=', $p->id)
+                    ->get();
+                $extrasAux = [];
+                foreach ($grupos as $g) {
+                    $requerido = false;
+                    $multiple = false;
+                    $listExtras = DB::table('extra_producto_externo')
+                        ->select(
+                            'extra_producto_externo.*'
+                        )
+                        ->where('extra_producto_externo.producto', '=', $p->id)
+                        ->where('extra_producto_externo.dsc_grupo', '=', $g->dsc_grupo)
+                        ->where('extra_producto_externo.multiple', '=', $g->multiple)
+                        ->get() ?? [];
+                    foreach ($listExtras as $le) {
+                        if ($le->es_requerido) {
+                            $requerido = true;
+                        }
+
+                        if ($le->multiple) {
+                            $multiple = true;
+                        }
+                    }
+                    $extras = [
+                        'grupo' => $g->dsc_grupo,
+                        'requerido' =>  $requerido,
+                        'multiple' =>  $multiple,
+                        'extras' =>  $listExtras
+                    ];
+                    array_push($extrasAux, $extras);
+                }
+                $p->extras = $extrasAux;
+                array_push($categoria->productos, $p);
+            }
+        }
+        foreach ($categorias as $i => $c) {
+            $cont = 0;
+
+            foreach ($c->productos as $p) {
+                if ($p != null) {
+                    if ($p->id != null) {
+                        $cont++;
+                    }
+                }
+            }
+            if ($cont < 1) {
+                unset($categorias[$i]);
+            }
+        }
+
+        return $categorias;
+    }
+
 
     public function getCategoriasProductosExternos($categorias)
     {

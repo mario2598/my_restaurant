@@ -37,6 +37,18 @@ class UsuarioExternoController extends Controller
         return view('usuarioExterno.menu', compact('data'));
     }
 
+    public function goMenuMobile()
+    {
+        $contro = new FacturacionController();
+        $categorias =  $contro->getCategoriasTodosProductosMobile();
+       
+        $data = [
+            'categorias' =>$categorias,
+            'panel_configuraciones' => $this->getPanelConfiguraciones()
+        ];
+        return view('usuarioExterno.menuMobile', compact('data'));
+    }
+
     public function cargarTiposGeneral(Request $request)
     {
         if (!$this->validarSesion("usuExtMnu")) {
