@@ -22,11 +22,7 @@
             font-size: 16px;
         }
 
-        /* Cambia el estilo al hacer hover */
-        .card-mario:hover {
-            transform: scale(1.05);
-            /* Escala ligeramente al hacer hover */
-        }
+
 
         .imagen-cuadrada {
             width: 200px;
@@ -47,10 +43,7 @@
             background: black;
         }
 
-        .categories ul li.active a {
-            color: white;
-            background: black;
-        }
+       
 
         .categories ul {
             text-align: left;
