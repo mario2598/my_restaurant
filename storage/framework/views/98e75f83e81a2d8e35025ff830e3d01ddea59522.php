@@ -35,13 +35,10 @@
             border: 0px solid #FFF !important;
         }
 
-
         .categories ul li a:hover {
             color: white;
             background: black;
         }
-
-       
 
         .categories ul {
             text-align: left;
@@ -57,7 +54,7 @@
             padding-left: 10px !important;
         }
     </style>
-    <div class="main-content">
+    <div class="main-content" style="padding-top: 70px;">
         <section class="section">
             <div class="section-body">
                 <div class="row">
