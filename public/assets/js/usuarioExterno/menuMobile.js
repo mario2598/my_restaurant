@@ -63,7 +63,7 @@ function generarHTMLTipos() {
                     <span>${tipo.categoria}</span>
                     </a>
                   </li>`;
-        texto = texto + `<li ${clase} onclick="seleccionarTipo(${index})" style="cursor:pointer;">
+        texto = texto + `<li ${clase} onclick="seleccionarTipoMod(${index})" style="cursor:pointer;">
                              <a href="#" ><i class="${tipo.logo}"></i> 
                              <span>${tipo.categoria}</span></a>
                         </li> `;
@@ -80,6 +80,14 @@ function seleccionarTipo(index) {
     generarHTMLTipos();
     const enlace = document.getElementById('btnEsconderBar'); // Cambia 'miEnlace' al ID de tu enlace o utiliza otro selector.
     enlace.click();
+}
+
+function seleccionarTipoMod(index) {
+    indexCategoriaSeleccionada = index;
+    tipoSeleccionado = tipos[index];
+    $("#lblNombreCategiriaSeleccionada").html(tipoSeleccionado.categoria);
+    generarHTMLProductos();
+    generarHTMLTipos();
 }
 
 function seleccionarCategorias() {
