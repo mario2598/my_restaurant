@@ -86,8 +86,7 @@ function seleccionarCategorias() {
     indexCategoriaSeleccionada = -1;
     generarHTMLCategorias();
     $("#lblNombreCategiriaSeleccionada").html("Todas las categorías");
-    const enlace = document.getElementById('btnEsconderBar'); // Cambia 'miEnlace' al ID de tu enlace o utiliza otro selector.
-    enlace.click();
+ 
 }
 
 function generarHTMLCategorias() {
