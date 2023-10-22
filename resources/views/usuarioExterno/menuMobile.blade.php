@@ -70,7 +70,7 @@
                                                 <div id="aniimated-thumbnials" class="list-unstyled row clearfix">
                                                     @foreach ($data['categorias'] as $index => $cat)
                                                         <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12"
-                                                            onclick="seleccionarTipo({{ $index }})"
+                                                            onclick="seleccionarTipoMod({{ $index }})"
                                                             style="padding: 10px;">
                                                             <div class="card-mario" style="padding: 10px;">
                                                                 <img class="img-responsive thumbnail imagen-cuadrada"
