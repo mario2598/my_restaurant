@@ -6,12 +6,14 @@ var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
 
 $(document).ready(function () {
     cargarTiposGeneral();
+    const navElement = document.getElementById('navMenuMobile'); // Change 'yourNavId' to your actual ID or selector
+    navElement.classList.add('sticky');
 });
 
 
 function cargarTiposGeneral() {
     $.ajax({
-        url: `${base_path}/usuarioExterno/menu/cargarTiposGeneral`,
+        url: `${base_path}/usuarioExterno/menuMobile/cargarTiposGeneral`,
         type: 'post',
         dataType: "json",
         data: {
@@ -67,7 +69,6 @@ function generarHTMLTipos() {
                         </li> `;
     }
 
-    $('#categoriasNav').html(texto);
     $('#sideBarMobile').html(texto2);
 }
 
