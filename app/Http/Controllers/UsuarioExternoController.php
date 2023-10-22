@@ -43,8 +43,7 @@ class UsuarioExternoController extends Controller
         $categorias =  $contro->getCategoriasTodosProductosMobile();
        
         $data = [
-            'categorias' =>$categorias,
-            'panel_configuraciones' => $this->getPanelConfiguraciones()
+            'categorias' =>$categorias
         ];
         return view('usuarioExterno.menuMobile', compact('data'));
     }
