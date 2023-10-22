@@ -39,9 +39,6 @@ function generarHTMLTipos() {
     if (indexCategoriaSeleccionada == -1) {
         clase = "class='active'";
     }
-    texto = texto + `<li ${clase} onclick="seleccionarCategorias()">
-                        <a href="#" ><span>Categorías</span></a>
-                    </li> `;
 
     texto2 = texto2 + ` <li  onclick="seleccionarCategorias()"> <a href="#"
      class="nav-link has-dropdown">
@@ -63,10 +60,7 @@ function generarHTMLTipos() {
                     <span>${tipo.categoria}</span>
                     </a>
                   </li>`;
-        texto = texto + `<li ${clase} onclick="seleccionarTipoMod(${index})" style="cursor:pointer;">
-                             <a href="#" ><i class="${tipo.logo}"></i> 
-                             <span>${tipo.categoria}</span></a>
-                        </li> `;
+  
     }
 
     $('#sideBarMobile').html(texto2);
@@ -94,7 +88,8 @@ function seleccionarCategorias() {
     indexCategoriaSeleccionada = -1;
     generarHTMLCategorias();
     $("#lblNombreCategiriaSeleccionada").html("Todas las categorías");
- 
+    const enlace = document.getElementById('btnEsconderBar'); // Cambia 'miEnlace' al ID de tu enlace o utiliza otro selector.
+    enlace.click();
 }
 
 function generarHTMLCategorias() {
@@ -103,7 +98,7 @@ function generarHTMLCategorias() {
     for (var index in tipos) {
         var tipo = tipos[index];
         texto = texto + `<div class="col-lg-3 col-md-4 col-sm-6 col-xs-12" 
-         onclick="seleccionarTipo(${index})"
+         onclick="seleccionarTipoMod(${index})"
         style="padding: 10px;">
             <div class="card-mario" style="padding: 10px;">
                     <img class="img-responsive thumbnail imagen-cuadrada"
