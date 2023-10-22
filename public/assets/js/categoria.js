@@ -34,11 +34,12 @@ function initialice() {
  * Abre el modal y carga los datos correspondientes
 
  */
-function editarGenerico(id, categoria, codigo, url) {
+function editarGenerico(id, categoria, codigo, url,posicion_menu) {
 
     $('#mdl_generico_ipt_id').val(id);
     $('#mdl_generico_ipt_categoria').val(categoria);
     $('#mdl_generico_ipt_codigo').val(codigo);
+    $('#posicion_menu').val(posicion_menu);
     var imagen = document.getElementById("img_cat");
     imagen.src = url;
     $('#mdl_generico').modal('show');
@@ -58,6 +59,7 @@ function nuevoGenerico() {
     $('#mdl_generico_ipt_id').val('-1');
     $('#mdl_generico_ipt_categoria').val("");
     $('#mdl_generico_ipt_codigo').val("");
+    $('#posicion_menu').val(0);
     $('#mdl_generico').modal('show');
 }
 

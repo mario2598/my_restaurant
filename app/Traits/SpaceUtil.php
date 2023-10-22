@@ -115,7 +115,7 @@ trait SpaceUtil
   public function getCategorias()
   {
     $categorias = DB::table('categoria')
-      ->where('estado', '=', 'A')
+      ->where('estado', '=', 'A')->orderBy('posicion_menu', 'asc')
       ->get();
 
       foreach ($categorias as $c) {

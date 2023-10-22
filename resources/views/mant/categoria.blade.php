@@ -46,6 +46,7 @@
                                             <th class="space-align-center">#Id</th>
                                             <th class="space-align-center">Código</th>
                                             <th class="space-align-center">Categoría</th>
+                                            <th class="space-align-center">Posicion Menu</th>
                                             <th class="space-align-center">Acciones</th>
 
                                         </tr>
@@ -67,7 +68,12 @@
                                                 </td>
 
                                                 <td class="space-align-center">
-                                                    <a onclick='editarGenerico("{{ $g->id }}","{{ $g->categoria ?? '' }}","{{ $g->codigo ?? '' }}","{{ $g->url_imagen ?? '' }}")'
+                                                    {{ $g->posicion_menu ?? '' }}
+                                                </td>
+
+
+                                                <td class="space-align-center">
+                                                    <a onclick='editarGenerico("{{ $g->id }}","{{ $g->categoria ?? '' }}","{{ $g->codigo ?? '' }}","{{ $g->url_imagen ?? '' }}","{{ $g->posicion_menu ?? '' }}")'
                                                         title="Editar" class="btn btn-primary" style="color:white"><i
                                                             class="fas fa-cog"></i></a>
                                                     <a onclick="eliminarGenerico({{ $g->id }})" title="Eliminar"
@@ -136,18 +142,28 @@
                                 </div>
                             </div>
                             <div class="col-xl-12 col-sm-12">
-                              <div class="form-group ">
-                                  <label>Foto Producto</label>
-                                  <input type="file"id="foto_producto" name="foto_producto"
-                                      accept="image/png, image/jpeg, image/jpg">
-                              </div>
-                          </div>
-                
+                                <div class="form-group ">
+                                    <label>Foto Producto</label>
+                                    <input type="file"id="foto_producto" name="foto_producto"
+                                        accept="image/png, image/jpeg, image/jpg">
+                                </div>
+                            </div>
+                            <div class="col-xl-12 col-sm-12">
+                                <div class="form-group form-float">
+                                    <div class="form-line">
+                                        <label class="form-label">Posicion Menu</label>
+                                        <input type="number" class="form-control space_input_modal"
+                                            id="posicion_menu" name="posicion_menu" required
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="ccol-xl-12 col-sm-12">
-                              <div class="form-group">
-                                <label>Imagen</label>
-                                <img  style="max-width: 100%; height: auto;" id="img_cat" alt="Imagen">
-                              </div>
+                                <div class="form-group">
+                                    <label>Imagen</label>
+                                    <img style="max-width: 100%; height: auto;" id="img_cat" alt="Imagen">
+                                </div>
                             </div>
 
                         </div>

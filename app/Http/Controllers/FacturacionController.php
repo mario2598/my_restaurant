@@ -171,7 +171,7 @@ class FacturacionController extends Controller
 
     public function getCategorias($tipo)
     {
-        $categorias = DB::table('categoria')->select('id', 'categoria')->get();
+        $categorias = DB::table('categoria')->select('id', 'categoria')->orderBy('posicion_menu', 'asc')->get();
 
         switch ($tipo) {
             case "R":
@@ -250,7 +250,7 @@ class FacturacionController extends Controller
 
     public function getCategoriasTodosProductos($idSucursal)
     {
-        $categorias = DB::table('categoria')->select('id', 'categoria', 'logo', 'url_imagen')->orderBy('categoria', 'asc')->get();
+        $categorias = DB::table('categoria')->select('id', 'categoria', 'logo', 'url_imagen')->orderBy('posicion_menu', 'asc')->get();
         foreach ($categorias as $categoria) {
 
             $categoria->url_imagen = asset('storage/' . $categoria->url_imagen);

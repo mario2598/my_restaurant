@@ -45,6 +45,7 @@ class MantenimientoCategoriaController extends Controller
             $categoria = $request->input('mdl_generico_ipt_categoria');
             $codigo = $request->input('mdl_generico_ipt_codigo');
             $id = $request->input('mdl_generico_ipt_id');
+            $posicion_menu = $request->input('posicion_menu');
             $actImagen = true;
             $image = $request->file('foto_producto');
             if ($image != null) {
@@ -69,11 +70,12 @@ class MantenimientoCategoriaController extends Controller
                     if ($actImagen) {
                         DB::table('categoria')
                             ->where('id', '=', $id)
-                            ->update(['categoria' => $categoria, 'codigo' => $codigo, 'url_imagen' => $path]);
+                            ->update(['categoria' => $categoria, 'codigo' => $codigo,  'posicion_menu' => $posicion_menu, 
+                            'url_imagen' => $path]);
                     } else {
                         DB::table('categoria')
                             ->where('id', '=', $id)
-                            ->update(['categoria' => $categoria, 'codigo' => $codigo]);
+                            ->update(['categoria' => $categoria, 'codigo' => $codigo, 'posicion_menu' => $posicion_menu, ]);
                     }
                 }
                 DB::commit();
