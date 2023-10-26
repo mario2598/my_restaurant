@@ -202,7 +202,8 @@ class FacturacionController extends Controller
                 ->join('impuesto', 'producto_menu.impuesto', '=', 'impuesto.id')
                 ->join('pm_x_sucursal', 'producto_menu.id', '=', 'pm_x_sucursal.producto_menu')
                 ->select('producto_menu.id', 'producto_menu.codigo', 'producto_menu.nombre', 'producto_menu.precio', 
-                'impuesto.impuesto as impuesto', 'producto_menu.tipo_comanda')->orderBy('producto_menu.nombre', 'asc')->get();
+                'impuesto.impuesto as impuesto', 'producto_menu.tipo_comanda')
+                ->orderBy('producto_menu.posicion_menu', 'asc')->get();
             foreach ($categoria->productos as $p) {
                 $p->tipoProducto = 'R';
                 $grupos = DB::table('extra_producto_menu')
@@ -271,7 +272,7 @@ class FacturacionController extends Controller
                     'producto_menu.tipo_comanda',
                     'producto_menu.url_imagen',
                     'producto_menu.descripcion'
-                )->orderBy('producto_menu.nombre', 'asc')->get();
+                )->orderBy('producto_menu.posicion_menu', 'asc')->get();
 
             foreach ($prods as $p) {
                 $p->url_imagen = asset('storage/' . $p->url_imagen);
@@ -332,7 +333,7 @@ class FacturacionController extends Controller
                     'pe_x_sucursal.cantidad',
                     'producto_externo.url_imagen',
                     'producto_externo.descripcion'
-                )->orderBy('producto_externo.nombre', 'asc')->get();
+                )->orderBy('producto_externo.posicion_menu', 'asc')->get();
 
             foreach ($prods2 as $p) {
                 $p->url_imagen = asset('storage/' . $p->url_imagen);
@@ -376,6 +377,9 @@ class FacturacionController extends Controller
                 $p->extras = $extrasAux;
                 array_push($categoria->productos, $p);
             }
+            usort($categoria->productos, function ($a, $b) {
+                return $a->posicion_menu - $b->posicion_menu;
+            });
         }
         foreach ($categorias as $i => $c) {
             $cont = 0;
@@ -416,7 +420,7 @@ class FacturacionController extends Controller
                     'producto_menu.tipo_comanda',
                     'producto_menu.url_imagen',
                     'producto_menu.descripcion'
-                )->orderBy('producto_menu.nombre', 'asc')->get();
+                )->orderBy('producto_menu.posicion_menu', 'asc')->get();
 
             foreach ($prods as $p) {
                 $p->url_imagen = asset('storage/' . $p->url_imagen);
@@ -474,7 +478,7 @@ class FacturacionController extends Controller
                     'impuesto.impuesto as impuesto',
                     'producto_externo.url_imagen',
                     'producto_externo.descripcion'
-                )->orderBy('producto_externo.nombre', 'asc')->get();
+                )->orderBy('producto_externo.posicion_menu', 'asc')->get();
 
             foreach ($prods2 as $p) {
                 $p->url_imagen = asset('storage/' . $p->url_imagen);
@@ -518,6 +522,9 @@ class FacturacionController extends Controller
                 $p->extras = $extrasAux;
                 array_push($categoria->productos, $p);
             }
+            usort($categoria->productos, function ($a, $b) {
+                return $a->posicion_menu - $b->posicion_menu;
+            });
         }
         foreach ($categorias as $i => $c) {
             $cont = 0;
@@ -548,7 +555,10 @@ class FacturacionController extends Controller
                 ->where('pe_x_sucursal.cantidad', ">", 0)
                 ->join('impuesto', 'producto_externo.impuesto', '=', 'impuesto.id')
                 ->join('pe_x_sucursal', 'producto_externo.id', '=', 'pe_x_sucursal.producto_externo')
-                ->select('producto_externo.id', 'producto_externo.codigo_barra as codigo', 'producto_externo.nombre', 'producto_externo.precio', 'impuesto.impuesto as impuesto', 'pe_x_sucursal.cantidad')->get();
+                ->select('producto_externo.id', 'producto_externo.codigo_barra as codigo',
+                 'producto_externo.nombre', 'producto_externo.precio', 
+                 'impuesto.impuesto as impuesto', 'pe_x_sucursal.cantidad')
+                 ->orderBy('producto_externo.posicion_menu', 'asc')->get();
             foreach ($categoria->productos as $p) {
                 $p->tipoProducto = 'E';
                 $grupos = DB::table('extra_producto_externo')
@@ -589,6 +599,9 @@ class FacturacionController extends Controller
                 }
                 $p->extras = $extrasAux;
             }
+            usort($categoria->productos, function ($a, $b) {
+                return $a->posicion_menu - $b->posicion_menu;
+            });
         }
         return $categorias;
     }

@@ -108,6 +108,14 @@
               </div>
             </div>
 
+            <div class="col-sm-12 col-md-6 col-xl-4">
+              <div class="form-group">
+                  <label>Posición Menú</label>
+                  <input type="number" class="form-control" id="posicion_menu" name="posicion_menu"
+                      value="0" min="0">
+              </div>
+          </div>
+
           
             <!-- enviar -->
             <div class="col-sm-12 col-md-6 col-xl-4">

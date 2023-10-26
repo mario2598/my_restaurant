@@ -162,6 +162,7 @@ class ProductosMenuController extends Controller
             $tipo_comanda = $request->input('tipo_comanda');
             $descripcion = $request->input('descripcion');
             $receta = $request->input('receta');
+            $posicion_menu = $request->input('posicion_menu');
 
             $image = $request->file('foto_producto');
             if ($image != null) {
@@ -184,14 +185,15 @@ class ProductosMenuController extends Controller
                             'nombre' => $nombre, 'categoria' => $categoria, 'precio' => $precio,
                             'impuesto' => $impuesto, 'descripcion' => $descripcion,
                             'codigo' => $codigo, 'tipo_comanda' => $tipo_comanda,
-                            'url_imagen' => $path, 'receta' => $receta
+                            'url_imagen' => $path, 'receta' => $receta, 'posicion_menu' => $posicion_menu
                         ]);
                 } else { // Nuevo usuario
                     $id = DB::table('producto_menu')->insertGetId([
                         'id' => null, 'nombre' => $nombre, 'categoria' => $categoria, 'precio' => $precio,
                         'impuesto' => $impuesto, 'descripcion' => $descripcion,
                         'codigo' => $codigo, 'estado' => 'A',
-                        'tipo_comanda' => $tipo_comanda, 'url_imagen' => $path, 'receta' => $receta
+                        'tipo_comanda' => $tipo_comanda, 'url_imagen' => $path, 'receta' => $receta,
+                        'posicion_menu' => $posicion_menu
                     ]);
                 }
 
