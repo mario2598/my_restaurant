@@ -954,7 +954,7 @@ class FacturacionController extends Controller
         $mto_efectivo = $request->input("mto_efectivo");
         $mto_tarjeta = $request->input("mto_tarjeta");
 
-        
+        try {
             DB::beginTransaction();
 
 
@@ -1006,7 +1006,10 @@ class FacturacionController extends Controller
             DB::commit();
             $this->setSuccess("Orden Creada", "Se creo la factura correctamente");
             return $this->responseAjaxSuccess("Pedido creado correctamente.", $id_orden);
-     
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            return $this->responseAjaxServerError("Algo salío mal.");
+        }
     }
 
     public function anularOrden(Request $request)
