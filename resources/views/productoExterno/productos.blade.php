@@ -108,6 +108,7 @@
                                                 Impuestos %
                                             </th>
                                             <th class="text-center">Precio</th>
+                                            <th class="text-center">Posicion Menú</th>
                                             <th class="text-center">Materia Prima</th>
 
                                         </tr>
@@ -131,6 +132,9 @@
 
                                                 <td onclick='clickProducto("{{ $g->id }}")' class="text-center">
                                                     CRC {{ number_format($g->precio ?? '0.00', 2, '.', ',') }}
+                                                </td>
+                                                <td onclick='clickProducto("{{ $g->id }}")' class="text-center">
+                                                    {{ $g->posicion_menu ?? 0}}
                                                 </td>
 
                                                 <td class="text-center">
