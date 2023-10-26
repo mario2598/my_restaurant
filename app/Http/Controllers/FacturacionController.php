@@ -602,9 +602,12 @@ class FacturacionController extends Controller
                 }
                 $p->extras = $extrasAux;
             }
-            usort($categoria->productos, function ($a, $b) {
-                return $a->posicion_menu - $b->posicion_menu;
-            });
+            if (count($categoria->productos) > 1) {
+                usort($categoria->productos, function ($a, $b) {
+                    return $a->posicion_menu - $b->posicion_menu;
+                });
+            }
+           
         }
         return $categorias;
     }
