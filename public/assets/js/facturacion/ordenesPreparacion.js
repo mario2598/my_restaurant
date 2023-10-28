@@ -3,7 +3,7 @@ window.addEventListener("load", initialice, false);
 
 
 // Luego, configura un intervalo para seguir consultando cada 5 segundos
-// const intervalo = setInterval(recargarOrdenes, 5000);
+const intervalo = setInterval(recargarOrdenes, 3000);
 
 function initialice() {
    
