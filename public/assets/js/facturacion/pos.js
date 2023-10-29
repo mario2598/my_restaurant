@@ -1270,6 +1270,9 @@ function procesarPago(mto_sinpe, mto_efectivo, mto_tarjeta) {
         $('#mdl-loader-pago').modal("hide");
         location.reload();
     }).fail(function (jqXHR, textStatus, errorThrown) {
+        console.log(jqXHR);
+        console.log(textStatus);
+        console.log(errorThrown);
         showError("Algo salió mal");
         $('#mdl-loader-pago').modal("hide");
     });

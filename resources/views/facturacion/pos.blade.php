@@ -64,6 +64,8 @@
                                 "id": "{{ $extra1->id }}",
                                 "descripcion": "{{ $extra1->descripcion ?? '' }}",
                                 "precio": "{{ $extra1->precio ?? 0 }}",
+                                "materia_prima": "{{ $extra1->materia_prima ?? 0 }}",
+                                "cant_mp": "{{ $extra1->cant_mp ?? 0 }}",
                                 "grupo": "{{ $extra1->dsc_grupo ?? '' }}",
                                 "requerido": "{{ $extra1->es_requerido ?? '' }}",
                                 "seleccionado": false
