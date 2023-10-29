@@ -256,9 +256,9 @@
     </div>
 
 
-    <div class="modal fade bs-example-modal-center" id='mdl-extras'  tabindex="-1" role="dialog"
+    <div class="modal fade bd-example-modal-lg" id='mdl-extras'  tabindex="-1" role="dialog"
         aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header" style="width: 100%">
                     <div class="row" style="width: 100%">
@@ -266,21 +266,21 @@
                             <h5 class="modal-title">Extras del producto</h5>
 
                         </div>
-                        <div class="col-sm-12 col-md-12 col-xl-12">
+                        <div class="col-sm-12 col-md-6 col-xl-6">
                             <div class="form-group">
                                 <label>Descripción extra</label>
                                 <input type="text" class="form-control" id="ipt_dsc_ext" name="ipt_dsc_ext"
                                     value="" required>
                             </div>
                         </div>
-                        <div class="col-sm-12 col-md-12 col-xl-12">
+                        <div class="col-sm-12 col-md-6 col-xl-6">
                             <div class="form-group">
                                 <label>Descripción grupo</label>
                                 <input type="text" class="form-control" id="ipt_dsc_gru_ext" name="ipt_dsc_gru_ext"
                                     value="" required>
                             </div>
                         </div>
-                        <div class="col-sm-12 col-md-12 col-xl-12">
+                        <div class="col-sm-12 col-md-6 col-xl-6">
                             <div class="form-group">
                                 <label>Precio</label>
                                 <input type="number" class="form-control" id="ipt_precio_ext" name="ipt_precio_ext"
@@ -288,7 +288,27 @@
                                 <input type="hidden" id="ipt_id_prod_ext" name="ipt_id_prod_ext" value="-1">
                             </div>
                         </div>
-                        <div class="col-sm-12 col-md-12 col-xl-12">
+                        <div class="col-sm-6 col-md-6 col-xl-6">
+                            <div class="form-group">
+                                <label>Materia Prima</label>
+                                <select class="form-control" id="select_prod_mp_extra" style="width: 100%"
+                                    name="select_prod_mp_extra">
+                                    @foreach ($data['materia_prima'] as $i)
+                                        <option value="{{ $i->id ?? -1 }}" title="{{ $i->unidad_medida ?? '' }}">
+                                            {{ $i->nombre ?? '' }} - {{ $i->unidad_medida ?? '' }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-6 col-xl-6">
+                            <div class="form-group">
+                                <label>Cantidad requerida Materia Prima</label>
+                                <input type="number" class="form-control" id="ipt_cantidad_req_extra" name="ipt_cantidad_req_extra"
+                                    value="" required step="0.01">
+                                <input type="hidden" id="ipt_id_prod_mp" name="ipt_id_prod_mp" value="-1">
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-6 col-xl-6">
                             <div class="form-group">
                                 <label for="requisito">¿Es requerido?</label>
                                 <input type="checkbox" id="requisito">
@@ -298,7 +318,7 @@
                                 <input type="checkbox" id="multiple">
                             </div>
                         </div>
-                        <div class="col-sm-12 col-md-12 col-xl-12">
+                        <div class="col-sm-6 col-md-6 col-xl-6">
                             <div class="form-group">
                                 <a class="btn btn-primary" title="Guardar Composición"
                                     onclick="agregarExtraProducto()" style="color:white;cursor:pointer;">Guardar
@@ -317,6 +337,8 @@
                                 <th scope="col">Descripción</th>
                                 <th scope="col" style="text-align: center">Precio</th>
                                 <th scope="col" style="text-align: center">Grupo</th>
+                                <th scope="col" style="text-align: center">Materia Prima</th>
+                                <th scope="col" style="text-align: center">Cant Mat Prima</th>
                                 <th scope="col" style="text-align: center">Es requerido</th>
                                 <th scope="col" style="text-align: center">Es Multiple</th>
                                 <th scope="col" style="text-align: center">Acciones</th>
