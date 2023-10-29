@@ -839,8 +839,10 @@ class ProductosMenuController extends Controller
 
         try {
             $mat_prim = DB::table('extra_producto_menu')
+            ->leftjoin('materia_prima', 'materia_prima.id', '=', 'extra_producto_menu.materia_prima')
                 ->select(
-                    'extra_producto_menu.*'
+                    'extra_producto_menu.*',
+                    'materia_prima.nombre as nombreMp'
                 )
                 ->where('extra_producto_menu.producto', '=', $id_prod_seleccionado)
                 ->get();
@@ -894,6 +896,9 @@ class ProductosMenuController extends Controller
         $es_Requerido = $request->input('es_Requerido');
         $multiple = $request->input('multiple');
 
+        $cantidad_mp_extra = $request->input('cantidad_mp_extra');
+        $materia_prima_extra = $request->input('materia_prima_extra');
+
         $nuevo = true;
 
         if ($this->isNull($producto) || $producto == '-1') {
@@ -938,12 +943,22 @@ class ProductosMenuController extends Controller
                 $mt_x_producto1 = DB::table('extra_producto_menu')
                     ->insertGetId([
                         'id' => null, 'descripcion' => $dsc, 'precio' => $precio,
-                        'producto' => $producto, 'dsc_grupo' => $dsc_grupo, 'es_requerido' => ($es_Requerido == 'true' ? 1 : 0), 'multiple' => ($multiple == 'true' ? 1 : 0)
+                        'producto' => $producto, 'dsc_grupo' => $dsc_grupo, 
+                        'es_requerido' => ($es_Requerido == 'true' ? 1 : 0), 
+                        'multiple' => ($multiple == 'true' ? 1 : 0),
+                        'materia_prima' => $materia_prima_extra,
+                        'cant_mp' => $cantidad_mp_extra
                     ]);
             } else {
                 DB::table('extra_producto_menu')
                     ->where('id', '=', $id)
-                    ->update(['precio' => $precio, 'descripcion' => $dsc, 'dsc_grupo ' => $dsc_grupo, 'es_requerido' => ($es_Requerido == 'true' ? 1 : 0), 'multiple' => ($multiple == 'true'  ? 1 : 0)]);
+                    ->update(['precio' => $precio, 'descripcion' => $dsc, 
+                    'dsc_grupo ' => $dsc_grupo,
+                     'es_requerido' => ($es_Requerido == 'true' ? 1 : 0),
+                      'multiple' => ($multiple == 'true'  ? 1 : 0),
+                      'materia_prima' => $materia_prima_extra,
+                      'cant_mp' => $cantidad_mp_extra
+                    ]);
             }
 
             DB::commit();

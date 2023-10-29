@@ -92,6 +92,7 @@ function cargarProductoPantalla() {
     $("#precio").val(productoGestion.precio);
     $("#impuesto").val(productoGestion.impuesto);
     $("#receta").val(productoGestion.receta);
+    $("#posicion_menu").val(productoGestion.posicion_menu);
     var imagen = document.getElementById("imgProd");
     imagen.src = productoGestion.url_imagen;
 }

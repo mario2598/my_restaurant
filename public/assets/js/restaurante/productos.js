@@ -124,6 +124,8 @@ function crearExtras(producto) {
     texto += "<td class='text-center'>" + producto.descripcion + "</td>";
     texto += "<td class='text-center'>" + producto.precio + "</td>";
     texto += "<td class='text-center'>" + producto.dsc_grupo + "</td>";
+    texto += "<td class='text-center'>" + producto.nombreMp ?? '' + "</td>";
+    texto += "<td class='text-center'>" + producto.cant_mp ?? 0 + "</td>";
     texto += "<td class='text-center'>" + (producto.es_requerido == 0 ? "No" : "Sí") + "</td>";
     texto += "<td class='text-center'>" + (producto.multiple == 0 ? "No" : "Sí") + "</td>";
     texto += '<td class="text-center"><button  class="btn btn-icon btn-secondary" onclick="eliminarExtra(' + producto.id + ')"' +
@@ -198,6 +200,8 @@ function agregarExtraProducto() {
     let ipt_dsc_gru_ext = $('#ipt_dsc_gru_ext').val();
     let esRequerido = $("#requisito").is(':checked');
     let multiple = $("#multiple").is(':checked');
+    let ipt_cantidad_req_extra = $('#ipt_cantidad_req_extra').val();
+    let select_prod_mp_extra = $('#select_prod_mp_extra').val();
     $.ajax({
         url: '/menu/productos/guardarExtProd',
         type: 'post',
@@ -209,7 +213,9 @@ function agregarExtraProducto() {
             dsc_grupo: ipt_dsc_gru_ext,
             producto : id_prod_seleccionado,
             es_Requerido : esRequerido,
-            multiple : multiple
+            multiple : multiple,
+            materia_prima_extra : select_prod_mp_extra,
+            cantidad_mp_extra :ipt_cantidad_req_extra
         }
     }).done(function (respuesta) {
 
