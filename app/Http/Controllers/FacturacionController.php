@@ -219,6 +219,7 @@ class FacturacionController extends Controller
                         'extra_producto_menu.multiple'
                     )->distinct()
                     ->where('extra_producto_menu.producto', '=', $p->id)
+                    ->orderBy('extra_producto_menu.es_requerido', 'DESC')
                     ->get();
                 $extrasAux = [];
                 foreach ($grupos as $g) {
