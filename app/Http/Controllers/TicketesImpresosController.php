@@ -132,7 +132,7 @@ class TicketesImpresosController extends Controller
             foreach ($d->extras as $e) {
                 $this->pdf->Ln(1);
                 $this->pdf->setX(10);
-                $this->pdf->Cell(63, 4,  $e->descripcion_extra, 0);
+                $this->pdf->Cell(63, 4,  iconv('UTF-8', 'ISO-8859-1',$e->descripcion_extra), 0);
                 $this->pdf->setX(32);
                 $this->pdf->Cell(63, 4,"", 0);
                 $this->pdf->setX(53);
