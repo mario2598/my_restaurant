@@ -29,7 +29,7 @@
         .imagen-cuadrada {
             width: 200px;
             /* Establece el ancho fijo para la imagen */
-            height: 290px;
+            height: 200px;
             /* Establece la altura fija para la imagen (mismo valor que el ancho) */
             object-fit: cover;
             /* Ajusta la imagen para que cubra completamente el cuadrado sin distorsión */
