@@ -701,8 +701,8 @@ trait SpaceUtil
       $carbonDate->setLocale('es');
   
       // Formatea la fecha en español
-      $fechaAux = $carbonDate->isoFormat('DDD, D [de] MMMM - h:i A');
-  
+      $fechaAux = $carbonDate->isoFormat('Ddd, D [de] MMMM - h:i A');
+      $fechaAux = ucfirst($fechaAux);
       return $fechaAux;
   }
 
