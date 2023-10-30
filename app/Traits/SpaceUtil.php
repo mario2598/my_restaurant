@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 trait SpaceUtil
 {
@@ -693,12 +694,16 @@ trait SpaceUtil
 
   public function fechaFormat($fecha)
   {
-    $phpdate = strtotime($fecha);
-    $date = date("d-m-Y", strtotime($fecha));
-
-    $fechaAux = iconv('ISO-8859-2', 'UTF-8', strftime("%a, %d de %B ", strtotime($date)));
-    $fechaAux .= ' - ' . date("g:i a", $phpdate);
-    return $fechaAux;
+      // Crea una instancia de Carbon a partir de la fecha
+      $carbonDate = Carbon::parse($fecha);
+  
+      // Establece la localización en español
+      $carbonDate->setLocale('es');
+  
+      // Formatea la fecha en español
+      $fechaAux = $carbonDate->isoFormat('ddd, D [de] MMMM - h:i A');
+  
+      return $fechaAux;
   }
 
   /**
