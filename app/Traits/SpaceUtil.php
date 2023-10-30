@@ -4,7 +4,6 @@ namespace App\Traits;
 
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 trait SpaceUtil
 {
@@ -694,9 +693,13 @@ trait SpaceUtil
 
   public function fechaFormat($fecha)
   {
-    setlocale(LC_TIME, "es_ES");
-    $date = Carbon::createFromFormat('Y-m-d H:i:s', $fecha);
-    return $date->formatLocalized('%A, %d de %B - g:i a');
+    setlocale(LC_ALL, "es_CR");
+    $phpdate = strtotime($fecha);
+    $date = date("d-m-Y", strtotime($fecha));
+
+    $fechaAux = iconv('ISO-8859-2', 'UTF-8', strftime("%a, %d de %B ", strtotime($date)));
+    $fechaAux .= ' - ' . date("g:i a", $phpdate);
+    return $fechaAux;
   }
 
   /**

@@ -14,7 +14,7 @@ class OrdenesController extends Controller
     public function __construct()
     {
 
-        setlocale(LC_ALL, "es_ES");
+        setlocale(LC_ALL, "es_CR");
     }
 
     public function index()

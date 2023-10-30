@@ -16,7 +16,7 @@ class TicketesImpresosController extends Controller
     public function __construct()
     {
         $this->pdf = new Fpdf();
-        setlocale(LC_ALL, "es_ES");
+        setlocale(LC_ALL, "es_CR");
     }
 
     public function index()
