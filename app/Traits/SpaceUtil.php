@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 trait SpaceUtil
 {
