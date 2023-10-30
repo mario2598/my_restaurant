@@ -704,7 +704,7 @@ trait SpaceUtil
       $fechaAux = $carbonDate->isoFormat('ddd D [de] MMMM');
       $fechaAux = ucfirst($fechaAux);
       $phpdate = strtotime($fecha);
-      return $fechaAux .' '. date("g:i a", $phpdate);;
+      return str_replace('.', '', $fechaAux .' '. date("g:i a", $phpdate));
   }
 
   /**
