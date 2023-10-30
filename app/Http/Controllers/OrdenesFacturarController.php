@@ -18,7 +18,7 @@ class OrdenesFacturarController extends Controller
     public function __construct()
     {
         $this->fpdf = new Fpdf();
-        setlocale(LC_ALL, "es_CR");
+        setlocale(LC_ALL, "es_ES");
     }
 
     public function index()

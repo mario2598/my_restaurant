@@ -693,7 +693,7 @@ trait SpaceUtil
 
   public function fechaFormat($fecha)
   {
-    setlocale(LC_ALL, "es_CR");
+    setlocale(LC_ALL, "es_ES");
     $phpdate = strtotime($fecha);
     $date = date("d-m-Y", strtotime($fecha));
 

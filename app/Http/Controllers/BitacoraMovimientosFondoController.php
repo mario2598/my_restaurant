@@ -13,7 +13,7 @@ class BitacoraMovimientosFondoController extends Controller
     public function __construct()
     {
        //Prueba git
-        setlocale(LC_ALL, "es_CR");
+        setlocale(LC_ALL, "es_ES");
     }
     
     public function index(){

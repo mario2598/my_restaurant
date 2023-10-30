@@ -18,7 +18,7 @@ class PedidoSucursalController extends Controller
     public function __construct()
     {
 
-        setlocale(LC_ALL, "es_CR");
+        setlocale(LC_ALL, "es_ES");
     }
 
     public function index()
