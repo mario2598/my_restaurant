@@ -459,9 +459,7 @@ class ProductosExternosController extends Controller
         if ($producto_externoAux == null) { //  
             return $this->responseAjaxServerError("Debe seleccionar el producto", []);
         }
-        if ($cantidad_agregar < 1 || $this->isNull($cantidad_agregar)) { //  
-            return $this->responseAjaxServerError("La cantidad debe ser mayor a 0", []);
-        }
+     
 
         if ($id < 1 || $this->isNull($id)) { //
             $productoExistente = DB::table('pe_x_sucursal')->select('pe_x_sucursal.*')->where('producto_externo', '=', $producto_externo)
