@@ -821,110 +821,35 @@ trait SpaceUtil
     $ingresos = DB::table('ingreso')
       ->where('aprobado', 'like', 'S');
 
-    $listaOrdenesCafeteria = DB::table('detalle_orden as dt')
-      ->join('orden as o', 'o.id', '=', 'dt.orden')
-      ->join('ingreso as i', 'i.id', '=', 'o.ingreso')
-      ->select('o.id','o.monto_efectivo','o.monto_sinpe','o.monto_tarjeta')
-      ->groupBy('o.id','o.monto_efectivo','o.monto_sinpe','o.monto_tarjeta')
-      ->where('i.aprobado', 'like', 'S')
-      ->where('dt.servicio_mesa', 'like', 'S');
-
     $gastos = DB::table('gasto')
       ->where('aprobado', 'like', 'S');
-    $gastosCafeteria = DB::table('gasto')
-      ->where('aprobado', 'like', 'S')
-      ->where('gasto.tipo_gasto', '=', 2);
 
     if ($sucursal != null && $sucursal != '' && $sucursal != 'T') {
       $ingresos = $ingresos->where('ingreso.sucursal', '=', $sucursal);
-      $listaOrdenesCafeteria =  $listaOrdenesCafeteria->where('i.sucursal', '=', $sucursal);
       $nombreSucursal =  DB::table('sucursal')->where('id', '=', $sucursal)->get()->first()->descripcion;
       $gastos = $gastos->where('gasto.sucursal', 'like', '%' . $nombreSucursal . '%');
-      $gastosCafeteria = $gastosCafeteria->where('gasto.sucursal', 'like', '%' . $nombreSucursal . '%');
     }
 
     if ($desde != null && $desde != '') {
       $desde = date('Y-m-d 00:00:00', strtotime($desde));
       $ingresos = $ingresos->where('ingreso.fecha', '>=', $desde);
-      $listaOrdenesCafeteria =  $listaOrdenesCafeteria->where('i.fecha', '>=', $desde);
       $gastos = $gastos->where('gasto.fecha', '>=', $desde);
-      $gastosCafeteria = $gastosCafeteria->where('gasto.fecha', '>=', $desde);
     }
     if ($hasta != null && $hasta != '') {
       $hasta = date('Y-m-d 23:59:59', strtotime($hasta));
       $ingresos = $ingresos->where('ingreso.fecha', '<=', $hasta);
-      $listaOrdenesCafeteria =  $listaOrdenesCafeteria->where('i.fecha', '<=', $hasta);
       $gastos = $gastos->where('gasto.fecha', '<=', $hasta);
-      $gastosCafeteria = $gastosCafeteria->where('gasto.fecha', '<=', $hasta);
     }
-    $totalIngresosCafeteria = 0;
-    $listaOrdenesCafeteria =  $listaOrdenesCafeteria->get();
-
-    $totalIngresosEfectivoCafeteria = 0;
-    $totalIngresosTarjetaCafeteria = 0;
-    $totalIngresosSinpeCafeteria = 0;
-    $totalPagoTarjetaCafeteria = 0;
-    $totalIngresosCafeteria = 0;
+ 
 
     $parametros = DB::table('parametros_generales')->get()->first();
     $porcentaje_banco = $parametros->porcentaje_banco / 100;
     $totalPagoTarjeta = 0;
-    foreach ($listaOrdenesCafeteria as $o) {
-      $montoSinpeOrden = $o->monto_sinpe;
-      $montoTarjetaOrden = $o->monto_tarjeta;
-      $montoEfectivoOrden = $o->monto_efectivo;
-
-      $detalles = DB::table('detalle_orden as dt')
-        ->join('orden as o', 'o.id', '=', 'dt.orden')
-        ->select('dt.*')
-        ->where('o.id', '=', $o->id)
-        ->where('dt.servicio_mesa', 'like', 'S')->get();
-
-      $totalServicioMesaLinea = 0;
-      foreach ($detalles as $d) {
-        $totalLinea = $d->cantidad * $d->precio_unidad;
-        $totalLinea = $totalLinea + ($totalLinea * 0.10);
-        $totalServicioMesaLinea = $totalServicioMesaLinea + $totalLinea;
-      }
-      $montoPendiente = $totalServicioMesaLinea;
-      if ($montoTarjetaOrden >= $montoPendiente) {
-        $totalIngresosTarjetaCafeteria = $totalIngresosTarjetaCafeteria + $montoPendiente;
-        $montoPendiente = 0;
-      } else {
-        $totalIngresosTarjetaCafeteria = $totalIngresosTarjetaCafeteria + $montoTarjetaOrden;
-        $montoPendiente = $montoPendiente - $montoTarjetaOrden;
-      }
-
-      if ($montoPendiente > 0) {
-        if ($montoEfectivoOrden >= $montoPendiente) {
-          $totalIngresosEfectivoCafeteria = $totalIngresosEfectivoCafeteria + $montoPendiente;
-          $montoPendiente = 0;
-        } else {
-          $totalIngresosEfectivoCafeteria = $totalIngresosEfectivoCafeteria + $montoEfectivoOrden;
-          $montoPendiente = $montoPendiente - $montoEfectivoOrden;
-        }
-      }
-      if ($montoPendiente > 0) {
-        if ($montoSinpeOrden >= $montoPendiente) {
-          $totalIngresosSinpeCafeteria = $totalIngresosSinpeCafeteria + $montoPendiente;
-          $montoPendiente = 0;
-        } else {
-          $totalIngresosSinpeCafeteria = $totalIngresosSinpeCafeteria + $montoSinpeOrden;
-          $montoPendiente = $montoPendiente - $montoSinpeOrden;
-        }
-      }
-    }
-    $totalPagoTarjetaCafeteria = $totalIngresosTarjetaCafeteria * $porcentaje_banco;
-    $totalIngresosCafeteria =  $totalPagoTarjetaCafeteria + $totalIngresosSinpeCafeteria + $totalIngresosEfectivoCafeteria;
-    $totalIngresosCafeteria = $totalIngresosCafeteria - $totalPagoTarjetaCafeteria;
-    $montoServicioMesa = $totalIngresosCafeteria * (10 / 100);
-    $totalIngresosCafeteria = $totalIngresosCafeteria - $montoServicioMesa;
-
+  
+   
     $ingresos = $ingresos->get();
     $gastos = $gastos->sum('monto');
 
-    $gastosCafeteria = $gastosCafeteria->sum('monto');
-    $gastos = $gastos - $gastosCafeteria;
     $totalIngresos = 0;
     $totalIngresosEfectivo = 0;
     $totalIngresosTarjeta = 0;
@@ -949,43 +874,27 @@ trait SpaceUtil
     }
 
     $parametros = $this->getParametrosGenerales();
-    $inicio_mes_panaderia = $parametros->inicio_mes_panaderia;
-    $inicio_mes_cafeteria = $parametros->inicio_mes_cafeteria;
-
-    $inicio_mes_general = $inicio_mes_panaderia + $inicio_mes_cafeteria;
-
-    $mesActual = date("M");
-    //$totalIngresos = $totalIngresos - $totalIngresosCafeteria;
    
-    //Fondos General sin cafeteria
-    $subTotalFondos = $totalIngresos;
+    $mesActual = date("M");
     
-    $subTotalFondos = $subTotalFondos + $inicio_mes_panaderia;
+    $subTotalFondos = $totalIngresos;
     
     $totalFondos = $subTotalFondos - $gastos;
     $totalFondos = $totalFondos - $totalPagoTarjeta;
 
-     //Fondos General cafeteria
-    $subTotalFondosCafeteria = $totalIngresosCafeteria;
-    $subTotalFondosCafeteria = $subTotalFondosCafeteria + $inicio_mes_cafeteria;
-    $totalFondosCafeteria = $subTotalFondosCafeteria - $gastosCafeteria;
-    $totalIngresosCafeteria = $totalIngresosCafeteria - $gastosCafeteria;
-
      //Totales en conjunto
-    $totalIngresosEfectivoGeneral = $totalIngresosEfectivo + $totalIngresosEfectivoCafeteria;
-    $totalIngresosTarjetaGeneral = $totalIngresosTarjeta + $totalIngresosTarjetaCafeteria;
-    $totalIngresosSinpeGeneral = $totalIngresosSinpe + $totalIngresosSinpeCafeteria;
-    $totalPagoTarjetaGeneral = $totalPagoTarjeta + $totalPagoTarjetaCafeteria;
+    $totalIngresosEfectivoGeneral = $totalIngresosEfectivo ;
+    $totalIngresosTarjetaGeneral = $totalIngresosTarjeta;
+    $totalIngresosSinpeGeneral = $totalIngresosSinpe ;
+    $totalPagoTarjetaGeneral = $totalPagoTarjeta ;
     
-    $subTotalFondosGeneral = $subTotalFondos + $subTotalFondosCafeteria;
-    $subTotalFondosGeneral = $subTotalFondosGeneral + $inicio_mes_general;
-    $totalFondosGeneral = $totalFondos + $totalFondosCafeteria;
-    $gastosGeneral = $gastos + $gastosCafeteria;
+    $subTotalFondosGeneral = $subTotalFondos;
+    $subTotalFondosGeneral = $subTotalFondosGeneral ;
+    $totalFondosGeneral = $totalFondos;
+    $gastosGeneral = $gastos;
 
     $resumen = [
-      'inicio_mes_panaderia' => $inicio_mes_panaderia,
-      'inicio_mes_cafeteria' => $inicio_mes_cafeteria,
-      'inicio_mes_general' => $inicio_mes_general,
+
       'totalIngressosTarjeta' => $totalIngresosTarjeta,
       'mesActual' => $mesActual,
       'totalIngresosSinpe' => $totalIngresosSinpe,
@@ -993,24 +902,14 @@ trait SpaceUtil
       'totalIngressosTarjeta' => $totalIngresosTarjeta,
       'ingresosTarjetaImpuestoAplicado' => $totalIngresosTarjeta - $totalPagoTarjeta,
       'totalIngresosEfectivo' => $totalIngresosEfectivo,
-      'totalIngresosEfectivoCafeteria' => $totalIngresosEfectivoCafeteria,
-      'totalIngresosTarjetaCafeteria' => $totalIngresosTarjetaCafeteria,
-      'ingresosCafeteriaTarjetaImpuestoAplicado' => $totalIngresosTarjetaCafeteria - $totalPagoTarjetaCafeteria,
-      'totalIngresosSinpeCafeteria' => $totalIngresosSinpeCafeteria,
-      'totalIngresosCafeteria' => $totalIngresosCafeteria,
-      'totalPagoTarjetaCafeteria' => $totalPagoTarjetaCafeteria,
       'ingresosGeneralTarjetaImpuestoAplicado' => $totalIngresosTarjetaGeneral - $totalPagoTarjetaGeneral,
       'totalIngresosSinpeGeneral' => $totalIngresosSinpeGeneral,
       'totalIngresosEfectivoGeneral' => $totalIngresosEfectivoGeneral,
       'totalIngresosTarjetaGeneral' => $totalIngresosTarjetaGeneral,
       'totalPagoTarjetaGeneral' => $totalPagoTarjetaGeneral,
       'gastos' => $gastos,
-      'montoServicioMesa' => $montoServicioMesa,
       'gastosGeneral' => $gastosGeneral,
-      'gastosCafeteria' => $gastosCafeteria,
       'subTotalFondos' => $subTotalFondos,
-      'totalFondosCafeteria' => $totalFondosCafeteria,
-      'subTotalFondosCafeteria' => $subTotalFondosCafeteria,
       'totalFondosGeneral' => $totalFondosGeneral,
       'subTotalFondosGeneral' => $subTotalFondosGeneral,
       'totalFondos' => $totalFondos,

@@ -24,11 +24,7 @@ class InformesController extends Controller
             $this->setMsjSeguridad();
             return redirect('/');
         }
-        if(!$this->usuarioAdministrador()){
-            $this->setMsjSeguridad();
-            return redirect('/');
-        }
-        
+     
         $filtros = [
             'sucursal' => 'T',
             'hasta' => "",
@@ -51,10 +47,7 @@ class InformesController extends Controller
             $this->setMsjSeguridad();
             return redirect('/');
         }
-        if(!$this->usuarioAdministrador()){
-            $this->setMsjSeguridad();
-            return redirect('/');
-        }
+      
 
         $filtroSucursal = $request->input('sucursal');
         $hasta = $request->input('hasta');
@@ -77,5 +70,131 @@ class InformesController extends Controller
     }
 
 
+    
+    public function goVentaXhora(){
+        if(!$this->validarSesion("ventaXhora")){
+            $this->setMsjSeguridad();
+            return redirect('/');
+        }
+       
+        $filtros = [
+            'cliente' => 0,
+            'sucursal' => 'T',
+            'hasta' => "",
+            'desde' => "",
+            'descProd' => "",
+            'nombreUsu' => "",
+            'horaDesdeFiltro' => "",
+            'filtroTipoProd' => "",
+            'horaHastaFiltro' => ""
+        ];
+
+        
+        $data = [
+             'menus'=> $this->cargarMenus(),
+             'clientes'=> $this->getClientes(),
+             'datosReporte'=> [],
+            'filtros' =>$filtros,
+            'sucursales' => $this->getSucursalesAndBodegas(),
+            'panel_configuraciones' => $this->getPanelConfiguraciones()
+        ];
+        
+        return view('informes.ventasXhora',compact('data'));
+    }
+
+    public function goVentaXhoraFiltro(Request $request)
+    {
+        if (!$this->validarSesion("ventaXhora")) {
+            $this->setMsjSeguridad();
+            return redirect('/');
+        }
+
+        $filtroCliente = $request->input('cliente');
+        $filtroSucursal = $request->input('sucursal');
+        $filtroTipoProd = $request->input('filtroTipoProd');
+        $filtroDescProd = $request->input('descProd');
+        $filtronombreUsu = $request->input('nombreUsu');
+        $hasta = $request->input('hasta');
+        $desde = $request->input('desde');
+        $horaHasta = $request->input('horaHastaFiltro');
+        $horaDesde = $request->input('horaDesdeFiltro');
+
+        $query = "SELECT DATE_FORMAT(o.fecha_inicio, '%Y-%m-%d') FECHA, DATE_FORMAT(o.fecha_inicio, '%h %p') HORA ,do.nombre_producto PRODUCTO, usu.usuario AS " .
+        "USUARIO,NVL(cli.nombre,'') as CLIENTE,suc.descripcion as SUCURSAL,HOUR(o.fecha_inicio) as HORAFILTRO, ".
+        "sum(do.cantidad) ".
+        "CANTIDAD, do.precio_unidad, Sum(do.cantidad * do.precio_unidad) as total_venta,".
+        " case do.tipo_producto when 'E' then 'Externo' else  'Propio'  end as tipo_producto FROM coffee_to_go.detalle_orden ".
+        " do join coffee_to_go.orden o on do.orden = o.id ".
+        " join coffee_to_go.usuario usu on usu.id = o.cajero ".
+        " left join coffee_to_go.sucursal suc on suc.id = o.sucursal ".
+        " left join coffee_to_go.cliente cli on cli.id = o.cliente ";
+       $where = " where o.estado <> " . SisEstadoController::getIdEstadoByCodGeneral('ORD_ANULADA');
+
+        if ($filtroCliente >= 1  && !$this->isNull($filtroCliente)) {
+            $where .= " and cli.id =".$filtroCliente;
+        }
+
+        if (!$this->isNull($filtroSucursal) && $filtroSucursal != 'T') {
+            $where .= " and suc.id =".$filtroSucursal;
+        }
+
+        if ($filtroTipoProd != '' && $filtroTipoProd != 'T') {
+            $where .= " and do.tipo_producto ='".$filtroTipoProd."' ";
+        }
+
+        if (!$this->isNull($desde)) {
+            $where .= " and o.fecha_inicio > '".$desde."'";
+        }
+
+        if (!$this->isNull($hasta)) {
+            $mod_date = strtotime($hasta . "+ 1 days");
+            $mod_date = date("Y-m-d", $mod_date);
+            $where .= " and o.fecha_inicio < '".$mod_date."'";
+        }
+
+
+        if ($filtroDescProd != ''  && !$this->isNull($filtroDescProd)) {
+            $where .= " and  UPPER(do.nombre_producto) like UPPER('%".$filtroDescProd."%')";
+        }
+
+        if ($filtronombreUsu != ''  && !$this->isNull($filtronombreUsu)) {
+            $where .= " and  UPPER(usu.usuario) like UPPER('%".$filtronombreUsu."%')";
+        }
+
+        if (!$this->isNull($horaHasta) && $horaHasta < 24  &&  $horaHasta >= 0) {
+            $where .= " and HOUR(o.fecha_inicio) <= ".$horaHasta;
+        }
+
+        
+        if (!$this->isNull($horaDesde) && $horaDesde < 24  &&  $horaDesde >= 0) {
+            $where .= " and HOUR(o.fecha_inicio) >= ".$horaDesde;
+        }
+       
+        $query .= $where . " group by do.nombre_producto,DATE_FORMAT(o.fecha_inicio, '%Y-%m-%d'),DATE_FORMAT(o.fecha_inicio, '%h %p'),usu.usuario,NVL(cli.nombre,''),suc.descripcion,HOUR(o.fecha_inicio),do.precio_unidad,coffee_to_go.do.tipo_producto order by 1 DESC,2 ASC,7 ASC";
+
+        $filtros = [
+            'cliente' => $filtroCliente,
+            'sucursal' => $filtroSucursal,
+            'hasta' => $hasta,
+            'desde' => $desde,
+            'descProd' => $filtroDescProd,
+            'nombreUsu' => $filtronombreUsu,
+            'horaDesdeFiltro' => $horaDesde,
+            'filtroTipoProd' => $filtroTipoProd,
+            'horaHastaFiltro' => $horaHasta
+        ];
+ 
+        $data = [
+            'menus'=> $this->cargarMenus(),
+            'clientes'=> $this->getClientes(),
+            'datosReporte'=> DB::select($query),
+           'filtros' =>$filtros,
+           'sucursales' => $this->getSucursalesAndBodegas(),
+           'panel_configuraciones' => $this->getPanelConfiguraciones()
+       ];
+       
+       return view('informes.ventasXhora',compact('data'));
+
+    }
   
 }

@@ -149,6 +149,8 @@ Route::post('caja/abrirCaja', 'CajaController@abrirCaja');
 /******************Informes ********************** */
 Route::post('informes/resumencontable/filtro', 'InformesController@goResumenContableFiltro');
 Route::get('informes/resumencontable', 'InformesController@goResumenContable');
+Route::get('informes/ventaXhora', 'InformesController@goVentaXhora');
+Route::post('informes/ventaXhora/filtro', 'InformesController@goVentaXhoraFiltro');
 
 /******************Bodega **************************** */
 Route::get('bodega/productos', 'ProductosController@goProductos');
