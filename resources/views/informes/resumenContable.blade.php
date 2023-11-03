@@ -83,9 +83,7 @@
                   <tbody>
                     <tr class="space_row_table" style="cursor: pointer;" >
                       <td class="text-center"><strong>Ingresos SINPE</strong></td>
-                      <td class="text-center">
-                        <strong>CRC {{number_format($data['resumen']['totalIngresosSinpeCafeteria'] ?? '0.00',2,".",",")}}</strong>
-                      </td>
+                     
                       <td class="text-center">
                         <strong>CRC {{number_format($data['resumen']['totalIngresosSinpe'] ?? '0.00',2,".",",")}}</strong>
                       </td>
@@ -107,7 +105,7 @@
                  
                     <tr class="space_row_table" style="cursor: pointer;" >
                       <td class="text-center"><strong>Ingresos Efectivo</strong></td>
-                     
+               
                       <td class="text-center">
                         <strong>CRC {{number_format($data['resumen']['totalIngresosEfectivo'] ?? '0.00',2,".",",")}}</strong>
                       </td>
@@ -115,10 +113,12 @@
                         <strong>CRC {{number_format($data['resumen']['totalIngresosEfectivoGeneral'] ?? '0.00',2,".",",")}}</strong>
                       </td>
                     </tr>
-                   
+
+                  
+                  
                     <tr class="space_row_table" style="cursor: pointer;" >
                       <td class="text-center"><strong>SubTotal Fondos</strong></td>
-                     
+                    
                       <td class="text-center">
                         <strong>CRC {{number_format($data['resumen']['subTotalFondos'] ?? '0.00',2,".",",")}}</strong>
                       </td>
@@ -129,6 +129,7 @@
                 
                     <tr class="space_row_table" style="cursor: pointer;" >
                       <td class="text-center"><strong>Total Gastos</strong></td>
+                     
                       <td class="text-center">
                         <strong>CRC {{number_format($data['resumen']['gastos'] ?? '0.00',2,".",",")}}</strong>
                       </td>
@@ -154,10 +155,7 @@
                     </tr>
                     <tr class="space_row_table" style="cursor: pointer;" >
                       <td class="text-center"><strong>Rebajo por tarjetas</strong></td>
-                      <td class="text-center">
-                        <strong>- CRC {{number_format($data['resumen']['totalPagoTarjetaCafeteria'] ?? '0.00',2,".",",")}}</strong>
-
-                      </td>
+                    
                       <td class="text-center">
                         <strong>- CRC {{number_format($data['resumen']['totalPagoTarjeta'] ?? '0.00',2,".",",")}}</strong>
 
@@ -171,9 +169,7 @@
                   <tfoot> 
                     <tr class="space_row_table" style="cursor: pointer;" >
                       <td class="text-center"><strong>Total General Fondos</strong></td>
-                      <td class="text-center">
-                        <strong>CRC {{number_format($data['resumen']['totalFondosCafeteria'] ?? '0.00',2,".",",")}}</strong>
-                      </td>
+                     
                       <td class="text-center">
                         <strong>CRC {{number_format($data['resumen']['totalFondos'] ?? '0.00',2,".",",")}}</strong>
                       </td>
@@ -228,21 +224,21 @@
         buttons: [
           {
             extend: 'excel',
-            title: 'COFFEE TO GO',
+            title: 'SPACE REST',
             messageTop:topMesage,
             footer: true,
             messageBottom:bottomMesage,
             filename: 'resumen_contable_el_amanecer'
           }, {
             extend: 'pdf',
-            title: 'COFFEE TO GO',
+            title: 'SPACE REST',
             messageTop:topMesage,
             footer: true,
             messageBottom:bottomMesage,
             filename: 'resumen_contable_el_amanecer'
           }, {
             extend: 'print',
-            title: 'COFFEE TO GO',
+            title: 'SPACE REST',
             messageTop:topMesage,
             footer: true,
             messageBottom:bottomMesage,
@@ -258,7 +254,7 @@
 
 
 @section('script')
-<script src="{{asset("assets/bundles/datatables/datatables.min.js")}}"></script>
+
 <script src="{{asset("assets/js/page/datatables.js")}}"></script>
   <script src="{{asset("assets/js/gastos_admin.js")}}"></script>
   
