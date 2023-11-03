@@ -69,13 +69,8 @@
                     <tr>
                     
                       <th class="text-center">Descripción</th>
-                      <th class="text-center">
-                          Cafetería
-                      </th>
-                      <th class="text-center">
-                          Panadería
-                      </th>
-                      <th class="text-center">General</th>
+                    
+                      <th class="text-center">MONTO</th>
                       
                     </tr>
                   </thead>
@@ -83,10 +78,6 @@
                   <tbody>
                     <tr class="space_row_table" style="cursor: pointer;" >
                       <td class="text-center"><strong>Ingresos SINPE</strong></td>
-                     
-                      <td class="text-center">
-                        <strong>CRC {{number_format($data['resumen']['totalIngresosSinpe'] ?? '0.00',2,".",",")}}</strong>
-                      </td>
                       <td class="text-center">
                         <strong>CRC {{number_format($data['resumen']['totalIngresosSinpeGeneral'] ?? '0.00',2,".",",")}}</strong>
                       </td>
@@ -94,10 +85,6 @@
                  
                     <tr class="space_row_table" style="cursor: pointer;" >
                       <td class="text-center"><strong>Ingresos Tarjeta</strong></td>
-                    
-                      <td class="text-center">
-                        <strong>CRC {{number_format($data['resumen']['totalIngressosTarjeta'] ?? '0.00',2,".",",")}}</strong>
-                      </td>
                       <td class="text-center">
                         <strong>CRC {{number_format($data['resumen']['totalIngresosTarjetaGeneral'] ?? '0.00',2,".",",")}}</strong>
                       </td>
@@ -105,10 +92,6 @@
                  
                     <tr class="space_row_table" style="cursor: pointer;" >
                       <td class="text-center"><strong>Ingresos Efectivo</strong></td>
-               
-                      <td class="text-center">
-                        <strong>CRC {{number_format($data['resumen']['totalIngresosEfectivo'] ?? '0.00',2,".",",")}}</strong>
-                      </td>
                       <td class="text-center">
                         <strong>CRC {{number_format($data['resumen']['totalIngresosEfectivoGeneral'] ?? '0.00',2,".",",")}}</strong>
                       </td>
@@ -118,10 +101,6 @@
                   
                     <tr class="space_row_table" style="cursor: pointer;" >
                       <td class="text-center"><strong>SubTotal Fondos</strong></td>
-                    
-                      <td class="text-center">
-                        <strong>CRC {{number_format($data['resumen']['subTotalFondos'] ?? '0.00',2,".",",")}}</strong>
-                      </td>
                       <td class="text-center">
                         <strong>CRC {{number_format($data['resumen']['subTotalFondosGeneral'] ?? '0.00',2,".",",")}}</strong>
                       </td>
@@ -129,10 +108,6 @@
                 
                     <tr class="space_row_table" style="cursor: pointer;" >
                       <td class="text-center"><strong>Total Gastos</strong></td>
-                     
-                      <td class="text-center">
-                        <strong>CRC {{number_format($data['resumen']['gastos'] ?? '0.00',2,".",",")}}</strong>
-                      </td>
                       <td class="text-center">
                         <strong>CRC {{number_format($data['resumen']['gastosGeneral'] ?? '0.00',2,".",",")}}</strong>
                       </td>
