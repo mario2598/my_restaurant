@@ -130,11 +130,6 @@
                     </tr>
                     <tr class="space_row_table" style="cursor: pointer;" >
                       <td class="text-center"><strong>Rebajo por tarjetas</strong></td>
-                    
-                      <td class="text-center">
-                        <strong>- CRC {{number_format($data['resumen']['totalPagoTarjeta'] ?? '0.00',2,".",",")}}</strong>
-
-                      </td>
                       <td class="text-center">
                         <strong>- CRC {{number_format($data['resumen']['totalPagoTarjetaGeneral'] ?? '0.00',2,".",",")}}</strong>
                       </td>
@@ -144,10 +139,7 @@
                   <tfoot> 
                     <tr class="space_row_table" style="cursor: pointer;" >
                       <td class="text-center"><strong>Total General Fondos</strong></td>
-                     
-                      <td class="text-center">
-                        <strong>CRC {{number_format($data['resumen']['totalFondos'] ?? '0.00',2,".",",")}}</strong>
-                      </td>
+                    
                       <td class="text-center">
                         <strong>CRC {{number_format($data['resumen']['totalFondosGeneral'] ?? '0.00',2,".",",")}}</strong>
                       </td>
