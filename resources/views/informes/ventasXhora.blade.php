@@ -276,21 +276,21 @@
                 "paging": false,
                 buttons: [{
                     extend: 'excel',
-                    title: 'Panadería y Cafetería El Amancer',
+                    title: 'COFFEE TO GO',
                     messageTop: topMesage,
                     footer: true,
                     messageBottom: bottomMesage,
                     filename: 'reporte_ventasXhora_el_amanecer'
                 }, {
                     extend: 'pdf',
-                    title: 'Panadería y Cafetería El Amancer',
+                    title: 'COFFEE TO GO',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
                     filename: 'reporte_ventasXhora_el_amanecer'
                 }, {
                     extend: 'print',
-                    title: 'Panadería y Cafetería El Amancer',
+                    title: 'COFFEE TO GO',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
