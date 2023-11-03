@@ -96,9 +96,7 @@
                  
                     <tr class="space_row_table" style="cursor: pointer;" >
                       <td class="text-center"><strong>Ingresos Tarjeta</strong></td>
-                      <td class="text-center">
-                        <strong>CRC {{number_format($data['resumen']['totalIngresosTarjetaCafeteria'] ?? '0.00',2,".",",")}}</strong>
-                      </td>
+                    
                       <td class="text-center">
                         <strong>CRC {{number_format($data['resumen']['totalIngressosTarjeta'] ?? '0.00',2,".",",")}}</strong>
                       </td>
@@ -109,9 +107,7 @@
                  
                     <tr class="space_row_table" style="cursor: pointer;" >
                       <td class="text-center"><strong>Ingresos Efectivo</strong></td>
-                      <td class="text-center">
-                        <strong>CRC {{number_format($data['resumen']['totalIngresosEfectivoCafeteria'] ?? '0.00',2,".",",")}}</strong>
-                      </td>
+                     
                       <td class="text-center">
                         <strong>CRC {{number_format($data['resumen']['totalIngresosEfectivo'] ?? '0.00',2,".",",")}}</strong>
                       </td>
@@ -119,27 +115,10 @@
                         <strong>CRC {{number_format($data['resumen']['totalIngresosEfectivoGeneral'] ?? '0.00',2,".",",")}}</strong>
                       </td>
                     </tr>
-
-                    <tr class="space_row_table" style="cursor: pointer;" >
-                      <td class="text-center"><strong>Saldo mes anterior</strong></td>
-                      <td class="text-center">
-                        <strong>+ CRC {{number_format($data['resumen']['inicio_mes_cafeteria'] ?? '0.00',2,".",",")}}</strong>
-
-                      </td>
-                      <td class="text-center">
-                        <strong>+ CRC {{number_format($data['resumen']['inicio_mes_panaderia'] ?? '0.00',2,".",",")}}</strong>
-
-                      </td>
-                      <td class="text-center">
-                        <strong>+ CRC {{number_format($data['resumen']['inicio_mes_general'] ?? '0.00',2,".",",")}}</strong>
-                      </td>
-                    </tr>
-                  
+                   
                     <tr class="space_row_table" style="cursor: pointer;" >
                       <td class="text-center"><strong>SubTotal Fondos</strong></td>
-                      <td class="text-center">
-                        <strong>CRC {{number_format($data['resumen']['subTotalFondosCafeteria'] ?? '0.00',2,".",",")}}</strong>
-                      </td>
+                     
                       <td class="text-center">
                         <strong>CRC {{number_format($data['resumen']['subTotalFondos'] ?? '0.00',2,".",",")}}</strong>
                       </td>
@@ -150,9 +129,6 @@
                 
                     <tr class="space_row_table" style="cursor: pointer;" >
                       <td class="text-center"><strong>Total Gastos</strong></td>
-                      <td class="text-center">
-                        <strong>CRC {{number_format($data['resumen']['gastosCafeteria'] ?? '0.00',2,".",",")}}</strong>
-                      </td>
                       <td class="text-center">
                         <strong>CRC {{number_format($data['resumen']['gastos'] ?? '0.00',2,".",",")}}</strong>
                       </td>
@@ -252,21 +228,21 @@
         buttons: [
           {
             extend: 'excel',
-            title: 'SPACE REST',
+            title: 'COFFEE TO GO',
             messageTop:topMesage,
             footer: true,
             messageBottom:bottomMesage,
             filename: 'resumen_contable_el_amanecer'
           }, {
             extend: 'pdf',
-            title: 'SPACE REST',
+            title: 'COFFEE TO GO',
             messageTop:topMesage,
             footer: true,
             messageBottom:bottomMesage,
             filename: 'resumen_contable_el_amanecer'
           }, {
             extend: 'print',
-            title: 'SPACE REST',
+            title: 'COFFEE TO GO',
             messageTop:topMesage,
             footer: true,
             messageBottom:bottomMesage,
@@ -282,7 +258,7 @@
 
 
 @section('script')
-
+<script src="{{asset("assets/bundles/datatables/datatables.min.js")}}"></script>
 <script src="{{asset("assets/js/page/datatables.js")}}"></script>
   <script src="{{asset("assets/js/gastos_admin.js")}}"></script>
   
