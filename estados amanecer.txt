@@ -132,5 +132,19 @@ SELECT null,
 
 
 
+COPIAR EXTRAS A PRODUCTO 
+INSERT INTO `coffee_to_go`.`extra_producto_menu`
+(`id`,
+`descripcion`,
+`precio`,
+`producto`,
+`dsc_grupo`,
+`es_requerido`,
+`multiple`,materia_prima,cant_mp)
+SELECT null,
+pm.descripcion,
+pm.precio,103,pm.dsc_grupo,pm.es_requerido,pm.multiple,pm.materia_prima,pm.cant_mp FROM coffee_to_go.extra_producto_menu pm where pm.producto in (100);
+
+
 
 

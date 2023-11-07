@@ -98,13 +98,13 @@ function generarHTMLProductos() {
         texto = texto + `<div class="col-lg-3 col-md-4 col-sm-6 col-xs-12" style="padding: 10px;">
             <div class="card-mario" style="padding: 10px;">
                 <a href="${prod.url_imagen}"
-                    data-sub-html="${prod.nombre} | CRC  ${ currencyCRFormat(prod.precio)} | ${ prod.descripcion} ">
+                    data-sub-html="${prod.nombre} | ${ currencyCRFormat(prod.precio)} | ${ prod.descripcion} ">
                     <img class="img-responsive thumbnail imagen-cuadrada"
                         src="${prod.url_imagen}"
                         alt="${ prod.descripcion}">
                 </a>
                 <p> <small>${prod.nombre}</small> <br>
-                    <strong>CRC  ${ currencyCRFormat(prod.precio)}</strong>
+                    <strong> ${ currencyCRFormat(prod.precio)}</strong>
                 </p>
             </div>
         </div>`;

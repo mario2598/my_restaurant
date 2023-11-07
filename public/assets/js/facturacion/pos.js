@@ -830,7 +830,7 @@ function generarHTMLProductoOrden(indice, detalle, precio, cantidad, total, codi
                                     <input type="number" step="1" min=1 value="${cantidad}"
                                         readonly
                                        name="quantity" class="quantity-field border-0 text-center w-25"
-                                       style="width:18%!important;">
+                                       style="width:28%!important;">
                                     <input type="button" value="+" class="button-plus border rounded-circle icon-shape icon-sm "
                                      data-field="quantity" onclick="agregarDetalleInpt(${indice},'${codigo}',true)">
                     </div>
