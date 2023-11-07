@@ -1,14 +1,12 @@
-@extends('layout.master')
-
-@section('style')
-    <link rel="stylesheet" href="{{ asset('assets/bundles/datatables/datatables.min.css') }}">
+<?php $__env->startSection('style'); ?>
+    <link rel="stylesheet" href="<?php echo e(asset('assets/bundles/datatables/datatables.min.css')); ?>">
     <link rel="stylesheet"
-        href="{{ asset('assets/bundles/datatables/DataTables-1.10.16/css/dataTables.bootstrap4.min.css') }}">
-@endsection
+        href="<?php echo e(asset('assets/bundles/datatables/DataTables-1.10.16/css/dataTables.bootstrap4.min.css')); ?>">
+<?php $__env->stopSection(); ?>
 
 
-@section('content')
-    @include('layout.sidebar')
+<?php $__env->startSection('content'); ?>
+    <?php echo $__env->make('layout.sidebar', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
     <div class="main-content">
         <section class="section">
@@ -29,32 +27,21 @@
                         </form>
                     </div>
                     <div class="card-body">
-                        <form action="{{ URL::to('informes/ventaXhora/filtro') }}" method="POST">
-                            {{ csrf_field() }}
+                        <form action="<?php echo e(URL::to('informes/ventaGenProductos/filtro')); ?>" method="POST">
+                            <?php echo e(csrf_field()); ?>
+
                             <div class="row" style="width: 100%">
-                                <div class="col-sm-12 col-md-3">
-                                    <div class="form-group">
-                                        <label>Cliente</label>
-                                        <select class="form-control" id="select_cliente" name="cliente">
-                                            <option value="0" selected>Todos</option>
-                                            @foreach ($data['clientes'] as $i)
-                                                <option value="{{ $i->id ?? -1 }}" title="{{ $i->nombre ?? '' }}"
-                                                    @if ($i->id == $data['filtros']['cliente']) selected @endif>{{ $i->nombre ?? '' }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
+                             
                                 <div class="col-sm-12 col-md-3">
                                     <div class="form-group">
                                         <label>Sucursal</label>
                                         <select class="form-control" id="select_sucursal" name="sucursal">
                                             <option value="T" selected>Todos</option>
-                                            @foreach ($data['sucursales'] as $i)
-                                                <option value="{{ $i->id ?? '' }}" title="{{ $i->descripcion ?? '' }}"
-                                                    @if ($i->id == $data['filtros']['sucursal']) selected @endif>
-                                                    {{ $i->descripcion ?? '' }}</option>
-                                            @endforeach
+                                            <?php $__currentLoopData = $data['sucursales']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <option value="<?php echo e($i->id ?? ''); ?>" title="<?php echo e($i->descripcion ?? ''); ?>"
+                                                    <?php if($i->id == $data['filtros']['sucursal']): ?> selected <?php endif; ?>>
+                                                    <?php echo e($i->descripcion ?? ''); ?></option>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </select>
                                     </div>
                                 </div>
@@ -64,9 +51,9 @@
                                         <label>Tipo Producto</label>
                                         <select class="form-control" id="filtroTipoProd" name="filtroTipoProd">
                                             <option value="T" selected>Todos</option>
-                                            <option value="R"  @if ("R" == $data['filtros']['filtroTipoProd']) selected @endif>Restaurante</option>
-                                            <option value="E" @if ("E" == $data['filtros']['filtroTipoProd']) selected @endif >Prdocutos externos</option>
-                                            <option value="P" @if ("P" == $data['filtros']['filtroTipoProd']) selected @endif>Panadería</option>
+                                            <option value="R"  <?php if("R" == $data['filtros']['filtroTipoProd']): ?> selected <?php endif; ?>>Restaurante</option>
+                                            <option value="E" <?php if("E" == $data['filtros']['filtroTipoProd']): ?> selected <?php endif; ?> >Prdocutos externos</option>
+                                            <option value="P" <?php if("P" == $data['filtros']['filtroTipoProd']): ?> selected <?php endif; ?>>Panadería</option>
                                         </select>
                                     </div>
                                 </div>
@@ -76,7 +63,7 @@
                                         <label>Desde</label>
                                         <input type="date" class="form-control" name="desde"
                                         required
-                                            value="{{ $data['filtros']['desde'] ?? '' }}" />
+                                            value="<?php echo e($data['filtros']['desde'] ?? ''); ?>" />
 
                                     </div>
                                 </div>
@@ -84,33 +71,25 @@
                                     <div class="form-group">
                                         <label>Hasta</label>
                                         <input type="date" class="form-control" name="hasta"
-                                            value="{{ $data['filtros']['hasta'] ?? '' }}" />
+                                            value="<?php echo e($data['filtros']['hasta'] ?? ''); ?>" />
                                     </div>
                                 </div>
                                 <div class="col-sm-12 col-md-3">
                                     <div class="form-group">
                                         <label>Descripción producto</label>
                                         <input type="text" name="descProd" onkeyup="filtrarGastosAdmin(this.value)"
-                                            value="{{ $data['filtros']['descProd'] ?? '' }}" class="form-control"
+                                            value="<?php echo e($data['filtros']['descProd'] ?? ''); ?>" class="form-control"
                                             placeholder="Descripción del producto">
 
                                     </div>
                                 </div>
-                                <div class="col-sm-12 col-md-3">
-                                    <div class="form-group">
-                                        <label>Nombre usuario</label>
-                                        <input type="text" name="nombreUsu" onkeyup="filtrarGastosAdmin(this.value)"
-                                            value="{{ $data['filtros']['nombreUsu'] ?? '' }}" class="form-control"
-                                            placeholder="Nombre de usuario">
-
-                                    </div>
-                                </div>
+                             
                                 <div class="col-sm-12 col-md-3">
                                     <div class="form-group">
                                         <label>Hora mínima (formato 24h ,0 - 24)</label>
                                         <input type="number" name="horaDesdeFiltro" 
                                             onkeyup="filtrarGastosAdmin(this.value)"
-                                            value="{{ $data['filtros']['horaDesdeFiltro'] ?? '' }}" class="form-control"
+                                            value="<?php echo e($data['filtros']['horaDesdeFiltro'] ?? ''); ?>" class="form-control"
                                             placeholder="Hora desde">
 
                                     </div>
@@ -121,7 +100,7 @@
                                         <label>Hora máxima (formato 24h, 0 - 24)</label>
                                         <input type="number" name="horaHastaFiltro"
                                             onkeyup="filtrarGastosAdmin(this.value)"
-                                            value="{{ $data['filtros']['horaHastaFiltro'] ?? '' }}" class="form-control"
+                                            value="<?php echo e($data['filtros']['horaHastaFiltro'] ?? ''); ?>" class="form-control"
                                             placeholder="Hora hasta">
 
                                     </div>
@@ -143,52 +122,48 @@
 
                                         <tr>
                                             <th class="text-center">Sucursal</th>
-                                            <th class="text-center">Fecha Venta</th>
-                                            <th class="text-center">
-                                                Hora Venta
-                                            </th>
+                                          
                                             <th class="text-center">
                                                 Producto
                                             </th>
                                             <th class="text-center">Cantidad</th>
                                             <th class="text-center">Precio unidad</th>
                                             <th class="text-center">Tipo producto</th>
-                                            <th class="text-center">Vendedor</th>
-                                            <th class="text-center">Cliente</th>
+                                           
                                             <th class="text-center">Total venta CRC</th>
 
                                         </tr>
                                     </thead>
                                     <tbody id="tbody_generico">
-                                        @foreach ($data['datosReporte'] as $g)
+                                        <?php $__currentLoopData = $data['datosReporte']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $g): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                             <tr class="space_row_table" style="cursor: pointer;">
-                                                <td class="text-center">{{ $g->SUCURSAL ?? '' }}</td>
-                                                <td class="text-center">{{ $g->FECHA ?? '' }}</td>
+                                                <td class="text-center"><?php echo e($g->SUCURSAL ?? ''); ?></td>
+                                               
+                                             
                                                 <td class="text-center">
-                                                    {{ $g->HORA ?? '' }} - {{ $g->HORAFILTRO ?? '' }} (24H)
+                                                    <?php echo e($g->PRODUCTO ?? ''); ?>
+
                                                 </td>
                                                 <td class="text-center">
-                                                    {{ $g->PRODUCTO ?? '' }}
+                                                    <?php echo e($g->CANTIDAD ?? ''); ?>
+
                                                 </td>
                                                 <td class="text-center">
-                                                    {{ $g->CANTIDAD ?? '' }}
+                                                    <?php echo e($g->precio_unidad ?? '0.00'); ?>
+
                                                 </td>
+                                              
                                                 <td class="text-center">
-                                                    {{$g->precio_unidad ?? '0.00'}}
+                                                    <?php echo e($g->tipo_producto ?? ''); ?>
+
                                                 </td>
                                              
                                                 <td class="text-center">
-                                                    {{ $g->tipo_producto ?? '' }}
-                                                </td>
-                                               
-                                                <td class="text-center">
-                                                    {{ $g->CLIENTE ?? '' }}
-                                                </td>
-                                                <td class="text-center">
-                                                     {{$g->total_venta ?? '0.00'}}
+                                                     <?php echo e($g->total_venta ?? '0.00'); ?>
+
                                                 </td>
                                             </tr>
-                                        @endforeach
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
                                     </tbody>
 
@@ -208,58 +183,45 @@
 
         function initialice() {
 
-            var cliente = $("#select_cliente option[value='" + "{{ $data['filtros']['cliente'] }}" + "']").html();
-            var sucursal = $("#select_sucursal option[value='" + "{{ $data['filtros']['sucursal'] }}" + "']").html();
+            var sucursal = $("#select_sucursal option[value='" + "<?php echo e($data['filtros']['sucursal']); ?>" + "']").html();
 
             var topMesage = 'Reporte de Ventas por Hora \n';
             var bottomMesage = 'Reporte de Ventas por Hora filtrado por : \n';
 
-            if ("{{ $data['filtros']['desde'] }}" != '') {
-                topMesage += ' Desde el ' + "{{ $data['filtros']['desde'] }}";
+            if ("<?php echo e($data['filtros']['desde']); ?>" != '') {
+                topMesage += ' Desde el ' + "<?php echo e($data['filtros']['desde']); ?>";
             }
            
-            if ("{{ $data['filtros']['hasta'] }}" != '') {
-                topMesage += ' Hasta el ' + "{{ $data['filtros']['hasta'] }}";
+            if ("<?php echo e($data['filtros']['hasta']); ?>" != '') {
+                topMesage += ' Hasta el ' + "<?php echo e($data['filtros']['hasta']); ?>";
             }
            
-            if ("{{ $data['filtros']['horaDesdeFiltro'] }}" != '' || "{{ $data['filtros']['horaHastaFiltro'] }}" != '') {
+            if ("<?php echo e($data['filtros']['horaDesdeFiltro']); ?>" != '' || "<?php echo e($data['filtros']['horaHastaFiltro']); ?>" != '') {
                 topMesage += ',';
             }
 
-            if ("{{ $data['filtros']['horaDesdeFiltro'] }}" != '') {
-                topMesage += ' A partir de las ' + "{{ $data['filtros']['horaDesdeFiltro'] }} ";
+            if ("<?php echo e($data['filtros']['horaDesdeFiltro']); ?>" != '') {
+                topMesage += ' A partir de las ' + "<?php echo e($data['filtros']['horaDesdeFiltro']); ?> ";
             }
 
-            if ("{{ $data['filtros']['horaHastaFiltro'] }}" != '') {
-              topMesage += ' Hasta las ' + "{{ $data['filtros']['horaHastaFiltro'] }} ";
+            if ("<?php echo e($data['filtros']['horaHastaFiltro']); ?>" != '') {
+              topMesage += ' Hasta las ' + "<?php echo e($data['filtros']['horaHastaFiltro']); ?> ";
             }
 
-            if ("{{ $data['filtros']['horaDesdeFiltro'] }}" != '' || "{{ $data['filtros']['horaHastaFiltro'] }}" != '') {
+            if ("<?php echo e($data['filtros']['horaDesdeFiltro']); ?>" != '' || "<?php echo e($data['filtros']['horaHastaFiltro']); ?>" != '') {
                 topMesage += ' (formato 24h) ';
             }
 
-            topMesage += '.' + '\nSolicitud realizada por ' + "{{ session('usuario')['usuario'] }}" + '.';
+            topMesage += '.' + '\nSolicitud realizada por ' + "<?php echo e(session('usuario')['usuario']); ?>" + '.';
 
-            if ("{{ $data['filtros']['sucursal'] }}" != 'T') {
+            if ("<?php echo e($data['filtros']['sucursal']); ?>" != 'T') {
                 bottomMesage += ' Sucursal [ ' + sucursal + ' ],';
             } else {
                 bottomMesage += ' Sucursal [ Todas ],';
             }
 
-            if ("{{ $data['filtros']['cliente'] }}" != 0) {
-                bottomMesage += ' Cliente [ ' + cliente + ' ],';
-            } else {
-                bottomMesage += 'Cliente [ Tod@s ],';
-            }
-
-            if ("{{ $data['filtros']['nombreUsu'] }}" != '') {
-                bottomMesage += ' Vendedor [ ' + "{{ $data['filtros']['nombreUsu'] }}" + ' ],';
-            } else {
-                bottomMesage += ' Vendedor [ Tod@s ],';
-            }
-
-            if ("{{ $data['filtros']['descProd'] }}" != '') {
-                bottomMesage += ' Descripción Producto [ ' + "{{ $data['filtros']['descProd'] }}" + ' ].';
+            if ("<?php echo e($data['filtros']['descProd']); ?>" != '') {
+                bottomMesage += ' Descripción Producto [ ' + "<?php echo e($data['filtros']['descProd']); ?>" + ' ].';
             } else {
                 bottomMesage += '.';
             }
@@ -278,31 +240,33 @@
                     messageTop: topMesage,
                     footer: true,
                     messageBottom: bottomMesage,
-                    filename: 'reporte_ventasXhora_COFFEETOGO'
+                    filename: 'reporte_ventasGenProductos_COFFETOGO'
                 }, {
                     extend: 'pdf',
                     title: 'COFFEE TO GO',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
-                    filename: 'reporte_ventasXhora_COFFEETOGO'
+                    filename: 'reporte_ventasGenProductos_COFFETOGO'
                 }, {
                     extend: 'print',
                     title: 'COFFEE TO GO',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
-                    filename: 'reporte_ventasXhora_COFFEETOGO'
+                    filename: 'reporte_ventasGenProductos_COFFETOGO'
                 }]
             });
 
         }
     </script>
-@endsection
+<?php $__env->stopSection(); ?>
 
 
-@section('script')
-    <script src="{{ asset('assets/bundles/datatables/datatables.min.js') }}"></script>
-    <script src="{{ asset('assets/js/page/datatables.js') }}"></script>
-    <script src="{{ asset('assets/js/gastos_admin.js') }}"></script>
-@endsection
+<?php $__env->startSection('script'); ?>
+    <script src="<?php echo e(asset('assets/bundles/datatables/datatables.min.js')); ?>"></script>
+    <script src="<?php echo e(asset('assets/js/page/datatables.js')); ?>"></script>
+    <script src="<?php echo e(asset('assets/js/gastos_admin.js')); ?>"></script>
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layout.master', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\Proyectos\2023\Laravel\CoffeeToGo\resources\views/informes/ventasGenProductos.blade.php ENDPATH**/ ?>

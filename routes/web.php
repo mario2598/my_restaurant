@@ -152,6 +152,9 @@ Route::get('informes/resumencontable', 'InformesController@goResumenContable');
 Route::get('informes/ventaXhora', 'InformesController@goVentaXhora');
 Route::post('informes/ventaXhora/filtro', 'InformesController@goVentaXhoraFiltro');
 
+Route::get('informes/ventaGenProductos', 'InformesController@goVentaGenProductos');
+Route::post('informes/ventaGenProductos/filtro', 'InformesController@goVentaGenProductosFiltro');
+
 /******************Bodega **************************** */
 Route::get('bodega/productos', 'ProductosController@goProductos');
 Route::post('bodega/productos/filtro', 'ProductosController@goProductosFiltro');

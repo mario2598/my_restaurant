@@ -29,22 +29,10 @@
                         </form>
                     </div>
                     <div class="card-body">
-                        <form action="{{ URL::to('informes/ventaXhora/filtro') }}" method="POST">
+                        <form action="{{ URL::to('informes/ventaGenProductos/filtro') }}" method="POST">
                             {{ csrf_field() }}
                             <div class="row" style="width: 100%">
-                                <div class="col-sm-12 col-md-3">
-                                    <div class="form-group">
-                                        <label>Cliente</label>
-                                        <select class="form-control" id="select_cliente" name="cliente">
-                                            <option value="0" selected>Todos</option>
-                                            @foreach ($data['clientes'] as $i)
-                                                <option value="{{ $i->id ?? -1 }}" title="{{ $i->nombre ?? '' }}"
-                                                    @if ($i->id == $data['filtros']['cliente']) selected @endif>{{ $i->nombre ?? '' }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
+                             
                                 <div class="col-sm-12 col-md-3">
                                     <div class="form-group">
                                         <label>Sucursal</label>
@@ -96,15 +84,7 @@
 
                                     </div>
                                 </div>
-                                <div class="col-sm-12 col-md-3">
-                                    <div class="form-group">
-                                        <label>Nombre usuario</label>
-                                        <input type="text" name="nombreUsu" onkeyup="filtrarGastosAdmin(this.value)"
-                                            value="{{ $data['filtros']['nombreUsu'] ?? '' }}" class="form-control"
-                                            placeholder="Nombre de usuario">
-
-                                    </div>
-                                </div>
+                             
                                 <div class="col-sm-12 col-md-3">
                                     <div class="form-group">
                                         <label>Hora mínima (formato 24h ,0 - 24)</label>
@@ -143,18 +123,14 @@
 
                                         <tr>
                                             <th class="text-center">Sucursal</th>
-                                            <th class="text-center">Fecha Venta</th>
-                                            <th class="text-center">
-                                                Hora Venta
-                                            </th>
+                                          
                                             <th class="text-center">
                                                 Producto
                                             </th>
                                             <th class="text-center">Cantidad</th>
                                             <th class="text-center">Precio unidad</th>
                                             <th class="text-center">Tipo producto</th>
-                                            <th class="text-center">Vendedor</th>
-                                            <th class="text-center">Cliente</th>
+                                           
                                             <th class="text-center">Total venta CRC</th>
 
                                         </tr>
@@ -163,10 +139,8 @@
                                         @foreach ($data['datosReporte'] as $g)
                                             <tr class="space_row_table" style="cursor: pointer;">
                                                 <td class="text-center">{{ $g->SUCURSAL ?? '' }}</td>
-                                                <td class="text-center">{{ $g->FECHA ?? '' }}</td>
-                                                <td class="text-center">
-                                                    {{ $g->HORA ?? '' }} - {{ $g->HORAFILTRO ?? '' }} (24H)
-                                                </td>
+                                               
+                                             
                                                 <td class="text-center">
                                                     {{ $g->PRODUCTO ?? '' }}
                                                 </td>
@@ -176,14 +150,11 @@
                                                 <td class="text-center">
                                                     {{$g->precio_unidad ?? '0.00'}}
                                                 </td>
-                                             
+                                              
                                                 <td class="text-center">
                                                     {{ $g->tipo_producto ?? '' }}
                                                 </td>
-                                               
-                                                <td class="text-center">
-                                                    {{ $g->CLIENTE ?? '' }}
-                                                </td>
+                                             
                                                 <td class="text-center">
                                                      {{$g->total_venta ?? '0.00'}}
                                                 </td>
@@ -208,10 +179,9 @@
 
         function initialice() {
 
-            var cliente = $("#select_cliente option[value='" + "{{ $data['filtros']['cliente'] }}" + "']").html();
             var sucursal = $("#select_sucursal option[value='" + "{{ $data['filtros']['sucursal'] }}" + "']").html();
 
-            var topMesage = 'Reporte de Ventas por Hora \n';
+            var topMesage = 'Reporte de Ventas Productos \n';
             var bottomMesage = 'Reporte de Ventas por Hora filtrado por : \n';
 
             if ("{{ $data['filtros']['desde'] }}" != '') {
@@ -246,18 +216,6 @@
                 bottomMesage += ' Sucursal [ Todas ],';
             }
 
-            if ("{{ $data['filtros']['cliente'] }}" != 0) {
-                bottomMesage += ' Cliente [ ' + cliente + ' ],';
-            } else {
-                bottomMesage += 'Cliente [ Tod@s ],';
-            }
-
-            if ("{{ $data['filtros']['nombreUsu'] }}" != '') {
-                bottomMesage += ' Vendedor [ ' + "{{ $data['filtros']['nombreUsu'] }}" + ' ],';
-            } else {
-                bottomMesage += ' Vendedor [ Tod@s ],';
-            }
-
             if ("{{ $data['filtros']['descProd'] }}" != '') {
                 bottomMesage += ' Descripción Producto [ ' + "{{ $data['filtros']['descProd'] }}" + ' ].';
             } else {
@@ -278,21 +236,21 @@
                     messageTop: topMesage,
                     footer: true,
                     messageBottom: bottomMesage,
-                    filename: 'reporte_ventasXhora_COFFEETOGO'
+                    filename: 'reporte_ventasGenProductos_COFFETOGO'
                 }, {
                     extend: 'pdf',
                     title: 'COFFEE TO GO',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
-                    filename: 'reporte_ventasXhora_COFFEETOGO'
+                    filename: 'reporte_ventasGenProductos_COFFETOGO'
                 }, {
                     extend: 'print',
                     title: 'COFFEE TO GO',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
-                    filename: 'reporte_ventasXhora_COFFEETOGO'
+                    filename: 'reporte_ventasGenProductos_COFFETOGO'
                 }]
             });
 

@@ -69,7 +69,117 @@ class InformesController extends Controller
         return view('informes.resumenContable',compact('data'));
     }
 
+    public function goVentaGenProductos(){
+        if(!$this->validarSesion("ventaGenProductos")){
+            $this->setMsjSeguridad();
+            return redirect('/');
+        }
+       
+        $filtros = [
+            'sucursal' => 'T',
+            'hasta' => "",
+            'desde' => "",
+            'descProd' => "",
+            'horaDesdeFiltro' => "",
+            'filtroTipoProd' => "",
+            'horaHastaFiltro' => ""
+        ];
 
+        
+        $data = [
+             'menus'=> $this->cargarMenus(),
+             'datosReporte'=> [],
+            'filtros' =>$filtros,
+            'sucursales' => $this->getSucursalesAndBodegas(),
+            'panel_configuraciones' => $this->getPanelConfiguraciones()
+        ];
+        
+        return view('informes.ventasGenProductos',compact('data'));
+    }
+
+    
+    public function goVentaGenProductosFiltro(Request $request)
+    {
+        if (!$this->validarSesion("ventaGenProductos")) {
+            $this->setMsjSeguridad();
+            return redirect('/');
+        }
+
+        $filtroSucursal = $request->input('sucursal');
+        $filtroTipoProd = $request->input('filtroTipoProd');
+        $filtroDescProd = $request->input('descProd');
+        $hasta = $request->input('hasta');
+        $desde = $request->input('desde');
+        $horaHasta = $request->input('horaHastaFiltro');
+        $horaDesde = $request->input('horaDesdeFiltro');
+
+        $query = "SELECT do.nombre_producto PRODUCTO" .
+        ",suc.descripcion as SUCURSAL, ".
+        "sum(do.cantidad) ".
+        "CANTIDAD, do.precio_unidad, Sum(do.cantidad * do.precio_unidad) as total_venta,".
+        " case do.tipo_producto when 'E' then 'Externo' else  'Cafetería'  end as tipo_producto FROM coffee_to_go.detalle_orden ".
+        " do join coffee_to_go.orden o on do.orden = o.id ".
+        " join coffee_to_go.usuario usu on usu.id = o.cajero ".
+        " left join coffee_to_go.sucursal suc on suc.id = o.sucursal ".
+        " left join coffee_to_go.cliente cli on cli.id = o.cliente ";
+       $where = " where o.estado <> " . SisEstadoController::getIdEstadoByCodGeneral('ORD_ANULADA');
+
+        if (!$this->isNull($filtroSucursal) && $filtroSucursal != 'T') {
+            $where .= " and suc.id =".$filtroSucursal;
+        }
+
+        if ($filtroTipoProd != '' && $filtroTipoProd != 'T') {
+            $where .= " and do.tipo_producto ='".$filtroTipoProd."' ";
+        }
+
+        if (!$this->isNull($desde)) {
+            $where .= " and o.fecha_inicio > '".$desde."'";
+        }
+
+        if (!$this->isNull($hasta)) {
+            $mod_date = strtotime($hasta . "+ 1 days");
+            $mod_date = date("Y-m-d", $mod_date);
+            $where .= " and o.fecha_inicio < '".$mod_date."'";
+        }
+
+
+        if ($filtroDescProd != ''  && !$this->isNull($filtroDescProd)) {
+            $where .= " and  UPPER(do.nombre_producto) like UPPER('%".$filtroDescProd."%')";
+        }
+
+
+        if (!$this->isNull($horaHasta) && $horaHasta < 24  &&  $horaHasta >= 0) {
+            $where .= " and HOUR(o.fecha_inicio) <= ".$horaHasta;
+        }
+
+        
+        if (!$this->isNull($horaDesde) && $horaDesde < 24  &&  $horaDesde >= 0) {
+            $where .= " and HOUR(o.fecha_inicio) >= ".$horaDesde;
+        }
+       
+        $query .= $where . " group by do.nombre_producto,suc.descripcion,do.precio_unidad,coffee_to_go.do.tipo_producto order by 3 DESC";
+
+        $filtros = [
+            'sucursal' => $filtroSucursal,
+            'hasta' => $hasta,
+            'desde' => $desde,
+            'descProd' => $filtroDescProd,
+            'horaDesdeFiltro' => $horaDesde,
+            'filtroTipoProd' => $filtroTipoProd,
+            'horaHastaFiltro' => $horaHasta
+        ];
+ 
+        $data = [
+            'menus'=> $this->cargarMenus(),
+            'datosReporte'=> DB::select($query),
+           'filtros' =>$filtros,
+           'sucursales' => $this->getSucursalesAndBodegas(),
+           'panel_configuraciones' => $this->getPanelConfiguraciones()
+       ];
+       
+       return view('informes.ventasGenProductos',compact('data'));
+
+    }
     
     public function goVentaXhora(){
         if(!$this->validarSesion("ventaXhora")){
