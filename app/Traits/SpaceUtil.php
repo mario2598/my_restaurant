@@ -870,7 +870,6 @@ trait SpaceUtil
       $totalPagoTarjeta = $totalPagoTarjeta + $porcentaje_cobro_tarjeta_aux;
 
       $totalIngresos = $totalIngresos + $i->total;
-      $totalIngresos = $totalIngresos - $porcentaje_cobro_tarjeta_aux;
     }
 
     $parametros = $this->getParametrosGenerales();

@@ -89,6 +89,13 @@
                         <strong>CRC {{number_format($data['resumen']['totalIngresosTarjetaGeneral'] ?? '0.00',2,".",",")}}</strong>
                       </td>
                     </tr>
+
+                    <tr class="space_row_table" style="cursor: pointer;" >
+                      <td class="text-center"><strong>Rebajo por tarjetas</strong></td>
+                      <td class="text-center">
+                        <strong>- CRC {{number_format($data['resumen']['totalPagoTarjetaGeneral'] ?? '0.00',2,".",",")}}</strong>
+                      </td>
+                    </tr>
                  
                     <tr class="space_row_table" style="cursor: pointer;" >
                       <td class="text-center"><strong>Ingresos Efectivo</strong></td>
@@ -128,12 +135,7 @@
                         
                       </td>
                     </tr>
-                    <tr class="space_row_table" style="cursor: pointer;" >
-                      <td class="text-center"><strong>Rebajo por tarjetas</strong></td>
-                      <td class="text-center">
-                        <strong>- CRC {{number_format($data['resumen']['totalPagoTarjetaGeneral'] ?? '0.00',2,".",",")}}</strong>
-                      </td>
-                    </tr>
+                    
                   
                   </tbody>
                   <tfoot> 
