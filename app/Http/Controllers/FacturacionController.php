@@ -268,7 +268,7 @@ class FacturacionController extends Controller
             $prods =   DB::table("producto_menu")
                 ->where('categoria', $categoria->id)
                 ->where('producto_menu.estado', "A")
-                ->where('pm_x_sucursal.sucursal', $this->getUsuarioSucursal()) //TODO, verificar método de obtener restaurante
+                ->where('pm_x_sucursal.sucursal', $idSucursal) //TODO, verificar método de obtener restaurante
                 ->join('impuesto', 'producto_menu.impuesto', '=', 'impuesto.id')
                 ->join('pm_x_sucursal', 'producto_menu.id', '=', 'pm_x_sucursal.producto_menu')
                 ->select(

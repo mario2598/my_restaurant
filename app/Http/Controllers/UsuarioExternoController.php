@@ -40,7 +40,7 @@ class UsuarioExternoController extends Controller
     public function goMenuMobile()
     {
         $contro = new FacturacionController();
-        $categorias =  $contro->getCategoriasTodosProductosMobile();
+        $categorias =  $contro->getCategoriasTodosProductos(1);
        
         $data = [
             'categorias' =>$categorias
