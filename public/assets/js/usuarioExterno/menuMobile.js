@@ -40,12 +40,12 @@ function generarHTMLTipos() {
         clase = "class='active'";
     }
 
-    texto2 = texto2 + `<li style="background-color: grey"> <a href="https://api.whatsapp.com/send?phone=50664499415&text=¡Hola! Me gustaría realizar un pedido, ¿cómo puedo hacerlo?" target="_blank"
+    texto2 = texto2 + `<li > <strong> <a href="https://api.whatsapp.com/send?phone=50664499415&text=¡Hola! Me gustaría realizar un pedido, ¿cómo puedo hacerlo?" target="_blank"
     class="nav-link has-dropdown">
-                   <i  class="fab fa-whatsapp"
+                  <i  class="fab fa-whatsapp"
                    style="font-size:24px;margin-left:-1px;"></i>
                    <span>Ordenar en línea</span>
-                   </a>
+                   </a> </strong>
                  </li>
                   <li  onclick="seleccionarCategorias()"> <a href="#"
      class="nav-link has-dropdown">
