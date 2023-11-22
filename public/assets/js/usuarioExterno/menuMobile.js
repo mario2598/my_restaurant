@@ -44,7 +44,7 @@ function generarHTMLTipos() {
     class="nav-link has-dropdown">
                    <i  class="fab fa-whatsapp"
                    style="font-size:24px;margin-left:-1px;"></i>
-                   <span>Ordenar algo por WhatsApp</span>
+                   <span>Ordenar en línea</span>
                    </a>
                  </li>
                   <li  onclick="seleccionarCategorias()"> <a href="#"
