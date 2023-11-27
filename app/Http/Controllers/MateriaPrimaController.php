@@ -178,7 +178,7 @@ class MateriaPrimaController extends Controller
             ->leftjoin('sucursal', 'sucursal.id', '=', 'mt_x_sucursal.sucursal')
             ->leftjoin('proveedor', 'proveedor.id', '=', 'materia_prima.proveedor')
             ->select('materia_prima.id', 'mt_x_sucursal.id as ms_id', 'materia_prima.nombre', 'materia_prima.unidad_medida', 'mt_x_sucursal.cantidad', 'proveedor.nombre as nombre_prov')
-            ->groupBy('materia_prima.id', 'mt_x_sucursal.id',  'materia_prima.nombre',  'mt_x_sucursal.cantidad', 'proveedor.nombre','materia_prima.unidad_medida')
+            ->groupBy('materia_prima.id', 'mt_x_sucursal.id',  'materia_prima.nombre',  'mt_x_sucursal.cantidad', 'proveedor.nombre', 'materia_prima.unidad_medida')
             ->where('mt_x_sucursal.sucursal', '=', $sucursal)
             ->get();
 
@@ -198,7 +198,7 @@ class MateriaPrimaController extends Controller
     }
 
 
-    
+
     public function getProductosMatPrima()
     {
         return  DB::table('materia_prima')
@@ -442,11 +442,41 @@ class MateriaPrimaController extends Controller
                     ->update([
                         'cantidad' => $cantidad_agregar, 'ultima_modificacion' => $fecha_actual, 'usuario_modifica' => session('usuario')['id']
                     ]);
+
+                $cantidadInventario = $producto->cantidad;
+                $cantidadDisminuye = 0;
+                $texto = "";
+                if ($cantidadInventario < $cantidad_agregar) {
+                    $texto = "Aumento de inventario materia prima en " . ($cantidad_agregar - $cantidadInventario) . " " . $producto_inv->unidad_medida;
+                    $cantidadDisminuye = ($cantidad_agregar - $cantidadInventario);
+                } else {
+                    $texto = "Disminuye inventario materia prima en " . ($cantidadInventario  - $cantidad_agregar) . " " . $producto_inv->unidad_medida;
+                    $cantidadDisminuye = ($cantidadInventario  - $cantidad_agregar);
+                }
+
+                $detalleMp =  'Materia Prima : ' . $producto_inv->nombre .
+                    ' | Detalle :' . $texto;
             } else { // Nuevo usuario
                 $id = DB::table('mt_x_sucursal')->insertGetId([
-                    'id' => null, 'sucursal' => $sucursal, 'materia_prima' => $producto_externo, 'cantidad' => $cantidad_agregar, 'ultima_modificacion' => $fecha_actual, 'usuario_modifica' => session('usuario')['id']
+                    'id' => null, 'sucursal' => $sucursal, 'materia_prima' => $producto_externo,
+                    'cantidad' => $cantidad_agregar, 'ultima_modificacion' => $fecha_actual, 'usuario_modifica' => session('usuario')['id']
                 ]);
+
+                $cantidadInventario = 0;
+                $cantidadDisminuye = $cantidad_agregar;
+                $texto = "Ingreso en inventario en " . ($cantidad_agregar - $cantidadInventario) . " " . $producto_inv->unidad_medida;
+
+                $detalleMp =  'Producto Externo : ' . $producto_inv->nombre .
+                    ' | Detalle :' . $texto;
             }
+
+
+
+            DB::table('bit_materia_prima')->insert([
+                'id' => null, 'usuario' => session('usuario')['id'],
+                'materia_prima' => $producto_externo, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
+                'cantidad_ajuste' => $cantidadDisminuye, 'cantidad_nueva' =>  $cantidad_agregar
+            ]);
 
             DB::commit();
 

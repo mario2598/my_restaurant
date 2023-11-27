@@ -1265,7 +1265,7 @@ class FacturacionController extends Controller
             DB::table('bit_materia_prima')->insert([
                 'id' => null, 'usuario' => session('usuario')['id'],
                 'materia_prima' => $i->materia_prima, 'detalle' => $detalleMp,'cantidad_anterior'=>  $cantidadInventario ?? 0,
-                'cantidad_rebaja'=> $cantidadRebajar ,'cantidad_nueva'=>  $cantAux
+                'cantidad_ajuste'=> $cantidadRebajar ,'cantidad_nueva'=>  $cantAux
             ]);
 
         }
@@ -1289,20 +1289,19 @@ class FacturacionController extends Controller
                         ->where('mt_x_sucursal.sucursal', '=', $this->getUsuarioSucursal())
                         ->where('mt_x_sucursal.materia_prima', '=', $extraAux->materia_prima)
                         ->sum('mt_x_sucursal.cantidad') ?? 0;
-
+                        $cantAux =  (($cantidadInventario ?? 0) - ($extraAux->cant_mp  ?? 0));
                     DB::table('mt_x_sucursal')
                         ->where('sucursal', '=', $this->getUsuarioSucursal())
                         ->where('materia_prima', '=', $extraAux->materia_prima)
-                        ->update(['cantidad' =>  $cantidadInventario - ($extraAux->cant_mp ?? 0)]);
-
-                    $cantAux = $cantidadInventario ?? 0 - ($extraAux->cant_mp ?? 0);
+                        ->update(['cantidad' =>  $cantAux]);
+                     
                     $detalleMp = 'Materia Prima : ' . $materia_prima->nombre .
                         ' | Detalle : Rebajo por venta de extra : ' . $e->descripcion_extra .
                          ' | Producto :' . $codigoProductoRebajar . '-' . $detalle->nombre_producto ;
                     DB::table('bit_materia_prima')->insert([
                         'id' => null, 'usuario' => session('usuario')['id'],
                         'materia_prima' => $extraAux->materia_prima, 'detalle' => $detalleMp,'cantidad_anterior'=>  $cantidadInventario ?? 0,
-                        'cantidad_rebaja'=> ($extraAux->cant_mp ?? 0) ,'cantidad_nueva'=>  $cantAux
+                        'cantidad_ajuste'=> ($extraAux->cant_mp ?? 0) ,'cantidad_nueva'=>  $cantAux
                     ]);
                 }
             }

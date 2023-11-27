@@ -381,10 +381,9 @@ class ProductosExternosController extends Controller
             } else {
                 if ($actualizar) {
                     $path = $producto->url_imagen;
-                }else{
+                } else {
                     $path = "";
                 }
-               
             }
             try {
                 DB::beginTransaction();
@@ -395,14 +394,14 @@ class ProductosExternosController extends Controller
                         ->update([
                             'nombre' => $nombre, 'categoria' => $categoria, 'precio' => $precio,
                             'impuesto' => $impuesto, 'precio_compra' => $precio_compra, 'codigo_barra' => $codigo_barra, 'proveedor' => $proveedor,
-                             'descripcion' => $descripcion, 'url_imagen' => $path,'posicion_menu' => $posicion_menu
+                            'descripcion' => $descripcion, 'url_imagen' => $path, 'posicion_menu' => $posicion_menu
                         ]);
                 } else { // Nuevo usuario
                     $id = DB::table('producto_externo')->insertGetId([
                         'id' => null, 'nombre' => $nombre, 'categoria' => $categoria, 'precio' => $precio,
-                        'impuesto' => $impuesto, 'precio_compra' => $precio_compra, 'codigo_barra' => $codigo_barra, 
-                        'proveedor' => $proveedor, 'estado' => 'A', 'descripcion' => $descripcion ?? "", 
-                        'url_imagen' => $path,'posicion_menu' => $posicion_menu
+                        'impuesto' => $impuesto, 'precio_compra' => $precio_compra, 'codigo_barra' => $codigo_barra,
+                        'proveedor' => $proveedor, 'estado' => 'A', 'descripcion' => $descripcion ?? "",
+                        'url_imagen' => $path, 'posicion_menu' => $posicion_menu
                     ]);
                 }
 
@@ -459,7 +458,7 @@ class ProductosExternosController extends Controller
         if ($producto_externoAux == null) { //  
             return $this->responseAjaxServerError("Debe seleccionar el producto", []);
         }
-     
+
 
         if ($id < 1 || $this->isNull($id)) { //
             $productoExistente = DB::table('pe_x_sucursal')->select('pe_x_sucursal.*')->where('producto_externo', '=', $producto_externo)
@@ -487,12 +486,42 @@ class ProductosExternosController extends Controller
                     ->update([
                         'cantidad' => $cantidad_agregar, 'ultima_modificacion' => $fecha_actual, 'usuario_modifica' => session('usuario')['id']
                     ]);
+
+                $cantidadInventario = $producto->cantidad;
+                $cantidadDisminuye = 0;
+                $texto = "";
+                if ($cantidadInventario < $cantidad_agregar) {
+                    $texto = "Aumento de inventario en " . ($cantidad_agregar - $cantidadInventario) . " unidades";
+                    $cantidadDisminuye = ($cantidad_agregar - $cantidadInventario);
+                } else {
+                    $texto = "Disminuye inventario en " . ($cantidadInventario  - $cantidad_agregar) . " unidades";
+                    $cantidadDisminuye = ($cantidadInventario  - $cantidad_agregar);
+                }
+
+                $detalleMp =  'Producto Externo : ' . $producto_externoAux->nombre .
+                    ' | Detalle :' . $texto;
+
+
             } else { // Nuevo usuario
                 $id = DB::table('pe_x_sucursal')->insertGetId([
-                    'id' => null, 'sucursal' => $sucursal, 'producto_externo' => $producto_externo, 'cantidad' => $cantidad_agregar, 'ultima_modificacion' => $fecha_actual, 'usuario_modifica' => session('usuario')['id']
+                    'id' => null, 'sucursal' => $sucursal, 'producto_externo' => $producto_externo, 'cantidad' => $cantidad_agregar,
+                    'ultima_modificacion' => $fecha_actual, 'usuario_modifica' => session('usuario')['id']
                 ]);
-            }
 
+                $cantidadInventario = 0;
+                $cantidadDisminuye = $cantidad_agregar;
+                $texto = "Ingreso en inventario en ". ($cantidad_agregar - $cantidadInventario) . " unidades";
+               
+                $detalleMp =  'Producto Externo : ' . $producto_externoAux->nombre .
+                    ' | Detalle :' . $texto;
+
+            }
+            DB::table('bit_inv_producto_externo')->insert([
+                'id' => null, 'usuario' => session('usuario')['id'],
+                'producto' => $producto_externo, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
+                'cantidad_ajustada' => $cantidadDisminuye, 'cantidad_nueva' =>  $cantidad_agregar
+            ]);
+            
             DB::commit();
 
 
@@ -501,7 +530,7 @@ class ProductosExternosController extends Controller
             } else { // Nuevo usuario
                 $this->setSuccess('Agregar Producto', 'Producto agregado correctamente.');
             }
-            return $this->responseAjaxSuccess("","");
+            return $this->responseAjaxSuccess("", "");
         } catch (QueryException $ex) {
             DB::rollBack();
             return $this->responseAjaxServerError("Algo salio mal...", []);
@@ -617,7 +646,7 @@ class ProductosExternosController extends Controller
             $this->setMsjSeguridad();
             return redirect('/');
         }
-      
+
         $filtros = [
             'sucursal' => '',
 
@@ -695,6 +724,4 @@ class ProductosExternosController extends Controller
 
         return $productos;
     }
-
-   
 }
