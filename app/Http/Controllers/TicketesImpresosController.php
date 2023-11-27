@@ -36,7 +36,7 @@ class TicketesImpresosController extends Controller
         }
         $orden = $res['orden'];
         $detalles = $orden->detalles;
-        $tamPdf = 110;
+        $tamPdf = 105;
         $aumento = count($detalles) * 10;
         $aumento2 = 0;
         foreach ($detalles as $d) {
@@ -157,14 +157,14 @@ class TicketesImpresosController extends Controller
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 4, 'SubTotal', 0);
         $this->pdf->setX(52);
-        $this->pdf->Cell(63, 4, number_format($orden->subtotal - $orden->impuesto, 2, ".", ","), 0);
+        $this->pdf->Cell(63, 4, number_format($orden->subtotal, 2, ".", ","), 0);
 
-        $this->pdf->Ln(4);
+     /*  $this->pdf->Ln(4);
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 4, 'Impuesto (IVA)', 0);
         $this->pdf->setX(52);
         $this->pdf->Cell(63, 4, number_format($orden->impuesto, 2, ".", ","), 0);
-    
+    */
         
         $this->pdf->Ln(4);
         $this->pdf->setX(6);
