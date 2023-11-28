@@ -101,6 +101,7 @@
                                             <th class="text-center">Sucursal</th>
                                             <th class="text-center">Fecha/Hora </th>
                                             <th class="text-center">Producto</th>
+                                            <th class="text-center">Detalle</th>
                                             <th class="text-center">Usuario</th>
                                             <th class="text-center">Cantidad anterior</th>
                                             <th class="text-center">Cantidad ajustada</th>
@@ -118,7 +119,10 @@
                                                     {{ $g->nombreProducto ?? '' }}
                                                 </td>
                                                 <td class="text-center">
-                                                    {{$g->nombreUsuario ?? '0.00'}}
+                                                    {{ $g->detalle ?? '' }}
+                                                </td>
+                                                <td class="text-center">
+                                                    {{$g->nombreUsuario ?? ''}}
                                                 </td>
                                               
                                                 <td class="text-center">
