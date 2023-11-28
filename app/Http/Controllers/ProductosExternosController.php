@@ -516,10 +516,11 @@ class ProductosExternosController extends Controller
                     ' | Detalle :' . $texto;
 
             }
+            $fechaActual = date("Y-m-d H:i:s");
             DB::table('bit_inv_producto_externo')->insert([
                 'id' => null, 'usuario' => session('usuario')['id'],
                 'producto' => $producto_externo, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                'cantidad_ajustada' => $cantidadDisminuye, 'cantidad_nueva' =>  $cantidad_agregar
+                'cantidad_ajustada' => $cantidadDisminuye, 'cantidad_nueva' =>  $cantidad_agregar,'fecha' => $fechaActual 
             ]);
             
             DB::commit();

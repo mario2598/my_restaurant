@@ -470,12 +470,13 @@ class MateriaPrimaController extends Controller
                     ' | Detalle :' . $texto;
             }
 
+            $fechaActual = date("Y-m-d H:i:s");
 
 
             DB::table('bit_materia_prima')->insert([
                 'id' => null, 'usuario' => session('usuario')['id'],
                 'materia_prima' => $producto_externo, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                'cantidad_ajuste' => $cantidadDisminuye, 'cantidad_nueva' =>  $cantidad_agregar
+                'cantidad_ajuste' => $cantidadDisminuye, 'cantidad_nueva' =>  $cantidad_agregar,'fecha' => $fechaActual 
             ]);
 
             DB::commit();

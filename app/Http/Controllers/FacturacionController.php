@@ -968,62 +968,62 @@ class FacturacionController extends Controller
         $mto_efectivo = $request->input("mto_efectivo");
         $mto_tarjeta = $request->input("mto_tarjeta");
 
-        //try {
-        DB::beginTransaction();
+        try {
+            DB::beginTransaction();
 
 
-        $id_orden = DB::table('orden')->insertGetId([
-            'id' => null, 'numero_orden' => $this->getConsecutivoNuevaOrdenSucursal($this->getUsuarioSucursal()),
-            'tipo' => null, 'fecha_fin' => $fechaActual, 'fecha_inicio' => $fechaActual, 'cliente' => null,
-            'nombre_cliente' => $cliente, 'estado' => null, 'total' => $infoFacturacionFinal['total'], 'total_con_descuento' => $infoFacturacionFinal['total_pagar'], 'subtotal' => $infoFacturacionFinal['subtotal'],
-            'impuesto' => $infoFacturacionFinal['montoImpuestos'], 'descuento' => $totalDescuentoGen,
-            'cajero' => session('usuario')['id'], 'monto_sinpe' => $mto_sinpe, 'monto_tarjeta' =>  $mto_tarjeta, 'monto_efectivo' => $mto_efectivo,
-            'factura_electronica' => 'N', 'ingreso' => null, 'sucursal' => $this->getUsuarioSucursal(),
-            'fecha_preparado' => $fechaActual, 'fecha_entregado' => $fechaActual,
-            'cocina_terminado' => 'N', 'bebida_terminado' => 'N', 'caja_cerrada' => 'N', 'pagado' => 1,
-            'estado' => SisEstadoController::getIdEstadoByCodGeneral('ORD_EN_PREPARACION'),
-            'periodo' => date('Y'), 'cierre_caja' => CajaController::getIdCaja(session('usuario')['id'], $this->getUsuarioSucursal())
-        ]);
-        $this->aumentarConsecutivoOrden($this->getUsuarioSucursal());
+            $id_orden = DB::table('orden')->insertGetId([
+                'id' => null, 'numero_orden' => $this->getConsecutivoNuevaOrdenSucursal($this->getUsuarioSucursal()),
+                'tipo' => null, 'fecha_fin' => $fechaActual, 'fecha_inicio' => $fechaActual, 'cliente' => null,
+                'nombre_cliente' => $cliente, 'estado' => null, 'total' => $infoFacturacionFinal['total'], 'total_con_descuento' => $infoFacturacionFinal['total_pagar'], 'subtotal' => $infoFacturacionFinal['subtotal'],
+                'impuesto' => $infoFacturacionFinal['montoImpuestos'], 'descuento' => $totalDescuentoGen,
+                'cajero' => session('usuario')['id'], 'monto_sinpe' => $mto_sinpe, 'monto_tarjeta' =>  $mto_tarjeta, 'monto_efectivo' => $mto_efectivo,
+                'factura_electronica' => 'N', 'ingreso' => null, 'sucursal' => $this->getUsuarioSucursal(),
+                'fecha_preparado' => $fechaActual, 'fecha_entregado' => $fechaActual,
+                'cocina_terminado' => 'N', 'bebida_terminado' => 'N', 'caja_cerrada' => 'N', 'pagado' => 1,
+                'estado' => SisEstadoController::getIdEstadoByCodGeneral('ORD_EN_PREPARACION'),
+                'periodo' => date('Y'), 'cierre_caja' => CajaController::getIdCaja(session('usuario')['id'], $this->getUsuarioSucursal())
+            ]);
+            $this->aumentarConsecutivoOrden($this->getUsuarioSucursal());
 
-        foreach ($detallesGuardar as $det) {
-            $d = $det['detalle'];
-            if ($d['cantidad'] > 0) {
-                $producto = $d['producto'];
-                $det_id = DB::table('detalle_orden')->insertGetId([
-                    'id' => null, 'cantidad' => $d['cantidad'],
-                    'nombre_producto' => $producto['nombre'], 'codigo_producto' => $producto['codigo'],
-                    'precio_unidad' => $d['precio_unidad'],
-                    'impuesto' => $det['montoIva'], 'total' => $det['totalGen'], 'descuento' => $det['descuento'], 'subtotal' => $det['subTotal'], 'total_extras' => $det['totalExtras'],
-                    'orden' => $id_orden, 'tipo_producto' => $d['tipo'], 'servicio_mesa' => $d['impuestoServicio'], 'observacion' => $d['observacion'],
-                    'tipo_comanda' => $d['tipoComanda']
-                ]);
-                foreach ($det['extras'] ?? [] as $extra) {
-                    $ext_id = DB::table('extra_detalle_orden')->insertGetId([
-                        'id' => null, 'detalle' => $det_id, 'extra' => $extra['id'],
-                        'orden' => $id_orden, 'descripcion_extra' => $extra['descripcion'],
-                        'total' => $extra['precio'] * $d['cantidad']
+            foreach ($detallesGuardar as $det) {
+                $d = $det['detalle'];
+                if ($d['cantidad'] > 0) {
+                    $producto = $d['producto'];
+                    $det_id = DB::table('detalle_orden')->insertGetId([
+                        'id' => null, 'cantidad' => $d['cantidad'],
+                        'nombre_producto' => $producto['nombre'], 'codigo_producto' => $producto['codigo'],
+                        'precio_unidad' => $d['precio_unidad'],
+                        'impuesto' => $det['montoIva'], 'total' => $det['totalGen'], 'descuento' => $det['descuento'], 'subtotal' => $det['subTotal'], 'total_extras' => $det['totalExtras'],
+                        'orden' => $id_orden, 'tipo_producto' => $d['tipo'], 'servicio_mesa' => $d['impuestoServicio'], 'observacion' => $d['observacion'],
+                        'tipo_comanda' => $d['tipoComanda']
                     ]);
+                    foreach ($det['extras'] ?? [] as $extra) {
+                        $ext_id = DB::table('extra_detalle_orden')->insertGetId([
+                            'id' => null, 'detalle' => $det_id, 'extra' => $extra['id'],
+                            'orden' => $id_orden, 'descripcion_extra' => $extra['descripcion'],
+                            'total' => $extra['precio'] * $d['cantidad']
+                        ]);
+                    }
                 }
             }
-        }
 
-        $res = $this->restarInventarioOrden($id_orden);
-        if ($existeDescuento) {
-            CodigosPromocionController::usarPromocion($descuentoObj->id);
-        }
+            $res = $this->restarInventarioOrden($id_orden);
+            if ($existeDescuento) {
+                CodigosPromocionController::usarPromocion($descuentoObj->id);
+            }
 
-        if (!$res['estado']) {
-            DB::rollBack();
-            return $this->responseAjaxServerError($res['mensaje'], []);
-        }
-        DB::commit();
-        $this->setSuccess("Orden Creada", "Se creo la factura correctamente");
-        return $this->responseAjaxSuccess("Pedido creado correctamente.", $id_orden);
-        /* } catch (QueryException $ex) {
+            if (!$res['estado']) {
+                DB::rollBack();
+                return $this->responseAjaxServerError($res['mensaje'], []);
+            }
+            DB::commit();
+            $this->setSuccess("Orden Creada", "Se creo la factura correctamente");
+            return $this->responseAjaxSuccess("Pedido creado correctamente.", $id_orden);
+        } catch (QueryException $ex) {
             DB::rollBack();
             return $this->responseAjaxServerError("Algo salío mal.");
-        }*/
+        }
     }
 
     public function anularOrden(Request $request)
@@ -1233,84 +1233,84 @@ class FacturacionController extends Controller
 
     private function restarInventarioMateriaPrima($detalle)
     {
-        // try {
-        $cantidadRebajar = $detalle->cantidad;
-        $codigoProductoRebajar = $detalle->codigo_producto;
-        $mt_prod = DB::table('mt_x_producto')
-            ->leftjoin('producto_menu', 'producto_menu.id', '=', 'mt_x_producto.producto')
-            ->select('mt_x_producto.*')
-            ->where('producto_menu.codigo', '=', $codigoProductoRebajar)
-            ->get();
+        try {
+            $fechaActual = date("Y-m-d H:i:s");
+            $cantidadRebajar = $detalle->cantidad;
+            $codigoProductoRebajar = $detalle->codigo_producto;
+            $mt_prod = DB::table('mt_x_producto')
+                ->leftjoin('producto_menu', 'producto_menu.id', '=', 'mt_x_producto.producto')
+                ->select('mt_x_producto.*')
+                ->where('producto_menu.codigo', '=', $codigoProductoRebajar)
+                ->get();
 
-        foreach ($mt_prod as $i) {
-            $materia_prima = DB::table('materia_prima')
-                ->select('materia_prima.*')
-                ->where('materia_prima.id', '=', $i->materia_prima)
-                ->get()->first();
+            foreach ($mt_prod as $i) {
+                $materia_prima = DB::table('materia_prima')
+                    ->select('materia_prima.*')
+                    ->where('materia_prima.id', '=', $i->materia_prima)
+                    ->get()->first();
 
-            $cantidadInventario = DB::table('mt_x_sucursal')
-                ->where('mt_x_sucursal.sucursal', '=', $this->getUsuarioSucursal())
-                ->where('mt_x_sucursal.materia_prima', '=', $i->materia_prima)
-                ->sum('mt_x_sucursal.cantidad');
+                $cantidadInventario = DB::table('mt_x_sucursal')
+                    ->where('mt_x_sucursal.sucursal', '=', $this->getUsuarioSucursal())
+                    ->where('mt_x_sucursal.materia_prima', '=', $i->materia_prima)
+                    ->sum('mt_x_sucursal.cantidad');
 
-            DB::table('mt_x_sucursal')
-                ->where('sucursal', '=', $this->getUsuarioSucursal())
-                ->where('materia_prima', '=', $i->materia_prima)
-                ->update(['cantidad' =>  $cantidadInventario - $i->cantidad]);
-            $cantAux =  (($cantidadInventario ?? 0) - ($cantidadRebajar ?? 0));
+                DB::table('mt_x_sucursal')
+                    ->where('sucursal', '=', $this->getUsuarioSucursal())
+                    ->where('materia_prima', '=', $i->materia_prima)
+                    ->update(['cantidad' =>  $cantidadInventario - $i->cantidad]);
+                $cantAux =  (($cantidadInventario ?? 0) - ($cantidadRebajar ?? 0));
 
-            $detalleMp =  'Materia Prima : ' . $materia_prima->nombre .
-                ' | Detalle : Rebajo por venta producto  : ' . $codigoProductoRebajar . '-' . $detalle->nombre_producto;
+                $detalleMp =  'Materia Prima : ' . $materia_prima->nombre .
+                    ' | Detalle : Rebajo por venta producto  : ' . $codigoProductoRebajar . '-' . $detalle->nombre_producto;
 
-            DB::table('bit_materia_prima')->insert([
-                'id' => null, 'usuario' => session('usuario')['id'],
-                'materia_prima' => $i->materia_prima, 'detalle' => $detalleMp,'cantidad_anterior'=>  $cantidadInventario ?? 0,
-                'cantidad_ajuste'=> $cantidadRebajar ,'cantidad_nueva'=>  $cantAux
-            ]);
+                DB::table('bit_materia_prima')->insert([
+                    'id' => null, 'usuario' => session('usuario')['id'],
+                    'materia_prima' => $i->materia_prima, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
+                    'cantidad_ajuste' => $cantidadRebajar, 'cantidad_nueva' =>  $cantAux,'fecha' => $fechaActual 
+                ]);
+            }
+            $detalle->extras = DB::table('extra_detalle_orden')
+                ->select('extra_detalle_orden.*')
+                ->where('extra_detalle_orden.detalle', '=', $detalle->id)->get();
 
-        }
-        $detalle->extras = DB::table('extra_detalle_orden')
-            ->select('extra_detalle_orden.*')
-            ->where('extra_detalle_orden.detalle', '=', $detalle->id)->get();
+            foreach ($detalle->extras as $e) {
+                $extraAux = DB::table('extra_producto_menu')
+                    ->select('extra_producto_menu.*')
+                    ->where('extra_producto_menu.id', '=', $e->extra)->get()->first();
+                if ($extraAux != null) {
+                    if ($extraAux->materia_prima != null) {
 
-        foreach ($detalle->extras as $e) {
-            $extraAux = DB::table('extra_producto_menu')
-                ->select('extra_producto_menu.*')
-                ->where('extra_producto_menu.id', '=', $e->extra)->get()->first();
-            if ($extraAux != null) {
-                if ($extraAux->materia_prima != null) {
+                        $materia_prima = DB::table('materia_prima')
+                            ->select('materia_prima.*')
+                            ->where('materia_prima.id', '=', $extraAux->materia_prima)
+                            ->get()->first();
 
-                    $materia_prima = DB::table('materia_prima')
-                        ->select('materia_prima.*')
-                        ->where('materia_prima.id', '=', $extraAux->materia_prima)
-                        ->get()->first();
-
-                    $cantidadInventario = DB::table('mt_x_sucursal')
-                        ->where('mt_x_sucursal.sucursal', '=', $this->getUsuarioSucursal())
-                        ->where('mt_x_sucursal.materia_prima', '=', $extraAux->materia_prima)
-                        ->sum('mt_x_sucursal.cantidad') ?? 0;
+                        $cantidadInventario = DB::table('mt_x_sucursal')
+                            ->where('mt_x_sucursal.sucursal', '=', $this->getUsuarioSucursal())
+                            ->where('mt_x_sucursal.materia_prima', '=', $extraAux->materia_prima)
+                            ->sum('mt_x_sucursal.cantidad') ?? 0;
                         $cantAux =  (($cantidadInventario ?? 0) - ($extraAux->cant_mp  ?? 0));
-                    DB::table('mt_x_sucursal')
-                        ->where('sucursal', '=', $this->getUsuarioSucursal())
-                        ->where('materia_prima', '=', $extraAux->materia_prima)
-                        ->update(['cantidad' =>  $cantAux]);
-                     
-                    $detalleMp = 'Materia Prima : ' . $materia_prima->nombre .
-                        ' | Detalle : Rebajo por venta de extra : ' . $e->descripcion_extra .
-                         ' | Producto :' . $codigoProductoRebajar . '-' . $detalle->nombre_producto ;
-                    DB::table('bit_materia_prima')->insert([
-                        'id' => null, 'usuario' => session('usuario')['id'],
-                        'materia_prima' => $extraAux->materia_prima, 'detalle' => $detalleMp,'cantidad_anterior'=>  $cantidadInventario ?? 0,
-                        'cantidad_ajuste'=> ($extraAux->cant_mp ?? 0) ,'cantidad_nueva'=>  $cantAux
-                    ]);
+                        DB::table('mt_x_sucursal')
+                            ->where('sucursal', '=', $this->getUsuarioSucursal())
+                            ->where('materia_prima', '=', $extraAux->materia_prima)
+                            ->update(['cantidad' =>  $cantAux]);
+
+                        $detalleMp = 'Materia Prima : ' . $materia_prima->nombre .
+                            ' | Detalle : Rebajo por venta de extra : ' . $e->descripcion_extra .
+                            ' | Producto :' . $codigoProductoRebajar . '-' . $detalle->nombre_producto;
+                        DB::table('bit_materia_prima')->insert([
+                            'id' => null, 'usuario' => session('usuario')['id'],
+                            'materia_prima' => $extraAux->materia_prima, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
+                            'cantidad_ajuste' => ($extraAux->cant_mp ?? 0), 'cantidad_nueva' =>  $cantAux,'fecha' => $fechaActual 
+                        ]);
+                    }
                 }
             }
-        }
 
-        return $this->responseAjaxSuccess("", "");
-        /* } catch (QueryException $ex) {
+            return $this->responseAjaxSuccess("", "");
+        } catch (QueryException $ex) {
             return $this->responseAjaxServerError('Algo salio mal...', []);
-        }*/
+        }
     }
 
 
