@@ -167,7 +167,6 @@ class InformesController extends Controller
         }
 
         $query .= $where . " order by inv.fecha DESC";
-        dd($query);
         $filtros = [
             'sucursal' => $filtroSucursal,
             'hasta' => $hasta,
@@ -175,7 +174,6 @@ class InformesController extends Controller
             'descProd' => $filtroDescProd,
             'descUsuario' => $filtroDescUsuario
         ];
-        dd(DB::select($query));
         $data = [
             'menus'=> $this->cargarMenus(),
             'datosReporte'=> DB::select($query),
