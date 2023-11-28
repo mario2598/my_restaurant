@@ -13,7 +13,7 @@
             <div class="section-body">
                 <div class="card card-warning">
                     <div class="card-header">
-                        <h4>Reporte de Ventas por Hora</h4>
+                        <h4>Movimientos inventario productos externos</h4>
                         <form class="card-header-form">
                             <div class="input-group">
                                 <input type="text" name="" onkeyup="filtrarGastosAdmin(this.value)"
@@ -27,7 +27,7 @@
                         </form>
                     </div>
                     <div class="card-body">
-                        <form action="<?php echo e(URL::to('informes/ventaGenProductos/filtro')); ?>" method="POST">
+                        <form action="<?php echo e(URL::to('informes/movInvProductoExterno/filtro')); ?>" method="POST">
                             <?php echo e(csrf_field()); ?>
 
                             <div class="row" style="width: 100%">
@@ -42,18 +42,6 @@
                                                     <?php if($i->id == $data['filtros']['sucursal']): ?> selected <?php endif; ?>>
                                                     <?php echo e($i->descripcion ?? ''); ?></option>
                                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="col-sm-12 col-md-3">
-                                    <div class="form-group">
-                                        <label>Tipo Producto</label>
-                                        <select class="form-control" id="filtroTipoProd" name="filtroTipoProd">
-                                            <option value="T" selected>Todos</option>
-                                            <option value="R"  <?php if("R" == $data['filtros']['filtroTipoProd']): ?> selected <?php endif; ?>>Restaurante</option>
-                                            <option value="E" <?php if("E" == $data['filtros']['filtroTipoProd']): ?> selected <?php endif; ?> >Prdocutos externos</option>
-                                            <option value="P" <?php if("P" == $data['filtros']['filtroTipoProd']): ?> selected <?php endif; ?>>Panadería</option>
                                         </select>
                                     </div>
                                 </div>
@@ -86,25 +74,14 @@
                              
                                 <div class="col-sm-12 col-md-3">
                                     <div class="form-group">
-                                        <label>Hora mínima (formato 24h ,0 - 24)</label>
-                                        <input type="number" name="horaDesdeFiltro" 
-                                            onkeyup="filtrarGastosAdmin(this.value)"
-                                            value="<?php echo e($data['filtros']['horaDesdeFiltro'] ?? ''); ?>" class="form-control"
-                                            placeholder="Hora desde">
-
-                                    </div>
-
-                                </div>
-                                <div class="col-sm-12 col-md-3">
-                                    <div class="form-group">
-                                        <label>Hora máxima (formato 24h, 0 - 24)</label>
-                                        <input type="number" name="horaHastaFiltro"
-                                            onkeyup="filtrarGastosAdmin(this.value)"
-                                            value="<?php echo e($data['filtros']['horaHastaFiltro'] ?? ''); ?>" class="form-control"
-                                            placeholder="Hora hasta">
+                                        <label>Usuario encargado</label>
+                                        <input type="text" name="descUsuario" onkeyup="filtrarGastosAdmin(this.value)"
+                                            value="<?php echo e($data['filtros']['descUsuario'] ?? ''); ?>" class="form-control"
+                                            placeholder="Usuario">
 
                                     </div>
                                 </div>
+
                                 <div class="col-sm-12 col-md-2">
                                     <div class="form-group">
                                         <label>Buscar</label>
@@ -119,47 +96,43 @@
                             <div class="table-responsive">
                                 <table class="table " id="tablaIngresos">
                                     <thead>
-
                                         <tr>
                                             <th class="text-center">Sucursal</th>
-                                          
-                                            <th class="text-center">
-                                                Producto
-                                            </th>
-                                            <th class="text-center">Cantidad</th>
-                                            <th class="text-center">Precio unidad</th>
-                                            <th class="text-center">Tipo producto</th>
-                                           
-                                            <th class="text-center">Total venta CRC</th>
-
+                                            <th class="text-center">Fecha/Hora </th>
+                                            <th class="text-center">Producto</th>
+                                            <th class="text-center">Usuario</th>
+                                            <th class="text-center">Cantidad anterior</th>
+                                            <th class="text-center">Cantidad ajustada</th>
+                                            <th class="text-center">Cantidad nueva</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tbody_generico">
                                         <?php $__currentLoopData = $data['datosReporte']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $g): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                             <tr class="space_row_table" style="cursor: pointer;">
-                                                <td class="text-center"><?php echo e($g->SUCURSAL ?? ''); ?></td>
-                                               
-                                             
+                                                <td class="text-center"><?php echo e($g->nombreSucursal ?? ''); ?></td>
                                                 <td class="text-center">
-                                                    <?php echo e($g->PRODUCTO ?? ''); ?>
+                                                    <?php echo e($g->fecha ?? ''); ?>
 
                                                 </td>
                                                 <td class="text-center">
-                                                    <?php echo e($g->CANTIDAD ?? ''); ?>
+                                                    <?php echo e($g->nombreProducto ?? ''); ?>
 
                                                 </td>
                                                 <td class="text-center">
-                                                    <?php echo e($g->precio_unidad ?? '0.00'); ?>
+                                                    <?php echo e($g->nombreUsuario ?? '0.00'); ?>
 
                                                 </td>
                                               
                                                 <td class="text-center">
-                                                    <?php echo e($g->tipo_producto ?? ''); ?>
+                                                    <?php echo e($g->cantidad_anterior ?? 0); ?>
 
                                                 </td>
-                                             
                                                 <td class="text-center">
-                                                     <?php echo e($g->total_venta ?? '0.00'); ?>
+                                                    <?php echo e($g->cantidad_ajustada ?? 0); ?>
+
+                                                </td>
+                                                <td class="text-center">
+                                                    <?php echo e($g->cantidad_nueva ?? 0); ?>
 
                                                 </td>
                                             </tr>
@@ -185,8 +158,8 @@
 
             var sucursal = $("#select_sucursal option[value='" + "<?php echo e($data['filtros']['sucursal']); ?>" + "']").html();
 
-            var topMesage = 'Reporte de Ventas Productos \n';
-            var bottomMesage = 'Reporte de Ventas por Hora filtrado por : \n';
+            var topMesage = 'Reporte de Movimientos de inventario de productos externos \n';
+            var bottomMesage = 'Reporte de Movimientos de inventario de productos externos por Hora filtrado por : \n';
 
             if ("<?php echo e($data['filtros']['desde']); ?>" != '') {
                 topMesage += ' Desde el ' + "<?php echo e($data['filtros']['desde']); ?>";
@@ -196,22 +169,6 @@
                 topMesage += ' Hasta el ' + "<?php echo e($data['filtros']['hasta']); ?>";
             }
            
-            if ("<?php echo e($data['filtros']['horaDesdeFiltro']); ?>" != '' || "<?php echo e($data['filtros']['horaHastaFiltro']); ?>" != '') {
-                topMesage += ',';
-            }
-
-            if ("<?php echo e($data['filtros']['horaDesdeFiltro']); ?>" != '') {
-                topMesage += ' A partir de las ' + "<?php echo e($data['filtros']['horaDesdeFiltro']); ?> ";
-            }
-
-            if ("<?php echo e($data['filtros']['horaHastaFiltro']); ?>" != '') {
-              topMesage += ' Hasta las ' + "<?php echo e($data['filtros']['horaHastaFiltro']); ?> ";
-            }
-
-            if ("<?php echo e($data['filtros']['horaDesdeFiltro']); ?>" != '' || "<?php echo e($data['filtros']['horaHastaFiltro']); ?>" != '') {
-                topMesage += ' (formato 24h) ';
-            }
-
             topMesage += '.' + '\nSolicitud realizada por ' + "<?php echo e(session('usuario')['usuario']); ?>" + '.';
 
             if ("<?php echo e($data['filtros']['sucursal']); ?>" != 'T') {
@@ -240,21 +197,21 @@
                     messageTop: topMesage,
                     footer: true,
                     messageBottom: bottomMesage,
-                    filename: 'reporte_ventasGenProductos_COFFETOGO'
+                    filename: 'mov_prod_ext_COFFETOGO'
                 }, {
                     extend: 'pdf',
                     title: 'COFFEE TO GO',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
-                    filename: 'reporte_ventasGenProductos_COFFETOGO'
+                    filename: 'mov_prod_ext_COFFETOGO'
                 }, {
                     extend: 'print',
                     title: 'COFFEE TO GO',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
-                    filename: 'reporte_ventasGenProductos_COFFETOGO'
+                    filename: 'mov_prod_ext_COFFETOGO'
                 }]
             });
 
@@ -269,4 +226,4 @@
     <script src="<?php echo e(asset('assets/js/gastos_admin.js')); ?>"></script>
 <?php $__env->stopSection(); ?>
 
-<?php echo $__env->make('layout.master', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\Proyectos\2023\Laravel\CoffeeToGo\resources\views/informes/ventasGenProductos.blade.php ENDPATH**/ ?>
+<?php echo $__env->make('layout.master', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\Proyectos\2023\Laravel\CoffeeToGo\resources\views/informes/movInvProductoExterno.blade.php ENDPATH**/ ?>

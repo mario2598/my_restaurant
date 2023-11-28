@@ -521,6 +521,7 @@ class ProductosExternosController extends Controller
                 'id' => null, 'usuario' => session('usuario')['id'],
                 'producto' => $producto_externo, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
                 'cantidad_ajustada' => $cantidadDisminuye, 'cantidad_nueva' =>  $cantidad_agregar,'fecha' => $fechaActual 
+                ,'sucursal' => $this->getUsuarioSucursal()
             ]);
             
             DB::commit();

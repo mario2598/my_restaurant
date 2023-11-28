@@ -97,6 +97,97 @@ class InformesController extends Controller
         return view('informes.ventasGenProductos',compact('data'));
     }
 
+    public function goMovInvProductoExterno(){
+        if(!$this->validarSesion("movInvProductoExterno")){
+            $this->setMsjSeguridad();
+            return redirect('/');
+        }
+       
+        $filtros = [
+            'sucursal' => 'T',
+            'hasta' => "",
+            'desde' => "",
+            'descProd' => "",
+            'descUsuario' => ""
+        ];
+
+        
+        $data = [
+            'menus'=> $this->cargarMenus(),
+            'datosReporte'=> [],
+            'filtros' =>$filtros,
+            'sucursales' => $this->getSucursalesAndBodegas(),
+            'panel_configuraciones' => $this->getPanelConfiguraciones()
+        ];
+        
+        return view('informes.movInvProductoExterno',compact('data'));
+    }
+
+    public function goMovInvProductoExternoFiltro(Request $request)
+    {
+        if (!$this->validarSesion("movInvProductoExterno")) {
+            $this->setMsjSeguridad();
+            return redirect('/');
+        }
+
+        $filtroSucursal = $request->input('sucursal');
+        $filtroDescProd = $request->input('descProd');
+        $filtroDescUsuario = $request->input('descUsuario');
+        $hasta = $request->input('hasta');
+        $desde = $request->input('desde');
+
+        $query = "SELECT usu.nombre as nombreUsuario,suc.descripcion as nombreSucursal, " .
+        "usu.usuario,inv.fecha,pe.nombre as nombreProducto,inv.detalle,inv.cantidad_anterior,inv.cantidad_ajustada,inv.cantidad_nueva ".
+        "FROM coffee_to_go.bit_inv_producto_externo inv join  coffee_to_go.usuario usu on usu.id = inv.usuario ".
+        "join coffee_to_go.producto_externo pe on pe.id = inv.producto ".
+        "join coffee_to_go.sucursal suc on suc.id = inv.sucursal ";
+       $where = " where 1 = 1 ";
+
+        if (!$this->isNull($filtroSucursal) && $filtroSucursal != 'T') {
+            $where .= " and suc.id =".$filtroSucursal;
+        }
+
+        if (!$this->isNull($desde)) {
+            $where .= " and inv.fecha > '".$desde."'";
+        }
+
+        if (!$this->isNull($hasta)) {
+            $mod_date = strtotime($hasta . "+ 1 days");
+            $mod_date = date("Y-m-d", $mod_date);
+            $where .= " and inv.fecha < '".$mod_date."'";
+        }
+
+
+        if ($filtroDescProd != ''  && !$this->isNull($filtroDescProd)) {
+            $where .= " and  UPPER(pe.nombre) like UPPER('%".$filtroDescProd."%')";
+        }
+
+        if ($filtroDescUsuario != ''  && !$this->isNull($filtroDescUsuario)) {
+            $where .= " and  ( UPPER(usu.usuario) like UPPER('%".$filtroDescUsuario."%') or UPPER(usu.nombre) like UPPER('%".$filtroDescUsuario."%'))";
+        }
+
+        $query .= $where . " order by inv.fecha DESC";
+        dd($query);
+        $filtros = [
+            'sucursal' => $filtroSucursal,
+            'hasta' => $hasta,
+            'desde' => $desde,
+            'descProd' => $filtroDescProd,
+            'descUsuario' => $filtroDescUsuario
+        ];
+        dd(DB::select($query));
+        $data = [
+            'menus'=> $this->cargarMenus(),
+            'datosReporte'=> DB::select($query),
+           'filtros' =>$filtros,
+           'sucursales' => $this->getSucursalesAndBodegas(),
+           'panel_configuraciones' => $this->getPanelConfiguraciones()
+       ];
+       
+       return view('informes.movInvProductoExterno',compact('data'));
+
+    }
+
     
     public function goVentaGenProductosFiltro(Request $request)
     {

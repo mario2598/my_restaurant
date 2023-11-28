@@ -476,7 +476,7 @@ class MateriaPrimaController extends Controller
             DB::table('bit_materia_prima')->insert([
                 'id' => null, 'usuario' => session('usuario')['id'],
                 'materia_prima' => $producto_externo, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                'cantidad_ajuste' => $cantidadDisminuye, 'cantidad_nueva' =>  $cantidad_agregar,'fecha' => $fechaActual 
+                'cantidad_ajuste' => $cantidadDisminuye, 'cantidad_nueva' =>  $cantidad_agregar,'fecha' => $fechaActual ,'sucursal' => $this->getUsuarioSucursal()
             ]);
 
             DB::commit();
