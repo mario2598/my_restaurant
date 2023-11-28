@@ -1266,7 +1266,7 @@ class FacturacionController extends Controller
                 DB::table('bit_materia_prima')->insert([
                     'id' => null, 'usuario' => session('usuario')['id'],
                     'materia_prima' => $i->materia_prima, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                    'cantidad_ajuste' => $cantidadRebajar, 'cantidad_nueva' =>  $cantAux,'fecha' => $fechaActual 
+                    'cantidad_ajuste' => $cantidadRebajar, 'cantidad_nueva' =>  $cantAux,'fecha' => $fechaActual ,'sucursal' => $this->getUsuarioSucursal()
                 ]);
             }
             $detalle->extras = DB::table('extra_detalle_orden')
@@ -1301,7 +1301,7 @@ class FacturacionController extends Controller
                         DB::table('bit_materia_prima')->insert([
                             'id' => null, 'usuario' => session('usuario')['id'],
                             'materia_prima' => $extraAux->materia_prima, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                            'cantidad_ajuste' => ($extraAux->cant_mp ?? 0), 'cantidad_nueva' =>  $cantAux,'fecha' => $fechaActual 
+                            'cantidad_ajuste' => ($extraAux->cant_mp ?? 0), 'cantidad_nueva' =>  $cantAux,'fecha' => $fechaActual ,'sucursal' => $this->getUsuarioSucursal()
                         ]);
                     }
                 }
