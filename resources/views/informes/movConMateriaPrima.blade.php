@@ -157,8 +157,8 @@
 
             var sucursal = $("#select_sucursal option[value='" + "{{ $data['filtros']['sucursal'] }}" + "']").html();
 
-            var topMesage = 'Reporte de Movimientos de inventario de productos externos \n';
-            var bottomMesage = 'Reporte de Movimientos de inventario de productos externos por Hora filtrado por : \n';
+            var topMesage = 'Reporte de Movimiento de Consumo de Materia Prima \n';
+            var bottomMesage = 'Reporte de Movimientos de Consumo de Materia Prima filtrado por : \n';
 
             if ("{{ $data['filtros']['desde'] }}" != '') {
                 topMesage += ' Desde el ' + "{{ $data['filtros']['desde'] }}";
@@ -196,21 +196,21 @@
                     messageTop: topMesage,
                     footer: true,
                     messageBottom: bottomMesage,
-                    filename: 'mov_prod_ext_COFFETOGO'
+                    filename: 'mov_consumo_mp_COFFETOGO'
                 }, {
                     extend: 'pdf',
                     title: 'COFFEE TO GO',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
-                    filename: 'mov_prod_ext_COFFETOGO'
+                    filename: 'mov_consumo_mp_COFFETOGO'
                 }, {
                     extend: 'print',
                     title: 'COFFEE TO GO',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
-                    filename: 'mov_prod_ext_COFFETOGO'
+                    filename: 'mov_consumo_mp_COFFETOGO'
                 }]
             });
 
