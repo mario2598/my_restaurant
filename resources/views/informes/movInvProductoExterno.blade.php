@@ -29,7 +29,7 @@
                         </form>
                     </div>
                     <div class="card-body">
-                        <form action="{{ URL::to('informes/movConMateriaPrima/filtro') }}" method="POST">
+                        <form action="{{ URL::to('informes/movInvProductoExterno/filtro') }}" method="POST">
                             {{ csrf_field() }}
                             <div class="row" style="width: 100%">
                              
@@ -100,7 +100,7 @@
                                         <tr>
                                             <th class="text-center">Sucursal</th>
                                             <th class="text-center">Fecha/Hora </th>
-                                            <th class="text-center">Producto MP</th>
+                                            <th class="text-center">Producto</th>
                                             <th class="text-center">Detalle</th>
                                             <th class="text-center">Usuario</th>
                                             <th class="text-center">Cantidad anterior</th>
@@ -129,7 +129,7 @@
                                                     {{ $g->cantidad_anterior ?? 0 }}
                                                 </td>
                                                 <td class="text-center">
-                                                    {{ $g->cantidad_ajuste ?? 0 }}
+                                                    {{ $g->cantidad_ajustada ?? 0 }}
                                                 </td>
                                                 <td class="text-center">
                                                     {{ $g->cantidad_nueva ?? 0 }}
