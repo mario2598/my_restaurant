@@ -381,7 +381,7 @@ class MateriaPrimaController extends Controller
         if (!$this->validarSesion("mt_inv")) {
             return redirect('/');
         }
-dd("entra");
+
         $id = $request->input('pe_id');
         $producto_externo = $request->input('producto_externo');
         $sucursal = $request->input('sucursal_agregar_id');
@@ -432,7 +432,7 @@ dd("entra");
             }
             $actualizar = true;
         }
-
+        dd("entra2");
         try {
             DB::beginTransaction();
 
