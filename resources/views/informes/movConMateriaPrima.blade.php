@@ -103,6 +103,7 @@
                                             <th class="text-center">Producto MP</th>
                                             <th class="text-center">Detalle</th>
                                             <th class="text-center">Usuario</th>
+                                            <th class="text-center">Unidad Medida</th>
                                             <th class="text-center">Cantidad anterior</th>
                                             <th class="text-center">Cantidad ajustada</th>
                                             <th class="text-center">Cantidad nueva</th>
@@ -124,9 +125,11 @@
                                                 <td class="text-center">
                                                     {{$g->nombreUsuario ?? ''}}
                                                 </td>
-                                              
                                                 <td class="text-center">
-                                                    {{ $g->cantidad_anterior ?? 0 }}
+                                                    {{$g->unidad_medida ?? ''}}
+                                                </td>
+                                                <td class="text-center">
+                                                    {{ $g->cantidad_anterior ?? 0 }} 
                                                 </td>
                                                 <td class="text-center">
                                                     {{ $g->cantidad_ajuste ?? 0 }}
