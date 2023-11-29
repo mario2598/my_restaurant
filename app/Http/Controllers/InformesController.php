@@ -284,7 +284,7 @@ class InformesController extends Controller
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
 
-        return view('informes.movInvProductoExterno', compact('data'));
+        return view('informes.movConMateriaPrima', compact('data'));
     }
 
 
