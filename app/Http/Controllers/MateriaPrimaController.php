@@ -433,7 +433,7 @@ class MateriaPrimaController extends Controller
             $actualizar = true;
         }
 
-      //  try {
+        try {
             DB::beginTransaction();
 
             if ($actualizar) { // Editar usuario
@@ -459,7 +459,7 @@ class MateriaPrimaController extends Controller
             } else { // Nuevo usuario
                 $id = DB::table('mt_x_sucursal')->insertGetId([
                     'id' => null, 'sucursal' => $sucursal, 'materia_prima' => $producto_externo,
-                    'cantidad' => $cantidad_agregar, 'ultima_modificacion' => $fecha_actual, 'usuario_modifica' => session('usuario')['id'],
+                    'cantidad' => $cantidad_agregar, 'ultima_modificacion' => $fecha_actual, 'usuario_modifica' => session('usuario')['id']
                 ]);
 
                 $cantidadInventario = 0;
@@ -476,7 +476,8 @@ class MateriaPrimaController extends Controller
             DB::table('bit_materia_prima')->insert([
                 'id' => null, 'usuario' => session('usuario')['id'],
                 'materia_prima' => $producto_externo, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                'cantidad_ajuste' => $cantidadDisminuye, 'cantidad_nueva' =>  $cantidad_agregar,'fecha' => $fechaActual ,'sucursal' => $this->getUsuarioSucursal()
+                'cantidad_ajuste' => $cantidadDisminuye, 'cantidad_nueva' =>  $cantidad_agregar,'fecha' => $fechaActual ,
+                'sucursal' => $this->getUsuarioSucursal()
             ]);
 
             DB::commit();
@@ -488,11 +489,13 @@ class MateriaPrimaController extends Controller
 
                 $this->setSuccess('Agregar Producto', 'Producto agregado correctamente.');
             }
-            return $this->goInventariosFiltroD($sucursal);;
-        /*} catch (QueryException $ex) {
+            return $this->goInventariosFiltroD($sucursal);
+        } catch (QueryException $ex) {
+            dd($ex);
             DB::rollBack();
-            $this->setError('Agregar Producto', 'Algo salio mal...');
+           
+            $this->setError('Agregar Producto', $ex);
             return redirect('productoExterno/inventario/inventarios');
-        }*/
+        }
     }
 }
