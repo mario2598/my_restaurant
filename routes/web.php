@@ -157,6 +157,9 @@ Route::post('informes/ventaGenProductos/filtro', 'InformesController@goVentaGenP
 
 Route::get('informes/movInvProductoExterno', 'InformesController@goMovInvProductoExterno');
 Route::post('informes/movInvProductoExterno/filtro', 'InformesController@goMovInvProductoExternoFiltro');
+
+Route::get('informes/movConMateriaPrima', 'InformesController@goMovConMateriaPrima');
+Route::post('informes/movConMateriaPrima/filtro', 'InformesController@goMovConMateriaPrimaFiltro');
 /******************Bodega **************************** */
 Route::get('bodega/productos', 'ProductosController@goProductos');
 Route::post('bodega/productos/filtro', 'ProductosController@goProductosFiltro');

@@ -15,7 +15,7 @@
             <div class="section-body">
                 <div class="card card-warning">
                     <div class="card-header">
-                        <h4>Movimientos inventario productos externos</h4>
+                        <h4>Movimientos Consumo Inventario Materia Prima</h4>
                         <form class="card-header-form">
                             <div class="input-group">
                                 <input type="text" name="" onkeyup="filtrarGastosAdmin(this.value)"
@@ -29,7 +29,7 @@
                         </form>
                     </div>
                     <div class="card-body">
-                        <form action="{{ URL::to('informes/movConMateriaPrima/filtro') }}" method="POST">
+                        <form action="{{ URL::to('informes/movInvProductoExterno/filtro') }}" method="POST">
                             {{ csrf_field() }}
                             <div class="row" style="width: 100%">
                              
@@ -100,7 +100,7 @@
                                         <tr>
                                             <th class="text-center">Sucursal</th>
                                             <th class="text-center">Fecha/Hora </th>
-                                            <th class="text-center">Producto MP</th>
+                                            <th class="text-center">Producto</th>
                                             <th class="text-center">Detalle</th>
                                             <th class="text-center">Usuario</th>
                                             <th class="text-center">Cantidad anterior</th>
@@ -129,7 +129,7 @@
                                                     {{ $g->cantidad_anterior ?? 0 }}
                                                 </td>
                                                 <td class="text-center">
-                                                    {{ $g->cantidad_ajuste ?? 0 }}
+                                                    {{ $g->cantidad_ajustada ?? 0 }}
                                                 </td>
                                                 <td class="text-center">
                                                     {{ $g->cantidad_nueva ?? 0 }}
