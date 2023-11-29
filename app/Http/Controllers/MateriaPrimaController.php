@@ -432,7 +432,7 @@ class MateriaPrimaController extends Controller
             }
             $actualizar = true;
         }
-        dd("entra2");
+       
         try {
             DB::beginTransaction();
 
@@ -472,7 +472,7 @@ class MateriaPrimaController extends Controller
 
             $fechaActual = date("Y-m-d H:i:s");
 
-
+            dd("entra3");
             DB::table('bit_materia_prima')->insert([
                 'id' => null, 'usuario' => session('usuario')['id'],
                 'materia_prima' => $producto_externo, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
