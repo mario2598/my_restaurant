@@ -1258,7 +1258,7 @@ class FacturacionController extends Controller
                     ->where('sucursal', '=', $this->getUsuarioSucursal())
                     ->where('materia_prima', '=', $i->materia_prima)
                     ->update(['cantidad' =>  $cantidadInventario - $i->cantidad]);
-                $cantAux =  (($cantidadInventario ?? 0) - ($cantidadRebajar ?? 0));
+                $cantAux =  (($cantidadInventario ?? 0) - ($i->cantidad));
 
                 $detalleMp =  'Materia Prima : ' . $materia_prima->nombre .
                     ' | Detalle : Rebajo por venta producto  : ' . $codigoProductoRebajar . '-' . $detalle->nombre_producto;
@@ -1266,7 +1266,7 @@ class FacturacionController extends Controller
                 DB::table('bit_materia_prima')->insert([
                     'id' => null, 'usuario' => session('usuario')['id'],
                     'materia_prima' => $i->materia_prima, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                    'cantidad_ajuste' => $cantidadRebajar, 'cantidad_nueva' =>  $cantAux,'fecha' => $fechaActual ,'sucursal' => $this->getUsuarioSucursal()
+                    'cantidad_ajuste' => $i->cantidad, 'cantidad_nueva' =>  $cantAux,'fecha' => $fechaActual ,'sucursal' => $this->getUsuarioSucursal()
                 ]);
             }
             $detalle->extras = DB::table('extra_detalle_orden')
