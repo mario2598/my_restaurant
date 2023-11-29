@@ -437,6 +437,7 @@ class MateriaPrimaController extends Controller
             DB::beginTransaction();
 
             if ($actualizar) { // Editar usuario
+                dd("actualiza");
                 DB::table('mt_x_sucursal')
                     ->where('id', '=', $id)
                     ->update([
@@ -457,6 +458,7 @@ class MateriaPrimaController extends Controller
                 $detalleMp =  'Materia Prima : ' . $producto_inv->nombre .
                     ' | Detalle :' . $texto;
             } else { // Nuevo usuario
+                dd("new");
                 $id = DB::table('mt_x_sucursal')->insertGetId([
                     'id' => null, 'sucursal' => $sucursal, 'materia_prima' => $producto_externo,
                     'cantidad' => $cantidad_agregar, 'ultima_modificacion' => $fecha_actual, 'usuario_modifica' => session('usuario')['id']
@@ -472,7 +474,7 @@ class MateriaPrimaController extends Controller
 
             $fechaActual = date("Y-m-d H:i:s");
 
-            dd("entra3");
+           
             DB::table('bit_materia_prima')->insert([
                 'id' => null, 'usuario' => session('usuario')['id'],
                 'materia_prima' => $producto_externo, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
