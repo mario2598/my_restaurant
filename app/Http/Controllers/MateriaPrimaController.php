@@ -381,7 +381,7 @@ class MateriaPrimaController extends Controller
         if (!$this->validarSesion("mt_inv")) {
             return redirect('/');
         }
-
+dd("entra");
         $id = $request->input('pe_id');
         $producto_externo = $request->input('producto_externo');
         $sucursal = $request->input('sucursal_agregar_id');
@@ -476,8 +476,7 @@ class MateriaPrimaController extends Controller
             DB::table('bit_materia_prima')->insert([
                 'id' => null, 'usuario' => session('usuario')['id'],
                 'materia_prima' => $producto_externo, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                'cantidad_ajuste' => $cantidadDisminuye, 'cantidad_nueva' =>  $cantidad_agregar,'fecha' => $fechaActual ,
-                'sucursal' => $this->getUsuarioSucursal()
+                'cantidad_ajuste' => $cantidadDisminuye, 'cantidad_nueva' =>  $cantidad_agregar,'fecha' => $fechaActual ,'sucursal' => $this->getUsuarioSucursal()
             ]);
 
             DB::commit();
@@ -491,10 +490,8 @@ class MateriaPrimaController extends Controller
             }
             return $this->goInventariosFiltroD($sucursal);
         } catch (QueryException $ex) {
-            dd($ex);
             DB::rollBack();
-           
-            $this->setError('Agregar Producto', $ex);
+            $this->setError('Agregar Producto', 'Algo salio mal...');
             return redirect('productoExterno/inventario/inventarios');
         }
     }
