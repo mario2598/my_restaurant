@@ -156,7 +156,7 @@
                                                 </td>
                                              
                                                 <td class="text-center">
-                                                     {{$g->total_venta ?? '0.00'}}
+                                                    CRC {{number_format($g->total_venta  ?? '0.00',2,".",",")}}
                                                 </td>
                                             </tr>
                                         @endforeach
