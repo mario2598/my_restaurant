@@ -160,6 +160,9 @@ Route::post('informes/movInvProductoExterno/filtro', 'InformesController@goMovIn
 
 Route::get('informes/movConMateriaPrima', 'InformesController@goMovConMateriaPrima');
 Route::post('informes/movConMateriaPrima/filtro', 'InformesController@goMovConMateriaPrimaFiltro');
+
+Route::get('informes/conMateriaPrima', 'InformesController@goConMateriaPrima');
+Route::post('informes/conMateriaPrima/filtro', 'InformesController@goConMateriaPrimaFiltro');
 /******************Bodega **************************** */
 Route::get('bodega/productos', 'ProductosController@goProductos');
 Route::post('bodega/productos/filtro', 'ProductosController@goProductosFiltro');

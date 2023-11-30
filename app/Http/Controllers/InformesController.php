@@ -287,6 +287,89 @@ class InformesController extends Controller
         return view('informes.movConMateriaPrima', compact('data'));
     }
 
+    public function goConMateriaPrima()
+    {
+        if (!$this->validarSesion("conMateriaPrima")) {
+            $this->setMsjSeguridad();
+            return redirect('/');
+        }
+
+        $filtros = [
+            'sucursal' => 'T',
+            'hasta' => "",
+            'desde' => "",
+            'descProd' => "",
+        ];
+
+
+        $data = [
+            'menus' => $this->cargarMenus(),
+            'datosReporte' => [],
+            'filtros' => $filtros,
+            'sucursales' => $this->getSucursalesAndBodegas(),
+            'panel_configuraciones' => $this->getPanelConfiguraciones()
+        ];
+
+        return view('informes.conMateriaPrima', compact('data'));
+    }
+
+    public function goConMateriaPrimaFiltro(Request $request)
+    {
+        if (!$this->validarSesion("conMateriaPrima")) {
+            $this->setMsjSeguridad();
+            return redirect('/');
+        }
+
+        $filtroSucursal = $request->input('sucursal');
+        $filtroDescProd = $request->input('descProd');
+        $hasta = $request->input('hasta');
+        $desde = $request->input('desde');
+
+        $query = "SELECT suc.descripcion as nombreSucursal,pe.nombre as nombreProducto,pe.unidad_medida,sum(inv.cantidad_ajuste) as suma " .
+            "FROM coffee_to_go.bit_materia_prima inv join  coffee_to_go.usuario usu on usu.id = inv.usuario " .
+            "join coffee_to_go.materia_prima pe on pe.id = inv.materia_prima join coffee_to_go.sucursal suc on suc.id = inv.sucursal ";
+        $where = " where inv.cantidad_anterior > inv.cantidad_nueva ";
+
+        if (!$this->isNull($filtroSucursal) && $filtroSucursal != 'T') {
+            $where .= " and suc.id =" . $filtroSucursal;
+        }
+
+        if (!$this->isNull($desde)) {
+            $where .= " and inv.fecha > '" . $desde . "'";
+        }
+
+        if (!$this->isNull($hasta)) {
+            $mod_date = strtotime($hasta . "+ 1 days");
+            $mod_date = date("Y-m-d", $mod_date);
+            $where .= " and inv.fecha < '" . $mod_date . "'";
+        }
+
+
+        if ($filtroDescProd != ''  && !$this->isNull($filtroDescProd)) {
+            $where .= " and  UPPER(pe.nombre) like UPPER('%" . $filtroDescProd . "%')";
+        }
+
+
+        $query .= $where . " group by suc.descripcion,pe.nombre,pe.unidad_medida";
+        $filtros = [
+            'sucursal' => $filtroSucursal,
+            'hasta' => $hasta,
+            'desde' => $desde,
+            'descProd' => $filtroDescProd
+        ];
+        $datos = DB::select($query);
+
+        $data = [
+            'menus' => $this->cargarMenus(),
+            'datosReporte' =>  $datos,
+            'filtros' => $filtros,
+            'sucursales' => $this->getSucursalesAndBodegas(),
+            'panel_configuraciones' => $this->getPanelConfiguraciones()
+        ];
+
+        return view('informes.conMateriaPrima', compact('data'));
+    }
+
 
     public function goVentaGenProductosFiltro(Request $request)
     {
