@@ -350,7 +350,7 @@ class InformesController extends Controller
         }
 
 
-        $query .= $where . " group by suc.descripcion,pe.nombre,pe.unidad_medida";
+        $query .= $where . " group by suc.descripcion,pe.nombre,pe.unidad_medida,coffee_to_go.pe.precio";
         $filtros = [
             'sucursal' => $filtroSucursal,
             'hasta' => $hasta,

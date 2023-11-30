@@ -91,6 +91,8 @@
                                             <th class="text-center">Producto MP</th>
                                             <th class="text-center">Consumo</th>
                                             <th class="text-center">Unidad Medida</th>
+                                            <th class="text-center">Precio Unidad</th>
+                                            <th class="text-center">Costo</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tbody_generico">
@@ -106,6 +108,14 @@
                                                 </td>
                                                 <td class="text-center">
                                                     <?php echo e($g->unidad_medida ?? ''); ?>
+
+                                                </td>
+                                                <td class="text-center">
+                                                    CRC <?php echo e(number_format($g->precio_unidad  ?? '0.00',2,".",",")); ?>
+
+                                                </td>
+                                                <td class="text-center">
+                                                    CRC <?php echo e(number_format($g->costo  ?? '0.00',2,".",",")); ?>
 
                                                 </td>
                                             </tr>
