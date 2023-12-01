@@ -168,7 +168,12 @@
 
                                     </div>
                                 </div>
+                                <div class="form-group">
+                                    <label for="es_devolucion">¿Es devoluvión?</label>
+                                    <input type="checkbox" id="es_devolucion">
+                                </div>
                             </div>
+                            
 
                         </div>
 

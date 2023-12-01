@@ -442,6 +442,8 @@ class ProductosExternosController extends Controller
         $producto_externo = $request->input('producto_externo');
         $sucursal = $request->input('sucursal_agregar_id');
         $cantidad_agregar = $request->input('cantidad_agregar');
+        $es_devolucion = $request->input('es_devolucion');
+
         $fecha_actual = date("Y-m-d H:i:s");
         if ($sucursal < 1 || $this->isNull($sucursal)) { //  
             return $this->responseAjaxServerError("Debe seleccionar la sucursal", []);
@@ -496,12 +498,13 @@ class ProductosExternosController extends Controller
                 } else {
                     $texto = "Disminuye inventario en " . ($cantidadInventario  - $cantidad_agregar) . " unidades";
                     $cantidadDisminuye = ($cantidadInventario  - $cantidad_agregar);
+                    if ($es_devolucion == 'on') {
+                        $texto .= ' | Devolución de inventario';
+                    }
                 }
 
                 $detalleMp =  'Producto Externo : ' . $producto_externoAux->nombre .
                     ' | Detalle :' . $texto;
-
-
             } else { // Nuevo usuario
                 $id = DB::table('pe_x_sucursal')->insertGetId([
                     'id' => null, 'sucursal' => $sucursal, 'producto_externo' => $producto_externo, 'cantidad' => $cantidad_agregar,
@@ -510,20 +513,21 @@ class ProductosExternosController extends Controller
 
                 $cantidadInventario = 0;
                 $cantidadDisminuye = $cantidad_agregar;
-                $texto = "Ingreso en inventario en ". ($cantidad_agregar - $cantidadInventario) . " unidades";
-               
+                $texto = "Ingreso en inventario en " . ($cantidad_agregar - $cantidadInventario) . " unidades";
+
                 $detalleMp =  'Producto Externo : ' . $producto_externoAux->nombre .
                     ' | Detalle :' . $texto;
-
             }
             $fechaActual = date("Y-m-d H:i:s");
             DB::table('bit_inv_producto_externo')->insert([
                 'id' => null, 'usuario' => session('usuario')['id'],
-                'producto' => $producto_externo, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                'cantidad_ajustada' => $cantidadDisminuye, 'cantidad_nueva' =>  $cantidad_agregar,'fecha' => $fechaActual 
-                ,'sucursal' => $this->getUsuarioSucursal()
+                'producto' => $producto_externo, 'detalle' => $detalleMp,
+                'cantidad_anterior' =>  $cantidadInventario ?? 0,
+                'cantidad_ajustada' => $cantidadDisminuye,
+                'cantidad_nueva' =>  $cantidad_agregar, 'fecha' => $fechaActual, 'sucursal' => $this->getUsuarioSucursal(),
+                'devolucion' => ($es_devolucion == 'on' ? 'S' : 'N')
             ]);
-            
+
             DB::commit();
 
 
