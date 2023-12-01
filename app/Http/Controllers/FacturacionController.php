@@ -1196,8 +1196,14 @@ class FacturacionController extends Controller
                 ->select('mt_x_producto_ext.*')
                 ->where('producto_externo.codigo_barra', '=', $codigoProductoRebajar)
                 ->get();
+            $fechaActual = date("Y-m-d H:i:s");
 
             foreach ($mt_prod as $i) {
+                $materia_prima = DB::table('materia_prima')
+                ->select('materia_prima.*')
+                ->where('materia_prima.id', '=', $i->materia_prima)
+                ->get()->first();
+                
                 $cantidadInventario = DB::table('mt_x_sucursal')
                     ->where('mt_x_sucursal.sucursal', '=', $this->getUsuarioSucursal())
                     ->where('mt_x_sucursal.materia_prima', '=', $i->materia_prima)
@@ -1207,6 +1213,19 @@ class FacturacionController extends Controller
                     ->where('sucursal', '=', $this->getUsuarioSucursal())
                     ->where('materia_prima', '=', $i->materia_prima)
                     ->update(['cantidad' =>  $cantidadInventario - $i->cantidad]);
+
+                $cantAux =  (($cantidadInventario ?? 0) -  ($i->cantidad * $cantidadRebajar));
+
+                $detalleMp =  'Materia Prima : ' . $materia_prima->nombre .
+                    ' | Detalle : Rebajo por venta producto  : ' . $codigoProductoRebajar . '-' . $detalle->nombre_producto;
+
+                DB::table('bit_materia_prima')->insert([
+                    'id' => null, 'usuario' => session('usuario')['id'],
+                    'materia_prima' => $i->materia_prima, 'detalle' => $detalleMp,
+                    'cantidad_anterior' =>  $cantidadInventario ?? 0,
+                    'cantidad_ajuste' => ($i->cantidad * $cantidadRebajar),
+                    'cantidad_nueva' =>  $cantAux, 'fecha' => $fechaActual, 'sucursal' => $this->getUsuarioSucursal()
+                ]);
             }
 
             /* foreach ($detalle['extras'] ?? [] as $e) {
@@ -1266,7 +1285,7 @@ class FacturacionController extends Controller
                 DB::table('bit_materia_prima')->insert([
                     'id' => null, 'usuario' => session('usuario')['id'],
                     'materia_prima' => $i->materia_prima, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                    'cantidad_ajuste' =>  ($i->cantidad * $cantidadRebajar), 'cantidad_nueva' =>  $cantAux,'fecha' => $fechaActual ,'sucursal' => $this->getUsuarioSucursal()
+                    'cantidad_ajuste' => ($i->cantidad * $cantidadRebajar), 'cantidad_nueva' =>  $cantAux, 'fecha' => $fechaActual, 'sucursal' => $this->getUsuarioSucursal()
                 ]);
             }
             $detalle->extras = DB::table('extra_detalle_orden')
@@ -1301,7 +1320,7 @@ class FacturacionController extends Controller
                         DB::table('bit_materia_prima')->insert([
                             'id' => null, 'usuario' => session('usuario')['id'],
                             'materia_prima' => $extraAux->materia_prima, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                            'cantidad_ajuste' => ($extraAux->cant_mp  * $cantidadRebajar), 'cantidad_nueva' =>  $cantAux,'fecha' => $fechaActual ,'sucursal' => $this->getUsuarioSucursal()
+                            'cantidad_ajuste' => ($extraAux->cant_mp  * $cantidadRebajar), 'cantidad_nueva' =>  $cantAux, 'fecha' => $fechaActual, 'sucursal' => $this->getUsuarioSucursal()
                         ]);
                     }
                 }
