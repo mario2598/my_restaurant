@@ -686,11 +686,7 @@ class GastosController extends Controller
             return redirect('/');
         }
 
-        if ($gasto->caja_cerrada == 'N') {
-            $this->setError('Eliminar gasto', "La caja no ha sido cerrada.");
-            return redirect('gastos/pendientes');
-        }
-
+     
         try {
             DB::beginTransaction();
 
