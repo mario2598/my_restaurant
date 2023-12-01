@@ -677,10 +677,7 @@ class GastosController extends Controller
             $this->setMsjSeguridad();
             return redirect('/');
         }
-        if (!$this->usuarioAdministrador()) {
-            $this->setMsjSeguridad();
-            return redirect('/');
-        }
+   
         $id = $request->input('idGastoEliminar');
         $gasto = DB::table('gasto')->where('id', '=', $id)->get()->first();
 
