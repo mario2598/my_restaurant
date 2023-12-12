@@ -76,7 +76,7 @@ class ReportesController extends Controller
 
             $where .= " and inv.fecha >= '" . date('Y-m-d', strtotime('-1 day')) . "'";
 
-            $where .= " and suc.id = " . $s->id;
+            $where .= " and inv.sucursal = " . $s->id;
 
             $where .= " and inv.fecha <= '" . date('Y-m-d') . "'";
 
@@ -106,9 +106,9 @@ class ReportesController extends Controller
 
             $where = " where inv.cantidad_anterior < cantidad_nueva";
             $where .= " and inv.fecha >= '" . date('Y-m-d', strtotime('-1 day')) . "'";
-            $where .= " and suc.id = " . $s->id;
-            $where .= " and inv.fecha <= '" . date('Y-m-d') . "'";
-            $queryIngresos .= $where . " group by  pe.nombre,pes.cantidad,suc.id ";
+            $where .= " and inv.sucursal = " . $s->id;
+            $where .= " and inv.fecha < '" . date('Y-m-d') . "'";
+            $queryIngresos .= $where . " group by  pe.nombre,pes.cantidad,suc.id  ";
 
             $datosIngresos = DB::select($queryIngresos);
 
@@ -129,8 +129,8 @@ class ReportesController extends Controller
 
             $where = " where inv.cantidad_anterior > cantidad_nueva and inv.devolucion = 'N' ";
             $where .= " and inv.fecha >= '" . date('Y-m-d', strtotime('-1 day')) . "'";
-            $where .= " and suc.id = " . $s->id;
-            $where .= " and inv.fecha <= '" . date('Y-m-d') . "'";
+            $where .= " and inv.sucursal = " . $s->id;
+            $where .= " and inv.fecha < '" . date('Y-m-d') . "'";
             $querySalidas .= $where . " group by  pe.nombre,pes.cantidad,suc.id ";
 
             $datosSalidas = DB::select($querySalidas);
@@ -152,8 +152,8 @@ class ReportesController extends Controller
 
             $where = " where inv.cantidad_anterior > cantidad_nueva and inv.devolucion = 'S' ";
             $where .= " and inv.fecha >= '" . date('Y-m-d', strtotime('-1 day')) . "'";
-            $where .= " and suc.id = " . $s->id;
-            $where .= " and inv.fecha <= '" . date('Y-m-d') . "'";
+            $where .= " and inv.sucursal = " . $s->id;
+            $where .= " and inv.fecha < '" . date('Y-m-d') . "'";
             $queryDesechos .= $where . " group by  pe.nombre,pes.cantidad,suc.id ";
 
             $datosDesechos = DB::select($queryDesechos);
