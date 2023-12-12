@@ -109,7 +109,8 @@ class ReportesController extends Controller
             $where .= " and inv.sucursal = " . $s->id;
             $where .= " and inv.fecha < '" . date('Y-m-d') . "'";
             $queryIngresos .= $where . " group by  pe.nombre,pes.cantidad,suc.id  ";
-
+            echo $queryIngresos;
+            return;
             $datosIngresos = DB::select($queryIngresos);
 
             $s->reporteMovIngresos = $datosIngresos;

@@ -481,13 +481,13 @@
                             @foreach ($s->reporteMovIngresos as $i)
                                 <tr class="space_row_table" style="cursor: pointer;">
                                     <td class="text-center">
-                                        {{ $g->nombreProducto ?? '' }}
+                                        {{ $i->nombreProducto ?? '' }}
                                     </td>
                                     <td class="text-center">
-                                        {{ $g->ingreso ?? '' }}
+                                        {{ $i->ingreso ?? '' }}
                                     </td>
                                     <td class="text-center">
-                                        {{ $g->cantInventarioActual ?? 0 }}
+                                        {{ $i->cantInventarioActual ?? 0 }}
                                     </td>
 
                                 </tr>
@@ -517,13 +517,13 @@
                             @foreach ($s->reporteMovSalidas as $i)
                                 <tr class="space_row_table" style="cursor: pointer;">
                                     <td class="text-center">
-                                        {{ $g->nombreProducto ?? '' }}
+                                        {{ $i->nombreProducto ?? '' }}
                                     </td>
                                     <td class="text-center">
-                                        {{ $g->salidas ?? '' }}
+                                        {{ $i->salidas ?? '' }}
                                     </td>
                                     <td class="text-center">
-                                        {{ $g->cantInventarioActual ?? 0 }}
+                                        {{ $i->cantInventarioActual ?? 0 }}
                                     </td>
 
                                 </tr>
@@ -553,15 +553,14 @@
                             @foreach ($s->reporteMovDesechos as $i)
                                 <tr class="space_row_table" style="cursor: pointer;">
                                     <td class="text-center">
-                                        {{ $g->nombreProducto ?? '' }}
+                                        {{ $i->nombreProducto ?? '' }}
                                     </td>
                                     <td class="text-center">
-                                        {{ $g->salidas ?? '' }}
+                                        {{ $i->salidas ?? '' }}
                                     </td>
                                     <td class="text-center">
-                                        {{ $g->cantInventarioActual ?? 0 }}
+                                        {{ $i->cantInventarioActual ?? 0 }}
                                     </td>
-
                                 </tr>
                             @endforeach
                         </tbody>
