@@ -50,7 +50,7 @@ class reporteDiarioConsumo extends Command
             $query = "SELECT suc.descripcion as nombreSucursal,pe.nombre as nombreProducto,pe.unidad_medida,sum(inv.cantidad_ajuste) as suma,pe.precio as precio_unidad, (sum(inv.cantidad_ajuste) * pe.precio) as costo, mts.cantidad as cantTotalMp " .
                 "FROM coffee_to_go.bit_materia_prima inv join  coffee_to_go.usuario usu on usu.id = inv.usuario " .
                 "join coffee_to_go.materia_prima pe on pe.id = inv.materia_prima join coffee_to_go.sucursal suc on suc.id = inv.sucursal 
-                 join coffee_to_go.mt_x_sucursal mts on mts.sucursal = suc.id ";
+                 join coffee_to_go.mt_x_sucursal mts on mts.sucursal = suc.id and mts.materia_prima = pe.id";
             $where = " where inv.cantidad_anterior > inv.cantidad_nueva ";
 
             $where .= " and inv.fecha >= '" . date('Y-m-d', strtotime('-1 day')) . "'";
