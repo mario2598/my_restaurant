@@ -387,7 +387,7 @@
 <body>
     <div id="invoiceholder">
         <h2>Reportes de consumo</h2>
-        <h3>Fecha : {{ $data['fechaReporte'] }}</h3>
+        <h2>Fecha : {{ $data['fechaReporte'] }}</h2>
         <br>
         <h3>Reportes de consumo de materia prima por sucursal</h3>
         @foreach ($data['sucursales'] as $s)
