@@ -556,7 +556,7 @@
                                         {{ $i->nombreProducto ?? '' }}
                                     </td>
                                     <td class="text-center">
-                                        {{ $i->salidas ?? '' }}
+                                        {{ $i->salida ?? '' }}
                                     </td>
                                     <td class="text-center">
                                         {{ $i->cantInventarioActual ?? 0 }}
