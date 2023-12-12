@@ -143,7 +143,7 @@ class ReportesController extends Controller
 
         foreach ($sucursales as $s) {
 
-            $queryDesechos = "SELECT pe.nombre as nombreProducto,pes.cantidad as cantInventarioActual ,sum(inv.cantidad_ajustada) as salida" .
+            $queryDesechos = "SELECT pe.nombre as nombreProducto,pes.cantidad as cantInventarioActual ,sum(inv.cantidad_ajustada) as desecho" .
                 " FROM coffee_to_go.bit_inv_producto_externo inv join  coffee_to_go.usuario usu on usu.id = inv.usuario " .
                 " join coffee_to_go.producto_externo pe on pe.id = inv.producto " .
                 " join coffee_to_go.pe_x_sucursal pes on pes.producto_externo = pe.id " .
