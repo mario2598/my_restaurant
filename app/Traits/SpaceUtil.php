@@ -705,7 +705,22 @@ trait SpaceUtil
       $fechaAux = $carbonDate->isoFormat('ddd D [de] MMMM');
       $fechaAux = ucfirst($fechaAux);
       $phpdate = strtotime($fecha);
-      return str_replace('.', '', $fechaAux .' '. date("g:i a", $phpdate));
+      return str_replace('.', '', $fechaAux );
+  }
+
+  public function soloFechaFormat($fecha)
+  {
+      // Crea una instancia de Carbon a partir de la fecha
+      $carbonDate = Carbon::parse($fecha);
+  
+      // Establece la localización en español
+      $carbonDate->setLocale('es');
+  
+      // Formatea la fecha en español
+      $fechaAux = $carbonDate->isoFormat('ddd D [de] MMMM');
+      $fechaAux = ucfirst($fechaAux);
+      $phpdate = strtotime($fecha);
+      return str_replace('.', '', $fechaAux );
   }
 
   /**

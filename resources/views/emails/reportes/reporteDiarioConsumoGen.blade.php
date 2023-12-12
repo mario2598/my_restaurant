@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Reporte consumo diario - Coffee To Go</title>
+    <title>Reporte consumo diario {{ $data['fechaReporte'] }} - Coffee To Go</title>
     <style>
         body {
             background: #fff;
@@ -236,6 +236,7 @@
 
         #invoice-bot {
             min-height: 250px;
+            margin: 15px;
         }
 
         .logo {
@@ -385,43 +386,80 @@
 
 <body>
     <div id="invoiceholder">
-        <h3>Reporte de consumo de materia prima del día anterior</h3>
-        <table class="table " id="tablaIngresos">
-            <thead>
-                <tr>
-                    <th class="text-center">Sucursal</th>
-                    <th class="text-center">Producto MP</th>
-                    <th class="text-center">Consumo</th>
-                    <th class="text-center">Unidad Medida</th>
-                    <th class="text-center">Precio Unidad</th>
-                    <th class="text-center">Costo</th>
-                </tr>
-            </thead>
-            <tbody id="tbody_generico">
-                @foreach ($data['datosReporte'] as $g)
-                    <tr class="space_row_table" style="cursor: pointer;">
-                        <td class="text-center">{{ $g->nombreSucursal ?? '' }}</td>
-                        <td class="text-center">
-                            {{ $g->nombreProducto ?? '' }}
-                        </td>
-                        <td class="text-center">
-                            {{ $g->suma ?? 0 }}
-                        </td>
-                        <td class="text-center">
-                            {{ $g->unidad_medida ?? '' }}
-                        </td>
-                        <td class="text-center">
-                            CRC {{ number_format($g->precio_unidad ?? '0.00', 2, '.', ',') }}
-                        </td>
-                        <td class="text-center">
-                            CRC {{ number_format($g->costo ?? '0.00', 2, '.', ',') }}
-                        </td>
-                    </tr>
-                @endforeach
+        <h2>Reportes de consumo</h2>
+        <h3>Fecha : {{ $data['fechaReporte'] }}</h3>
+        <br>
+        <h3>Reportes de consumo de materia prima por sucursal</h3>
+        @foreach ($data['sucursales'] as $s)
+            @if (count($s->reporteConsumoMp) > 0)
+                <div id="invoice-bot">
+                    <h4>{{ $s->descripcion }}</h4>
+                    <table class="table " id="tablaIngresos">
+                        <thead>
+                            <tr>
+                                <th class="text-center">Producto</th>
+                                <th class="text-center">Consumo</th>
+                                <th class="text-center">Unidad Medida</th>
+                                <th class="text-center">Precio Unidad</th>
+                                <th class="text-center">Costo</th>
+                                <th class="text-center">Total en inventario</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody_generico">
+                            @foreach ($s->reporteConsumoMp as $g)
+                                <tr class="space_row_table" style="cursor: pointer;">
+                                    <td class="text-center">
+                                        {{ $g->nombreProducto ?? '' }}
+                                    </td>
+                                    <td class="text-center">
+                                        {{ $g->suma ?? 0 }}
+                                    </td>
+                                    <td class="text-center">
+                                        {{ $g->unidad_medida ?? '' }}
+                                    </td>
+                                    <td class="text-center">
+                                        CRC {{ number_format($g->precio_unidad ?? '0.00', 2, '.', ',') }}
+                                    </td>
+                                    <td class="text-center">
+                                        CRC {{ number_format($g->costo ?? '0.00', 2, '.', ',') }}
+                                    </td>
+                                    <td class="text-center">
+                                        {{ $g->cantTotalMp ?? '' }} {{ $g->unidad_medida ?? '' }}
+                                    </td>
+                                  
+                                </tr>
+                            @endforeach
 
-            </tbody>
+                        </tbody>
+                        <tfoot>
+                            <tr class="space_row_table">
+                                <td class="text-center" style="background: rgb(226, 196, 196);"><strong>Total
+                                        </strong></td>
+                                <td class="text-center" style="background: rgb(226, 196, 196);">
+                                    ***
+                                </td>
+                                <td class="text-center" style="background: rgb(226, 196, 196);">
+                                    ***
+                                </td>
+                                <td class="text-center" style="background: rgb(226, 196, 196);">
+                                    <strong> ***</strong>
+                                </td>
 
-        </table>
+                                <td class="text-center" style="background: rgb(226, 196, 196);">
+
+                                    <strong>CRC
+                                        {{ number_format($s->costoTotalReporteConsumoMp ?? '0.00', 2, '.', ',') }}</strong>
+                                </td>
+                                <td class="text-center" style="background: rgb(226, 196, 196);">
+                                    ***
+                                </td>
+                            </tr>
+                        </tfoot>
+
+                    </table>
+                </div>
+            @endif
+        @endforeach
     </div>
     <div id="invoiceholder">
         <p>ESTO SON PRUEBAS</p>
