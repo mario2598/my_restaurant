@@ -249,6 +249,11 @@ trait SpaceUtil
     return DB::table('sucursal')->where('estado', 'like', 'A')->get();
   }
 
+  public static function getSucursalesAll()
+  {
+    return DB::table('sucursal')->where('estado', 'like', 'A')->get();
+  }
+
 
   /**
    * Obtiene las sucursales activas que son bodega
@@ -708,7 +713,7 @@ trait SpaceUtil
       return str_replace('.', '', $fechaAux );
   }
 
-  public function soloFechaFormat($fecha)
+  public static function soloFechaFormat($fecha)
   {
       // Crea una instancia de Carbon a partir de la fecha
       $carbonDate = Carbon::parse($fecha);

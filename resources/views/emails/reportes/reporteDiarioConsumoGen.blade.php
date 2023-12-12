@@ -389,80 +389,186 @@
         <h2>Reportes de consumo</h2>
         <h2>Fecha : {{ $data['fechaReporte'] }}</h2>
         <br>
-        <h3>Reportes de consumo de materia prima por sucursal</h3>
+        <div id="invoiceholder">
+            <h3>Reportes de consumo de materia prima por sucursal</h3>
+            @foreach ($data['sucursales'] as $s)
+                @if (count($s->reporteConsumoMp) > 0)
+                    <div id="invoice-bot">
+                        <h4>{{ $s->descripcion }}</h4>
+                        <table class="table " id="tablaIngresos">
+                            <thead>
+                                <tr>
+                                    <th class="text-center">Producto</th>
+                                    <th class="text-center">Consumo</th>
+                                    <th class="text-center">Unidad Medida</th>
+                                    <th class="text-center">Precio Unidad</th>
+                                    <th class="text-center">Costo</th>
+                                    <th class="text-center">Total en inventario</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody_generico">
+                                @foreach ($s->reporteConsumoMp as $g)
+                                    <tr class="space_row_table" style="cursor: pointer;">
+                                        <td class="text-center">
+                                            {{ $g->nombreProducto ?? '' }}
+                                        </td>
+                                        <td class="text-center">
+                                            {{ $g->suma ?? 0 }}
+                                        </td>
+                                        <td class="text-center">
+                                            {{ $g->unidad_medida ?? '' }}
+                                        </td>
+                                        <td class="text-center">
+                                            CRC {{ number_format($g->precio_unidad ?? '0.00', 2, '.', ',') }}
+                                        </td>
+                                        <td class="text-center">
+                                            CRC {{ number_format($g->costo ?? '0.00', 2, '.', ',') }}
+                                        </td>
+                                        <td class="text-center">
+                                            {{ $g->cantTotalMp ?? '' }} {{ $g->unidad_medida ?? '' }}
+                                        </td>
+
+                                    </tr>
+                                @endforeach
+
+                            </tbody>
+                            <tfoot>
+                                <tr class="space_row_table">
+                                    <td class="text-center" style="background: rgb(226, 196, 196);"><strong>Total
+                                        </strong></td>
+                                    <td class="text-center" style="background: rgb(226, 196, 196);">
+                                        ***
+                                    </td>
+                                    <td class="text-center" style="background: rgb(226, 196, 196);">
+                                        ***
+                                    </td>
+                                    <td class="text-center" style="background: rgb(226, 196, 196);">
+                                        <strong> ***</strong>
+                                    </td>
+
+                                    <td class="text-center" style="background: rgb(226, 196, 196);">
+
+                                        <strong>CRC
+                                            {{ number_format($s->costoTotalReporteConsumoMp ?? '0.00', 2, '.', ',') }}</strong>
+                                    </td>
+                                    <td class="text-center" style="background: rgb(226, 196, 196);">
+                                        ***
+                                    </td>
+                                </tr>
+                            </tfoot>
+
+                        </table>
+                    </div>
+                @endif
+            @endforeach
+        </div>
+    </div>
+    <div id="invoiceholder">
+        <h3>Reportes de ingresos de productos externos por sucursal</h3>
         @foreach ($data['sucursales'] as $s)
-            @if (count($s->reporteConsumoMp) > 0)
+            @if (count($s->reporteMovIngresos) > 0)
                 <div id="invoice-bot">
                     <h4>{{ $s->descripcion }}</h4>
                     <table class="table " id="tablaIngresos">
                         <thead>
                             <tr>
                                 <th class="text-center">Producto</th>
-                                <th class="text-center">Consumo</th>
-                                <th class="text-center">Unidad Medida</th>
-                                <th class="text-center">Precio Unidad</th>
-                                <th class="text-center">Costo</th>
-                                <th class="text-center">Total en inventario</th>
+                                <th class="text-center">Cantidad ingresada</th>
+                                <th class="text-center">Inventario actual</th>
                             </tr>
                         </thead>
                         <tbody id="tbody_generico">
-                            @foreach ($s->reporteConsumoMp as $g)
+                            @foreach ($s->reporteMovIngresos as $i)
                                 <tr class="space_row_table" style="cursor: pointer;">
                                     <td class="text-center">
                                         {{ $g->nombreProducto ?? '' }}
                                     </td>
                                     <td class="text-center">
-                                        {{ $g->suma ?? 0 }}
+                                        {{ $g->ingreso ?? '' }}
                                     </td>
                                     <td class="text-center">
-                                        {{ $g->unidad_medida ?? '' }}
+                                        {{ $g->cantInventarioActual ?? 0 }}
                                     </td>
-                                    <td class="text-center">
-                                        CRC {{ number_format($g->precio_unidad ?? '0.00', 2, '.', ',') }}
-                                    </td>
-                                    <td class="text-center">
-                                        CRC {{ number_format($g->costo ?? '0.00', 2, '.', ',') }}
-                                    </td>
-                                    <td class="text-center">
-                                        {{ $g->cantTotalMp ?? '' }} {{ $g->unidad_medida ?? '' }}
-                                    </td>
-                                  
+
                                 </tr>
                             @endforeach
-
                         </tbody>
-                        <tfoot>
-                            <tr class="space_row_table">
-                                <td class="text-center" style="background: rgb(226, 196, 196);"><strong>Total
-                                        </strong></td>
-                                <td class="text-center" style="background: rgb(226, 196, 196);">
-                                    ***
-                                </td>
-                                <td class="text-center" style="background: rgb(226, 196, 196);">
-                                    ***
-                                </td>
-                                <td class="text-center" style="background: rgb(226, 196, 196);">
-                                    <strong> ***</strong>
-                                </td>
-
-                                <td class="text-center" style="background: rgb(226, 196, 196);">
-
-                                    <strong>CRC
-                                        {{ number_format($s->costoTotalReporteConsumoMp ?? '0.00', 2, '.', ',') }}</strong>
-                                </td>
-                                <td class="text-center" style="background: rgb(226, 196, 196);">
-                                    ***
-                                </td>
-                            </tr>
-                        </tfoot>
-
                     </table>
                 </div>
             @endif
         @endforeach
-    </div>
+    </div><!-- End Invoice Holder-->
+
     <div id="invoiceholder">
-        <p>ESTO SON PRUEBAS</p>
+        <h3>Reportes de salidas de productos externos por sucursal</h3>
+        @foreach ($data['sucursales'] as $s)
+            @if (count($s->reporteMovSalidas) > 0)
+                <div id="invoice-bot">
+                    <h4>{{ $s->descripcion }}</h4>
+                    <table class="table " id="tablaIngresos">
+                        <thead>
+                            <tr>
+                                <th class="text-center">Producto</th>
+                                <th class="text-center">Cantidad de salida</th>
+                                <th class="text-center">Inventario actual</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody_generico">
+                            @foreach ($s->reporteMovSalidas as $i)
+                                <tr class="space_row_table" style="cursor: pointer;">
+                                    <td class="text-center">
+                                        {{ $g->nombreProducto ?? '' }}
+                                    </td>
+                                    <td class="text-center">
+                                        {{ $g->salidas ?? '' }}
+                                    </td>
+                                    <td class="text-center">
+                                        {{ $g->cantInventarioActual ?? 0 }}
+                                    </td>
+
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        @endforeach
+    </div><!-- End Invoice Holder-->
+
+    <div id="invoiceholder">
+        <h3>Reportes de salidas por desecho de productos externos por sucursal</h3>
+        @foreach ($data['sucursales'] as $s)
+            @if (count($s->reporteMovDesechos) > 0)
+                <div id="invoice-bot">
+                    <h4>{{ $s->descripcion }}</h4>
+                    <table class="table " id="tablaIngresos">
+                        <thead>
+                            <tr>
+                                <th class="text-center">Producto</th>
+                                <th class="text-center">Cantidad de desecho</th>
+                                <th class="text-center">Inventario actual</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody_generico">
+                            @foreach ($s->reporteMovDesechos as $i)
+                                <tr class="space_row_table" style="cursor: pointer;">
+                                    <td class="text-center">
+                                        {{ $g->nombreProducto ?? '' }}
+                                    </td>
+                                    <td class="text-center">
+                                        {{ $g->salidas ?? '' }}
+                                    </td>
+                                    <td class="text-center">
+                                        {{ $g->cantInventarioActual ?? 0 }}
+                                    </td>
+
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        @endforeach
     </div><!-- End Invoice Holder-->
 
 </body>
