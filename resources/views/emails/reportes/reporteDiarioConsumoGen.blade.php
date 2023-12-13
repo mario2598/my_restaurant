@@ -463,8 +463,13 @@
             @endforeach
         </div>
     </div>
-    <div id="invoiceholder">
-        <h3>Reportes de ingresos de productos externos por sucursal</h3>
+    <div>
+        @if (count($s->reporteMovIngresos) > 0)
+            <h3>Reportes de ingresos de productos externos por sucursal</h3>
+        @else
+            <h3>No se reportan ingresos de productos externos por sucursal</h3>
+        @endif
+
         @foreach ($data['sucursales'] as $s)
             @if (count($s->reporteMovIngresos) > 0)
                 <div id="invoice-bot">
@@ -499,8 +504,13 @@
         @endforeach
     </div><!-- End Invoice Holder-->
 
-    <div id="invoiceholder">
-        <h3>Reportes de salidas de productos externos por sucursal</h3>
+    <div>
+
+        @if (count($s->reporteMovSalidas) > 0)
+            <h3>Reportes de salidas de productos externos por sucursal</h3>
+        @else
+            <h3>No se reportan salidas de productos externos por sucursal</h3>
+        @endif
         @foreach ($data['sucursales'] as $s)
             @if (count($s->reporteMovSalidas) > 0)
                 <div id="invoice-bot">
@@ -535,8 +545,12 @@
         @endforeach
     </div><!-- End Invoice Holder-->
 
-    <div id="invoiceholder">
-        <h3>Reportes de salidas por desecho de productos externos por sucursal</h3>
+    <div>
+        @if (count($s->reporteMovDesechos) > 0)
+            <h3>Reportes de salidas por desecho de productos externos por sucursal</h3>
+        @else
+            <h3>No se reportan salidas por desecho de productos externos por sucursal</h3>
+        @endif
         @foreach ($data['sucursales'] as $s)
             @if (count($s->reporteMovDesechos) > 0)
                 <div id="invoice-bot">
