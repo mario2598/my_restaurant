@@ -543,8 +543,8 @@
                 </div>
             @endif
         @endforeach
-    </div><!-- End Invoice Holder-->
-
+    </div>
+    
     <div>
         @if (count($s->reporteMovDesechos) > 0)
             <h3>Reportes de salidas por desecho de productos externos por sucursal</h3>
