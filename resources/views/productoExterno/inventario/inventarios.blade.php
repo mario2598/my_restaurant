@@ -169,7 +169,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="es_devolucion">¿Es devoluvión?</label>
+                                    <label for="es_devolucion">¿Es desecho?</label>
                                     <input type="checkbox" id="es_devolucion">
                                 </div>
                             </div>
