@@ -31,6 +31,7 @@ class ReportesController extends Controller
         ReportesController::agregarDatosIngMovProdExtDiaAnterior($sucursales);
         ReportesController::agregarDatosSalidasMovProdExtDiaAnterior($sucursales);
         ReportesController::agregarDatosDesechoMovProdExtDiaAnterior($sucursales);
+        ReportesController::agregarDatosVentasProdExtDiaAnterior($sucursales);
 
         $data = [
             'sucursales' =>  $sucursales,
@@ -158,6 +159,26 @@ class ReportesController extends Controller
             $datosDesechos = DB::select($queryDesechos);
 
             $s->reporteMovDesechos = $datosDesechos;
+        }
+    }
+
+    public static function agregarDatosVentasProdExtDiaAnterior($sucursales)
+    {
+
+        foreach ($sucursales as $s) {
+
+            $queryVentas = "SELECT do.nombre_producto,sum(do.cantidad) as cantidad FROM coffee_to_go.detalle_orden do ".
+              "join coffee_to_go.orden o on o.id = do.orden";
+
+            $where = " where o.estado <> 5 and do.tipo_producto = 'E' ";
+            $where .= " and o.fecha_inicio >= '" . date('Y-m-d', strtotime('-1 day')) . "'";
+            $where .= " and o.sucursal = " . $s->id;
+            $where .= " and o.fecha_inicio < '" . date('Y-m-d') . "'";
+            $queryVentas .= $where . " group by do.nombre_producto order by 2 DESC ";
+
+            $datosVentas = DB::select($queryVentas);
+
+            $s->reporteVentasProdExt= $datosVentas;
         }
     }
 }

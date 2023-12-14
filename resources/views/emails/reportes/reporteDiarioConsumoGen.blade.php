@@ -584,6 +584,41 @@
         @endforeach
     </div><!-- End Invoice Holder-->
 
+    <div>
+        @if (count($s->reporteVentasProdExt) > 0)
+            <h3>Reportes de salidas por venta de productos externos por sucursal</h3>
+        @else
+            <h3>No se reportan salidas por ventas de productos externos por sucursal</h3>
+        @endif
+        @foreach ($data['sucursales'] as $s)
+            @if (count($s->reporteVentasProdExt) > 0)
+                <div id="invoice-bot">
+                    <h4>{{ $s->descripcion }}</h4>
+                    <table class="table " id="tablaIngresos">
+                        <thead>
+                            <tr>
+                                <th class="text-center">Producto</th>
+                                <th class="text-center">Cantidad salida</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody_generico">
+                            @foreach ($s->reporteVentasProdExt as $i)
+                                <tr class="space_row_table" style="cursor: pointer;">
+                                    <td class="text-center">
+                                        {{ $i->nombre_producto ?? '' }}
+                                    </td>
+                                    <td class="text-center">
+                                        {{ $i->cantidad ?? '' }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        @endforeach
+    </div><!-- End Invoice Holder-->
+
 </body>
 
 </html>
