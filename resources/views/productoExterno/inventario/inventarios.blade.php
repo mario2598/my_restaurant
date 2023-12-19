@@ -169,8 +169,8 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="es_devolucion">¿Es desecho?</label>
-                                    <input type="checkbox" id="es_devolucion">
+                                    <label for="es_desecho">¿Es desecho?</label>
+                                    <input type="checkbox" id="es_desecho" name="es_desecho">
                                 </div>
                             </div>
                             

@@ -442,7 +442,7 @@ class ProductosExternosController extends Controller
         $producto_externo = $request->input('producto_externo');
         $sucursal = $request->input('sucursal_agregar_id');
         $cantidad_agregar = $request->input('cantidad_agregar');
-        $es_devolucion = $request->input('es_devolucion');
+        $es_desecho = $request->input('es_desecho');
 
         $fecha_actual = date("Y-m-d H:i:s");
         if ($sucursal < 1 || $this->isNull($sucursal)) { //  
@@ -498,8 +498,8 @@ class ProductosExternosController extends Controller
                 } else {
                     $texto = "Disminuye inventario en " . ($cantidadInventario  - $cantidad_agregar) . " unidades";
                     $cantidadDisminuye = ($cantidadInventario  - $cantidad_agregar);
-                    if ($es_devolucion == 'on') {
-                        $texto .= ' | Devolución de inventario';
+                    if ($es_desecho  == 'true') {
+                        $texto .= ' | Desecho de inventario';
                     }
                 }
 
@@ -525,7 +525,7 @@ class ProductosExternosController extends Controller
                 'cantidad_anterior' =>  $cantidadInventario ?? 0,
                 'cantidad_ajustada' => $cantidadDisminuye,
                 'cantidad_nueva' =>  $cantidad_agregar, 'fecha' => $fechaActual, 'sucursal' => $this->getUsuarioSucursal(),
-                'devolucion' => ($es_devolucion == 'on' ? 'S' : 'N')
+                'devolucion' => ($es_desecho == 'true' ? 'S' : 'N')
             ]);
 
             DB::commit();

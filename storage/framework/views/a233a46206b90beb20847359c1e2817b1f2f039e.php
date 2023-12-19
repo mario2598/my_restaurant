@@ -13,7 +13,7 @@
             <div class="section-body">
                 <div class="card card-warning">
                     <div class="card-header">
-                        <h4>Movimientos inventario productos externos</h4>
+                        <h4>Movimientos Consumo Inventario Materia Prima</h4>
                         <form class="card-header-form">
                             <div class="input-group">
                                 <input type="text" name="" onkeyup="filtrarGastosAdmin(this.value)"
@@ -27,7 +27,7 @@
                         </form>
                     </div>
                     <div class="card-body">
-                        <form action="<?php echo e(URL::to('informes/movInvProductoExterno/filtro')); ?>" method="POST">
+                        <form action="<?php echo e(URL::to('informes/movConMateriaPrima/filtro')); ?>" method="POST">
                             <?php echo e(csrf_field()); ?>
 
                             <div class="row" style="width: 100%">
@@ -99,9 +99,10 @@
                                         <tr>
                                             <th class="text-center">Sucursal</th>
                                             <th class="text-center">Fecha/Hora </th>
-                                            <th class="text-center">Producto</th>
+                                            <th class="text-center">Producto MP</th>
                                             <th class="text-center">Detalle</th>
                                             <th class="text-center">Usuario</th>
+                                            <th class="text-center">Unidad Medida</th>
                                             <th class="text-center">Cantidad anterior</th>
                                             <th class="text-center">Cantidad ajustada</th>
                                             <th class="text-center">Cantidad nueva</th>
@@ -127,13 +128,15 @@
                                                     <?php echo e($g->nombreUsuario ?? ''); ?>
 
                                                 </td>
-                                              
                                                 <td class="text-center">
-                                                    <?php echo e($g->cantidad_anterior ?? 0); ?>
+                                                    <?php echo e($g->unidad_medida ?? ''); ?>
 
                                                 </td>
                                                 <td class="text-center">
-                                                    <?php echo e($g->cantidad_ajustada ?? 0); ?>
+                                                    <?php echo e($g->cantidad_anterior ?? 0); ?> 
+                                                </td>
+                                                <td class="text-center">
+                                                    <?php echo e($g->cantidad_ajuste ?? 0); ?>
 
                                                 </td>
                                                 <td class="text-center">
@@ -163,8 +166,8 @@
 
             var sucursal = $("#select_sucursal option[value='" + "<?php echo e($data['filtros']['sucursal']); ?>" + "']").html();
 
-            var topMesage = 'Reporte de Movimientos de inventario de productos externos \n';
-            var bottomMesage = 'Reporte de Movimientos de inventario de productos externos por Hora filtrado por : \n';
+            var topMesage = 'Reporte de Movimiento de Consumo de Materia Prima \n';
+            var bottomMesage = 'Reporte de Movimientos de Consumo de Materia Prima filtrado por : \n';
 
             if ("<?php echo e($data['filtros']['desde']); ?>" != '') {
                 topMesage += ' Desde el ' + "<?php echo e($data['filtros']['desde']); ?>";
@@ -202,21 +205,21 @@
                     messageTop: topMesage,
                     footer: true,
                     messageBottom: bottomMesage,
-                    filename: 'mov_prod_ext_COFFETOGO'
+                    filename: 'mov_consumo_mp_COFFETOGO'
                 }, {
                     extend: 'pdf',
                     title: 'COFFEE TO GO',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
-                    filename: 'mov_prod_ext_COFFETOGO'
+                    filename: 'mov_consumo_mp_COFFETOGO'
                 }, {
                     extend: 'print',
                     title: 'COFFEE TO GO',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
-                    filename: 'mov_prod_ext_COFFETOGO'
+                    filename: 'mov_consumo_mp_COFFETOGO'
                 }]
             });
 
@@ -231,4 +234,4 @@
     <script src="<?php echo e(asset('assets/js/gastos_admin.js')); ?>"></script>
 <?php $__env->stopSection(); ?>
 
-<?php echo $__env->make('layout.master', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\Proyectos\2023\Laravel\CoffeeToGo\resources\views/informes/movInvProductoExterno.blade.php ENDPATH**/ ?>
+<?php echo $__env->make('layout.master', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\Proyectos\2023\Laravel\CoffeeToGo\resources\views/informes/movConMateriaPrima.blade.php ENDPATH**/ ?>

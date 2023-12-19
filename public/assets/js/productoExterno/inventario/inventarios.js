@@ -41,7 +41,7 @@ function guardarProductoSucursal() {
     var idSuc = $('#sucursal_agregar_id').val( );
     var prodExt = $('#producto_externo').val();
     var cant = $('#cantidad_agregar').val();
-    var devolucion = $('#es_devolucion').val();
+    var desecho = $('#es_desecho').prop('checked');
     $.ajax({
         url: `${base_path}/productoExterno/inventario/inventarios/guardar`,
         type: 'post',
@@ -51,7 +51,7 @@ function guardarProductoSucursal() {
             pe_id: id,
             sucursal_agregar_id:idSuc,
             producto_externo:prodExt,
-            cantidad_agregar:cant,es_devolucion : devolucion
+            cantidad_agregar:cant,es_desecho : desecho
         }
     }).done(function (response) {
         if (!response['estado']) {
