@@ -175,7 +175,7 @@
                                     <div class="form-line">
                                         <label class="form-label">Cantidad</label>
                                         <input type="number" class="form-control space_input_modal" id="cantidad_agregar"
-                                            name="cantidad_agregar" required  min="1">
+                                            name="cantidad_agregar" required >
 
                                     </div>
                                 </div>

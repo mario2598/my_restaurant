@@ -408,8 +408,8 @@ class MateriaPrimaController extends Controller
             return $this->goInventariosFiltroD($sucursal);
         }
         
-        if ($cantidad_agregar < 1 || $this->isNull($cantidad_agregar)) { //  
-            $this->setError('Agregar Producto', 'La cantidad debe ser mayor a 0.');
+        if ($cantidad_agregar < 0 || $this->isNull($cantidad_agregar)) { //  
+            $this->setError('Agregar Producto', 'La cantidad debe ser mayor a -1.');
             return $this->goInventariosFiltroD($sucursal);
         }
 
