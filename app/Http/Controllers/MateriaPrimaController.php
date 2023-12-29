@@ -184,6 +184,7 @@ class MateriaPrimaController extends Controller
 
         return $inventarios;
     }
+    
 
     public static function getProductos()
     {

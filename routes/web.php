@@ -388,3 +388,18 @@ Route::post('usuarioExterno/menuMobile/cargarTiposGeneral', 'UsuarioExternoContr
 Route::post('productoMenu/producto/cargarProducto', 'ProductosMenuController@cargarProducto');
 Route::post('menu/producto/guardar', 'ProductosMenuController@guardarProducto');
 Route::get('menu', 'UsuarioExternoController@goMenuMobile');
+
+
+/** CLIENTE*/
+Route::get('cliente/registro', 'ClienteController@goRegistro');
+Route::post('cliente/registrarse', 'ClienteController@registrarCliente');
+Route::get('cliente/login', 'ClienteController@goLogin');
+Route::get('cliente/login/recuperarPassword', 'ClienteController@goRecuperarPassword');
+Route::post('cliente/login/solicitarNuevaPassword', 'ClienteController@solicitarNuevaPassword');
+Route::post('cliente/verificaCta','ClienteController@verificarCuenta');
+
+
+/** TOMA FISICA */
+Route::get('materiaPrima/inventario/tomaFisica', 'TomaFisicaController@goCrearToma');
+Route::post('materiaPrima/inventario/buscarMPTomaFisica','TomaFisicaController@buscarMPTomaFisica');
+Route::post('materiaPrima/inventario/creaMPTomaFisica','TomaFisicaController@creaMPTomaFisica');
