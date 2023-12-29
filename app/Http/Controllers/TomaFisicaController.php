@@ -79,11 +79,11 @@ class TomaFisicaController extends Controller
         }
 
         $tomaExiste = DB::table('toma_fisica')
-        ->select('toma_fisica.*')
-        ->where('toma_fisica.materia_prima', '=', $idMateriaPrima)
-        ->where('toma_fisica.sucursal', '=', $sucursal)
-        ->whereDate('toma_fisica.fecha', '=', now()->toDateString())
-        ->get()->first();
+            ->select('toma_fisica.*')
+            ->where('toma_fisica.materia_prima', '=', $idMateriaPrima)
+            ->where('toma_fisica.sucursal', '=', $sucursal)
+            ->whereDate('toma_fisica.fecha', '=', now()->toDateString())
+            ->get()->first();
 
         if ($tomaExiste != null) {
             return $this->responseAjaxServerError("Ya existe una toma física registrada el día de hoy. Solo se puede registrar una toma diaria por producto.", []);
@@ -92,19 +92,27 @@ class TomaFisicaController extends Controller
         if ($this->isNull($cantidadUsuario) || $cantidadUsuario < 0) {
             return $this->responseAjaxServerError("La cantidad a ajustar no puede ser vacía o menor a 0.", []);
         }
-
-       
+        $usuarioReportaMas = false;
 
         $cantidadInventario = (DB::table('mt_x_sucursal')
             ->where('mt_x_sucursal.sucursal', '=', $sucursal)
             ->where('mt_x_sucursal.materia_prima', '=', $idMateriaPrima)
             ->sum('mt_x_sucursal.cantidad')) ?? 0;
 
+        $textoAux = "";
+        if ($cantidadInventario >  $cantidadUsuario) {
+            $cantidadAjuste =  $cantidadInventario -  $cantidadUsuario;
+            $textoAux = "Rebajo inventario ajustado por toma física  # ";
+        } else if ($cantidadInventario < $cantidadUsuario) {
+            $cantidadAjuste =  $cantidadUsuario -  $cantidadInventario;
+            $textoAux = "Aumento inventario ajustado por toma física  # ";
+        } else {
+            $cantidadAjuste =  $cantidadUsuario -  $cantidadInventario;
+            $textoAux = "Actualiza inventario (sin cambios) ajustado por toma física  # ";
+        }
         $detalleMp =  'Materia Prima : ' . $materia_prima->nombre .
-            ' | Detalle : Ajuste por toma física  # ';
+            ' | Detalle : '.$textoAux;
 
-
-        $cantidadAjuste =  $cantidadInventario -  $cantidadUsuario;
         try {
             DB::beginTransaction();
 
