@@ -64,8 +64,7 @@ class UsuarioExternoController extends Controller
     public function cargarTiposGeneralMobile(Request $request)
     {
         $contro = new FacturacionController();
-        $categorias =  $contro->getCategoriasTodosProductosMobile();
-
+        $categorias =  $contro->getCategoriasTodosProductos(1);
 
         return $this->responseAjaxSuccess("", $categorias);
     }
