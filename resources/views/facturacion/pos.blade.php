@@ -11,6 +11,7 @@
             "cliente": "",
             "nueva": true,
             "total": 0,
+            "envio": 0,
             "subTotal": 0,
             "codigoPromocion": "",
             "codigo_descuento": null
@@ -132,8 +133,8 @@
                     <div class="col-12 col-md-12 col-lg-12">
                         <div class="row">
 
-                            <div class="col-sm-12 col-md-4 col-lg-4" id="contEscogerProductos" 
-                            style="padding-right: 0px !important;padding-left: 0px !important;">
+                            <div class="col-sm-12 col-md-4 col-lg-4" id="contEscogerProductos"
+                                style="padding-right: 0px !important;padding-left: 0px !important;">
 
                                 <div class="col-lg-12 col-md-12 pr-25">
 
@@ -171,7 +172,8 @@
                                 </div>
 
                             </div>
-                            <div class="col-sm-12 col-md-4 col-lg-5" style="padding-right: 0px !important;padding-left: 0px !important;">
+                            <div class="col-sm-12 col-md-4 col-lg-5"
+                                style="padding-right: 0px !important;padding-left: 0px !important;">
                                 <!-- Panel orden -->
                                 <div class="col-lg-12 col-md-12 pl-0">
                                     <!-- Acciones -->
@@ -215,8 +217,13 @@
                                                                     placeholder="Nombre cliente..."
                                                                     onkeyup="enterCampoPago(event)"
                                                                     onchange="ordenGestion.cliente = $('#txt-cliente').val()">
+                                                                <a class="btn btn-success "
+                                                                    style="color: white; padding-top:6px; margin-left : 3px;"
+                                                                    onclick="abrirModalEnvio()"><i class="fas fa-truck"
+                                                                        aria-hidden="true"></i> Datos envío</a>
                                                             </div>
                                                         </div>
+
 
                                                     </div>
                                                 </div>
@@ -242,8 +249,8 @@
                                 </div>
                             </div>
 
-                            <div class="col-sm-12 col-md-3 col-lg-3" id="contFacturar" 
-                            style="padding-right: 0px !important;padding-left: 0px !important;">
+                            <div class="col-sm-12 col-md-3 col-lg-3" id="contFacturar"
+                                style="padding-right: 0px !important;padding-left: 0px !important;">
                                 <div class="col-lg-12 col-md-12 pl-0">
 
                                     <div class="col-12">
@@ -266,12 +273,18 @@
                                                         </div>
 
                                                         <div class="col-sm-12 col-md-12 col-lg-12">
+                                                            <h6 id="txt-mto-envio" class="text-muted"
+                                                                style="margin-left: 3%">
+                                                                Envío: No aplica</h6>
+                                                        </div>
+                                                        
+                                                        <div class="col-sm-12 col-md-12 col-lg-12">
                                                             <h6 id="txt-total-pagar" class="text-muted"
                                                                 style="margin-left: 3%">
                                                                 Total: 0,00</h6>
                                                         </div>
 
-                                                        <div class="col-sm-12 col-md-12 col-lg-12" >
+                                                        <div class="col-sm-12 col-md-12 col-lg-12">
                                                             <div class="row">
                                                                 <div class="col-sm-12 col-md-12 col-lg-8">
                                                                     <input type="text" class="form-control h-75"
@@ -282,11 +295,13 @@
                                                                 </div>
                                                                 <div class="col-sm-12 col-md-6 col-lg-4"
                                                                     style="padding-left:0px; ">
-                                                                    <a class="btn btn-success " style="color: white;padding: 2px 6px !important;"
+                                                                    <a class="btn btn-success "
+                                                                        style="color: white;padding: 2px 6px !important;"
                                                                         onclick="validarCodDescuento()"><i
                                                                             class="fas fa-check"
                                                                             aria-hidden="true"></i></a>
-                                                                    <a class="btn btn-danger " style="color: white;padding: 2px 6px !important;"
+                                                                    <a class="btn btn-danger "
+                                                                        style="color: white;padding: 2px 6px !important;"
                                                                         onclick="eliminarCodDescuento()"><i
                                                                             class="fas fa-trash"
                                                                             aria-hidden="true"></i></a>
@@ -318,13 +333,14 @@
                                                         <div class="form-group">
                                                             <label>Monto Tarjeta (₡)</label>
                                                             <input type="number" class="form-control" step=any
-                                                            onkeyup="enterCampoPago(event)"
-                                                                id="monto_tarjeta" name="monto_tarjeta" value=""
-                                                                placeholder="0.00" min="0">
-                                                                <button type="button" class="btn btn-info " id="btnPagoTarjeta"
+                                                                onkeyup="enterCampoPago(event)" id="monto_tarjeta"
+                                                                name="monto_tarjeta" value="" placeholder="0.00"
+                                                                min="0">
+                                                            <button type="button" class="btn btn-info "
+                                                                id="btnPagoTarjeta"
                                                                 style="width: 100% !important; margin-bottom:20px;"
-                                                                onclick="verificarAbrirModalPagoTarjeta()">Pagar con tarjeta<i
-                                                                    class="fas fa-payment"
+                                                                onclick="verificarAbrirModalPagoTarjeta()">Pagar con
+                                                                tarjeta<i class="fas fa-payment"
                                                                     aria-hidden="true"></i></button>
                                                         </div>
                                                     </div>
@@ -332,13 +348,14 @@
                                                         <div class="form-group">
                                                             <label>Monto Efectivo (₡)</label>
                                                             <input type="number" class="form-control" step=any
-                                                            onkeyup="enterCampoPago(event)"
-                                                                id="monto_efectivo" name="monto_efectivo" value=""
-                                                                placeholder="0.00" min="0">
-                                                                <button type="button" class="btn btn-info " id="btnPagoEfectivo"
+                                                                onkeyup="enterCampoPago(event)" id="monto_efectivo"
+                                                                name="monto_efectivo" value="" placeholder="0.00"
+                                                                min="0">
+                                                            <button type="button" class="btn btn-info "
+                                                                id="btnPagoEfectivo"
                                                                 style="width: 100% !important; margin-bottom:20px;"
-                                                                onclick="verificarAbrirModalPagoEfectivo()">Pagar con efectivo<i
-                                                                    class="fas fa-payment"
+                                                                onclick="verificarAbrirModalPagoEfectivo()">Pagar con
+                                                                efectivo<i class="fas fa-payment"
                                                                     aria-hidden="true"></i></button>
                                                         </div>
                                                     </div>
@@ -346,10 +363,11 @@
                                                         <div class="form-group">
                                                             <label>Monto Sinpe (₡)</label>
                                                             <input type="number" class="form-control" step=any
-                                                            onkeyup="enterCampoPago(event)"
-                                                                id="monto_sinpe" name="monto_sinpe" value=""
-                                                                placeholder="0.00" min="0">
-                                                                <button type="button" class="btn btn-info " id="btnPagoSinpe"
+                                                                onkeyup="enterCampoPago(event)" id="monto_sinpe"
+                                                                name="monto_sinpe" value="" placeholder="0.00"
+                                                                min="0">
+                                                            <button type="button" class="btn btn-info "
+                                                                id="btnPagoSinpe"
                                                                 style="width: 100% !important; margin-bottom:20px;"
                                                                 onclick="verificarAbrirModalPagoSinpe()">Pagar con sinpe<i
                                                                     class="fas fa-payment"
@@ -417,35 +435,35 @@
     </div>
 
     <div class="modal fade bs-example-modal-center" id='mdl-extras-detalle' tabindex="-1" role="dialog"
-    aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-body" style="width: 100%">
-                <div class="row">
-                    <div class="col-sm-12">
-                        <label>Detalle </label>
-                        <textarea name="detAdicional" id="detAdicional"  style="width: 100%">
+        aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body" style="width: 100%">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <label>Detalle </label>
+                            <textarea name="detAdicional" id="detAdicional" style="width: 100%">
                         </textarea>
-                    </div>
-                    <div class="col-sm-12">
-                        <label>Extras</label>
-                        <div class="row" id="cont-extras-detalle" style="width: 100%">
+                        </div>
+                        <div class="col-sm-12">
+                            <label>Extras</label>
+                            <div class="row" id="cont-extras-detalle" style="width: 100%">
 
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <div class="form-group">
-                    <a class="btn btn-primary" title="Guardar" onclick="actualizarExtrasDetalle()"
-                        style="color:white;cursor:pointer;">Agregar</a>
-                    <a class="btn btn-secondary btn-icon" title="Cerrar" onclick='cerrarExtrasDetalle()'
-                        style="cursor: pointer;">Cerrar</a>
+                <div class="modal-footer">
+                    <div class="form-group">
+                        <a class="btn btn-primary" title="Guardar" onclick="actualizarExtrasDetalle()"
+                            style="color:white;cursor:pointer;">Agregar</a>
+                        <a class="btn btn-secondary btn-icon" title="Cerrar" onclick='cerrarExtrasDetalle()'
+                            style="cursor: pointer;">Cerrar</a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
     <div class="modal fade bd-example-modal-lg" id='mdl-ordenes' tabindex="-1" role="dialog"
         aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
@@ -534,6 +552,73 @@
             </div>
         </div>
     </div>
+
+
+    <!-- modal modal -->
+    <div class="modal fade bs-example-modal-center" id='mdl_envio' tabindex="-1" role="dialog"
+        aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+
+                    <div class="spinner-border" id='modal_spinner' style='margin-right:3%;display:none;' role="status">
+                    </div>
+                    <h5 class="modal-title mt-0" id="edit_cliente_text"><i class="fas fa-truck"></i> Información de Envío
+                    </h5>
+                    <button type="button" id='btnSalirFact' class="close" aria-hidden="true"
+                        onclick="cerrarModalEnvio()">x</button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-xl-12 col-sm-12">
+                            <div class="form-group form-float">
+                                <div class="form-line">
+                                    <label for="incluyeEnvio">Incluye envío: </label>
+                                    <input type="checkbox" id="incluyeEnvio" onchange="mostrarMonto()">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-12 col-sm-12">
+                            <div class="form-group form-float">
+                                <div class="form-line">
+                                    <label class="form-label">Precio Envío</label>
+                                    <input type="number" class="form-control space_input_modal" id="mdl_precio_envio"
+                                        name="mdl_precio_envio">
+                                </div>
+                            </div>
+                        </div>
+                       
+                        <div class="col-xl-12 col-sm-12">
+                            <div class="form-group form-float">
+                                <div class="form-line">
+                                    <label class="form-label">Contacto de entrega</label>
+                                    <input type="text" class="form-control space_input_modal"
+                                        id="mdl_contacto_entrega" name="mdl_contacto_entrega"
+                                        maxlength="500">
+                                   
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-12 col-sm-12">
+                            <div class="form-group form-float">
+                                <div class="form-line">
+                                    <label class="form-label">Descripción Lugar Entrega</label>
+                                    <textarea class="form-control" name="mdl_lugar_entrega" id="mdl_lugar_entrega" maxlength="2000"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div id='footerContiner' class="modal-footer" style="margin-top:-5%;">
+                    <a href="#" class="btn btn-secondary" onclick="cerrarModalEnvio()">Volver</a>
+                    <a href="#" class="btn btn-primary" onclick="guardarInfoEnvio()">Guardar</a>
+                </div>
+                </form>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal ---->
 
     <div class="modal fade bd-example-modal-lg" id='mdl-cerrar-caja' tabindex="-1" role="dialog"
         aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
@@ -630,48 +715,48 @@
                 <a href="" target='_blank' class="btn btn-primary" id='btn-pdf' style="display:none"></a>
 
                 <!--
-                                                                                                                                                    <div class="modal fade bs-example-modal-center" id='mdl-cliente' tabindex="-1" role="dialog"
-                                                                                                                                                        aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-                                                                                                                                                        <div class="modal-dialog modal-dialog-centered">
-                                                                                                                                                            <div class="modal-content">
-                                                                                                                                                                <div class="modal-header">
-                                                                                                                                                                    <h5 class="modal-title">Buscar clientes</h5>
-                                                                                                                                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                                                                                                                                        <span aria-hidden="true">&times;</span>
-                                                                                                                                                                    </button>
-                                                                                                                                                                </div>
-                                                                                                                                                                <div class="modal-body">
-                                                                                                                                                                    <table class="table" id="tbl-clientes" style="max-height: 100%;">
-                                                                                                                                                                        <thead class="thead-light">
-                                                                                                                                                                            <tr>
-                                                                                                                                                                                <th scope="col">Nombre</th>
-                                                                                                                                                                                <th scope="col" style="text-align: center">Teléfono</th>
-                                                                                                                                                                                <th scope="col" style="text-align: center">Correo</th>
-                                                                                                                                                                                <th scope="col" style="text-align: center">Ubicación</th>
-                                                                                                                                                                                <th scope="col" style="text-align: center">Seleccionar</th>
-                                                                                                                                                                            </tr>
-                                                                                                                                                                        </thead>
-                                                                                                                                                                        <tbody id="tbody-clientes">
-                                                                                                                                                                         foreach ($data['clientes'] as $cliente)
-                                                                                                                                                                                <tr>
-                                                                                                                                                                                    <td> $cliente->nombre </td>
-                                                                                                                                                                                    <td class="text-center"> $cliente->telefono }}</td>
-                                                                                                                                                                                    <td class="text-center">$cliente->correo }}</td>
-                                                                                                                                                                                    <td class="text-center"> $cliente->ubicacion }}</td>
-                                                                                                                                                                                    <td class="text-center"><button type="button" class="btn btn-info"
-                                                                                                                                                                                            onclick="seleccionarCliente(' $cliente->id }}',' $cliente->nombre }}')"
-                                                                                                                                                                                            data-dismiss="modal">
-                                                                                                                                                                                            <i class="fas fa-check" aria-hidden="true"></i>
-                                                                                                                                                                                        </button></td>
-                                                                                                                                                                                </tr>
-                                                                                                                                                                            endforeach
-                                                                                                                                                                        </tbody>
-                                                                                                                                                                    </table>
-                                                                                                                                                                </div>
-                                                                                                                                                            </div>
-                                                                                                                                                        </div>
-                                                                                                                                                    </div>
-                                                                                                                                                -->
+                                                                                                                                                                            <div class="modal fade bs-example-modal-center" id='mdl-cliente' tabindex="-1" role="dialog"
+                                                                                                                                                                                aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                                                                                                                                                                                <div class="modal-dialog modal-dialog-centered">
+                                                                                                                                                                                    <div class="modal-content">
+                                                                                                                                                                                        <div class="modal-header">
+                                                                                                                                                                                            <h5 class="modal-title">Buscar clientes</h5>
+                                                                                                                                                                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                                                                                                                                                <span aria-hidden="true">&times;</span>
+                                                                                                                                                                                            </button>
+                                                                                                                                                                                        </div>
+                                                                                                                                                                                        <div class="modal-body">
+                                                                                                                                                                                            <table class="table" id="tbl-clientes" style="max-height: 100%;">
+                                                                                                                                                                                                <thead class="thead-light">
+                                                                                                                                                                                                    <tr>
+                                                                                                                                                                                                        <th scope="col">Nombre</th>
+                                                                                                                                                                                                        <th scope="col" style="text-align: center">Teléfono</th>
+                                                                                                                                                                                                        <th scope="col" style="text-align: center">Correo</th>
+                                                                                                                                                                                                        <th scope="col" style="text-align: center">Ubicación</th>
+                                                                                                                                                                                                        <th scope="col" style="text-align: center">Seleccionar</th>
+                                                                                                                                                                                                    </tr>
+                                                                                                                                                                                                </thead>
+                                                                                                                                                                                                <tbody id="tbody-clientes">
+                                                                                                                                                                                                 foreach ($data['clientes'] as $cliente)
+                                                                                                                                                                                                        <tr>
+                                                                                                                                                                                                            <td> $cliente->nombre </td>
+                                                                                                                                                                                                            <td class="text-center"> $cliente->telefono }}</td>
+                                                                                                                                                                                                            <td class="text-center">$cliente->correo }}</td>
+                                                                                                                                                                                                            <td class="text-center"> $cliente->ubicacion }}</td>
+                                                                                                                                                                                                            <td class="text-center"><button type="button" class="btn btn-info"
+                                                                                                                                                                                                                    onclick="seleccionarCliente(' $cliente->id }}',' $cliente->nombre }}')"
+                                                                                                                                                                                                                    data-dismiss="modal">
+                                                                                                                                                                                                                    <i class="fas fa-check" aria-hidden="true"></i>
+                                                                                                                                                                                                                </button></td>
+                                                                                                                                                                                                        </tr>
+                                                                                                                                                                                                    endforeach
+                                                                                                                                                                                                </tbody>
+                                                                                                                                                                                            </table>
+                                                                                                                                                                                        </div>
+                                                                                                                                                                                    </div>
+                                                                                                                                                                                </div>
+                                                                                                                                                                            </div>
+                                                                                                                                                                        -->
             @endsection
             @section('script')
                 <script src="{{ asset('assets/bundles/datatables/datatables.min.js') }}"></script>

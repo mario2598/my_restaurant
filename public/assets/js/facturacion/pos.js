@@ -20,6 +20,13 @@
     ]
 */
 
+var infoEnvio = {
+    "incluye_envio": false,
+    "precio": 0,
+    "descripcion_lugar": "",
+    "contacto": ""
+};
+
 $(document).ready(function () {
     $("#input_buscar_generico").on("keyup", function () {
         var value = $(this).val().toLowerCase();
@@ -787,6 +794,10 @@ function actualizarOrden() {
     }
 
     total = subTotal - aux;
+    if(infoEnvio.incluye_envio){
+        total = total + (parseFloat(ordenGestion.envio) );
+    }
+    
     ordenGestion.total = total;
 
     $('#txt-id-cliente').val(ordenGestion.cliente);
@@ -800,6 +811,15 @@ function actualizarOrden() {
         style: 'currency',
         currency: 'CRC',
     }));
+
+    if(infoEnvio.incluye_envio){
+        $('#txt-mto-envio').html("Envío: " + (parseFloat(ordenGestion.envio)).toLocaleString('es-CR', {
+            style: 'currency',
+            currency: 'CRC',
+        }));
+    }else{
+        $('#txt-mto-envio').html("Envío: No aplica" );
+    }
 
     $('#txt-total-pagar').html("Total: " + (ordenGestion.total).toLocaleString('es-CR', {
         style: 'currency',
@@ -901,6 +921,7 @@ function limpiarOrden() {
         "cliente": "",
         "nueva": true,
         "total": 0,
+        "envio": 0,
         "subTotal": 0,
         "codigo_descuento": null
     };
@@ -1245,6 +1266,7 @@ function verificarAbrirModalPagoSinpe() {
 
 
 function procesarPago(mto_sinpe, mto_efectivo, mto_tarjeta) {
+    
     $.ajax({
         url: `${base_path}/facturacion/pos/crearFactura`,
         type: 'post',
@@ -1252,6 +1274,7 @@ function procesarPago(mto_sinpe, mto_efectivo, mto_tarjeta) {
         data: {
             _token: CSRF_TOKEN,
             orden: ordenGestion,
+            envio: infoEnvio,
             detalles: detalles,
             mto_sinpe: mto_sinpe,
             mto_efectivo: mto_efectivo,
@@ -1261,6 +1284,7 @@ function procesarPago(mto_sinpe, mto_efectivo, mto_tarjeta) {
         console.log(res);
         if (!res['estado']) {
             showError(res['mensaje']);
+            $('#mdl-loader-pago').modal("hide");
             return;
         } else {
             id = res['datos'];
@@ -1508,6 +1532,39 @@ function enterCampoPago(event) {
         $('#btnPago').focus();
         return;
     }
+}
+
+function abrirModalEnvio() {
+    cargarInfoEnvio();
+    $("#mdl_envio").modal("show");
+}
+
+function cargarInfoEnvio(){
+    $('#mdl_contacto_entrega').val(infoEnvio.contacto);
+    $('#mdl_precio_envio').val(infoEnvio.precio);$('#mdl_precio_envio').val(infoEnvio.precio);
+    $('#incluyeEnvio').prop("checked", infoEnvio.incluye_envio); 
+    $("#mdl_lugar_entrega").val(infoEnvio.descripcion_lugar);
+}
+
+function guardarInfoEnvio(){
+    infoEnvio.contacto = $('#mdl_contacto_entrega').val();
+    infoEnvio.precio = $('#mdl_precio_envio').val();
+    infoEnvio.incluye_envio = $('#incluyeEnvio').prop("checked"); 
+    infoEnvio.descripcion_lugar = $("#mdl_lugar_entrega").val();
+    ordenGestion.envio = infoEnvio.precio;
+    cerrarModalEnvio();
+    actualizarOrden();
+    iziToast.success({
+        title: 'Información de envío',
+        message: 'Se actualizo la información de envío',
+        position: 'topRight'
+    });
+}
+
+
+
+function cerrarModalEnvio() {
+    $("#mdl_envio").modal("hide");
 }
 
 function cerrarCaja() {

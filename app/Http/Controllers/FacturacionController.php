@@ -773,6 +773,25 @@ class FacturacionController extends Controller
         return  $this->responseAjaxSuccess("", "");
     }
 
+    private function validarInfoEnvio($envio)
+    {
+
+        if ($envio['incluye_envio'] == 'true') {
+            if ($envio['descripcion_lugar'] == null || $envio['descripcion_lugar'] == "") {
+                return $this->responseAjaxServerError("El envío no tiene la descripción del lugar.", []);
+            }
+
+            if ($envio['contacto'] == null || $envio['contacto'] == "") {
+                return $this->responseAjaxServerError("El envío no tiene información de contacto.", []);
+            }
+
+            if ($envio['precio'] == null || $envio['precio']  < 0) {
+                return $this->responseAjaxServerError("El envío no tiene un precio valido", []);
+            }
+        }
+        return  $this->responseAjaxSuccess("", "");
+    }
+
     public static function calcularMontosDetalles($detalles)
     {
         $total = 0;
@@ -820,7 +839,7 @@ class FacturacionController extends Controller
         ];
     }
 
-    public static function asignarMontosDetalles($detalles, $totalOrden, $descuento)
+    public static function asignarMontosDetalles($detalles, $totalOrden, $descuento, $infoEnvio)
     {
         $total = 0;
         $subtotal = 0;
@@ -877,12 +896,16 @@ class FacturacionController extends Controller
 
         $subtotal = $subtotal + $montoImpuestos + $descuento;
         $total = $subtotal - $descuento;
+        if ($infoEnvio['incluye_envio'] == 'true') {
+            $total =   $total  + $infoEnvio['precio'];
+        }
 
         return [
             'total' => $total,
             'detalles' => $listaDetallesNueva,
             'total_pagar' => $total,
             'subtotal' => $subtotal,
+            'envio' => $infoEnvio['precio'] ?? 0,
             'descuento' => $descuento,
             'montoImpuestos' => $montoImpuestos,
             "totalExtras" => $totalExtras,
@@ -918,11 +941,19 @@ class FacturacionController extends Controller
         }
 
         $orden = $request->input("orden");
+        $envio = $request->input("envio");
         $detalles = $request->input("detalles");
+
         $resValidar = $this->validarOrden($orden, $detalles);
         if (!$resValidar['estado']) {
             return $this->responseAjaxServerError($resValidar['mensaje'], []);
         }
+
+        $resValidarEnvio = $this->validarInfoEnvio($envio);
+        if (!$resValidarEnvio['estado']) {
+            return $this->responseAjaxServerError($resValidarEnvio['mensaje'], []);
+        }
+
         $existeDescuento = false;
         $descuento = 0;
         if ($orden['codigo_descuento'] != null) {
@@ -944,6 +975,7 @@ class FacturacionController extends Controller
         $totalFacturaGenDescuento = $totalFacturaGen;
         $totalDescuentoGen = 0;
         $descuentoObj = null;
+        $infoDescuento = "";
         if ($existeDescuento) {
             $descuentoObj = $verificaCodDesc['datos'];
             if ($descuentoObj->cod_general == 'DESCUENTO_ABSOLUTO') {
@@ -958,8 +990,10 @@ class FacturacionController extends Controller
             } else {
                 return $this->responseAjaxServerError("No se encontro el tipo de descuento a aplicar", []);
             }
+
+            $infoDescuento = $descuentoObj->codigo . " : " . $descuentoObj->descripcion . " [ " . $descuentoObj->cod_general . " = " . $descuentoObj->descuento . " ]";
         }
-        $asignarMontosDetalles = FacturacionController::asignarMontosDetalles($detalles, $totalFacturaGen, $totalDescuentoGen);
+        $asignarMontosDetalles = FacturacionController::asignarMontosDetalles($detalles, $totalFacturaGen, $totalDescuentoGen, $envio);
         $detallesGuardar = $asignarMontosDetalles['detalles'];
         $infoFacturacionFinal = $asignarMontosDetalles;
         $fechaActual = date("Y-m-d H:i:s");
@@ -982,9 +1016,18 @@ class FacturacionController extends Controller
                 'fecha_preparado' => $fechaActual, 'fecha_entregado' => $fechaActual,
                 'cocina_terminado' => 'N', 'bebida_terminado' => 'N', 'caja_cerrada' => 'N', 'pagado' => 1,
                 'estado' => SisEstadoController::getIdEstadoByCodGeneral('ORD_EN_PREPARACION'),
-                'periodo' => date('Y'), 'cierre_caja' => CajaController::getIdCaja(session('usuario')['id'], $this->getUsuarioSucursal())
+                'periodo' => date('Y'), 'cierre_caja' => CajaController::getIdCaja(session('usuario')['id'], $this->getUsuarioSucursal()),
+                'monto_envio' => $infoFacturacionFinal['envio'],
+                'ind_requiere_envio' => $envio['incluye_envio'] == 'true', 'info_descuento' => $infoDescuento
             ]);
             $this->aumentarConsecutivoOrden($this->getUsuarioSucursal());
+
+            if ($envio['incluye_envio'] == 'true') {
+                $resCreaEnvio = $this->crearEntregaOrden($envio["precio"], $envio["descripcion_lugar"], $envio["contacto"], $id_orden);
+                if (!$resCreaEnvio['estado']) {
+                    return $this->responseAjaxServerError($resCreaEnvio['mensaje'], []);
+                }
+            }
 
             foreach ($detallesGuardar as $det) {
                 $d = $det['detalle'];
@@ -1023,6 +1066,21 @@ class FacturacionController extends Controller
         } catch (QueryException $ex) {
             DB::rollBack();
             return $this->responseAjaxServerError("Algo salío mal.");
+        }
+    }
+
+    public function crearEntregaOrden($precio, $dsc_lugar, $dsc_contacto, $orden)
+    {
+        try {
+            $ext_id = DB::table('entrega_orden')->insertGetId([
+                'id' => null, 'orden' => $orden, 'precio' => $precio,
+                'descripcion_lugar' => $dsc_contacto, 'contacto' => $dsc_contacto,
+                'estado' => SisEstadoController::getIdEstadoByCodGeneral('ENTREGA_PREPARACION_PEND'), 'encargado' => null
+            ]);
+            return $this->responseAjaxSuccess("", $ext_id);
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            return $this->responseAjaxServerError("Algo salío mal creando el envío");
         }
     }
 
@@ -1200,10 +1258,10 @@ class FacturacionController extends Controller
 
             foreach ($mt_prod as $i) {
                 $materia_prima = DB::table('materia_prima')
-                ->select('materia_prima.*')
-                ->where('materia_prima.id', '=', $i->materia_prima)
-                ->get()->first();
-                
+                    ->select('materia_prima.*')
+                    ->where('materia_prima.id', '=', $i->materia_prima)
+                    ->get()->first();
+
                 $cantidadInventario = DB::table('mt_x_sucursal')
                     ->where('mt_x_sucursal.sucursal', '=', $this->getUsuarioSucursal())
                     ->where('mt_x_sucursal.materia_prima', '=', $i->materia_prima)

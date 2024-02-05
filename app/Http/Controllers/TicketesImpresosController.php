@@ -36,19 +36,23 @@ class TicketesImpresosController extends Controller
         }
         $orden = $res['orden'];
         $detalles = $orden->detalles;
+        
         $tamPdf = 105;
+        if ($orden->ind_requiere_envio == 1) {
+            $tamPdf = 110;
+        }
         $aumento = count($detalles) * 10;
         $aumento2 = 0;
         foreach ($detalles as $d) {
             $aumento2 = $aumento2 + count($d->extras) * 5;
         }
-        $tamPdf = $tamPdf  + $aumento +$aumento2;
+        $tamPdf = $tamPdf  + $aumento + $aumento2;
         /**
          * Header
          */
         $titulo1 = iconv('UTF-8', 'ISO-8859-1', 'COFFEE TO GO');
-        $titulo2 = iconv('UTF-8', 'ISO-8859-1', 'COFFEE TO GO'); 
-        $titulo3 = iconv('UTF-8', 'ISO-8859-1', 'S&M COMERCIOS UNIDOS S.R.L'); 
+        $titulo2 = iconv('UTF-8', 'ISO-8859-1', 'COFFEE TO GO');
+        $titulo3 = iconv('UTF-8', 'ISO-8859-1', 'S&M COMERCIOS UNIDOS S.R.L');
         $titulo4 = iconv('UTF-8', 'ISO-8859-1', 'Cédula juridica : 3-102-887543');
         $titulo5 = iconv('UTF-8', 'ISO-8859-1', 'Correo : admin@coffeetogocr.com');
         $sucursal = iconv('UTF-8', 'ISO-8859-1', 'Sucursal : ' . $orden->nombre_sucursal);
@@ -58,7 +62,7 @@ class TicketesImpresosController extends Controller
         } else {
             $cliente = iconv('UTF-8', 'ISO-8859-1', 'Cliente : ' . $orden->nombre_cliente);
         }
-       
+
         $fecha = iconv('UTF-8', 'ISO-8859-1', 'Fecha : ' . $this->fechaFormat($orden->fecha_fin));
 
         $path = public_path() . '/logo_blanco_negro.png';
@@ -85,7 +89,7 @@ class TicketesImpresosController extends Controller
         $this->pdf->setX(6);
         $this->pdf->MultiCell(63, 4, $sucursal, 0);
         $this->pdf->Ln(1);
-       
+
         $this->pdf->SetFont('Helvetica', '', 8);
         $this->pdf->Ln(1);
         $this->pdf->setX(6);
@@ -118,7 +122,7 @@ class TicketesImpresosController extends Controller
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 0, '', 'T');
         $this->pdf->SetFont('Helvetica', '', 9);
-        
+
 
         foreach ($detalles as $d) {
             $this->pdf->Ln(1);
@@ -127,18 +131,18 @@ class TicketesImpresosController extends Controller
             if ($d->servicio_mesa == 'S') {
                 $producto .= ' (10%)';
             }
-            $totalExtra =0;
+            $totalExtra = 0;
             $this->pdf->MultiCell(63, 4, iconv('UTF-8', 'ISO-8859-1', $producto), 0);
             foreach ($d->extras as $e) {
                 $this->pdf->Ln(1);
                 $this->pdf->setX(10);
-                $this->pdf->Cell(63, 4,  iconv('UTF-8', 'ISO-8859-1',$e->descripcion_extra), 0);
+                $this->pdf->Cell(63, 4,  iconv('UTF-8', 'ISO-8859-1', $e->descripcion_extra), 0);
                 $this->pdf->setX(32);
-                $this->pdf->Cell(63, 4,"", 0);
+                $this->pdf->Cell(63, 4, "", 0);
                 $this->pdf->setX(53);
                 $this->pdf->Cell(63, 4, number_format($e->total, 2, ".", ","), 0);
                 $this->pdf->Ln(4);
-                $totalExtra =$totalExtra  + $e->total;
+                $totalExtra = $totalExtra  + $e->total;
             }
             $this->pdf->Ln(1);
             $this->pdf->setX(10);
@@ -146,12 +150,12 @@ class TicketesImpresosController extends Controller
             $this->pdf->setX(32);
             $this->pdf->Cell(63, 4, number_format($d->precio_unidad, 2, ".", ","), 0);
             $this->pdf->setX(53);
-            $this->pdf->Cell(63, 4, number_format(($d->precio_unidad * $d->cantidad)+$totalExtra, 2, ".", ","), 0);
+            $this->pdf->Cell(63, 4, number_format(($d->precio_unidad * $d->cantidad) + $totalExtra, 2, ".", ","), 0);
             $this->pdf->Ln(4);
             $this->pdf->setX(6);
             $this->pdf->Cell(63, 0, '', 'T');
         }
-        
+
         $this->pdf->Ln(4);
         $this->pdf->SetFont('Arial', 'B', 9);    //Letra Arial, negrita (Bold), tam. 20
         $this->pdf->setX(6);
@@ -159,18 +163,26 @@ class TicketesImpresosController extends Controller
         $this->pdf->setX(52);
         $this->pdf->Cell(63, 4, number_format($orden->subtotal, 2, ".", ","), 0);
 
-     /*  $this->pdf->Ln(4);
+        /*  $this->pdf->Ln(4);
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 4, 'Impuesto (IVA)', 0);
         $this->pdf->setX(52);
         $this->pdf->Cell(63, 4, number_format($orden->impuesto, 2, ".", ","), 0);
     */
-        
+
         $this->pdf->Ln(4);
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 4, 'Descuento', 0);
         $this->pdf->setX(52);
         $this->pdf->Cell(63, 4, number_format($orden->descuento, 2, ".", ","), 0);
+        if ($orden->ind_requiere_envio == 1) {
+            $this->pdf->Ln(4);
+            $this->pdf->setX(6);
+            $this->pdf->Cell(63, 4, iconv('UTF-8', 'ISO-8859-1','Envío'), 0);
+            $this->pdf->setX(52);
+            $this->pdf->Cell(63, 4, number_format($orden->monto_envio, 2, ".", ","), 0);
+    
+        }
         $this->pdf->Ln(4);
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 4, 'Total', 0);
@@ -205,7 +217,7 @@ class TicketesImpresosController extends Controller
             return redirect('/');
         }
 
-       
+
 
         $orden = $res['orden'];
         $detalles = $orden->detalles;
@@ -214,8 +226,8 @@ class TicketesImpresosController extends Controller
         $tamPdf = $tamPdf  + $aumento;
 
         $pagoCobrador = DB::table('usuario')
-        ->select('usuario.usuario as cobrador')
-        ->where('usuario.id', '=', $orden->cajero)->get()->first()->cobrador;
+            ->select('usuario.usuario as cobrador')
+            ->where('usuario.id', '=', $orden->cajero)->get()->first()->cobrador;
         /**
          * Header
          */
@@ -329,7 +341,7 @@ class TicketesImpresosController extends Controller
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 4, 'SubTotal', 0);
         $this->pdf->setX(52);
-        $this->pdf->Cell(63, 4, number_format($orden->subtotal , 2, ".", ","), 0);
+        $this->pdf->Cell(63, 4, number_format($orden->subtotal, 2, ".", ","), 0);
         $this->pdf->Ln(4);
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 4, 'Impuesto (IVA)', 0);
@@ -381,7 +393,7 @@ class TicketesImpresosController extends Controller
 
         $pago = DB::table('pago_parcial_h')
             ->leftjoin('usuario', 'usuario.id', '=', 'pago_parcial_h.usuario')
-            ->select('pago_parcial_h.*','usuario.usuario as cobrador')
+            ->select('pago_parcial_h.*', 'usuario.usuario as cobrador')
             ->where('pago_parcial_h.id', '=', $idPago)->get()->first();
         if ($pago == null) {
             $this->setError("Imprimir tiquete", "Al parecer no se encontro el detalle del pago.");
@@ -511,7 +523,7 @@ class TicketesImpresosController extends Controller
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 4, 'SubTotal', 0);
         $this->pdf->setX(52);
-        $this->pdf->Cell(63, 4, number_format($orden->subtotal , 2, ".", ","), 0);
+        $this->pdf->Cell(63, 4, number_format($orden->subtotal, 2, ".", ","), 0);
         $this->pdf->Ln(4);
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 4, 'Impuesto (IVA)', 0);
@@ -608,7 +620,7 @@ class TicketesImpresosController extends Controller
         // $this->pdf->SetTextColor(220, 50, 50);
 
         $this->pdf->Ln(23);
-        $this->pdf->SetFont('Helvetica', '',7);
+        $this->pdf->SetFont('Helvetica', '', 7);
         $this->pdf->setX(6);
         $this->pdf->MultiCell(63, 4, $titulo3, 0);
         $this->pdf->SetFont('Helvetica', '', 9);
@@ -683,7 +695,7 @@ class TicketesImpresosController extends Controller
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 4, 'SubTotal', 0);
         $this->pdf->setX(52);
-        $this->pdf->Cell(63, 4, number_format($orden->subtotal , 2, ".", ","), 0);
+        $this->pdf->Cell(63, 4, number_format($orden->subtotal, 2, ".", ","), 0);
         $this->pdf->Ln(4);
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 4, 'Impuesto (IVA)', 0);
