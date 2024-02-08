@@ -1022,11 +1022,21 @@ class FacturacionController extends Controller
             ]);
             $this->aumentarConsecutivoOrden($this->getUsuarioSucursal());
 
+            $serv = new EntregasOrdenController();
+            $servEstOrd = new EstOrdenController();
             if ($envio['incluye_envio'] == 'true') {
-                $resCreaEnvio = $this->crearEntregaOrden($envio["precio"], $envio["descripcion_lugar"], $envio["contacto"], $id_orden);
+                $resCreaEnvio = $serv->crearEntregaOrden($envio["precio"], $envio["descripcion_lugar"], $envio["contacto"], $id_orden);
                 if (!$resCreaEnvio['estado']) {
+                    DB::rollBack();
                     return $this->responseAjaxServerError($resCreaEnvio['mensaje'], []);
                 }
+            }
+
+            $resCargaEst = $servEstOrd->creaEstOrden($id_orden,SisEstadoController::getIdEstadoByCodGeneral('ORD_EN_PREPARACION'),null);
+
+            if (!$resCargaEst['estado']) {
+                DB::rollBack();
+                return $this->responseAjaxServerError($resCargaEst['mensaje'], []);
             }
 
             foreach ($detallesGuardar as $det) {

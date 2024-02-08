@@ -112,18 +112,18 @@ class OrdenesListasController extends Controller
             $o->fecha_inicio_hora_tiempo = date("g:i a", $phpdate);
             $o->fecha_inicio_texto =  $fechaAux;
             $o->detalles = DB::table('detalle_orden')
-            ->select('detalle_orden.*')
+                ->select('detalle_orden.*')
                 ->where('detalle_orden.orden', '=', $o->id)
                 ->get();
-                
+
             foreach ($o->detalles as $d) {
-                if($d->tipo_producto == 'R'){
+                if ($d->tipo_producto == 'R') {
                     $d->receta =  DB::table('producto_menu')
-                    ->select('producto_menu.receta')
+                        ->select('producto_menu.receta')
                         ->where('producto_menu.codigo', '=', $d->codigo_producto)
                         ->get()->first()->receta ?? "";
-                }else{
-                    $d->receta = "";  
+                } else {
+                    $d->receta = "";
                 }
                 $d->extras = DB::table('extra_detalle_orden')->select('extra_detalle_orden.*')
                     ->where('extra_detalle_orden.orden', '=', $o->id)
@@ -131,7 +131,8 @@ class OrdenesListasController extends Controller
 
                     ->get() ?? [];
                 $d->tieneExtras = count($d->extras) > 0;
-            }}
+            }
+        }
 
         return $ordenes;
     }
@@ -226,18 +227,36 @@ class OrdenesListasController extends Controller
             return $this->responseAjaxServerError('La orden ya fue procesada', []);
         }
 
+        $estadoAnterior = $orden->estado;
         try {
+            $servEstOrd = new EstOrdenController();
+            $fac = new EntregasOrdenController();
             DB::beginTransaction();
+            $idEstEntrega = SisEstadoController::getIdEstadoByCodGeneral('ORD_PARA_ENTREGA');
             $detalles = DB::table('detalle_orden')->select('detalle_orden.*')
                 ->where('orden', '=', $id_orden)->get();
             DB::table('orden')
                 ->where('id', '=', $id_orden)
                 ->update([
-                    'estado' => SisEstadoController::getIdEstadoByCodGeneral('ORD_PARA_ENTREGA'), 'fecha_preparado' => date("Y-m-d H:i:s"), 'cocina_terminado' => 'S'
+                    'estado' => $idEstEntrega, 'fecha_preparado' => date("Y-m-d H:i:s"), 'cocina_terminado' => 'S'
                 ]);
+            if ($orden->ind_requiere_envio == 1) {
+                $respuesta = $fac->actualizarEntregaOrden($id_orden, SisEstadoController::getIdEstadoByCodGeneral('ENTREGA_PEND_SALIDA_LOCAL'));
+
+                if (!$respuesta['estado']) {
+                    DB::rollBack();
+                    return $this->responseAjaxServerError($respuesta['mensaje'], []);
+                }
+            }
+
+            $resCargaEst = $servEstOrd->creaEstOrden($id_orden, $idEstEntrega,$estadoAnterior);
+
+            if (!$resCargaEst['estado']) {
+                DB::rollBack();
+                return $this->responseAjaxServerError($resCargaEst['mensaje'], []);
+            }
 
             DB::commit();
-
 
             return $this->setAjaxResponse(200, "", [], true);
         } catch (QueryException $ex) {
@@ -247,7 +266,7 @@ class OrdenesListasController extends Controller
         }
     }
 
-    
+
     public function recargarOrdenesEntrega(Request $request)
     {
         if (!$this->validarSesion("ordList_cmds")) {
@@ -255,7 +274,7 @@ class OrdenesListasController extends Controller
         }
 
         $data = [
-            
+
             'ordenes' => OrdenesListasController::getOrdenesListasEntregar($this->getUsuarioSucursal())
         ];
         return view('facturacion.layout.entregas', compact('data'));
@@ -268,7 +287,7 @@ class OrdenesListasController extends Controller
         }
 
         $data = [
-            
+
             'ordenes' => OrdenesListasController::getOrdenesPreparacion($this->getUsuarioSucursal())
         ];
         return view('facturacion.layout.preparacion', compact('data'));
@@ -299,16 +318,33 @@ class OrdenesListasController extends Controller
             $this->setError('Terminar Preparación Orden', 'La orden ya fue procesada');
             return $this->responseAjaxServerError('La orden ya fue procesada', []);
         }
-
+        $estadoAnterior = $orden->estado;
         try {
+            $fac = new EntregasOrdenController();
+            $servEstOrd = new EstOrdenController();
             DB::beginTransaction();
+            $idEstEntrega = SisEstadoController::getIdEstadoByCodGeneral('ORD_ENTREGADA');
             $detalles = DB::table('detalle_orden')->select('detalle_orden.*')
                 ->where('orden', '=', $id_orden)->get();
             DB::table('orden')
                 ->where('id', '=', $id_orden)
                 ->update([
-                    'estado' => SisEstadoController::getIdEstadoByCodGeneral('ORD_ENTREGADA'), 'fecha_entregado' => date("Y-m-d H:i:s"), 'cocina_terminado' => 'S'
+                    'estado' => $idEstEntrega, 'fecha_entregado' => date("Y-m-d H:i:s"), 'cocina_terminado' => 'S'
                 ]);
+            if ($orden->ind_requiere_envio == 1) {
+                $respuesta = $fac->actualizarEntregaOrden($id_orden, SisEstadoController::getIdEstadoByCodGeneral('ENTREGA_EN_RUTA'));
+
+                if (!$respuesta['estado']) {
+                    DB::rollBack();
+                    return $this->responseAjaxServerError($respuesta['mensaje'], []);
+                }
+            }
+            $resCargaEst = $servEstOrd->creaEstOrden($id_orden, $idEstEntrega,$estadoAnterior);
+
+            if (!$resCargaEst['estado']) {
+                DB::rollBack();
+                return $this->responseAjaxServerError($resCargaEst['mensaje'], []);
+            }
 
             DB::commit();
 
@@ -318,5 +354,6 @@ class OrdenesListasController extends Controller
             DB::rollBack();
             $this->setError('Terminar Preparación Orden', 'Algo salio mal...');
             return $this->responseAjaxServerError('Algo salio mal...', []);
-        }}
+        }
+    }
 }
