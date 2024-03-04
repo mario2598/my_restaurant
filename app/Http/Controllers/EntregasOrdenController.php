@@ -25,11 +25,11 @@ class EntregasOrdenController extends Controller
             $idEst = SisEstadoController::getIdEstadoByCodGeneral('ENTREGA_PREPARACION_PEND');
             $ext_id = DB::table('entrega_orden')->insertGetId([
                 'id' => null, 'orden' => $orden, 'precio' => $precio,
-                'descripcion_lugar' => $dsc_contacto, 'contacto' => $dsc_contacto,
+                'descripcion_lugar' => $dsc_lugar, 'contacto' => $dsc_contacto,
                 'estado' => $idEst, 'encargado' => null
             ]);
 
-            $actEstado = $this->creaEstEntregaOrden($orden, $idEst,null);
+            $actEstado = $this->creaEstEntregaOrden($orden, $idEst, null);
             if (!$actEstado['estado']) {
                 return $this->responseAjaxServerError($actEstado['mensaje'], []);
             }
@@ -122,6 +122,183 @@ class EntregasOrdenController extends Controller
             return $this->responseAjaxSuccess("", "");
         } catch (QueryException $ex) {
             return $this->responseAjaxServerError("Algo salío mal creando el estado del envío");
+        }
+    }
+
+    public function goOrdenesEntrega()
+    {
+        if (!$this->validarSesion("entregas_pend")) {
+            $this->setMsjSeguridad();
+            return redirect('/');
+        }
+
+        $data = [
+            'menus' => $this->cargarMenus(),
+            'estadosOrden' => SisEstadoController::getEstadosByCodClase("EST_ENTREGAS_ORDEN"),
+            'panel_configuraciones' => $this->getPanelConfiguraciones()
+        ];
+
+        return view("entregas.ordenesEntrega", compact("data"));
+    }
+
+    public function filtrarOrdenesEntrega(Request $request)
+    {
+        if (!$this->validarSesion("entregas_pend")) {
+            return $this->responseAjaxServerError("No tienes permisos para ingresar.", []);
+        }
+
+        $filtro = $request->input('filtro');
+
+        $filtroSucursal =  $this->getUsuarioSucursal();
+        $hasta = $filtro['hasta'];
+        $desde = $filtro['desde'];
+        $estado = $filtro['estadoEntrega'];
+
+        $ordenes = DB::table('orden')
+            ->leftjoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+            ->leftjoin('sucursal', 'sucursal.id', '=', 'orden.sucursal')
+            ->leftjoin('entrega_orden', 'entrega_orden.orden', '=', 'orden.id')
+            ->select(
+                'orden.*',
+                'sis_estado.nombre as estadoOrden',
+                'sis_estado.cod_general',
+                'sucursal.descripcion as nombreSucursal'
+            )->where('orden.ind_requiere_envio', '=', 1);
+
+
+        if (!$this->isNull($filtroSucursal) && $filtroSucursal != 'T') {
+            $ordenes = $ordenes->where('orden.sucursal', '=',  $filtroSucursal);
+        }
+
+        if (!$this->isNull($estado) && $estado != 'T') {
+            $ordenes = $ordenes->where('entrega_orden.estado', '=',  $estado);
+        }
+
+        if (!$this->isNull($desde)) {
+            $ordenes = $ordenes->where('orden.fecha_inicio', '>=', $desde);
+        }
+
+        if (!$this->isNull($hasta)) {
+            $mod_date = strtotime($hasta . "+ 1 days");
+            $mod_date = date("Y-m-d", $mod_date);
+            $ordenes = $ordenes->where('orden.fecha_inicio', '<', $mod_date);
+        }
+
+        $ordenes = $ordenes->orderBy('orden.fecha_inicio', 'DESC')->get();
+
+        foreach ($ordenes as $o) {
+            $o->detalles = DB::table('detalle_orden')->where('orden', '=', $o->id)->get();
+            $o->entrega = DB::table('entrega_orden')->leftjoin('sis_estado', 'sis_estado.id', '=', 'entrega_orden.estado')
+                ->select(
+                    'entrega_orden.*',
+                    'sis_estado.nombre as estadoOrden',
+                    'sis_estado.cod_general'
+                )
+                ->where('entrega_orden.orden', '=', $o->id)->get()->first();
+        }
+
+        return  $this->responseAjaxSuccess("", $ordenes);
+    }
+
+    public function iniciarRutaEntrega(Request $request)
+    {
+        if (!$this->validarSesion("entregas_pend")) {
+            return $this->responseAjaxServerError('Error de seguridad.', []);
+        }
+
+        $id_orden = $request->input('id_orden');
+
+        if ($id_orden < 1 || $this->isNull($id_orden)) {
+            return $this->responseAjaxServerError('Id de la orden incorrecto...', []);
+        }
+
+        $orden = DB::table('orden')->select('orden.*')->where('id', '=', $id_orden)->get()->first();
+
+        $entrega = DB::table('entrega_orden')->select('entrega_orden.*')->where('orden', '=', $id_orden)->get()->first();
+
+        if ($orden == null) {
+            return $this->responseAjaxServerError('No existe la orden.', []);
+        }
+
+        if ($entrega == null) {
+            return $this->responseAjaxServerError('No existe la entrega.', []);
+        }
+
+
+        if ($entrega->estado != SisEstadoController::getIdEstadoByCodGeneral('ENTREGA_PEND_SALIDA_LOCAL')) {
+            return $this->responseAjaxServerError('La entrega ya fue procesada', []);
+        }
+
+        $fechaActual = date("Y-m-d H:i:s");
+        try {
+            $idEstEntrega = SisEstadoController::getIdEstadoByCodGeneral('ENTREGA_EN_RUTA');
+
+            DB::beginTransaction();
+         
+            $respuesta = $this->actualizarEntregaOrden($id_orden, $idEstEntrega);
+
+            if (!$respuesta['estado']) {
+                DB::rollBack();
+                return $this->responseAjaxServerError($respuesta['mensaje'], []);
+            }
+
+            DB::commit();
+
+            return $this->responseAjaxSuccess("", []);
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            return $this->responseAjaxServerError('Algo salio mal...', []);
+        }
+    }
+
+    public function entregarOrden(Request $request)
+    {
+        if (!$this->validarSesion("entregas_pend")) {
+            return $this->responseAjaxServerError('Error de seguridad.', []);
+        }
+
+        $id_orden = $request->input('id_orden');
+
+        if ($id_orden < 1 || $this->isNull($id_orden)) {
+            return $this->responseAjaxServerError('Id de la orden incorrecto...', []);
+        }
+
+        $orden = DB::table('orden')->select('orden.*')->where('id', '=', $id_orden)->get()->first();
+
+        $entrega = DB::table('entrega_orden')->select('entrega_orden.*')->where('orden', '=', $id_orden)->get()->first();
+
+        if ($orden == null) {
+            return $this->responseAjaxServerError('No existe la orden.', []);
+        }
+
+        if ($entrega == null) {
+            return $this->responseAjaxServerError('No existe la entrega.', []);
+        }
+
+
+        if ($entrega->estado != SisEstadoController::getIdEstadoByCodGeneral('ENTREGA_EN_RUTA')) {
+            return $this->responseAjaxServerError('La entrega ya fue procesada', []);
+        }
+
+        $fechaActual = date("Y-m-d H:i:s");
+        try {
+            $idEstEntrega = SisEstadoController::getIdEstadoByCodGeneral('ENTREGA_TERMINADA');
+
+            DB::beginTransaction();
+         
+            $respuesta = $this->actualizarEntregaOrden($id_orden, $idEstEntrega);
+
+            if (!$respuesta['estado']) {
+                DB::rollBack();
+                return $this->responseAjaxServerError($respuesta['mensaje'], []);
+            }
+
+            DB::commit();
+
+            return $this->responseAjaxSuccess("", []);
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            return $this->responseAjaxServerError('Algo salio mal...', []);
         }
     }
 }

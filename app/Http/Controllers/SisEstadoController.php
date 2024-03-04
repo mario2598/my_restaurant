@@ -29,4 +29,12 @@ class SisEstadoController extends Controller
         ->get()->first()->id;
     }
 
+    public static function getEstadosByCodClase($codGeneral){
+        return DB::table('sis_estado')
+        ->leftjoin('sis_clase', 'sis_clase.id', '=', 'sis_estado.clase')
+        ->select('sis_estado.*')
+        ->where('sis_clase.cod_general', '=', $codGeneral)
+        ->get();
+    }
+
 }

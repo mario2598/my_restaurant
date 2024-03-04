@@ -104,6 +104,7 @@ Route::get('usuario', function () {
 
 Route::get('/', 'LogInController@index');
 Route::get('login', 'LogInController@goLogIn');
+Route::get('TheCoffeeExperience', 'LogInController@goLandingPage');
 
 
 Route::get('Autentificacion', function () {
@@ -397,9 +398,16 @@ Route::get('cliente/login', 'ClienteController@goLogin');
 Route::get('cliente/login/recuperarPassword', 'ClienteController@goRecuperarPassword');
 Route::post('cliente/login/solicitarNuevaPassword', 'ClienteController@solicitarNuevaPassword');
 Route::post('cliente/verificaCta','ClienteController@verificarCuenta');
+Route::post('cliente/login/ingresar', 'ClienteController@ingresar');
 
 
 /** TOMA FISICA */
 Route::get('materiaPrima/inventario/tomaFisica', 'TomaFisicaController@goCrearToma');
 Route::post('materiaPrima/inventario/buscarMPTomaFisica','TomaFisicaController@buscarMPTomaFisica');
 Route::post('materiaPrima/inventario/creaMPTomaFisica','TomaFisicaController@creaMPTomaFisica');
+
+/* ENTREGAS */
+Route::get('entregas/entregasPendientes', 'EntregasOrdenController@goOrdenesEntrega');
+Route::post('entregas/filtrarOrdenesEntrega', 'EntregasOrdenController@filtrarOrdenesEntrega');
+Route::post('entregas/iniciarRutaEntrega', 'EntregasOrdenController@iniciarRutaEntrega');
+Route::post('entregas/entregarOrden', 'EntregasOrdenController@entregarOrden');

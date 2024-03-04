@@ -228,6 +228,7 @@ class OrdenesListasController extends Controller
         }
 
         $estadoAnterior = $orden->estado;
+        $fechaActual = date("Y-m-d H:i:s");
         try {
             $servEstOrd = new EstOrdenController();
             $fac = new EntregasOrdenController();
@@ -238,7 +239,7 @@ class OrdenesListasController extends Controller
             DB::table('orden')
                 ->where('id', '=', $id_orden)
                 ->update([
-                    'estado' => $idEstEntrega, 'fecha_preparado' => date("Y-m-d H:i:s"), 'cocina_terminado' => 'S'
+                    'estado' => $idEstEntrega, 'fecha_preparado' => $fechaActual, 'cocina_terminado' => 'S'
                 ]);
             if ($orden->ind_requiere_envio == 1) {
                 $respuesta = $fac->actualizarEntregaOrden($id_orden, SisEstadoController::getIdEstadoByCodGeneral('ENTREGA_PEND_SALIDA_LOCAL'));
