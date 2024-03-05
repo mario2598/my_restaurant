@@ -222,7 +222,7 @@ function generarMensajeWhatsApp(nombreUsuario, numeroOrden, telefono) {
     var mensaje = "Hola " + nombreUsuario + ", tu pedido con número de orden " + numeroOrden + " llegó a tu destino. ¿Podemos continuar con la entrega?";
 
     // Formatear el enlace con el mensaje y el número de teléfono del usuario
-    var enlaceWhatsApp = "https://api.whatsapp.com/send?phone=" + encodeURIComponent("+506".telefono) + "&text=" + encodeURIComponent(mensaje);
+    var enlaceWhatsApp = "https://api.whatsapp.com/send?phone=+506".telefono + "&text=" + encodeURIComponent(mensaje);
 
     // Retornar el enlace generado
     return enlaceWhatsApp;
