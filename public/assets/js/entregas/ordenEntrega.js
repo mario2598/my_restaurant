@@ -70,12 +70,10 @@ function generarHTMLOrdenes(ordenes) {
                 <td class="text-center">
                     <button type="button" class="btn btn-success px-2" onclick='abrirModalEntrega("${orden.id ?? 0}")' 
                         title="Contactar cliente">
-                        <i class="fas fa-truck" aria-hidden="true"> Información</i>
+                        <i class="fas fa-truck" aria-hidden="true">  ${orden.numero_orden}</i>
                     </button>
                 </td>
-                <td class="text-center" onclick="imprimirTicket( ${orden.id})" style="cursor:pointer; text-decoration : underline; ">
-                    ${orden.numero_orden}
-                </td> 
+             
                 `;
         if (orden.cod_general != 'ORD_ANULADA') {
             texto = texto + `<td class="text-center">

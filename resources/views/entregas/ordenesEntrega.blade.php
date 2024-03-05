@@ -72,7 +72,6 @@
                                 <table class="table table-striped" id="tbl-ordenes">
                                     <thead class="thead-light">
                                         <tr>
-                                            <th scope="col" style="text-align: center">Cliente</th>
                                             <th scope="col" style="text-align: center">No.Orden</th>
                                             <th scope="col" style="text-align: center">Estado</th>
                                         </tr>
