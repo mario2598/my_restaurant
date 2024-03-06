@@ -81,7 +81,11 @@ function generarHTMLOrdenes(ordenes) {
                 ${orden.total_con_descuento ?? 0}
             </td> <td class="text-center">
             ${orden.estadoOrden ?? ""}
-        </td>`;
+        </td><td class="text-center">
+         <a href="${base_path}/tracking/orden/${orden.idOrdenEnc ?? ''}" style="display: block;width: 100%;" target="_blank">
+               Link Rastreó                      
+        </a>
+    </td>`;
         if (orden.cod_general != 'ORD_ANULADA') {
             texto = texto + `<td class="text-center">
                 <button type="button" class="btn btn-danger px-2" onclick='abrirModalAnularOrden("${orden.id ?? 0}")' 

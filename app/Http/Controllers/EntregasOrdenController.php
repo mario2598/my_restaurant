@@ -195,6 +195,8 @@ class EntregasOrdenController extends Controller
                     'sis_estado.cod_general'
                 )
                 ->where('entrega_orden.orden', '=', $o->id)->get()->first();
+                $o->idOrdenEnc =encrypt($o->id);
+                $o->fechaFormat = $this->fechaFormat($o->fecha_inicio);
         }
 
         return  $this->responseAjaxSuccess("", $ordenes);

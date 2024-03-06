@@ -108,6 +108,11 @@ function abrirModalEntrega(idOrden) {
             $("#ocliente").val(orden.nombre_cliente);
             $("#ipt_contacto_entrega").val(orden.entrega.contacto);
             $("#ipt_lugar_entrega").val(orden.entrega.descripcion_lugar);
+            $("#linkSeguimientoWhatsapp").html(`<i class="fas fa-barcode" aria-hidden="true"> </i> Envíar link de rastreo de orden `);
+            $('#linkSeguimientoWhatsapp').attr('href', `${base_path}/tracking/orden/${orden.idOrdenEnc ?? ''}`);
+            $('#linkSeguimientoWhatsapp').attr('href', generarMensajeTrackingWhatsApp(orden.nombre_cliente,
+                orden.numero_orden, orden.entrega.contacto,
+                `${base_path}/tracking/orden/${orden.idOrdenEnc ?? ''}`));
             $('#msjWhatsapp').attr('href', generarMensajeWhatsApp(orden.nombre_cliente, orden.numero_orden, orden.entrega.contacto));
             $("#nEstado").val(orden.entrega.estadoOrden);
             texto = texto + `
@@ -220,7 +225,18 @@ function generarMensajeWhatsApp(nombreUsuario, numeroOrden, telefono) {
     var mensaje = "Hola " + nombreUsuario + ", de parte de COFFEE TO GO te informamos que tu pedido con número de orden " + numeroOrden + " llegó a tu destino. ¿Podemos continuar con la entrega?";
 
     // Formatear el enlace con el mensaje y el número de teléfono del usuario
-    var enlaceWhatsApp = "https://api.whatsapp.com/send?phone=506"+telefono + "&text=" + encodeURIComponent(mensaje);
+    var enlaceWhatsApp = "https://api.whatsapp.com/send?phone=506" + telefono + "&text=" + encodeURIComponent(mensaje);
+
+    // Retornar el enlace generado
+    return enlaceWhatsApp;
+}
+
+function generarMensajeTrackingWhatsApp(nombreUsuario, numeroOrden, telefono, url) {
+    // Formatear el mensaje con los datos proporcionados
+    var mensaje = "Hola " + nombreUsuario + ", de parte de COFFEE TO GO te informamos que puedes rastrear el estado de tú orden " + numeroOrden + " siguiendo el siguiente link" + url;
+
+    // Formatear el enlace con el mensaje y el número de teléfono del usuario
+    var enlaceWhatsApp = "https://api.whatsapp.com/send?phone=506" + telefono + "&text=" + encodeURIComponent(mensaje);
 
     // Retornar el enlace generado
     return enlaceWhatsApp;

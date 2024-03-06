@@ -89,6 +89,7 @@
                                             <th scope="col" style="text-align: center">Total pagado</th>
                                             <th scope="col" style="text-align: center">Estado</th>
                                             <th scope="col" style="text-align: center"></th>
+                                            <th scope="col" style="text-align: center"></th>
                                         </tr>
                                     </thead>
                                     <tbody id="tbody-ordenes">

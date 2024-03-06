@@ -106,6 +106,10 @@
                                     <label for="nOrden">Número Orden :</label>
                                     <output id="nOrden" >
                                 </div>
+                                <div class="form-line">
+                                    <p> <a id="linkSeguimientoWhatsapp" style="display: block;width: 100%;" target="_blank">
+                                  
+                                   </a></p></div>
                             </div>
                         </div>
                         <div class="col-xl-12 col-sm-12">

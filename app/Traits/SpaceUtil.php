@@ -710,7 +710,7 @@ trait SpaceUtil
       $fechaAux = $carbonDate->isoFormat('ddd D [de] MMMM');
       $fechaAux = ucfirst($fechaAux);
       $phpdate = strtotime($fecha);
-      return str_replace('.', '', $fechaAux );
+      return str_replace('.', '', $fechaAux ) . " " . date("g:i a", $phpdate);
   }
 
   public static function soloFechaFormat($fecha)

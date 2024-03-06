@@ -411,3 +411,6 @@ Route::get('entregas/entregasPendientes', 'EntregasOrdenController@goOrdenesEntr
 Route::post('entregas/filtrarOrdenesEntrega', 'EntregasOrdenController@filtrarOrdenesEntrega');
 Route::post('entregas/iniciarRutaEntrega', 'EntregasOrdenController@iniciarRutaEntrega');
 Route::post('entregas/entregarOrden', 'EntregasOrdenController@entregarOrden');
+
+/* Tracking orden  */
+Route::get('tracking/orden/{encryptedOrderId}', 'UsuarioExternoController@goTrackingOrden');

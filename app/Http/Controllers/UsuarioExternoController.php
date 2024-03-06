@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\QueryException;
 use App\Traits\SpaceUtil;
+use Illuminate\Support\Facades\Crypt;
 use App\Http\Controllers\FacturacionController;
 
 class UsuarioExternoController extends Controller
@@ -26,10 +27,10 @@ class UsuarioExternoController extends Controller
 
         $contro = new FacturacionController();
         $categorias =  $contro->getCategoriasTodosProductos($this->getUsuarioSucursal());
-       
+
         $data = [
             'menus' => $this->cargarMenus(),
-            'categorias' =>$categorias,
+            'categorias' => $categorias,
             'impuestos' => $this->getImpuestos(),
             'proveedores' => $this->getProveedores(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
@@ -41,9 +42,9 @@ class UsuarioExternoController extends Controller
     {
         $contro = new FacturacionController();
         $categorias =  $contro->getCategoriasTodosProductos(1);
-       
+
         $data = [
-            'categorias' =>$categorias
+            'categorias' => $categorias
         ];
         return view('usuarioExterno.menuMobile', compact('data'));
     }
@@ -67,5 +68,55 @@ class UsuarioExternoController extends Controller
         $categorias =  $contro->getCategoriasTodosProductos(1);
 
         return $this->responseAjaxSuccess("", $categorias);
+    }
+
+    public function goTrackingOrden($encryptedOrderId)
+    {
+        $id_orden = Crypt::decrypt($encryptedOrderId);
+        if ($id_orden < 1 || $this->isNull($id_orden)) {
+            $this->setError('Campos Requeridos', "No se encontró la orden");
+            return redirect('/');
+        }
+        $orden = DB::table('orden')
+            ->leftjoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+            ->select(
+                'orden.*',
+                'sis_estado.nombre as estadoOrden',
+                'sis_estado.cod_general'
+            )->where('orden.id', '=', $id_orden)->get()->first();
+        if ($this->isNull($orden)) {
+            $this->setError('Campos Requeridos', "No se encontró la orden");
+            return redirect('/');
+        }
+
+        $orden->detalles = DB::table('detalle_orden')->where('orden', '=', $id_orden)->get();
+        $orden->entrega = DB::table('entrega_orden')->leftjoin('sis_estado', 'sis_estado.id', '=', 'entrega_orden.estado')
+            ->select(
+                'entrega_orden.*',
+                'sis_estado.nombre as estadoOrden',
+                'sis_estado.cod_general'
+            )
+            ->where('entrega_orden.orden', '=', $id_orden)->get()->first();
+        $orden->fechaFormat = $this->fechaFormat($orden->fecha_inicio);
+
+        if($orden->entrega != null){
+            $orden->entrega->estados = DB::table('est_entrega_orden')
+            ->leftjoin('sis_estado', 'sis_estado.id', '=', 'est_entrega_orden.estado')
+            ->select(
+                'est_entrega_orden.*',
+                'sis_estado.nombre as estadoOrden',
+                'sis_estado.cod_general'
+            )->where('est_entrega_orden.entrega_orden', '=', $orden->entrega->id)
+            ->orderBy('fecha','ASC')->get();
+            foreach($orden->entrega->estados as $e){
+                $phpdate = strtotime($e->fecha);
+                $e->hora = date("g:i a", $phpdate);
+            }
+        }
+       
+        $data = [
+            'orden' => $orden
+        ];
+        return view('usuarioExterno.trackingOrden', compact('data'));
     }
 }

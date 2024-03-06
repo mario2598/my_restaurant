@@ -104,6 +104,7 @@ class FacturacionController extends Controller
 
         foreach ($ordenes as $o) {
             $o->detalles = DB::table('detalle_orden')->where('orden', '=', $o->id)->get();
+            $o->idOrdenEnc =encrypt($o->id);
         }
 
         return  $this->responseAjaxSuccess("", $ordenes);
