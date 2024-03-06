@@ -29,8 +29,6 @@
                 transform: scale(1.1);
             }
         }
-
-    
     </style>
     <section class="section" style="padding: 15px;">
         <div class="section-body">
@@ -181,5 +179,15 @@
 @endsection
 
 @section('script')
-    <script src="{{ asset('assets/js/usuarioExterno/trackingOrden.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            // Función para recargar la página
+            function recargarPagina() {
+                location.reload();
+            }
+
+            // Configurar intervalo para llamar a la función cada 2 minutos (120,000 milisegundos)
+            setInterval(recargarPagina, 120000);
+        });
+    </script>
 @endsection
