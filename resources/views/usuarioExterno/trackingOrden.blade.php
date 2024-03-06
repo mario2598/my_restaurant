@@ -189,5 +189,5 @@
             // Configurar intervalo para llamar a la función cada 2 minutos (120,000 milisegundos)
             setInterval(recargarPagina, 40000);
         });
-    </script>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
+    </script>
 @endsection
