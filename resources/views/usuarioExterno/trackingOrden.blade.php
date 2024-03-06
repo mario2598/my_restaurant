@@ -105,7 +105,7 @@
                                                     <div class="activity-detail">
                                                         <div class="mb-2">
                                                             <span class="text-job text-primary">{{ $e->hora }}</span>
-                                                            <span class="bullet"></span>
+                                                            <span class="bullet" style="color: {{ $loop->last ? 'green' : 'grey' }}"></span>
                                                         </div>
                                                         <p>{{ $e->estadoOrden }}
                                                         </p>
@@ -187,7 +187,7 @@
             }
 
             // Configurar intervalo para llamar a la función cada 2 minutos (120,000 milisegundos)
-            setInterval(recargarPagina, 60000);
+            setInterval(recargarPagina, 40000);
         });
     </script>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
 @endsection
