@@ -1544,6 +1544,7 @@ function cargarInfoEnvio(){
     $('#mdl_precio_envio').val(infoEnvio.precio);$('#mdl_precio_envio').val(infoEnvio.precio);
     $('#incluyeEnvio').prop("checked", infoEnvio.incluye_envio); 
     $("#mdl_lugar_entrega").val(infoEnvio.descripcion_lugar);
+    $("#mdl_lugar_entrega_maps").val(infoEnvio.descripcion_lugar_maps);
 }
 
 function guardarInfoEnvio(){
@@ -1551,6 +1552,7 @@ function guardarInfoEnvio(){
     infoEnvio.precio = $('#mdl_precio_envio').val();
     infoEnvio.incluye_envio = $('#incluyeEnvio').prop("checked"); 
     infoEnvio.descripcion_lugar = $("#mdl_lugar_entrega").val();
+    infoEnvio.descripcion_lugar_maps = $("#mdl_lugar_entrega_maps").val();
     ordenGestion.envio = infoEnvio.precio;
     cerrarModalEnvio();
     actualizarOrden();
