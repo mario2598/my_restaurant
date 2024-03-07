@@ -19,14 +19,14 @@ class EntregasOrdenController extends Controller
     {
     }
 
-    public function crearEntregaOrden($precio, $dsc_lugar, $dsc_contacto, $orden)
+    public function crearEntregaOrden($precio, $dsc_lugar, $dsc_contacto,$url_maps, $orden)
     {
         try {
             $idEst = SisEstadoController::getIdEstadoByCodGeneral('ENTREGA_PREPARACION_PEND');
             $ext_id = DB::table('entrega_orden')->insertGetId([
                 'id' => null, 'orden' => $orden, 'precio' => $precio,
                 'descripcion_lugar' => $dsc_lugar, 'contacto' => $dsc_contacto,
-                'estado' => $idEst, 'encargado' => null
+                'estado' => $idEst, 'encargado' => null, 'url_ubicacion' => $url_maps
             ]);
 
             $actEstado = $this->creaEstEntregaOrden($orden, $idEst, null);

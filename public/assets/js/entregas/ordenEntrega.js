@@ -115,6 +115,7 @@ function abrirModalEntrega(idOrden) {
                 `${base_path}/tracking/orden/${orden.idOrdenEnc ?? ''}`));
             $('#msjWhatsapp').attr('href', generarMensajeWhatsApp(orden.nombre_cliente, orden.numero_orden, orden.entrega.contacto));
             $("#nEstado").val(orden.entrega.estadoOrden);
+            $('#ubicacionMaps').attr('href', orden.entrega.url_ubicacion);
             texto = texto + `
             <button type="button" class="btn btn-success px-2" onclick='imprimirTicket("${orden.id ?? 0}")' 
                 title="Ver detalle de la orden">

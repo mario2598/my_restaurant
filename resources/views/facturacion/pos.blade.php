@@ -609,6 +609,15 @@
                             </div>
                         </div>
 
+                        <div class="col-xl-12 col-sm-12">
+                            <div class="form-group form-float">
+                                <div class="form-line">
+                                    <label class="form-label">URL Lugar Entrega (MAPS)</label>
+                                    <textarea class="form-control" name="mdl_lugar_entrega_maps" id="mdl_lugar_entrega_maps" maxlength="1000"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
                 <div id='footerContiner' class="modal-footer" style="margin-top:-5%;">

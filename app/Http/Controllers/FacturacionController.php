@@ -1026,7 +1026,7 @@ class FacturacionController extends Controller
             $serv = new EntregasOrdenController();
             $servEstOrd = new EstOrdenController();
             if ($envio['incluye_envio'] == 'true') {
-                $resCreaEnvio = $serv->crearEntregaOrden($envio["precio"], $envio["descripcion_lugar"], $envio["contacto"], $id_orden);
+                $resCreaEnvio = $serv->crearEntregaOrden($envio["precio"], $envio["descripcion_lugar"], $envio["contacto"],$envio["descripcion_lugar_maps"], $id_orden);
                 if (!$resCreaEnvio['estado']) {
                     DB::rollBack();
                     return $this->responseAjaxServerError($resCreaEnvio['mensaje'], []);

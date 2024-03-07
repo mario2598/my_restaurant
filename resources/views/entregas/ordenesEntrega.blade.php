@@ -104,12 +104,13 @@
                             <div class="form-group form-float">
                                 <div class="form-line">
                                     <label for="nOrden">Número Orden :</label>
-                                    <output id="nOrden" >
+                                    <output id="nOrden">
                                 </div>
                                 <div class="form-line">
                                     <p> <a id="linkSeguimientoWhatsapp" style="display: block;width: 100%;" target="_blank">
-                                  
-                                   </a></p></div>
+
+                                        </a></p>
+                                </div>
                             </div>
                         </div>
                         <div class="col-xl-12 col-sm-12">
@@ -123,9 +124,8 @@
                             <div class="form-group form-float">
                                 <div class="form-line">
                                     <label class="form-label">Cliente :</label>
-                           
-                                        <output 
-                                        id="ocliente" name="ocliente">
+
+                                    <output id="ocliente" name="ocliente">
                                 </div>
                             </div>
                         </div>
@@ -134,13 +134,12 @@
                             <div class="form-group form-float">
                                 <div class="form-line">
                                     <label class="form-label">Contacto de entrega :</label>
-                                    
-                                    <output
-                                        id="ipt_contacto_entrega" name="mdl_contacto_entrega">
-                                       
+
+                                    <output id="ipt_contacto_entrega" name="mdl_contacto_entrega">
+
                                 </div>
-                               <a id="msjWhatsapp"  target="_blank">
-                                 <i class="fab fa-whatsapp" aria-hidden="true"> </i>Contactar por whatsapp
+                                <a id="msjWhatsapp" target="_blank">
+                                    <i class="fab fa-whatsapp" aria-hidden="true"> </i>Contactar por whatsapp
                                 </a>
                             </div>
                         </div>
@@ -149,9 +148,11 @@
                             <div class="form-group form-float">
                                 <div class="form-line">
                                     <label class="form-label">Descripción Lugar Entrega :</label>
-                                    <output  
-                                    id="ipt_lugar_entrega" name="mdl_lugar_entrega">
+                                    <output id="ipt_lugar_entrega" name="mdl_lugar_entrega">
                                 </div>
+                                <a id="ubicacionMaps" target="_blank">
+                                    <i class="fas fa-map" aria-hidden="true"> </i>Ver ubicación
+                                </a>
                             </div>
                         </div>
 
@@ -160,7 +161,7 @@
                 <div class="modal-footer">
                     <div class="form-group" id="botonesEntregaContainer">
 
-                      
+
                     </div>
                 </div>
             </div>
