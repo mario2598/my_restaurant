@@ -1366,7 +1366,7 @@ function generarHTMLOrdenes(ordenes) {
                 <td class="text-center">
                 ${orden.total_con_descuento ?? 0}
             </td> <td class="text-center">
-<<<<<<< HEAD
+
                 ${orden.estadoOrden ?? ""}
             </td>
            
@@ -1375,10 +1375,6 @@ function generarHTMLOrdenes(ordenes) {
                     <i class="fas fa-barcode" aria-hidden="true"> </i> Envíar link de rastreo de orden
                 </a>
             </td>`;
-=======
-            ${orden.estadoOrden ?? ""}
-        </td>`;
->>>>>>> parent of 4b058e5 (Merge branch 'main' into GymBar)
 
         texto = texto + `</tr>`;
     });
