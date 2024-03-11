@@ -266,19 +266,19 @@
                     title: 'GYM BAR',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
-                    filename: 'reporte_productos_gym_bar'
+                    filename: 'reporte_productos_coffee_to_go'
                 }, {
                     extend: 'pdf',
                     title: 'GYM BAR',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
-                    filename: 'reporte_productos_gym_bar'
+                    filename: 'reporte_productos_coffee_to_go'
                 }, {
                     extend: 'print',
                     title: 'GYM BAR',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
-                    filename: 'reporte_productos_gym_bar'
+                    filename: 'reporte_productos_coffee_to_go'
                 }]
             });
 

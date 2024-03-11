@@ -18,10 +18,10 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Base de datos: `gym_bar`
+-- Base de datos: `coffee_to_go`
 --
-CREATE DATABASE IF NOT EXISTS `gym_bar` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-USE `gym_bar`;
+CREATE DATABASE IF NOT EXISTS `coffee_to_go` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `coffee_to_go`;
 
 -- --------------------------------------------------------
 
