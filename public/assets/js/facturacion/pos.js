@@ -1378,9 +1378,7 @@ function generarHTMLOrdenes(ordenes) {
             </td> <td class="text-center">
                 ${orden.estadoOrden ?? ""}
             </td>
-            <td class="text-center">
-                ${orden.estadoOrden ?? ""}
-            </td>
+           
             <td class="text-center"> 
                 <a href="${msjTrackingWhatsp ?? ""}" style="display: block;width: 100%;" target="_blank">
                     <i class="fas fa-barcode" aria-hidden="true"> </i> Envíar link de rastreo de orden
