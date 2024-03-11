@@ -70,9 +70,9 @@ class ReportesController extends Controller
         foreach ($sucursales as $s) {
 
             $query = "SELECT suc.descripcion as nombreSucursal,pe.nombre as nombreProducto,pe.unidad_medida,sum(inv.cantidad_ajuste) as suma,pe.precio as precio_unidad, (sum(inv.cantidad_ajuste) * pe.precio) as costo, mts.cantidad as cantTotalMp " .
-                "FROM coffee_to_go.bit_materia_prima inv join  coffee_to_go.usuario usu on usu.id = inv.usuario " .
-                "join coffee_to_go.materia_prima pe on pe.id = inv.materia_prima join coffee_to_go.sucursal suc on suc.id = inv.sucursal 
-                 join coffee_to_go.mt_x_sucursal mts on mts.sucursal = suc.id and mts.materia_prima = pe.id";
+                "FROM gym_bar.bit_materia_prima inv join  gym_bar.usuario usu on usu.id = inv.usuario " .
+                "join gym_bar.materia_prima pe on pe.id = inv.materia_prima join gym_bar.sucursal suc on suc.id = inv.sucursal 
+                 join gym_bar.mt_x_sucursal mts on mts.sucursal = suc.id and mts.materia_prima = pe.id";
             $where = " where inv.cantidad_anterior > inv.cantidad_nueva and inv.detalle like '%Rebajo por venta%'";
 
             $where .= " and inv.fecha >= '" . date('Y-m-d', strtotime('-1 day')) . "'";
@@ -100,10 +100,10 @@ class ReportesController extends Controller
         foreach ($sucursales as $s) {
 
             $queryIngresos = "SELECT pe.nombre as nombreProducto,pes.cantidad as cantInventarioActual ,sum(inv.cantidad_ajustada) as ingreso" .
-                " FROM coffee_to_go.bit_inv_producto_externo inv join  coffee_to_go.usuario usu on usu.id = inv.usuario " .
-                " join coffee_to_go.producto_externo pe on pe.id = inv.producto " .
-                " join coffee_to_go.pe_x_sucursal pes on pes.producto_externo = pe.id " .
-                " join coffee_to_go.sucursal suc on suc.id = inv.sucursal";
+                " FROM gym_bar.bit_inv_producto_externo inv join  gym_bar.usuario usu on usu.id = inv.usuario " .
+                " join gym_bar.producto_externo pe on pe.id = inv.producto " .
+                " join gym_bar.pe_x_sucursal pes on pes.producto_externo = pe.id " .
+                " join gym_bar.sucursal suc on suc.id = inv.sucursal";
 
             $where = " where inv.cantidad_anterior < cantidad_nueva";
             $where .= " and inv.fecha >= '" . date('Y-m-d', strtotime('-1 day')) . "'";
@@ -122,10 +122,10 @@ class ReportesController extends Controller
         foreach ($sucursales as $s) {
 
             $querySalidas = "SELECT pe.nombre as nombreProducto,pes.cantidad as cantInventarioActual ,sum(inv.cantidad_ajustada) as salida" .
-                " FROM coffee_to_go.bit_inv_producto_externo inv join  coffee_to_go.usuario usu on usu.id = inv.usuario " .
-                " join coffee_to_go.producto_externo pe on pe.id = inv.producto " .
-                " join coffee_to_go.pe_x_sucursal pes on pes.producto_externo = pe.id " .
-                " join coffee_to_go.sucursal suc on suc.id = inv.sucursal";
+                " FROM gym_bar.bit_inv_producto_externo inv join  gym_bar.usuario usu on usu.id = inv.usuario " .
+                " join gym_bar.producto_externo pe on pe.id = inv.producto " .
+                " join gym_bar.pe_x_sucursal pes on pes.producto_externo = pe.id " .
+                " join gym_bar.sucursal suc on suc.id = inv.sucursal";
 
             $where = " where inv.cantidad_anterior > cantidad_nueva and inv.devolucion = 'N' ";
             $where .= " and inv.fecha >= '" . date('Y-m-d', strtotime('-1 day')) . "'";
@@ -145,10 +145,10 @@ class ReportesController extends Controller
         foreach ($sucursales as $s) {
 
             $queryDesechos = "SELECT pe.nombre as nombreProducto,pes.cantidad as cantInventarioActual ,sum(inv.cantidad_ajustada) as desecho" .
-                " FROM coffee_to_go.bit_inv_producto_externo inv join  coffee_to_go.usuario usu on usu.id = inv.usuario " .
-                " join coffee_to_go.producto_externo pe on pe.id = inv.producto " .
-                " join coffee_to_go.pe_x_sucursal pes on pes.producto_externo = pe.id " .
-                " join coffee_to_go.sucursal suc on suc.id = inv.sucursal";
+                " FROM gym_bar.bit_inv_producto_externo inv join  gym_bar.usuario usu on usu.id = inv.usuario " .
+                " join gym_bar.producto_externo pe on pe.id = inv.producto " .
+                " join gym_bar.pe_x_sucursal pes on pes.producto_externo = pe.id " .
+                " join gym_bar.sucursal suc on suc.id = inv.sucursal";
 
             $where = " where inv.cantidad_anterior > cantidad_nueva and inv.devolucion = 'S' ";
             $where .= " and inv.fecha >= '" . date('Y-m-d', strtotime('-1 day')) . "'";
@@ -167,8 +167,8 @@ class ReportesController extends Controller
 
         foreach ($sucursales as $s) {
 
-            $queryVentas = "SELECT do.nombre_producto,sum(do.cantidad) as cantidad FROM coffee_to_go.detalle_orden do ".
-              "join coffee_to_go.orden o on o.id = do.orden";
+            $queryVentas = "SELECT do.nombre_producto,sum(do.cantidad) as cantidad FROM gym_bar.detalle_orden do ".
+              "join gym_bar.orden o on o.id = do.orden";
 
             $where = " where o.estado <> 5 and do.tipo_producto = 'E' ";
             $where .= " and o.fecha_inicio >= '" . date('Y-m-d', strtotime('-1 day')) . "'";

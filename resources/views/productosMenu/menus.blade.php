@@ -211,19 +211,19 @@
                     title: 'GYM BAR',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
-                    filename: 'reporte_menu_coffee_to_go'
+                    filename: 'reporte_menu_gym_bar'
                 }, {
                     extend: 'pdf',
                     title: 'GYM BAR',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
-                    filename: 'reporte_menu_coffee_to_go'
+                    filename: 'reporte_menu_gym_bar'
                 }, {
                     extend: 'print',
                     title: 'GYM BAR',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
-                    filename: 'reporte_menu_coffee_to_go'
+                    filename: 'reporte_menu_gym_bar'
                 }]
             });
 

@@ -268,21 +268,21 @@
             messageTop:topMesage,
             footer: true,
             messageBottom:bottomMesage,
-            filename: 'reporte_ingresos_coffee_to_go'
+            filename: 'reporte_ingresos_gym_bar'
           }, {
             extend: 'pdf',
             title: 'GYM BAR',
             footer: true,
             messageTop:topMesage,
             messageBottom:bottomMesage,
-            filename: 'reporte_ingresos_coffee_to_go'
+            filename: 'reporte_ingresos_gym_bar'
           }, {
             extend: 'print',
             title: 'GYM BAR',
             footer: true,
             messageTop:topMesage,
             messageBottom:bottomMesage,
-            filename: 'reporte_ingresos_coffee_to_go'
+            filename: 'reporte_ingresos_gym_bar'
           }
         ]
       });

@@ -81,7 +81,7 @@ chmod -R 777 /var/www/html/PV_POS/storage
 -- AGREGAR leches requeridas 
 
 -- LLEVO  150 ml y 3.00 ml y 90,100,115,125,130,140,133,89,39,170,175,180,200,210,230,240,270,280 de leche
-INSERT INTO `coffee_to_go`.`extra_producto_menu`
+INSERT INTO `gym_bar`.`extra_producto_menu`
 (`id`,
 `descripcion`,
 `precio`,
@@ -91,9 +91,9 @@ INSERT INTO `coffee_to_go`.`extra_producto_menu`
 `multiple`,materia_prima,cant_mp)
 SELECT null,
 'Leche Descremada',
-0,pm.id,'Tipo Leche',1,0,27,130 FROM coffee_to_go.producto_menu pm where pm.id in (56);
+0,pm.id,'Tipo Leche',1,0,27,130 FROM gym_bar.producto_menu pm where pm.id in (56);
 
-INSERT INTO `coffee_to_go`.`extra_producto_menu`
+INSERT INTO `gym_bar`.`extra_producto_menu`
 (`id`,
 `descripcion`,
 `precio`,
@@ -103,9 +103,9 @@ INSERT INTO `coffee_to_go`.`extra_producto_menu`
 `multiple`,materia_prima,cant_mp)
 SELECT null,
 'Leche Almendras',
-0,pm.id,'Tipo Leche',1,0,26,130 FROM coffee_to_go.producto_menu pm where pm.id in (56);
+0,pm.id,'Tipo Leche',1,0,26,130 FROM gym_bar.producto_menu pm where pm.id in (56);
 
-INSERT INTO `coffee_to_go`.`extra_producto_menu`
+INSERT INTO `gym_bar`.`extra_producto_menu`
 (`id`,
 `descripcion`,
 `precio`,
@@ -115,10 +115,10 @@ INSERT INTO `coffee_to_go`.`extra_producto_menu`
 `multiple`,materia_prima,cant_mp)
 SELECT null,
 'Leche Entera',
-0,pm.id,'Tipo Leche',1,0,25,130 FROM coffee_to_go.producto_menu pm where pm.id in (56);
+0,pm.id,'Tipo Leche',1,0,25,130 FROM gym_bar.producto_menu pm where pm.id in (56);
 
 
-INSERT INTO `coffee_to_go`.`extra_producto_menu`
+INSERT INTO `gym_bar`.`extra_producto_menu`
 (`id`,
 `descripcion`,
 `precio`,
@@ -128,12 +128,12 @@ INSERT INTO `coffee_to_go`.`extra_producto_menu`
 `multiple`,materia_prima,cant_mp)
 SELECT null,
 'Leche Deslactosada',
-0,pm.id,'Tipo Leche',1,0,19,130 FROM coffee_to_go.producto_menu pm where pm.id in (56);
+0,pm.id,'Tipo Leche',1,0,19,130 FROM gym_bar.producto_menu pm where pm.id in (56);
 
 
 
 COPIAR EXTRAS A PRODUCTO 
-INSERT INTO `coffee_to_go`.`extra_producto_menu`
+INSERT INTO `gym_bar`.`extra_producto_menu`
 (`id`,
 `descripcion`,
 `precio`,
@@ -143,7 +143,7 @@ INSERT INTO `coffee_to_go`.`extra_producto_menu`
 `multiple`,materia_prima,cant_mp)
 SELECT null,
 pm.descripcion,
-pm.precio,103,pm.dsc_grupo,pm.es_requerido,pm.multiple,pm.materia_prima,pm.cant_mp FROM coffee_to_go.extra_producto_menu pm where pm.producto in (100);
+pm.precio,103,pm.dsc_grupo,pm.es_requerido,pm.multiple,pm.materia_prima,pm.cant_mp FROM gym_bar.extra_producto_menu pm where pm.producto in (100);
 
 
 

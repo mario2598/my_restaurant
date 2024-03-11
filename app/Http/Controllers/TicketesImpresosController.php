@@ -52,9 +52,8 @@ class TicketesImpresosController extends Controller
          */
         $titulo1 = iconv('UTF-8', 'ISO-8859-1', 'GYM BAR');
         $titulo2 = iconv('UTF-8', 'ISO-8859-1', 'GYM BAR');
-        $titulo3 = iconv('UTF-8', 'ISO-8859-1', 'S&M COMERCIOS UNIDOS S.R.L');
-        $titulo4 = iconv('UTF-8', 'ISO-8859-1', 'Cédula juridica : 3-102-887543');
-        $titulo5 = iconv('UTF-8', 'ISO-8859-1', 'Correo : admin@coffeetogocr.com');
+        $titulo3 = iconv('UTF-8', 'ISO-8859-1', 'GYM BAR');
+        $titulo5 = iconv('UTF-8', 'ISO-8859-1', 'Correo : admin@gymbarcr.com');
         $sucursal = iconv('UTF-8', 'ISO-8859-1', 'Sucursal : ' . $orden->nombre_sucursal);
         $numero_orden = iconv('UTF-8', 'ISO-8859-1', 'No.Orden : ' . $orden->numero_orden);
         if ($orden->nombre_cliente == null || $orden->nombre_cliente == "") {
