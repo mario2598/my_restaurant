@@ -1159,6 +1159,14 @@ class FacturacionController extends Controller
 
         foreach ($ordenes as $o) {
             $o->detalles = DB::table('detalle_orden')->where('orden', '=', $o->id)->get();
+            $o->entrega = DB::table('entrega_orden')->leftjoin('sis_estado', 'sis_estado.id', '=', 'entrega_orden.estado')
+                ->select(
+                    'entrega_orden.*',
+                    'sis_estado.nombre as estadoOrden',
+                    'sis_estado.cod_general'
+                )
+                ->where('entrega_orden.orden', '=', $o->id)->get()->first();
+            $o->idOrdenEnc =encrypt($o->id);
         }
         return $this->responseAjaxSuccess("", $ordenes);
     }
