@@ -794,10 +794,10 @@ function actualizarOrden() {
     }
 
     total = subTotal - aux;
-    if(infoEnvio.incluye_envio){
-        total = total + (parseFloat(ordenGestion.envio) );
+    if (infoEnvio.incluye_envio) {
+        total = total + (parseFloat(ordenGestion.envio));
     }
-    
+
     ordenGestion.total = total;
 
     $('#txt-id-cliente').val(ordenGestion.cliente);
@@ -812,13 +812,13 @@ function actualizarOrden() {
         currency: 'CRC',
     }));
 
-    if(infoEnvio.incluye_envio){
+    if (infoEnvio.incluye_envio) {
         $('#txt-mto-envio').html("Envío: " + (parseFloat(ordenGestion.envio)).toLocaleString('es-CR', {
             style: 'currency',
             currency: 'CRC',
         }));
-    }else{
-        $('#txt-mto-envio').html("Envío: No aplica" );
+    } else {
+        $('#txt-mto-envio').html("Envío: No aplica");
     }
 
     $('#txt-total-pagar').html("Total: " + (ordenGestion.total).toLocaleString('es-CR', {
@@ -1266,7 +1266,7 @@ function verificarAbrirModalPagoSinpe() {
 
 
 function procesarPago(mto_sinpe, mto_efectivo, mto_tarjeta) {
-    
+
     $.ajax({
         url: `${base_path}/facturacion/pos/crearFactura`,
         type: 'post',
@@ -1330,8 +1330,11 @@ function imprimirTicket(id) {
 
 function generarHTMLOrdenes(ordenes) {
     var texto = "";
-
+    var msjTrackingWhatsp = "";
+    var contactoAux = "";
     ordenes.forEach(orden => {
+        contactoAux = "";
+        msjTrackingWhatsp = "";
         var lineas = "";
         var tablaDetalles = "";
         orden.detalles.forEach(detalle => {
@@ -1350,6 +1353,13 @@ function generarHTMLOrdenes(ordenes) {
                                                 </td>
                                             </tr>`;
         });
+
+        if (orden.entrega != null) {
+            contactoAux = orden.entrega.contacto;
+        }
+        msjTrackingWhatsp = generarMensajeTrackingWhatsApp(orden.nombre_cliente,
+            orden.numero_orden, contactoAux,
+            `${base_path}/tracking/orden/${orden.idOrdenEnc ?? ''}`);
 
         lineas.slice(0, -1);
         texto = texto +
@@ -1381,6 +1391,17 @@ function generarHTMLOrdenes(ordenes) {
 
     $('#tbody-ordenes').html(texto);
     $('#mdl-ordenes').modal('show');
+}
+
+function generarMensajeTrackingWhatsApp(nombreUsuario, numeroOrden, telefono, url) {
+    // Formatear el mensaje con los datos proporcionados
+    var mensaje = "Hola " + nombreUsuario + ", de parte de COFFEE TO GO te informamos que puedes rastrear el estado de tú orden " + numeroOrden + " siguiendo el siguiente link : " + url;
+
+    // Formatear el enlace con el mensaje y el número de teléfono del usuario
+    var enlaceWhatsApp = "https://api.whatsapp.com/send?phone=506" + telefono + "&text=" + encodeURIComponent(mensaje);
+
+    // Retornar el enlace generado
+    return enlaceWhatsApp;
 }
 
 function cerrarMdlOrdenes() {
@@ -1546,18 +1567,19 @@ function abrirModalEnvio() {
     $("#mdl_envio").modal("show");
 }
 
-function cargarInfoEnvio(){
+function cargarInfoEnvio() {
     $('#mdl_contacto_entrega').val(infoEnvio.contacto);
-    $('#mdl_precio_envio').val(infoEnvio.precio);$('#mdl_precio_envio').val(infoEnvio.precio);
-    $('#incluyeEnvio').prop("checked", infoEnvio.incluye_envio); 
+    $('#mdl_precio_envio').val(infoEnvio.precio);
+    $('#mdl_precio_envio').val(infoEnvio.precio);
+    $('#incluyeEnvio').prop("checked", infoEnvio.incluye_envio);
     $("#mdl_lugar_entrega").val(infoEnvio.descripcion_lugar);
     $("#mdl_lugar_entrega_maps").val(infoEnvio.descripcion_lugar_maps);
 }
 
-function guardarInfoEnvio(){
+function guardarInfoEnvio() {
     infoEnvio.contacto = $('#mdl_contacto_entrega').val();
     infoEnvio.precio = $('#mdl_precio_envio').val();
-    infoEnvio.incluye_envio = $('#incluyeEnvio').prop("checked"); 
+    infoEnvio.incluye_envio = $('#incluyeEnvio').prop("checked");
     infoEnvio.descripcion_lugar = $("#mdl_lugar_entrega").val();
     infoEnvio.descripcion_lugar_maps = $("#mdl_lugar_entrega_maps").val();
     ordenGestion.envio = infoEnvio.precio;
