@@ -82,8 +82,6 @@ class TicketesImpresosController extends Controller
         $this->pdf->setX(6);
         $this->pdf->MultiCell(63, 4, $titulo3, 0);
         $this->pdf->setX(6);
-        $this->pdf->MultiCell(63, 4, $titulo4, 0);
-        $this->pdf->setX(6);
         $this->pdf->MultiCell(63, 4, $titulo5, 0);
         $this->pdf->setX(6);
         $this->pdf->MultiCell(63, 4, $sucursal, 0);
