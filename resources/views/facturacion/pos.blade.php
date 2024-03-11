@@ -275,7 +275,7 @@
                                                         <div class="col-sm-12 col-md-12 col-lg-12">
                                                             <h6 id="txt-mto-envio" class="text-muted"
                                                                 style="margin-left: 3%">
-                                                                Envío: No aplica</h6>
+                                                                Envío: No aplica </h6>
                                                         </div>
                                                         
                                                         <div class="col-sm-12 col-md-12 col-lg-12">
