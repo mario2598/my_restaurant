@@ -77,9 +77,9 @@ class TicketesImpresosController extends Controller
 
         // $this->pdf->SetTextColor(220, 50, 50);
 
-        $this->pdf->Ln(15);
+        $this->pdf->Ln(19);
         $this->pdf->SetFont('Helvetica', '', 7);
-        $this->pdf->setX(9);
+        $this->pdf->setX(6);
         $this->pdf->MultiCell(63, 4, $titulo5, 0);
         $this->pdf->setX(6);
         $this->pdf->MultiCell(63, 4, $sucursal, 0);
