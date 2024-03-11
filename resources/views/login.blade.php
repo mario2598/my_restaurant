@@ -54,7 +54,7 @@
                 </div>
             </div>
             <div class="mt-5 text-muted text-center">
-                GYM BAR | Elevate your gym experience
+                Coffee To Go | The coffee experience
             </div>
         </div>
     </section>

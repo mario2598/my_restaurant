@@ -4,7 +4,7 @@
         <a  href="#" data-toggle="sidebar" > <img title="Nombre empresa"
            alt="Nombre empresa" src="{{asset("assets/images/default-image_small.png")}}"
            style="background-color: transparent;border-color: transparent;" class="img-thumbnail"/> <span
-            class="logo-name" style="color: transparent;" >GYM BAR</span>
+            class="logo-name" style="color: transparent;" >COFFEE TO GO</span>
         </a>
       </div>
       <ul class="sidebar-menu" id="sideBarMobile">

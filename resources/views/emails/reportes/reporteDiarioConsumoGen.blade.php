@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Reporte consumo diario {{ $data['fechaReporte'] }} - GYM BAR</title>
+    <title>Reporte consumo diario {{ $data['fechaReporte'] }} - Coffee To Go</title>
     <style>
         body {
             background: #fff;

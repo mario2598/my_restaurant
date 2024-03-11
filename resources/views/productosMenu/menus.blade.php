@@ -208,19 +208,19 @@
                 },
                 buttons: [{
                     extend: 'excel',
-                    title: 'GYM BAR',
+                    title: 'COFFEE TO GO',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
                     filename: 'reporte_menu_coffee_to_go'
                 }, {
                     extend: 'pdf',
-                    title: 'GYM BAR',
+                    title: 'COFFEE TO GO',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
                     filename: 'reporte_menu_coffee_to_go'
                 }, {
                     extend: 'print',
-                    title: 'GYM BAR',
+                    title: 'COFFEE TO GO',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
                     filename: 'reporte_menu_coffee_to_go'

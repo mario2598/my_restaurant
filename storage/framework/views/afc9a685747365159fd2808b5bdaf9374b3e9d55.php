@@ -354,7 +354,7 @@
                 bottomMesage += 'tipo de impuesto [ Todos ].';
             }
 
-            bottomMesage += ' GYM BAR CR. ';
+            bottomMesage += ' Coffee To Go CR. ';
 
 
             $('#tablaProductos').DataTable({
@@ -367,19 +367,19 @@
                 },
                 buttons: [{
                     extend: 'excel',
-                    title: 'GYM BAR',
+                    title: 'Coffee To Go',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
                     filename: 'reporte_productos_coffee_to_coffee'
                 }, {
                     extend: 'pdf',
-                    title: 'GYM BAR',
+                    title: 'Coffee To Go',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
                     filename: 'reporte_productos_coffee_to_coffee'
                 }, {
                     extend: 'print',
-                    title: 'GYM BAR',
+                    title: 'Coffee To Go',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
                     filename: 'reporte_productos_coffee_to_coffee'

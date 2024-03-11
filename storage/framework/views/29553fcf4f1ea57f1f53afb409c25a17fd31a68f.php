@@ -6,8 +6,8 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
-        <title>GYM BAR</title>
-        <meta name="keywords" content="Elevate your gym experience">
+        <title>Coffee To Go</title>
+        <meta name="keywords" content="The coffee experience">
         <meta name="description" content="<?php echo $__env->yieldContent('meta_description', config('app.name')); ?>">
         <meta name="author" content="<?php echo $__env->yieldContent('meta_author', config('app.name')); ?>">
         <!-- Favicon -->

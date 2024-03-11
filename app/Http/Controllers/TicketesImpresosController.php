@@ -50,8 +50,8 @@ class TicketesImpresosController extends Controller
         /**
          * Header
          */
-        $titulo1 = iconv('UTF-8', 'ISO-8859-1', 'GYM BAR');
-        $titulo2 = iconv('UTF-8', 'ISO-8859-1', 'GYM BAR');
+        $titulo1 = iconv('UTF-8', 'ISO-8859-1', 'COFFEE TO GO');
+        $titulo2 = iconv('UTF-8', 'ISO-8859-1', 'COFFEE TO GO');
         $titulo3 = iconv('UTF-8', 'ISO-8859-1', 'S&M COMERCIOS UNIDOS S.R.L');
         $titulo4 = iconv('UTF-8', 'ISO-8859-1', 'Cédula juridica : 3-102-887543');
         $titulo5 = iconv('UTF-8', 'ISO-8859-1', 'Correo : admin@coffeetogocr.com');
@@ -196,7 +196,7 @@ class TicketesImpresosController extends Controller
 
         $this->pdf->SetFont('Helvetica', 'B', 6);
         $this->pdf->setX(28);
-        $this->pdf->Cell(63, 4, 'GYM BAR CR');
+        $this->pdf->Cell(63, 4, 'COFFEE TO GO CR');
         $this->pdf->Ln(10);
         // $this->footer();
 

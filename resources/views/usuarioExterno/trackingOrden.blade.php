@@ -44,7 +44,7 @@
                                         style="background-color: transparent;border-color: transparent;
                                              height: 150px;"
                                         class="img-thumbnail" />
-                                    <span class="logo-name" style="color: transparent;">GYM BAR</span>
+                                    <span class="logo-name" style="color: transparent;">COFFEE TO GO</span>
 
                                 </div>
 

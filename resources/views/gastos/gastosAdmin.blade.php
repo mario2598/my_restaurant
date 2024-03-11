@@ -271,21 +271,21 @@
           {
             extend: 'excel',
             footer: true,
-            title: 'GYM BAR',
+            title: 'Coffee To Go',
             messageTop:topMesage,
             messageBottom:bottomMesage,
             filename: 'reporte_gastos_coffee_to_go'
           }, {
             extend: 'pdf',
             footer: true,
-            title: 'GYM BAR',
+            title: 'Coffee To Go',
             messageTop:topMesage,
             messageBottom:bottomMesage,
             filename: 'reporte_gastos_coffee_to_go'
           }, {
             extend: 'print',
             footer: true,
-            title: 'GYM BAR',
+            title: 'Coffee To Go',
             messageTop:topMesage,
             messageBottom:bottomMesage,
             filename: 'reporte_gastos_coffee_to_go'

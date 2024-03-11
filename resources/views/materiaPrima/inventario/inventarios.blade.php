@@ -277,19 +277,19 @@
                 },
                 buttons: [{
                     extend: 'excel',
-                    title: 'GYM BAR',
+                    title: 'COFFEE TO GO',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
                     filename: 'inventario_mt_' + sucursal + '_ctg'
                 }, {
                     extend: 'pdf',
-                    title: 'GYM BAR',
+                    title: 'COFFEE TO GO',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
                     filename: 'inventario_mt_' + sucursal + '_ctg'
                 }, {
                     extend: 'print',
-                    title: 'GYM BAR',
+                    title: 'COFFEE TO GO',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
                     filename: 'inventario_mt_' + sucursal + '_ctg'

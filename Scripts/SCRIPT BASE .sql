@@ -122,7 +122,7 @@ CREATE TABLE `codigo_descuento` (
 --
 
 INSERT INTO `codigo_descuento` (`id`, `tipo`, `descuento`, `fecha_inicio`, `fecha_fin`, `descripcion`, `codigo`, `activo`) VALUES
-(1, 2, 10, '2023-08-24', '2023-08-27', 'Gracias por preferir GYM BAR', 'MARIO2598', 1);
+(1, 2, 10, '2023-08-24', '2023-08-27', 'Gracias por preferir COFFEE TO GO', 'MARIO2598', 1);
 
 -- --------------------------------------------------------
 
