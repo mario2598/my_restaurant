@@ -263,21 +263,21 @@
         buttons: [
           {
             extend: 'excel',
-            title: 'COFFEE TO GO',
+            title: 'GYM BAR',
             messageTop:topMesage,
             footer: true,
             messageBottom:bottomMesage,
             filename: 'reporte_ingresos_coffee_to_go'
           }, {
             extend: 'pdf',
-            title: 'COFFEE TO GO',
+            title: 'GYM BAR',
             footer: true,
             messageTop:topMesage,
             messageBottom:bottomMesage,
             filename: 'reporte_ingresos_coffee_to_go'
           }, {
             extend: 'print',
-            title: 'COFFEE TO GO',
+            title: 'GYM BAR',
             footer: true,
             messageTop:topMesage,
             messageBottom:bottomMesage,

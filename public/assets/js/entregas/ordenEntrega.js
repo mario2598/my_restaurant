@@ -223,7 +223,7 @@ function entregarOrden(idOrden) {
 
 function generarMensajeWhatsApp(nombreUsuario, numeroOrden, telefono) {
     // Formatear el mensaje con los datos proporcionados
-    var mensaje = "Hola " + nombreUsuario + ", de parte de COFFEE TO GO te informamos que tu pedido con número de orden " + numeroOrden + " llegó a tu destino. ¿Podemos continuar con la entrega?";
+    var mensaje = "Hola " + nombreUsuario + ", de parte de GYM BAR te informamos que tu pedido con número de orden " + numeroOrden + " llegó a tu destino. ¿Podemos continuar con la entrega?";
 
     // Formatear el enlace con el mensaje y el número de teléfono del usuario
     var enlaceWhatsApp = "https://api.whatsapp.com/send?phone=506" + telefono + "&text=" + encodeURIComponent(mensaje);
@@ -234,7 +234,7 @@ function generarMensajeWhatsApp(nombreUsuario, numeroOrden, telefono) {
 
 function generarMensajeTrackingWhatsApp(nombreUsuario, numeroOrden, telefono, url) {
     // Formatear el mensaje con los datos proporcionados
-    var mensaje = "Hola " + nombreUsuario + ", de parte de COFFEE TO GO te informamos que puedes rastrear el estado de tú orden " + numeroOrden + " siguiendo el siguiente link : " + url;
+    var mensaje = "Hola " + nombreUsuario + ", de parte de GYM BAR te informamos que puedes rastrear el estado de tú orden " + numeroOrden + " siguiendo el siguiente link : " + url;
 
     // Formatear el enlace con el mensaje y el número de teléfono del usuario
     var enlaceWhatsApp = "https://api.whatsapp.com/send?phone=506" + telefono + "&text=" + encodeURIComponent(mensaje);

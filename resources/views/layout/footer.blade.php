@@ -1,7 +1,7 @@
 
 <footer class="main-footer">
   <div class="footer-right">
-    Coffee To Go | The coffee experience
+    GYM BAR | Elevate your gym experience
   </div>
   
 </footer>

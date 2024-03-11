@@ -198,21 +198,21 @@
                 "paging": false,
                 buttons: [{
                     extend: 'excel',
-                    title: 'COFFEE TO GO',
+                    title: 'GYM BAR',
                     messageTop: topMesage,
                     footer: true,
                     messageBottom: bottomMesage,
                     filename: 'mov_prod_ext_COFFETOGO'
                 }, {
                     extend: 'pdf',
-                    title: 'COFFEE TO GO',
+                    title: 'GYM BAR',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
                     filename: 'mov_prod_ext_COFFETOGO'
                 }, {
                     extend: 'print',
-                    title: 'COFFEE TO GO',
+                    title: 'GYM BAR',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,

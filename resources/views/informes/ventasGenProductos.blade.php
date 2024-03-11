@@ -232,21 +232,21 @@
                 "paging": false,
                 buttons: [{
                     extend: 'excel',
-                    title: 'COFFEE TO GO',
+                    title: 'GYM BAR',
                     messageTop: topMesage,
                     footer: true,
                     messageBottom: bottomMesage,
                     filename: 'reporte_ventasGenProductos_COFFETOGO'
                 }, {
                     extend: 'pdf',
-                    title: 'COFFEE TO GO',
+                    title: 'GYM BAR',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
                     filename: 'reporte_ventasGenProductos_COFFETOGO'
                 }, {
                     extend: 'print',
-                    title: 'COFFEE TO GO',
+                    title: 'GYM BAR',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,

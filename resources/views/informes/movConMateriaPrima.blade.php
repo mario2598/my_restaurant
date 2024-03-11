@@ -195,21 +195,21 @@
                 "paging": false,
                 buttons: [{
                     extend: 'excel',
-                    title: 'COFFEE TO GO',
+                    title: 'GYM BAR',
                     messageTop: topMesage,
                     footer: true,
                     messageBottom: bottomMesage,
                     filename: 'mov_consumo_mp_COFFETOGO'
                 }, {
                     extend: 'pdf',
-                    title: 'COFFEE TO GO',
+                    title: 'GYM BAR',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
                     filename: 'mov_consumo_mp_COFFETOGO'
                 }, {
                     extend: 'print',
-                    title: 'COFFEE TO GO',
+                    title: 'GYM BAR',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,

@@ -53,7 +53,7 @@
                 </div>
             </div>
             <div class="mt-5 text-muted text-center">
-                Coffee To Go | The coffee experience
+                GYM BAR | Elevate your gym experience
             </div>
         </div>
     </section>
