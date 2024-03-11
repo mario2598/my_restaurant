@@ -4,7 +4,7 @@
     <section class="section">
         <div class="container mt-5">
             <div class="row">
-                <div class="col-sm-12 col-md-12 col-xl-12" >
+                <div class="col-sm-12 col-md-6 col-xl-6" >
                     <div class="card-header" style="background-color: transparent;border-color: transparent;">
 
                         <div class="account-logo">
@@ -14,7 +14,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-12 col-md-12 col-xl-12" style="margin-top: 10px;">
+                <div class="col-sm-12 col-md-6 col-xl-6" style="margin-top: 60px;">
                     <div class="card-body " style="background-color: transparent;border-color: transparent;">
                         <h4>Inicio de Sesión</h4>
                         <form method="POST" action="{{ URL::to('ingresar') }}" class="needs-validation" autocomplete="off">
