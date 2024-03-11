@@ -109,7 +109,7 @@ function abrirModalEntrega(idOrden) {
             $("#ipt_contacto_entrega").val(orden.entrega.contacto);
             $("#ipt_lugar_entrega").val(orden.entrega.descripcion_lugar);
             $("#linkSeguimientoWhatsapp").html(`<i class="fas fa-barcode" aria-hidden="true"> </i> Envíar link de rastreo de orden `);
-            $('#linkSeguimientoWhatsapp').attr('href', `${base_path}/tracking/orden/${orden.idOrdenEnc ?? ''}`);
+          
             $('#linkSeguimientoWhatsapp').attr('href', generarMensajeTrackingWhatsApp(orden.nombre_cliente,
                 orden.numero_orden, orden.entrega.contacto,
                 `${base_path}/tracking/orden/${orden.idOrdenEnc ?? ''}`));
