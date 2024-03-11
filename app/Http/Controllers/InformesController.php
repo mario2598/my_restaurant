@@ -144,9 +144,9 @@ class InformesController extends Controller
 
         $query = "SELECT usu.nombre as nombreUsuario,suc.descripcion as nombreSucursal, " .
             "usu.usuario,inv.fecha,pe.nombre as nombreProducto,inv.detalle,inv.cantidad_anterior,inv.cantidad_ajustada,inv.cantidad_nueva " .
-            "FROM coffee_to_go.bit_inv_producto_externo inv join  coffee_to_go.usuario usu on usu.id = inv.usuario " .
-            "join coffee_to_go.producto_externo pe on pe.id = inv.producto " .
-            "join coffee_to_go.sucursal suc on suc.id = inv.sucursal ";
+            "FROM gym_bar.bit_inv_producto_externo inv join  gym_bar.usuario usu on usu.id = inv.usuario " .
+            "join gym_bar.producto_externo pe on pe.id = inv.producto " .
+            "join gym_bar.sucursal suc on suc.id = inv.sucursal ";
         $where = " where 1 = 1 ";
 
         if (!$this->isNull($filtroSucursal) && $filtroSucursal != 'T') {
@@ -237,8 +237,8 @@ class InformesController extends Controller
 
         $query = "SELECT usu.nombre as nombreUsuario,suc.descripcion as nombreSucursal, " .
             "usu.usuario,inv.fecha,pe.nombre as nombreProducto,inv.detalle,inv.cantidad_anterior,inv.cantidad_ajuste,inv.cantidad_nueva,pe.unidad_medida " .
-            "FROM coffee_to_go.bit_materia_prima inv join  coffee_to_go.usuario usu on usu.id = inv.usuario " .
-            "join coffee_to_go.materia_prima pe on pe.id = inv.materia_prima join coffee_to_go.sucursal suc on suc.id = inv.sucursal ";
+            "FROM gym_bar.bit_materia_prima inv join  gym_bar.usuario usu on usu.id = inv.usuario " .
+            "join gym_bar.materia_prima pe on pe.id = inv.materia_prima join gym_bar.sucursal suc on suc.id = inv.sucursal ";
         $where = " where 1 = 1 ";
 
         if (!$this->isNull($filtroSucursal) && $filtroSucursal != 'T') {
@@ -326,8 +326,8 @@ class InformesController extends Controller
         $desde = $request->input('desde');
 
         $query = "SELECT suc.descripcion as nombreSucursal,pe.nombre as nombreProducto,pe.unidad_medida,sum(inv.cantidad_ajuste) as suma,pe.precio as precio_unidad, (sum(inv.cantidad_ajuste) * pe.precio) as costo " .
-            "FROM coffee_to_go.bit_materia_prima inv join  coffee_to_go.usuario usu on usu.id = inv.usuario " .
-            "join coffee_to_go.materia_prima pe on pe.id = inv.materia_prima join coffee_to_go.sucursal suc on suc.id = inv.sucursal ";
+            "FROM gym_bar.bit_materia_prima inv join  gym_bar.usuario usu on usu.id = inv.usuario " .
+            "join gym_bar.materia_prima pe on pe.id = inv.materia_prima join gym_bar.sucursal suc on suc.id = inv.sucursal ";
         $where = " where inv.cantidad_anterior > inv.cantidad_nueva ";
 
         if (!$this->isNull($filtroSucursal) && $filtroSucursal != 'T') {
@@ -350,7 +350,7 @@ class InformesController extends Controller
         }
 
 
-        $query .= $where . " group by suc.descripcion,pe.nombre,pe.unidad_medida,coffee_to_go.pe.precio";
+        $query .= $where . " group by suc.descripcion,pe.nombre,pe.unidad_medida,gym_bar.pe.precio";
         $filtros = [
             'sucursal' => $filtroSucursal,
             'hasta' => $hasta,
@@ -390,11 +390,11 @@ class InformesController extends Controller
             ",suc.descripcion as SUCURSAL, " .
             "sum(do.cantidad) " .
             "CANTIDAD, do.precio_unidad, Sum(do.cantidad * do.precio_unidad) as total_venta," .
-            " case do.tipo_producto when 'E' then 'Externo' else  'Cafetería'  end as tipo_producto FROM coffee_to_go.detalle_orden " .
-            " do join coffee_to_go.orden o on do.orden = o.id " .
-            " join coffee_to_go.usuario usu on usu.id = o.cajero " .
-            " left join coffee_to_go.sucursal suc on suc.id = o.sucursal " .
-            " left join coffee_to_go.cliente cli on cli.id = o.cliente ";
+            " case do.tipo_producto when 'E' then 'Externo' else  'Cafetería'  end as tipo_producto FROM gym_bar.detalle_orden " .
+            " do join gym_bar.orden o on do.orden = o.id " .
+            " join gym_bar.usuario usu on usu.id = o.cajero " .
+            " left join gym_bar.sucursal suc on suc.id = o.sucursal " .
+            " left join gym_bar.cliente cli on cli.id = o.cliente ";
         $where = " where o.estado <> " . SisEstadoController::getIdEstadoByCodGeneral('ORD_ANULADA');
 
         if (!$this->isNull($filtroSucursal) && $filtroSucursal != 'T') {
@@ -430,7 +430,7 @@ class InformesController extends Controller
             $where .= " and HOUR(o.fecha_inicio) >= " . $horaDesde;
         }
 
-        $query .= $where . " group by do.nombre_producto,suc.descripcion,do.precio_unidad,coffee_to_go.do.tipo_producto order by 3 DESC";
+        $query .= $where . " group by do.nombre_producto,suc.descripcion,do.precio_unidad,gym_bar.do.tipo_producto order by 3 DESC";
 
         $filtros = [
             'sucursal' => $filtroSucursal,
@@ -506,11 +506,11 @@ class InformesController extends Controller
             "USUARIO,NVL(cli.nombre,'') as CLIENTE,suc.descripcion as SUCURSAL,HOUR(o.fecha_inicio) as HORAFILTRO, " .
             "sum(do.cantidad) " .
             "CANTIDAD, do.precio_unidad, Sum(do.cantidad * do.precio_unidad) as total_venta," .
-            " case do.tipo_producto when 'E' then 'Externo' else  'Propio'  end as tipo_producto FROM coffee_to_go.detalle_orden " .
-            " do join coffee_to_go.orden o on do.orden = o.id " .
-            " join coffee_to_go.usuario usu on usu.id = o.cajero " .
-            " left join coffee_to_go.sucursal suc on suc.id = o.sucursal " .
-            " left join coffee_to_go.cliente cli on cli.id = o.cliente ";
+            " case do.tipo_producto when 'E' then 'Externo' else  'Propio'  end as tipo_producto FROM gym_bar.detalle_orden " .
+            " do join gym_bar.orden o on do.orden = o.id " .
+            " join gym_bar.usuario usu on usu.id = o.cajero " .
+            " left join gym_bar.sucursal suc on suc.id = o.sucursal " .
+            " left join gym_bar.cliente cli on cli.id = o.cliente ";
         $where = " where o.estado <> " . SisEstadoController::getIdEstadoByCodGeneral('ORD_ANULADA');
 
         if ($filtroCliente >= 1  && !$this->isNull($filtroCliente)) {
@@ -553,7 +553,7 @@ class InformesController extends Controller
             $where .= " and HOUR(o.fecha_inicio) >= " . $horaDesde;
         }
 
-        $query .= $where . " group by do.nombre_producto,DATE_FORMAT(o.fecha_inicio, '%Y-%m-%d'),DATE_FORMAT(o.fecha_inicio, '%h %p'),usu.usuario,NVL(cli.nombre,''),suc.descripcion,HOUR(o.fecha_inicio),do.precio_unidad,coffee_to_go.do.tipo_producto order by 1 DESC,2 ASC,7 ASC";
+        $query .= $where . " group by do.nombre_producto,DATE_FORMAT(o.fecha_inicio, '%Y-%m-%d'),DATE_FORMAT(o.fecha_inicio, '%h %p'),usu.usuario,NVL(cli.nombre,''),suc.descripcion,HOUR(o.fecha_inicio),do.precio_unidad,gym_bar.do.tipo_producto order by 1 DESC,2 ASC,7 ASC";
 
         $filtros = [
             'cliente' => $filtroCliente,
