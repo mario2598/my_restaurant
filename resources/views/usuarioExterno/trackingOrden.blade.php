@@ -127,7 +127,7 @@
                                         <th class="text-left">Producto</th>
                                         <th class="text-left">Precio</th>
                                         <th class="text-center">Cantidad</th>
-                                        <th class="text-center">Total</th>
+                                        <th class="text-right">Total</th>
                                     </tr>
                                     @foreach ($data['orden']->detalles as $d)
                                         <tr>
@@ -135,7 +135,7 @@
                                             <td style="text-align: left">{{ $d->precio_unidad }}</td>
                                             <td style="text-align: center">
                                                 {{$d->cantidad ?? 0 }} </td>
-                                            <td style="text-align: center"> CRC
+                                            <td style="text-align: right"> CRC
                                                 {{ number_format($d->total ?? '0.00', 2, '.', ',') }} </td>
                                         </tr>
                                     @endforeach
