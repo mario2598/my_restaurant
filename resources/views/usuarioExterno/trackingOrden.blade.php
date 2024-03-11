@@ -133,8 +133,8 @@
                                         <tr>
                                             <td style="text-align: left">{{ $d->nombre_producto }}</td>
                                             <td style="text-align: left">{{ $d->precio_unidad }}</td>
-                                            <td style="text-align: center"> CRC
-                                                {{ number_format($d->cantidad ?? '0.00', 2, '.', ',') }} </td>
+                                            <td style="text-align: center">
+                                                {{$d->cantidad ?? 0 }} </td>
                                             <td style="text-align: center"> CRC
                                                 {{ number_format($d->total ?? '0.00', 2, '.', ',') }} </td>
                                         </tr>
