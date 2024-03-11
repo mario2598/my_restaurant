@@ -37,7 +37,7 @@ class TicketesImpresosController extends Controller
         $orden = $res['orden'];
         $detalles = $orden->detalles;
         
-        $tamPdf = 105;
+        $tamPdf = 95;
         if ($orden->ind_requiere_envio == 1) {
             $tamPdf = 110;
         }
@@ -79,9 +79,7 @@ class TicketesImpresosController extends Controller
 
         $this->pdf->Ln(15);
         $this->pdf->SetFont('Helvetica', '', 7);
-        $this->pdf->setX(6);
-        $this->pdf->MultiCell(63, 4, $titulo3, 0);
-        $this->pdf->setX(6);
+        $this->pdf->setX(9);
         $this->pdf->MultiCell(63, 4, $titulo5, 0);
         $this->pdf->setX(6);
         $this->pdf->MultiCell(63, 4, $sucursal, 0);
