@@ -263,7 +263,6 @@ class MateriaPrimaController extends Controller
             $unidad_medida = $request->input('unidad_medida');
             $precio = $request->input('precio');
             $proveedor = $request->input('proveedor');
-            $min_deseado = $request->input('cant_min');
 
 
             DB::beginTransaction();
@@ -273,12 +272,12 @@ class MateriaPrimaController extends Controller
                     ->where('id', '=', $id)
                     ->update([
                         'nombre' => $nombre, 'unidad_medida' => $unidad_medida, 'precio' => $precio,
-                        'proveedor' => $proveedor,'cant_min_deseada' => $min_deseado
+                        'proveedor' => $proveedor
                     ]);
             } else { // Nuevo usuario
                 $id = DB::table('materia_prima')->insertGetId([
                     'id' => null,  'nombre' => $nombre, 'unidad_medida' => $unidad_medida, 'precio' => $precio,
-                    'proveedor' => $proveedor, 'activo' => 1,'cant_min_deseada' => $min_deseado
+                    'proveedor' => $proveedor, 'activo' => 1
                 ]);
             }
 
