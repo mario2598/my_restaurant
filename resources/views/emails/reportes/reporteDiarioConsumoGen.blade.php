@@ -390,8 +390,12 @@
         <h2>Fecha : {{ $data['fechaReporte'] }}</h2>
         <br>
         <div id="invoiceholder">
-            <h3>Reportes de consumo de materia prima por sucursal</h3>
             @foreach ($data['sucursales'] as $s)
+                @if (count($s->reporteConsumoMp) > 0)
+                    <h3>Reportes de consumo de materia prima por sucursal</h3>
+                @else
+                    <h3>No se Reporta consumo de materia prima para la sucursal</h3>
+                @endif
                 @if (count($s->reporteConsumoMp) > 0)
                     <div id="invoice-bot">
                         <h4>{{ $s->descripcion }}</h4>
@@ -463,162 +467,222 @@
             @endforeach
         </div>
     </div>
-    <div>
-        @if (count($s->reporteMovIngresos) > 0)
-            <h3>Reportes de ingresos de productos externos por sucursal</h3>
+    <br>
+    <div id="invoiceholder">
+        @if (count($s->reporteMateriaPrimaBaja) > 0)
+            <h3>Materia prima por debajo de su minimo deseable</h3>
         @else
-            <h3>No se reportan ingresos de productos externos por sucursal</h3>
+            <h3>Sin materia prima abajo del minimo deseable</h3>
         @endif
 
         @foreach ($data['sucursales'] as $s)
-            @if (count($s->reporteMovIngresos) > 0)
+            @if (count($s->reporteMateriaPrimaBaja) > 0)
                 <div id="invoice-bot">
                     <h4>{{ $s->descripcion }}</h4>
                     <table class="table " id="tablaIngresos">
                         <thead>
                             <tr>
                                 <th class="text-center">Producto</th>
-                                <th class="text-center">Cantidad ingresada</th>
-                                <th class="text-center">Inventario actual</th>
+                                <th class="text-center">Minimo deseable</th>
+                                <th class="text-center">Cantidad en el inventario</th>
+                                <th class="text-center">Precio Unidad</th>
+                                <th class="text-center">Proveedor</th>
                             </tr>
                         </thead>
                         <tbody id="tbody_generico">
-                            @foreach ($s->reporteMovIngresos as $i)
+                            @foreach ($s->reporteMateriaPrimaBaja as $g)
                                 <tr class="space_row_table" style="cursor: pointer;">
                                     <td class="text-center">
-                                        {{ $i->nombreProducto ?? '' }}
+                                        {{ $g->nombre ?? '' }}
                                     </td>
                                     <td class="text-center">
-                                        {{ $i->ingreso ?? '' }}
+                                        {{ $g->cant_min_deseada ?? 0 }} {{ $g->unidad_medida ?? '' }}
                                     </td>
                                     <td class="text-center">
-                                        {{ $i->cantInventarioActual ?? 0 }}
+                                        {{ $g->cant_inventario ?? '' }} {{ $g->unidad_medida ?? '' }}
+                                    </td>
+                                    <td class="text-center">
+                                        CRC {{ number_format($g->precio ?? '0.00', 2, '.', ',') }}
+                                    </td>
+                                    <td class="text-center">
+                                        {{ $g->nombreProveedor ?? '' }}
                                     </td>
 
                                 </tr>
                             @endforeach
+
                         </tbody>
-                    </table>
-                </div>
-            @endif
-        @endforeach
-    </div><!-- End Invoice Holder-->
 
-    <div>
-
-        @if (count($s->reporteMovSalidas) > 0)
-            <h3>Reportes de salidas de productos externos por sucursal</h3>
-        @else
-            <h3>No se reportan salidas de productos externos por sucursal</h3>
-        @endif
-        @foreach ($data['sucursales'] as $s)
-            @if (count($s->reporteMovSalidas) > 0)
-                <div id="invoice-bot">
-                    <h4>{{ $s->descripcion }}</h4>
-                    <table class="table " id="tablaIngresos">
-                        <thead>
-                            <tr>
-                                <th class="text-center">Producto</th>
-                                <th class="text-center">Cantidad de salida</th>
-                                <th class="text-center">Inventario actual</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody_generico">
-                            @foreach ($s->reporteMovSalidas as $i)
-                                <tr class="space_row_table" style="cursor: pointer;">
-                                    <td class="text-center">
-                                        {{ $i->nombreProducto ?? '' }}
-                                    </td>
-                                    <td class="text-center">
-                                        {{ $i->salida ?? '' }}
-                                    </td>
-                                    <td class="text-center">
-                                        {{ $i->cantInventarioActual ?? 0 }}
-                                    </td>
-
-                                </tr>
-                            @endforeach
-                        </tbody>
                     </table>
                 </div>
             @endif
         @endforeach
     </div>
-    
-    <div>
-        @if (count($s->reporteMovDesechos) > 0)
-            <h3>Reportes de salidas por desecho de productos externos por sucursal</h3>
-        @else
-            <h3>No se reportan salidas por desecho de productos externos por sucursal</h3>
-        @endif
-        @foreach ($data['sucursales'] as $s)
+    </div>
+    <br>
+    <div id="invoiceholder">
+        <div>
+            @if (count($s->reporteMovIngresos) > 0)
+                <h3>Reportes de ingresos de productos externos por sucursal</h3>
+            @else
+                <h3>No se reportan ingresos de productos externos por sucursal</h3>
+            @endif
+
+            @foreach ($data['sucursales'] as $s)
+                @if (count($s->reporteMovIngresos) > 0)
+                    <div id="invoice-bot">
+                        <h4>{{ $s->descripcion }}</h4>
+                        <table class="table " id="tablaIngresos">
+                            <thead>
+                                <tr>
+                                    <th class="text-center">Producto</th>
+                                    <th class="text-center">Cantidad ingresada</th>
+                                    <th class="text-center">Inventario actual</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody_generico">
+                                @foreach ($s->reporteMovIngresos as $i)
+                                    <tr class="space_row_table" style="cursor: pointer;">
+                                        <td class="text-center">
+                                            {{ $i->nombreProducto ?? '' }}
+                                        </td>
+                                        <td class="text-center">
+                                            {{ $i->ingreso ?? '' }}
+                                        </td>
+                                        <td class="text-center">
+                                            {{ $i->cantInventarioActual ?? 0 }}
+                                        </td>
+
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            @endforeach
+        </div><!-- End Invoice Holder-->
+    </div>
+    <br>
+    <div id="invoiceholder">
+        <div>
+
+            @if (count($s->reporteMovSalidas) > 0)
+                <h3>Reportes de salidas de productos externos por sucursal</h3>
+            @else
+                <h3>No se reportan salidas de productos externos por sucursal</h3>
+            @endif
+            @foreach ($data['sucursales'] as $s)
+                @if (count($s->reporteMovSalidas) > 0)
+                    <div id="invoice-bot">
+                        <h4>{{ $s->descripcion }}</h4>
+                        <table class="table " id="tablaIngresos">
+                            <thead>
+                                <tr>
+                                    <th class="text-center">Producto</th>
+                                    <th class="text-center">Cantidad de salida</th>
+                                    <th class="text-center">Inventario actual</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody_generico">
+                                @foreach ($s->reporteMovSalidas as $i)
+                                    <tr class="space_row_table" style="cursor: pointer;">
+                                        <td class="text-center">
+                                            {{ $i->nombreProducto ?? '' }}
+                                        </td>
+                                        <td class="text-center">
+                                            {{ $i->salida ?? '' }}
+                                        </td>
+                                        <td class="text-center">
+                                            {{ $i->cantInventarioActual ?? 0 }}
+                                        </td>
+
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            @endforeach
+        </div>
+    </div>
+    <br>
+    <div id="invoiceholder">
+        <div>
             @if (count($s->reporteMovDesechos) > 0)
-                <div id="invoice-bot">
-                    <h4>{{ $s->descripcion }}</h4>
-                    <table class="table " id="tablaIngresos">
-                        <thead>
-                            <tr>
-                                <th class="text-center">Producto</th>
-                                <th class="text-center">Cantidad de desecho</th>
-                                <th class="text-center">Inventario actual</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody_generico">
-                            @foreach ($s->reporteMovDesechos as $i)
-                                <tr class="space_row_table" style="cursor: pointer;">
-                                    <td class="text-center">
-                                        {{ $i->nombreProducto ?? '' }}
-                                    </td>
-                                    <td class="text-center">
-                                        {{ $i->desecho ?? '' }}
-                                    </td>
-                                    <td class="text-center">
-                                        {{ $i->cantInventarioActual ?? 0 }}
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                <h3>Reportes de salidas por desecho de productos externos por sucursal</h3>
+            @else
+                <h3>No se reportan salidas por desecho de productos externos por sucursal</h3>
             @endif
-        @endforeach
-    </div><!-- End Invoice Holder-->
-
-    <div>
-        @if (count($s->reporteVentasProdExt) > 0)
-            <h3>Reportes de salidas por venta de productos externos por sucursal</h3>
-        @else
-            <h3>No se reportan salidas por ventas de productos externos por sucursal</h3>
-        @endif
-        @foreach ($data['sucursales'] as $s)
+            @foreach ($data['sucursales'] as $s)
+                @if (count($s->reporteMovDesechos) > 0)
+                    <div id="invoice-bot">
+                        <h4>{{ $s->descripcion }}</h4>
+                        <table class="table " id="tablaIngresos">
+                            <thead>
+                                <tr>
+                                    <th class="text-center">Producto</th>
+                                    <th class="text-center">Cantidad de desecho</th>
+                                    <th class="text-center">Inventario actual</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody_generico">
+                                @foreach ($s->reporteMovDesechos as $i)
+                                    <tr class="space_row_table" style="cursor: pointer;">
+                                        <td class="text-center">
+                                            {{ $i->nombreProducto ?? '' }}
+                                        </td>
+                                        <td class="text-center">
+                                            {{ $i->desecho ?? '' }}
+                                        </td>
+                                        <td class="text-center">
+                                            {{ $i->cantInventarioActual ?? 0 }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            @endforeach
+        </div><!-- End Invoice Holder-->
+    </div>
+    <br>
+    <div id="invoiceholder">
+        <div>
             @if (count($s->reporteVentasProdExt) > 0)
-                <div id="invoice-bot">
-                    <h4>{{ $s->descripcion }}</h4>
-                    <table class="table " id="tablaIngresos">
-                        <thead>
-                            <tr>
-                                <th class="text-center">Producto</th>
-                                <th class="text-center">Cantidad salida</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody_generico">
-                            @foreach ($s->reporteVentasProdExt as $i)
-                                <tr class="space_row_table" style="cursor: pointer;">
-                                    <td class="text-center">
-                                        {{ $i->nombre_producto ?? '' }}
-                                    </td>
-                                    <td class="text-center">
-                                        {{ $i->cantidad ?? '' }}
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                <h3>Reportes de salidas por venta de productos externos por sucursal</h3>
+            @else
+                <h3>No se reportan salidas por ventas de productos externos por sucursal</h3>
             @endif
-        @endforeach
-    </div><!-- End Invoice Holder-->
-
+            @foreach ($data['sucursales'] as $s)
+                @if (count($s->reporteVentasProdExt) > 0)
+                    <div id="invoice-bot">
+                        <h4>{{ $s->descripcion }}</h4>
+                        <table class="table " id="tablaIngresos">
+                            <thead>
+                                <tr>
+                                    <th class="text-center">Producto</th>
+                                    <th class="text-center">Cantidad salida</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody_generico">
+                                @foreach ($s->reporteVentasProdExt as $i)
+                                    <tr class="space_row_table" style="cursor: pointer;">
+                                        <td class="text-center">
+                                            {{ $i->nombre_producto ?? '' }}
+                                        </td>
+                                        <td class="text-center">
+                                            {{ $i->cantidad ?? '' }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            @endforeach
+        </div><!-- End Invoice Holder-->
+    </div>
 </body>
 
 </html>

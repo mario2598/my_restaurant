@@ -32,6 +32,7 @@ class ReportesController extends Controller
         ReportesController::agregarDatosSalidasMovProdExtDiaAnterior($sucursales);
         ReportesController::agregarDatosDesechoMovProdExtDiaAnterior($sucursales);
         ReportesController::agregarDatosVentasProdExtDiaAnterior($sucursales);
+        ReportesController::agregarDatosMateriaPrimaBaja($sucursales);
 
         $data = [
             'sucursales' =>  $sucursales,
@@ -181,4 +182,23 @@ class ReportesController extends Controller
             $s->reporteVentasProdExt= $datosVentas;
         }
     }
+
+    public static function agregarDatosMateriaPrimaBaja($sucursales)
+    {
+
+        foreach ($sucursales as $s) {
+
+            $queryInv = "SELECT mp.*, s.cantidad as cant_inventario, s.sucursal as sucursal, p.nombre as nombreProveedor,(mp.cant_min_deseada - s.cantidad) as cantPendiente,(mp.cant_min_deseada - s.cantidad) * mp.precio as mtoPendiente FROM coffee_to_go.materia_prima mp join " .
+                " coffee_to_go.mt_x_sucursal s on s.materia_prima = mp.id " .
+                " left join coffee_to_go.proveedor p on p.id = mp.proveedor".
+                " where s.cantidad < mp.cant_min_deseada and mp.cant_min_deseada > 0 " .
+                " and s.sucursal = " .  $s->id;
+                "  order by s.cantidad ASC";
+
+            $datosInv = DB::select($queryInv);
+
+            $s->reporteMateriaPrimaBaja = $datosInv;
+        }
+    }
+
 }
