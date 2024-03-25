@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Reporte consumo diario {{ $data['fechaReporte'] }} - Coffee To Go</title>
+    <title>Reporte consumo diario <?php echo e($data['fechaReporte']); ?> - Coffee To Go</title>
     <style>
         body {
             background: #fff;
@@ -143,7 +143,7 @@
         }
 
 
-        @import url(https://fonts.googleapis.com/css?family=Roboto:100,300,400,900,700,500,300,100);
+        @import  url(https://fonts.googleapis.com/css?family=Roboto:100,300,400,900,700,500,300,100);
 
         * {
             margin: 0;
@@ -387,18 +387,18 @@
 <body>
     <div id="invoiceholder">
         <h2>Reportes de consumo</h2>
-        <h2>Fecha : {{ $data['fechaReporte'] }}</h2>
+        <h2>Fecha : <?php echo e($data['fechaReporte']); ?></h2>
         <br>
         <div id="invoiceholder">
-            @foreach ($data['sucursales'] as $s)
-                @if (count($s->reporteConsumoMp) > 0)
+            <?php $__currentLoopData = $data['sucursales']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $s): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <?php if(count($s->reporteConsumoMp) > 0): ?>
                     <h3>Reportes de consumo de materia prima por sucursal</h3>
-                @else
+                <?php else: ?>
                     <h3>No se Reporta consumo de materia prima para la sucursal</h3>
-                @endif
-                @if (count($s->reporteConsumoMp) > 0)
+                <?php endif; ?>
+                <?php if(count($s->reporteConsumoMp) > 0): ?>
                     <div id="invoice-bot">
-                        <h4>{{ $s->descripcion }}</h4>
+                        <h4><?php echo e($s->descripcion); ?></h4>
                         <table class="table " id="tablaIngresos">
                             <thead>
                                 <tr>
@@ -411,29 +411,35 @@
                                 </tr>
                             </thead>
                             <tbody id="tbody_generico">
-                                @foreach ($s->reporteConsumoMp as $g)
+                                <?php $__currentLoopData = $s->reporteConsumoMp; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $g): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <tr class="space_row_table" style="cursor: pointer;">
                                         <td class="text-center">
-                                            {{ $g->nombreProducto ?? '' }}
+                                            <?php echo e($g->nombreProducto ?? ''); ?>
+
                                         </td>
                                         <td class="text-center">
-                                            {{ $g->suma ?? 0 }}
+                                            <?php echo e($g->suma ?? 0); ?>
+
                                         </td>
                                         <td class="text-center">
-                                            {{ $g->unidad_medida ?? '' }}
+                                            <?php echo e($g->unidad_medida ?? ''); ?>
+
                                         </td>
                                         <td class="text-center">
-                                            CRC {{ number_format($g->precio_unidad ?? '0.00', 2, '.', ',') }}
+                                            CRC <?php echo e(number_format($g->precio_unidad ?? '0.00', 2, '.', ',')); ?>
+
                                         </td>
                                         <td class="text-center">
-                                            CRC {{ number_format($g->costo ?? '0.00', 2, '.', ',') }}
+                                            CRC <?php echo e(number_format($g->costo ?? '0.00', 2, '.', ',')); ?>
+
                                         </td>
                                         <td class="text-center">
-                                            {{ $g->cantTotalMp ?? '' }} {{ $g->unidad_medida ?? '' }}
+                                            <?php echo e($g->cantTotalMp ?? ''); ?> <?php echo e($g->unidad_medida ?? ''); ?>
+
                                         </td>
 
                                     </tr>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
                             </tbody>
                             <tfoot>
@@ -453,7 +459,7 @@
                                     <td class="text-center" style="background: rgb(226, 196, 196);">
 
                                         <strong>CRC
-                                            {{ number_format($s->costoTotalReporteConsumoMp ?? '0.00', 2, '.', ',') }}</strong>
+                                            <?php echo e(number_format($s->costoTotalReporteConsumoMp ?? '0.00', 2, '.', ',')); ?></strong>
                                     </td>
                                     <td class="text-center" style="background: rgb(226, 196, 196);">
                                         ***
@@ -463,22 +469,22 @@
 
                         </table>
                     </div>
-                @endif
-            @endforeach
+                <?php endif; ?>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div>
     </div>
     <br>
     <div id="invoiceholder">
-        @if (count($s->reporteMateriaPrimaBaja) > 0)
+        <?php if(count($s->reporteMateriaPrimaBaja) > 0): ?>
             <h3>Materia prima por debajo de su minimo deseable</h3>
-        @else
+        <?php else: ?>
             <h3>Sin materia prima abajo del minimo deseable</h3>
-        @endif
+        <?php endif; ?>
 
-        @foreach ($data['sucursales'] as $s)
-            @if (count($s->reporteMateriaPrimaBaja) > 0)
+        <?php $__currentLoopData = $data['sucursales']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $s): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <?php if(count($s->reporteMateriaPrimaBaja) > 0): ?>
                 <div id="invoice-bot">
-                    <h4>{{ $s->descripcion }}</h4>
+                    <h4><?php echo e($s->descripcion); ?></h4>
                     <table class="table " id="tablaIngresos">
                         <thead>
                             <tr>
@@ -490,48 +496,53 @@
                             </tr>
                         </thead>
                         <tbody id="tbody_generico">
-                            @foreach ($s->reporteMateriaPrimaBaja as $g)
+                            <?php $__currentLoopData = $s->reporteMateriaPrimaBaja; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $g): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <tr class="space_row_table" style="cursor: pointer;">
                                     <td class="text-center">
-                                        {{ $g->nombre ?? '' }}
+                                        <?php echo e($g->nombre ?? ''); ?>
+
                                     </td>
                                     <td class="text-center">
-                                        {{ $g->cant_min_deseada ?? 0 }} {{ $g->unidad_medida ?? '' }}
+                                        <?php echo e($g->cant_min_deseada ?? 0); ?> <?php echo e($g->unidad_medida ?? ''); ?>
+
                                     </td>
                                     <td class="text-center">
-                                        {{ $g->cant_inventario ?? '' }} {{ $g->unidad_medida ?? '' }}
+                                        <?php echo e($g->cant_inventario ?? ''); ?> <?php echo e($g->unidad_medida ?? ''); ?>
+
                                     </td>
                                     <td class="text-center">
-                                        CRC {{ number_format($g->precio ?? '0.00', 2, '.', ',') }}
+                                        CRC <?php echo e(number_format($g->precio ?? '0.00', 2, '.', ',')); ?>
+
                                     </td>
                                     <td class="text-center">
-                                        {{ $g->nombreProveedor ?? '' }}
+                                        <?php echo e($g->nombreProveedor ?? ''); ?>
+
                                     </td>
 
                                 </tr>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
                         </tbody>
 
                     </table>
                 </div>
-            @endif
-        @endforeach
+            <?php endif; ?>
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
     </div>
     </div>
     <br>
     <div id="invoiceholder">
         <div>
-            @if (count($s->reporteMovIngresos) > 0)
+            <?php if(count($s->reporteMovIngresos) > 0): ?>
                 <h3>Reportes de ingresos de productos externos por sucursal</h3>
-            @else
+            <?php else: ?>
                 <h3>No se reportan ingresos de productos externos por sucursal</h3>
-            @endif
+            <?php endif; ?>
 
-            @foreach ($data['sucursales'] as $s)
-                @if (count($s->reporteMovIngresos) > 0)
+            <?php $__currentLoopData = $data['sucursales']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $s): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <?php if(count($s->reporteMovIngresos) > 0): ?>
                     <div id="invoice-bot">
-                        <h4>{{ $s->descripcion }}</h4>
+                        <h4><?php echo e($s->descripcion); ?></h4>
                         <table class="table " id="tablaIngresos">
                             <thead>
                                 <tr>
@@ -541,40 +552,43 @@
                                 </tr>
                             </thead>
                             <tbody id="tbody_generico">
-                                @foreach ($s->reporteMovIngresos as $i)
+                                <?php $__currentLoopData = $s->reporteMovIngresos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <tr class="space_row_table" style="cursor: pointer;">
                                         <td class="text-center">
-                                            {{ $i->nombreProducto ?? '' }}
+                                            <?php echo e($i->nombreProducto ?? ''); ?>
+
                                         </td>
                                         <td class="text-center">
-                                            {{ $i->ingreso ?? '' }}
+                                            <?php echo e($i->ingreso ?? ''); ?>
+
                                         </td>
                                         <td class="text-center">
-                                            {{ $i->cantInventarioActual ?? 0 }}
+                                            <?php echo e($i->cantInventarioActual ?? 0); ?>
+
                                         </td>
 
                                     </tr>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </tbody>
                         </table>
                     </div>
-                @endif
-            @endforeach
+                <?php endif; ?>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div><!-- End Invoice Holder-->
     </div>
     <br>
     <div id="invoiceholder">
         <div>
 
-            @if (count($s->reporteMovSalidas) > 0)
+            <?php if(count($s->reporteMovSalidas) > 0): ?>
                 <h3>Reportes de salidas de productos externos por sucursal</h3>
-            @else
+            <?php else: ?>
                 <h3>No se reportan salidas de productos externos por sucursal</h3>
-            @endif
-            @foreach ($data['sucursales'] as $s)
-                @if (count($s->reporteMovSalidas) > 0)
+            <?php endif; ?>
+            <?php $__currentLoopData = $data['sucursales']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $s): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <?php if(count($s->reporteMovSalidas) > 0): ?>
                     <div id="invoice-bot">
-                        <h4>{{ $s->descripcion }}</h4>
+                        <h4><?php echo e($s->descripcion); ?></h4>
                         <table class="table " id="tablaIngresos">
                             <thead>
                                 <tr>
@@ -584,39 +598,42 @@
                                 </tr>
                             </thead>
                             <tbody id="tbody_generico">
-                                @foreach ($s->reporteMovSalidas as $i)
+                                <?php $__currentLoopData = $s->reporteMovSalidas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <tr class="space_row_table" style="cursor: pointer;">
                                         <td class="text-center">
-                                            {{ $i->nombreProducto ?? '' }}
+                                            <?php echo e($i->nombreProducto ?? ''); ?>
+
                                         </td>
                                         <td class="text-center">
-                                            {{ $i->salida ?? '' }}
+                                            <?php echo e($i->salida ?? ''); ?>
+
                                         </td>
                                         <td class="text-center">
-                                            {{ $i->cantInventarioActual ?? 0 }}
+                                            <?php echo e($i->cantInventarioActual ?? 0); ?>
+
                                         </td>
 
                                     </tr>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </tbody>
                         </table>
                     </div>
-                @endif
-            @endforeach
+                <?php endif; ?>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div>
     </div>
     <br>
     <div id="invoiceholder">
         <div>
-            @if (count($s->reporteMovDesechos) > 0)
+            <?php if(count($s->reporteMovDesechos) > 0): ?>
                 <h3>Reportes de salidas por desecho de productos externos por sucursal</h3>
-            @else
+            <?php else: ?>
                 <h3>No se reportan salidas por desecho de productos externos por sucursal</h3>
-            @endif
-            @foreach ($data['sucursales'] as $s)
-                @if (count($s->reporteMovDesechos) > 0)
+            <?php endif; ?>
+            <?php $__currentLoopData = $data['sucursales']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $s): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <?php if(count($s->reporteMovDesechos) > 0): ?>
                     <div id="invoice-bot">
-                        <h4>{{ $s->descripcion }}</h4>
+                        <h4><?php echo e($s->descripcion); ?></h4>
                         <table class="table " id="tablaIngresos">
                             <thead>
                                 <tr>
@@ -626,38 +643,41 @@
                                 </tr>
                             </thead>
                             <tbody id="tbody_generico">
-                                @foreach ($s->reporteMovDesechos as $i)
+                                <?php $__currentLoopData = $s->reporteMovDesechos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <tr class="space_row_table" style="cursor: pointer;">
                                         <td class="text-center">
-                                            {{ $i->nombreProducto ?? '' }}
+                                            <?php echo e($i->nombreProducto ?? ''); ?>
+
                                         </td>
                                         <td class="text-center">
-                                            {{ $i->desecho ?? '' }}
+                                            <?php echo e($i->desecho ?? ''); ?>
+
                                         </td>
                                         <td class="text-center">
-                                            {{ $i->cantInventarioActual ?? 0 }}
+                                            <?php echo e($i->cantInventarioActual ?? 0); ?>
+
                                         </td>
                                     </tr>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </tbody>
                         </table>
                     </div>
-                @endif
-            @endforeach
+                <?php endif; ?>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div><!-- End Invoice Holder-->
     </div>
     <br>
     <div id="invoiceholder">
         <div>
-            @if (count($s->reporteVentasProdExt) > 0)
+            <?php if(count($s->reporteVentasProdExt) > 0): ?>
                 <h3>Reportes de salidas por venta de productos externos por sucursal</h3>
-            @else
+            <?php else: ?>
                 <h3>No se reportan salidas por ventas de productos externos por sucursal</h3>
-            @endif
-            @foreach ($data['sucursales'] as $s)
-                @if (count($s->reporteVentasProdExt) > 0)
+            <?php endif; ?>
+            <?php $__currentLoopData = $data['sucursales']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $s): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <?php if(count($s->reporteVentasProdExt) > 0): ?>
                     <div id="invoice-bot">
-                        <h4>{{ $s->descripcion }}</h4>
+                        <h4><?php echo e($s->descripcion); ?></h4>
                         <table class="table " id="tablaIngresos">
                             <thead>
                                 <tr>
@@ -666,23 +686,26 @@
                                 </tr>
                             </thead>
                             <tbody id="tbody_generico">
-                                @foreach ($s->reporteVentasProdExt as $i)
+                                <?php $__currentLoopData = $s->reporteVentasProdExt; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <tr class="space_row_table" style="cursor: pointer;">
                                         <td class="text-center">
-                                            {{ $i->nombre_producto ?? '' }}
+                                            <?php echo e($i->nombre_producto ?? ''); ?>
+
                                         </td>
                                         <td class="text-center">
-                                            {{ $i->cantidad ?? '' }}
+                                            <?php echo e($i->cantidad ?? ''); ?>
+
                                         </td>
                                     </tr>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </tbody>
                         </table>
                     </div>
-                @endif
-            @endforeach
+                <?php endif; ?>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div><!-- End Invoice Holder-->
     </div>
 </body>
 
 </html>
+<?php /**PATH D:\Proyectos\2023\Laravel\CoffeeToGo\resources\views/emails/reportes/reporteDiarioConsumoGen.blade.php ENDPATH**/ ?>

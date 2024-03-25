@@ -61,6 +61,13 @@
                                         value="{{ $data['datos']['precio'] ?? '' }}" required min="0">
                                 </div>
                             </div>
+                            <div class="col-sm-12 col-md-6 col-xl-6">
+                                <div class="form-group">
+                                    <label>Cantidad unidades minima deseada</label>
+                                    <input type="number" class="form-control" id="cant_min" name="cant_min" step="any"
+                                        value="{{ $data['datos']['cant_min'] ?? '' }}" required min="0">
+                                </div>
+                            </div>
                             <!-- enviar -->
                             <div class="col-sm-12 col-md-6 col-xl-4">
                                 <div class="form-group">
