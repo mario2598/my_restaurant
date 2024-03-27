@@ -909,7 +909,7 @@ trait SpaceUtil
     $totalPagoTarjetaGeneral = $totalPagoTarjeta ;
     
     $subTotalFondosGeneral = $subTotalFondos;
-    $subTotalFondosGeneral = $subTotalFondosGeneral ;
+    $subTotalFondosGeneral = $subTotalFondosGeneral - $totalPagoTarjeta;;
     $totalFondosGeneral = $totalFondos;
     $gastosGeneral = $gastos;
 
