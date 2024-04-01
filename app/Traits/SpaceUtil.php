@@ -299,6 +299,7 @@ trait SpaceUtil
   {
     $headers = DB::table('vista')
       ->where('vista.tipo', '=', 'G')
+      ->where('vista.inactivo', '=', '0')
       ->select('vista.*')
       ->orderBy('vista.peso_general', 'ASC')
       ->orderBy('vista.orden', 'ASC')
@@ -306,6 +307,7 @@ trait SpaceUtil
 
     $menus = DB::table('vista')
       ->where('vista.tipo', '=', 'M')
+      ->where('vista.inactivo', '=', '0')
       ->select('vista.*')
       ->orderBy('vista.peso_general', 'ASC')
       ->orderBy('vista.orden', 'ASC')
