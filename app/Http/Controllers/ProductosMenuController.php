@@ -899,7 +899,7 @@ class ProductosMenuController extends Controller
         $cantidad_mp_extra = $request->input('cantidad_mp_extra');
         $materia_prima_extra = $request->input('materia_prima_extra');
 
-        $nuevo = true;
+        $nuevo = ($id == '-1' || $id == null);
 
         if ($this->isNull($producto) || $producto == '-1') {
             return $this->responseAjaxServerError("No se puede cargar el producto de menú");
@@ -934,9 +934,7 @@ class ProductosMenuController extends Controller
             ->where('extra_producto_menu.multiple', '=', ($multiple == 'true' ? 1 : 0))
             ->get()->first();
 
-        if (!$this->isNull($extra)) {
-            return $this->responseAjaxServerError("Ya existe el extra para el producto en el grupo indicado");
-        }
+      
         try {
             DB::beginTransaction();
             if ($nuevo) {
@@ -953,7 +951,7 @@ class ProductosMenuController extends Controller
                 DB::table('extra_producto_menu')
                     ->where('id', '=', $id)
                     ->update(['precio' => $precio, 'descripcion' => $dsc, 
-                    'dsc_grupo ' => $dsc_grupo,
+                    'dsc_grupo' => $dsc_grupo,
                      'es_requerido' => ($es_Requerido == 'true' ? 1 : 0),
                       'multiple' => ($multiple == 'true'  ? 1 : 0),
                       'materia_prima' => $materia_prima_extra,

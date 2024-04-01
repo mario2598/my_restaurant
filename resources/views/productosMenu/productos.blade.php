@@ -258,7 +258,7 @@
 
     <div class="modal fade bd-example-modal-lg" id='mdl-extras'  tabindex="-1" role="dialog"
         aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl ">
             <div class="modal-content">
                 <div class="modal-header" style="width: 100%">
                     <div class="row" style="width: 100%">
@@ -293,6 +293,8 @@
                                 <label>Materia Prima</label>
                                 <select class="form-control" id="select_prod_mp_extra" style="width: 100%"
                                     name="select_prod_mp_extra">
+                                    <option value="" title="Sin materia prima asignada">
+                                        Sin asignar</option>
                                     @foreach ($data['materia_prima'] as $i)
                                         <option value="{{ $i->id ?? -1 }}" title="{{ $i->unidad_medida ?? '' }}">
                                             {{ $i->nombre ?? '' }} - {{ $i->unidad_medida ?? '' }}</option>
@@ -330,7 +332,8 @@
                     </div>
 
                 </div>
-                <div class="modal-body" style="padding: 5px !important;">
+ 
+                <div class="modal-body" style="max-height: 100%;padding: 5px !important; max-height: 70vh; overflow-y: auto; ">
                     <table class="table" id="tbl-inv"  >
                         <thead class="thead-light">
                             <tr>

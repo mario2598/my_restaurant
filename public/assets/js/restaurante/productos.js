@@ -1,5 +1,7 @@
 window.addEventListener("load", initialice, false);
 var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
+var extrasGestion = [];
+var extraGestion = null;
 
 $(document).ready(function () {
     $("#btn_buscar_pro").on("keyup", function () {
@@ -9,23 +11,6 @@ $(document).ready(function () {
         });
     });
 });
-
-
-function initialice() {
-    var t = document.getElementById('nombre');
-    t.addEventListener('input', function () { // 
-        if (this.value.length > 30)
-            this.value = this.value.slice(0, 30);
-    });
-
-    t = document.getElementById('codigo');
-    t.addEventListener('input', function () { // 
-        if (this.value.length > 15)
-            this.value = this.value.slice(0, 15);
-    });
-
-
-}
 
 function clickProducto(id) {
     $('#idProductoEditar').val(id);
@@ -56,13 +41,13 @@ function eliminarProducto(id) {
 
 function clickMateriaPrima(id) {
     id_prod_seleccionado = id;
-    cargarMateriaPrima() ;
+    cargarMateriaPrima();
     $("#mdl-materia-prima").modal("show");
 }
 
 function clickExtras(id) {
     id_prod_seleccionado = id;
-    cargarExtras() ;
+    cargarExtras();
     $("#mdl-extras").modal("show");
 }
 
@@ -84,6 +69,7 @@ function cargarMateriaPrima() {
         }
 
         $("#tbody-inv").html("");
+        extrasGestion = respuesta.datos;
         respuesta.datos.forEach(p => {
             crearMateriaPrima(p);
         });
@@ -109,6 +95,7 @@ function cargarExtras() {
             return;
         }
 
+        extrasGestion = respuesta.datos;
         $("#tbody-ext").html("");
         respuesta.datos.forEach(p => {
             crearExtras(p);
@@ -124,12 +111,13 @@ function crearExtras(producto) {
     texto += "<td class='text-center'>" + producto.descripcion + "</td>";
     texto += "<td class='text-center'>" + producto.precio + "</td>";
     texto += "<td class='text-center'>" + producto.dsc_grupo + "</td>";
-    texto += "<td class='text-center'>" + producto.nombreMp ?? '' + "</td>";
-    texto += "<td class='text-center'>" + producto.cant_mp ?? 0 + "</td>";
+    texto += "<td class='text-center'>" + (producto.nombreMp == null ? "Sin asignar" : producto.nombreMp) + "</td>";
+    texto += "<td class='text-center'>" + (producto.cant_mp == null ? "0" : producto.cant_mp) + "</td>";
     texto += "<td class='text-center'>" + (producto.es_requerido == 0 ? "No" : "Sí") + "</td>";
     texto += "<td class='text-center'>" + (producto.multiple == 0 ? "No" : "Sí") + "</td>";
-    texto += '<td class="text-center"><button  class="btn btn-icon btn-secondary" onclick="eliminarExtra(' + producto.id + ')"' +
-        '><i class="fas fa-trash"></i></button></td>';
+    texto += `<td class="text-center"><button  class="btn btn-icon btn-secondary" onclick="eliminarExtra('${producto.id}')"><i class="fas fa-trash"></i></button>
+            <button  class="btn btn-icon btn-primary" onclick="cargarEditarExtra('${producto.id}')"><i class="fas fa-cog"></i></button>
+    </td>`;
     texto += "</tr>";
 
     $("#tbody-ext").append(texto);
@@ -140,7 +128,7 @@ function crearMateriaPrima(producto) {
     let texto = "<tr>";
     texto += "<td class='text-center'>" + producto.nombre + "</td>";
     texto += "<td class='text-center'>" + producto.cantidad + "</td>";
-    texto += "<td  class='text-center''>" +   producto.unidad_medida +"</td>";
+    texto += "<td  class='text-center''>" + producto.unidad_medida + "</td>";
     texto += '<td class="text-center"><button  class="btn btn-icon btn-secondary" onclick="eliminarProdMp(' + producto.id_mp_x_prod + ')"' +
         '><i class="fas fa-trash"></i></button></td>';
     texto += "</tr>";
@@ -149,13 +137,13 @@ function crearMateriaPrima(producto) {
 
 }
 
-function cerrarMateriaPrima(){
-  $("#mdl-materia-prima").modal("hide");
+function cerrarMateriaPrima() {
+    $("#mdl-materia-prima").modal("hide");
 }
 
-function cerrarExtras(){
+function cerrarExtras() {
     $("#mdl-extras").modal("hide");
-  }
+}
 
 function limpiarMateriaPrimaProducto() {
     $('#select_prod_mp').val(1);
@@ -193,6 +181,17 @@ function agregarMateriaPrimaProducto() {
     });
 }
 
+function limpiarExtraProd(){
+    $('#ipt_dsc_ext').val("");
+    $('#ipt_precio_ext').val("");
+    $('#ipt_id_prod_ext').val("-1");
+    $('#ipt_dsc_gru_ext').val("");
+    $("#requisito").prop('checked', false);
+    $("#multiple").prop('checked', false);
+    $('#ipt_cantidad_req_extra').val("");
+    $('#select_prod_mp_extra').val("");
+}
+
 function agregarExtraProducto() {
     let ipt_dsc_ext = $('#ipt_dsc_ext').val();
     let ipt_precio_ext = $('#ipt_precio_ext').val();
@@ -211,11 +210,11 @@ function agregarExtraProducto() {
             precio: ipt_precio_ext,
             dsc: ipt_dsc_ext,
             dsc_grupo: ipt_dsc_gru_ext,
-            producto : id_prod_seleccionado,
-            es_Requerido : esRequerido,
-            multiple : multiple,
-            materia_prima_extra : select_prod_mp_extra,
-            cantidad_mp_extra :ipt_cantidad_req_extra
+            producto: id_prod_seleccionado,
+            es_Requerido: esRequerido,
+            multiple: multiple,
+            materia_prima_extra: select_prod_mp_extra,
+            cantidad_mp_extra: ipt_cantidad_req_extra
         }
     }).done(function (respuesta) {
 
@@ -224,7 +223,7 @@ function agregarExtraProducto() {
             return;
         }
 
-        showSuccess("Se agregó correctamente");
+        showSuccess("Se guardo correctamente");
         cargarExtras();
     }).fail(function (jqXHR, textStatus, errorThrown) {
         showError("Ocurrió un error consultando el servidor");
@@ -275,4 +274,25 @@ function eliminarExtra(id_prod_mp) {
     }).fail(function (jqXHR, textStatus, errorThrown) {
         showError("Ocurrió un error consultando el servidor");
     });
+}
+
+function cargarEditarExtra(id_prod_mp) {
+    extrasGestion.forEach(e => {
+        if (e.id == id_prod_mp) {
+            extraGestion = e;
+        }
+    });
+
+    cargarEditarExtrarMdl();
+}
+
+function cargarEditarExtrarMdl() {
+    $('#ipt_dsc_ext').val(extraGestion.descripcion);
+    $('#ipt_precio_ext').val(extraGestion.precio);
+    $('#ipt_id_prod_ext').val(extraGestion.id);
+    $('#ipt_dsc_gru_ext').val(extraGestion.dsc_grupo);
+    $("#requisito").prop('checked', extraGestion.es_requerido == 1);
+    $("#multiple").prop('checked', extraGestion.multiple == 1);
+    $('#ipt_cantidad_req_extra').val(extraGestion.cant_mp);
+    $('#select_prod_mp_extra').val(extraGestion.materia_prima);
 }
