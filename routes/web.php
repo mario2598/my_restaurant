@@ -414,3 +414,8 @@ Route::post('entregas/entregarOrden', 'EntregasOrdenController@entregarOrden');
 
 /* Tracking orden  */
 Route::get('tracking/orden/{encryptedOrderId}', 'UsuarioExternoController@goTrackingOrden');
+
+/* FE */ 
+Route::get('fe/facturas', 'FeController@goFacturasFe');
+Route::post('fe/filtrarFacturas', 'FeController@filtrarFacturas');
+Route::post('fe/enviarFe', 'FeController@enviarFe');

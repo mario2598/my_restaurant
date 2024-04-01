@@ -793,6 +793,27 @@ class FacturacionController extends Controller
         return  $this->responseAjaxSuccess("", "");
     }
 
+    private function validarInfoFe($fe)
+    {
+
+        if ($fe['incluyeFE'] == 'true') {
+            if ($fe['info_ced_fe'] == null || $fe['info_ced_fe'] == "") {
+                return $this->responseAjaxServerError("Información de Facturación Electrónica pendiente : Cédula Cliente.", []);
+            }
+
+            if ($fe['info_nombre_fe'] == null || $fe['info_nombre_fe'] == "") {
+                return $this->responseAjaxServerError("Información de Facturación Electrónica pendiente : Nombre Cliente.", []);
+            }
+
+            if ($fe['info_correo_fe'] == null || $fe['info_correo_fe'] == "") {
+                return $this->responseAjaxServerError("Información de Facturación Electrónica pendiente : Correo Cliente.", []);
+            }else if (!preg_match('/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/', $fe['info_correo_fe'])) {
+                return $this->responseAjaxServerError("Información de Facturación Electrónica pendiente : El formato del correo electrónico no es válido.", []);
+            }
+        }
+        return  $this->responseAjaxSuccess("", "");
+    }
+
     public static function calcularMontosDetalles($detalles)
     {
         $total = 0;
@@ -943,6 +964,7 @@ class FacturacionController extends Controller
 
         $orden = $request->input("orden");
         $envio = $request->input("envio");
+        $infoFE = $request->input("infoFE");
         $detalles = $request->input("detalles");
 
         $resValidar = $this->validarOrden($orden, $detalles);
@@ -953,6 +975,11 @@ class FacturacionController extends Controller
         $resValidarEnvio = $this->validarInfoEnvio($envio);
         if (!$resValidarEnvio['estado']) {
             return $this->responseAjaxServerError($resValidarEnvio['mensaje'], []);
+        }
+
+        $resValidarFE = $this->validarInfoFe($infoFE);
+        if (!$resValidarFE['estado']) {
+            return $this->responseAjaxServerError($resValidarFE['mensaje'], []);
         }
 
         $existeDescuento = false;
@@ -1013,7 +1040,7 @@ class FacturacionController extends Controller
                 'nombre_cliente' => $cliente, 'estado' => null, 'total' => $infoFacturacionFinal['total'], 'total_con_descuento' => $infoFacturacionFinal['total_pagar'], 'subtotal' => $infoFacturacionFinal['subtotal'],
                 'impuesto' => $infoFacturacionFinal['montoImpuestos'], 'descuento' => $totalDescuentoGen,
                 'cajero' => session('usuario')['id'], 'monto_sinpe' => $mto_sinpe, 'monto_tarjeta' =>  $mto_tarjeta, 'monto_efectivo' => $mto_efectivo,
-                'factura_electronica' => 'N', 'ingreso' => null, 'sucursal' => $this->getUsuarioSucursal(),
+                'factura_electronica' =>$infoFE['incluyeFE'] == 'true' ? 'S' : 'N', 'ingreso' => null, 'sucursal' => $this->getUsuarioSucursal(),
                 'fecha_preparado' => $fechaActual, 'fecha_entregado' => $fechaActual,
                 'cocina_terminado' => 'N', 'bebida_terminado' => 'N', 'caja_cerrada' => 'N', 'pagado' => 1,
                 'estado' => SisEstadoController::getIdEstadoByCodGeneral('ORD_EN_PREPARACION'),
@@ -1071,12 +1098,40 @@ class FacturacionController extends Controller
                 DB::rollBack();
                 return $this->responseAjaxServerError($res['mensaje'], []);
             }
+
+            if ($infoFE['incluyeFE'] == 'true') {
+                $resCreaFe = $this->crearInfoFacturaElectronica($infoFE["info_ced_fe"], 
+                $infoFE["info_nombre_fe"], $infoFE["info_correo_fe"], $id_orden);
+                if (!$resCreaFe['estado']) {
+                    DB::rollBack();
+                    return $this->responseAjaxServerError($resCreaFe['mensaje'], []);
+                }
+            }
+
             DB::commit();
             $this->setSuccess("Orden Creada", "Se creo la factura correctamente");
             return $this->responseAjaxSuccess("Pedido creado correctamente.", $id_orden);
         } catch (QueryException $ex) {
             DB::rollBack();
             return $this->responseAjaxServerError("Algo salío mal.");
+        }
+    }
+
+    public function crearInfoFacturaElectronica($cedula, $nombre, $correo, $orden)
+    {
+        try {
+            $idEst = SisEstadoController::getIdEstadoByCodGeneral('FE_ORDEN_PEND');
+            $ext_id = DB::table('fe_info')->insertGetId([
+                'id' => null, 'orden' => $orden, 'cedula' => $cedula,
+                'nombre' => $nombre, 'correo' => $correo,
+                'estado' => SisEstadoController::getIdEstadoByCodGeneral('FE_ORDEN_PEND'),
+                 'num_comprobante' => ''
+            ]);
+
+
+            return $this->responseAjaxSuccess("", $ext_id);
+        } catch (QueryException $ex) {
+            return $this->responseAjaxServerError("Algo salío mal creando la información de Factura Electrónica");
         }
     }
 

@@ -221,9 +221,18 @@
                                                                     style="color: white; padding-top:6px; margin-left : 3px;"
                                                                     onclick="abrirModalEnvio()"><i class="fas fa-truck"
                                                                         aria-hidden="true"></i> Datos envío</a>
+
                                                             </div>
                                                         </div>
+                                                        <div class="col-sm-12 col-md-12 col-lg-12" style="margin-top: 5px;">
+                                                            <div class="input-group">
 
+                                                                <a class="btn btn-success " id="btn_fe"
+                                                                    style="color: white; padding-top:6px; margin-left : 3px;"
+                                                                    onclick="abrirModalFE()"><i class="fas fa-user"
+                                                                        aria-hidden="true"></i> Factura Electrónica : NO</a>
+                                                            </div>
+                                                        </div>
 
                                                     </div>
                                                 </div>
@@ -277,12 +286,14 @@
                                                                 style="margin-left: 3%">
                                                                 Envío: No aplica </h6>
                                                         </div>
-                                                        
+
                                                         <div class="col-sm-12 col-md-12 col-lg-12">
                                                             <h6 id="txt-total-pagar" class="text-muted"
                                                                 style="margin-left: 3%">
                                                                 Total: 0,00</h6>
                                                         </div>
+
+                                                        
 
                                                         <div class="col-sm-12 col-md-12 col-lg-12">
                                                             <div class="row">
@@ -574,7 +585,7 @@
                             <div class="form-group form-float">
                                 <div class="form-line">
                                     <label for="incluyeEnvio">Incluye envío: </label>
-                                    <input type="checkbox" id="incluyeEnvio" onchange="mostrarMonto()">
+                                    <input type="checkbox" id="incluyeEnvio">
                                 </div>
                             </div>
                         </div>
@@ -587,15 +598,14 @@
                                 </div>
                             </div>
                         </div>
-                       
+
                         <div class="col-xl-12 col-sm-12">
                             <div class="form-group form-float">
                                 <div class="form-line">
                                     <label class="form-label">Contacto de entrega</label>
                                     <input type="text" class="form-control space_input_modal"
-                                        id="mdl_contacto_entrega" name="mdl_contacto_entrega"
-                                        maxlength="500">
-                                   
+                                        id="mdl_contacto_entrega" name="mdl_contacto_entrega" maxlength="500">
+
                                 </div>
                             </div>
                         </div>
@@ -628,6 +638,71 @@
             </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal ---->
+
+    <div class="modal fade bs-example-modal-center" id='mdl_fe' tabindex="-1" role="dialog"
+    aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+
+                <div class="spinner-border" id='modal_spinner' style='margin-right:3%;display:none;' role="status">
+                </div>
+                <h5 class="modal-title mt-0" id="edit_cliente_text"><i class="fas fa-truck"></i> Información de Facturación Electrónica
+                </h5>
+                <button type="button" id='btnSalirFac' class="close" aria-hidden="true"
+                    onclick="cerrarModalFe()">x</button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-xl-12 col-sm-12">
+                        <div class="form-group form-float">
+                            <div class="form-line">
+                                <label for="incluyeEnvio">Incluye factura electrónica : </label>
+                                <input type="checkbox" id="incluyeFE" >
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-12 col-sm-12">
+                        <div class="form-group form-float">
+                            <div class="form-line">
+                                <label class="form-label">Cédula cliente</label>
+                                <input type="text" class="form-control space_input_modal"
+                                id="info_ced_fe" name="info_ced_fe" maxlength="25">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-12 col-sm-12">
+                        <div class="form-group form-float">
+                            <div class="form-line">
+                                <label class="form-label">Nombre cliente</label>
+                                <input type="text" class="form-control space_input_modal"
+                                id="info_nombre_fe" name="info_nombre_fe" maxlength="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-12 col-sm-12">
+                        <div class="form-group form-float">
+                            <div class="form-line">
+                                <label class="form-label">Correo cliente</label>
+                                <input type="text" class="form-control space_input_modal"
+                                id="info_correo_fe" name="info_correo_fe" maxlength="250">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div id='footerContiner' class="modal-footer" style="margin-top:-5%;">
+                <a href="#" class="btn btn-secondary" onclick="cerrarModalFE()">Volver</a>
+                <a href="#" class="btn btn-primary" onclick="guardarInfoFE()">Guardar</a>
+            </div>
+            </form>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal ---->
+
 
     <div class="modal fade bd-example-modal-lg" id='mdl-cerrar-caja' tabindex="-1" role="dialog"
         aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
@@ -724,48 +799,48 @@
                 <a href="" target='_blank' class="btn btn-primary" id='btn-pdf' style="display:none"></a>
 
                 <!--
-                                                                                                                                                                            <div class="modal fade bs-example-modal-center" id='mdl-cliente' tabindex="-1" role="dialog"
-                                                                                                                                                                                aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-                                                                                                                                                                                <div class="modal-dialog modal-dialog-centered">
-                                                                                                                                                                                    <div class="modal-content">
-                                                                                                                                                                                        <div class="modal-header">
-                                                                                                                                                                                            <h5 class="modal-title">Buscar clientes</h5>
-                                                                                                                                                                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                                                                                                                                                                <span aria-hidden="true">&times;</span>
-                                                                                                                                                                                            </button>
-                                                                                                                                                                                        </div>
-                                                                                                                                                                                        <div class="modal-body">
-                                                                                                                                                                                            <table class="table" id="tbl-clientes" style="max-height: 100%;">
-                                                                                                                                                                                                <thead class="thead-light">
-                                                                                                                                                                                                    <tr>
-                                                                                                                                                                                                        <th scope="col">Nombre</th>
-                                                                                                                                                                                                        <th scope="col" style="text-align: center">Teléfono</th>
-                                                                                                                                                                                                        <th scope="col" style="text-align: center">Correo</th>
-                                                                                                                                                                                                        <th scope="col" style="text-align: center">Ubicación</th>
-                                                                                                                                                                                                        <th scope="col" style="text-align: center">Seleccionar</th>
-                                                                                                                                                                                                    </tr>
-                                                                                                                                                                                                </thead>
-                                                                                                                                                                                                <tbody id="tbody-clientes">
-                                                                                                                                                                                                 foreach ($data['clientes'] as $cliente)
+                                                                                                                                                                                <div class="modal fade bs-example-modal-center" id='mdl-cliente' tabindex="-1" role="dialog"
+                                                                                                                                                                                    aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                                                                                                                                                                                    <div class="modal-dialog modal-dialog-centered">
+                                                                                                                                                                                        <div class="modal-content">
+                                                                                                                                                                                            <div class="modal-header">
+                                                                                                                                                                                                <h5 class="modal-title">Buscar clientes</h5>
+                                                                                                                                                                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                                                                                                                                                    <span aria-hidden="true">&times;</span>
+                                                                                                                                                                                                </button>
+                                                                                                                                                                                            </div>
+                                                                                                                                                                                            <div class="modal-body">
+                                                                                                                                                                                                <table class="table" id="tbl-clientes" style="max-height: 100%;">
+                                                                                                                                                                                                    <thead class="thead-light">
                                                                                                                                                                                                         <tr>
-                                                                                                                                                                                                            <td> $cliente->nombre </td>
-                                                                                                                                                                                                            <td class="text-center"> $cliente->telefono }}</td>
-                                                                                                                                                                                                            <td class="text-center">$cliente->correo }}</td>
-                                                                                                                                                                                                            <td class="text-center"> $cliente->ubicacion }}</td>
-                                                                                                                                                                                                            <td class="text-center"><button type="button" class="btn btn-info"
-                                                                                                                                                                                                                    onclick="seleccionarCliente(' $cliente->id }}',' $cliente->nombre }}')"
-                                                                                                                                                                                                                    data-dismiss="modal">
-                                                                                                                                                                                                                    <i class="fas fa-check" aria-hidden="true"></i>
-                                                                                                                                                                                                                </button></td>
+                                                                                                                                                                                                            <th scope="col">Nombre</th>
+                                                                                                                                                                                                            <th scope="col" style="text-align: center">Teléfono</th>
+                                                                                                                                                                                                            <th scope="col" style="text-align: center">Correo</th>
+                                                                                                                                                                                                            <th scope="col" style="text-align: center">Ubicación</th>
+                                                                                                                                                                                                            <th scope="col" style="text-align: center">Seleccionar</th>
                                                                                                                                                                                                         </tr>
-                                                                                                                                                                                                    endforeach
-                                                                                                                                                                                                </tbody>
-                                                                                                                                                                                            </table>
+                                                                                                                                                                                                    </thead>
+                                                                                                                                                                                                    <tbody id="tbody-clientes">
+                                                                                                                                                                                                     foreach ($data['clientes'] as $cliente)
+                                                                                                                                                                                                            <tr>
+                                                                                                                                                                                                                <td> $cliente->nombre </td>
+                                                                                                                                                                                                                <td class="text-center"> $cliente->telefono }}</td>
+                                                                                                                                                                                                                <td class="text-center">$cliente->correo }}</td>
+                                                                                                                                                                                                                <td class="text-center"> $cliente->ubicacion }}</td>
+                                                                                                                                                                                                                <td class="text-center"><button type="button" class="btn btn-info"
+                                                                                                                                                                                                                        onclick="seleccionarCliente(' $cliente->id }}',' $cliente->nombre }}')"
+                                                                                                                                                                                                                        data-dismiss="modal">
+                                                                                                                                                                                                                        <i class="fas fa-check" aria-hidden="true"></i>
+                                                                                                                                                                                                                    </button></td>
+                                                                                                                                                                                                            </tr>
+                                                                                                                                                                                                        endforeach
+                                                                                                                                                                                                    </tbody>
+                                                                                                                                                                                                </table>
+                                                                                                                                                                                            </div>
                                                                                                                                                                                         </div>
                                                                                                                                                                                     </div>
                                                                                                                                                                                 </div>
-                                                                                                                                                                            </div>
-                                                                                                                                                                        -->
+                                                                                                                                                                            -->
             @endsection
             @section('script')
                 <script src="{{ asset('assets/bundles/datatables/datatables.min.js') }}"></script>

@@ -27,6 +27,14 @@ var infoEnvio = {
     "contacto": ""
 };
 
+var infoFE = {
+    "incluyeFE": false,
+    "info_ced_fe": "",
+    "info_nombre_fe": "",
+    "info_correo_fe": ""
+};
+
+
 $(document).ready(function () {
     $("#input_buscar_generico").on("keyup", function () {
         var value = $(this).val().toLowerCase();
@@ -828,6 +836,15 @@ function actualizarOrden() {
 
 
     $(contenedores.get("orden")).html(cards);
+
+    if (infoFE.incluyeFE) {
+       $('#btn_fe').html(`<i class="fas fa-pay"
+         aria-hidden="true"></i> Factura Electrónica : SÍ`);
+    }else{
+        $('#btn_fe').html(`<i class="fas fa-pay"
+        aria-hidden="true"></i> Factura Electrónica : NO`);
+    }
+
 }
 
 /**
@@ -1275,6 +1292,7 @@ function procesarPago(mto_sinpe, mto_efectivo, mto_tarjeta) {
             _token: CSRF_TOKEN,
             orden: ordenGestion,
             envio: infoEnvio,
+            infoFE : infoFE,
             detalles: detalles,
             mto_sinpe: mto_sinpe,
             mto_efectivo: mto_efectivo,
@@ -1567,6 +1585,11 @@ function abrirModalEnvio() {
     $("#mdl_envio").modal("show");
 }
 
+function abrirModalFE() {
+    cargarInfoFE();
+    $("#mdl_fe").modal("show");
+}
+
 function cargarInfoEnvio() {
     $('#mdl_contacto_entrega').val(infoEnvio.contacto);
     $('#mdl_precio_envio').val(infoEnvio.precio);
@@ -1574,6 +1597,13 @@ function cargarInfoEnvio() {
     $('#incluyeEnvio').prop("checked", infoEnvio.incluye_envio);
     $("#mdl_lugar_entrega").val(infoEnvio.descripcion_lugar);
     $("#mdl_lugar_entrega_maps").val(infoEnvio.descripcion_lugar_maps);
+}
+
+function cargarInfoFE() {
+    $('#info_nombre_fe').val(infoFE.info_nombre_fe);
+    $('#info_ced_fe').val(infoFE.info_ced_fe);
+    $('#info_correo_fe').val(infoFE.info_correo_fe);
+    $('#incluyeFE').prop("checked", infoFE.incluyeFE);
 }
 
 function guardarInfoEnvio() {
@@ -1593,9 +1623,27 @@ function guardarInfoEnvio() {
 }
 
 
+function guardarInfoFE() {
+    infoFE.info_nombre_fe = $('#info_nombre_fe').val();
+    infoFE.info_ced_fe = $('#info_ced_fe').val();
+    infoFE.incluyeFE = $('#incluyeFE').prop("checked");
+    infoFE.info_correo_fe = $("#info_correo_fe").val();
+   
+    cerrarModalFe();
+    actualizarOrden();
+    iziToast.success({
+        title: 'Información de facturación electrónica',
+        message: 'Se actualizo la información de  facturación electrónica',
+        position: 'topRight'
+    });
+}
 
 function cerrarModalEnvio() {
     $("#mdl_envio").modal("hide");
+}
+
+function cerrarModalFe() {
+    $("#mdl_fe").modal("hide");
 }
 
 function cerrarCaja() {
