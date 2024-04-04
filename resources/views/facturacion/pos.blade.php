@@ -54,37 +54,113 @@
                     var extrasAux = [];
                 </script>
 
-                @foreach ($producto->extras ?? [] as $extra)
-                    <script>
-                        var extraAuxL = [];
-                    </script>
+                @if ($producto->es_promocion == 'S')
+                    @foreach ($producto->detallesRestaurante ?? [] as $dr)
+                        @foreach ($dr->extras ?? [] as $extra)
+                            <script>
+                                var extraAuxL = [];
+                            </script>
 
-                    @foreach ($extra['extras'] ?? [] as $extra1)
-                        <script>
-                            var extraAux = {
-                                "id": "{{ $extra1->id }}",
-                                "descripcion": "{{ $extra1->descripcion ?? '' }}",
-                                "precio": "{{ $extra1->precio ?? 0 }}",
-                                "materia_prima": "{{ $extra1->materia_prima ?? 0 }}",
-                                "cant_mp": "{{ $extra1->cant_mp ?? 0 }}",
-                                "grupo": "{{ $extra1->dsc_grupo ?? '' }}",
-                                "requerido": "{{ $extra1->es_requerido ?? '' }}",
-                                "seleccionado": false
-                            };
-                            extraAuxL.push(extraAux);
-                        </script>
+                            @foreach ($extra['extras'] ?? [] as $extra1)
+                                <script>
+                                    var extraAux = {
+                                        "id": "{{ $extra1->id }}",
+                                        "descripcion": "{{ $extra1->descripcion  ?? '' }}",
+                                        "precio": "{{ $extra1->precio ?? 0 }}",
+                                        "materia_prima": "{{ $extra1->materia_prima ?? 0 }}",
+                                        "cant_mp": "{{ $extra1->cant_mp ?? 0 }}",
+                                        "grupo": "{{ $extra1->dsc_grupo  ?? '' }}",
+                                        "requerido": "{{ $extra1->es_requerido ?? '' }}",
+                                        "tipo_producto": "R",
+                                        "idProd": "{{ $dr->id_producto ?? '' }}",
+                                        "seleccionado": false
+                                    };
+                                    extraAuxL.push(extraAux);
+                                </script>
+                            @endforeach
+
+                            <script>
+                                var extraAux1 = {
+                                    "dsc_grupo": "{{ $extra['grupo'] .' - ' .$dr->nombre ?? '' }}",
+                                    "requerido": "{{ $extra['requerido'] ?? 0 }}",
+                                    "multiple": "{{ $extra['multiple'] ?? 0 }}",
+                                    "extras": extraAuxL
+                                };
+                                extrasAux.push(extraAux1);
+                            </script>
+                        @endforeach
                     @endforeach
 
-                    <script>
-                        var extraAux1 = {
-                            "dsc_grupo": "{{ $extra['grupo'] ?? '' }}",
-                            "requerido": "{{ $extra['requerido'] ?? 0 }}",
-                            "multiple": "{{ $extra['multiple'] ?? 0 }}",
-                            "extras": extraAuxL
-                        };
-                        extrasAux.push(extraAux1);
-                    </script>
-                @endforeach
+                    @foreach ($producto->detallesExternos ?? [] as $de)
+                        @foreach ($de->extras ?? [] as $extra)
+                            <script>
+                                var extraAuxL = [];
+                            </script>
+
+                            @foreach ($extra['extras'] ?? [] as $extra1)
+                                <script>
+                                    var extraAux = {
+                                        "id": "{{ $extra1->id }}",
+                                        "descripcion": "{{ $extra1->descripcion  }}",
+                                        "precio": "{{ $extra1->precio ?? 0 }}",
+                                        "materia_prima": "{{ $extra1->materia_prima ?? 0 }}",
+                                        "cant_mp": "{{ $extra1->cant_mp ?? 0 }}",
+                                        "grupo": "{{ $extra1->dsc_grupo?? '' }}",
+                                        "requerido": "{{ $extra1->es_requerido ?? '' }}",
+                                        "tipo_producto": "E",
+                                        "idProd": "{{ $dr->id_producto ?? '' }}",
+                                        "seleccionado": false
+                                    };
+                                    extraAuxL.push(extraAux);
+                                </script>
+                            @endforeach
+
+                            <script>
+                                var extraAux1 = {
+                                    "dsc_grupo": "{{ $extra['grupo']  .' - ' .$de->nombre ?? '' }}",
+                                    "requerido": "{{ $extra['requerido'] ?? 0 }}",
+                                    "multiple": "{{ $extra['multiple'] ?? 0 }}",
+                                    "extras": extraAuxL
+                                };
+                                extrasAux.push(extraAux1);
+                            </script>
+                        @endforeach
+                    @endforeach
+                @else
+                    @foreach ($producto->extras ?? [] as $extra)
+                        <script>
+                            var extraAuxL = [];
+                        </script>
+
+                        @foreach ($extra['extras'] ?? [] as $extra1)
+                            <script>
+                                var extraAux = {
+                                    "id": "{{ $extra1->id }}",
+                                    "descripcion": "{{ $extra1->descripcion ?? '' }}",
+                                    "precio": "{{ $extra1->precio ?? 0 }}",
+                                    "materia_prima": "{{ $extra1->materia_prima ?? 0 }}",
+                                    "cant_mp": "{{ $extra1->cant_mp ?? 0 }}",
+                                    "grupo": "{{ $extra1->dsc_grupo ?? '' }}",
+                                    "requerido": "{{ $extra1->es_requerido ?? '' }}",
+                                    "tipo_producto": "RE",
+                                    "idProd": "{{ $producto->id ?? '' }}",
+                                    "seleccionado": false
+                                };
+                                extraAuxL.push(extraAux);
+                            </script>
+                        @endforeach
+
+                        <script>
+                            var extraAux1 = {
+                                "dsc_grupo": "{{ $extra['grupo'] ?? '' }}",
+                                "requerido": "{{ $extra['requerido'] ?? 0 }}",
+                                "multiple": "{{ $extra['multiple'] ?? 0 }}",
+                                "extras": extraAuxL
+                            };
+                            extrasAux.push(extraAux1);
+                        </script>
+                    @endforeach
+                @endif
                 <script>
                     auxProducto = {
                         "id": "{{ $producto->id }}",
@@ -96,12 +172,15 @@
                         "cantidad": "{{ $producto->cantidad ?? -1 }}",
                         "cantidad_original": "{{ $producto->cantidad ?? -1 }}",
                         "tipoProducto": "{{ $producto->tipoProducto ?? -1 }}",
-                        "extras": extrasAux
+                        "extras": extrasAux,
+                        "es_promocion": "{{ $producto->es_promocion ?? 'N' }}",
                     };
                     productos.push(auxProducto);
                     productosGeneral.push(auxProducto);
                 </script>
             @endforeach
+
+
 
             <script>
                 categorias.push({
@@ -293,7 +372,7 @@
                                                                 Total: 0,00</h6>
                                                         </div>
 
-                                                        
+
 
                                                         <div class="col-sm-12 col-md-12 col-lg-12">
                                                             <div class="row">
@@ -640,68 +719,69 @@
     </div><!-- /.modal ---->
 
     <div class="modal fade bs-example-modal-center" id='mdl_fe' tabindex="-1" role="dialog"
-    aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
+        aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
 
-                <div class="spinner-border" id='modal_spinner' style='margin-right:3%;display:none;' role="status">
+                    <div class="spinner-border" id='modal_spinner' style='margin-right:3%;display:none;' role="status">
+                    </div>
+                    <h5 class="modal-title mt-0" id="edit_cliente_text"><i class="fas fa-truck"></i> Información de
+                        Facturación Electrónica
+                    </h5>
+                    <button type="button" id='btnSalirFac' class="close" aria-hidden="true"
+                        onclick="cerrarModalFe()">x</button>
                 </div>
-                <h5 class="modal-title mt-0" id="edit_cliente_text"><i class="fas fa-truck"></i> Información de Facturación Electrónica
-                </h5>
-                <button type="button" id='btnSalirFac' class="close" aria-hidden="true"
-                    onclick="cerrarModalFe()">x</button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-xl-12 col-sm-12">
-                        <div class="form-group form-float">
-                            <div class="form-line">
-                                <label for="incluyeEnvio">Incluye factura electrónica : </label>
-                                <input type="checkbox" id="incluyeFE" >
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-xl-12 col-sm-12">
+                            <div class="form-group form-float">
+                                <div class="form-line">
+                                    <label for="incluyeEnvio">Incluye factura electrónica : </label>
+                                    <input type="checkbox" id="incluyeFE">
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-xl-12 col-sm-12">
-                        <div class="form-group form-float">
-                            <div class="form-line">
-                                <label class="form-label">Cédula cliente</label>
-                                <input type="text" class="form-control space_input_modal"
-                                id="info_ced_fe" name="info_ced_fe" maxlength="25">
+                        <div class="col-xl-12 col-sm-12">
+                            <div class="form-group form-float">
+                                <div class="form-line">
+                                    <label class="form-label">Cédula cliente</label>
+                                    <input type="text" class="form-control space_input_modal" id="info_ced_fe"
+                                        name="info_ced_fe" maxlength="25">
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="col-xl-12 col-sm-12">
-                        <div class="form-group form-float">
-                            <div class="form-line">
-                                <label class="form-label">Nombre cliente</label>
-                                <input type="text" class="form-control space_input_modal"
-                                id="info_nombre_fe" name="info_nombre_fe" maxlength="100">
+                        <div class="col-xl-12 col-sm-12">
+                            <div class="form-group form-float">
+                                <div class="form-line">
+                                    <label class="form-label">Nombre cliente</label>
+                                    <input type="text" class="form-control space_input_modal" id="info_nombre_fe"
+                                        name="info_nombre_fe" maxlength="100">
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="col-xl-12 col-sm-12">
-                        <div class="form-group form-float">
-                            <div class="form-line">
-                                <label class="form-label">Correo cliente</label>
-                                <input type="text" class="form-control space_input_modal"
-                                id="info_correo_fe" name="info_correo_fe" maxlength="250">
+                        <div class="col-xl-12 col-sm-12">
+                            <div class="form-group form-float">
+                                <div class="form-line">
+                                    <label class="form-label">Correo cliente</label>
+                                    <input type="text" class="form-control space_input_modal" id="info_correo_fe"
+                                        name="info_correo_fe" maxlength="250">
+                                </div>
                             </div>
                         </div>
-                    </div>
 
+                    </div>
                 </div>
-            </div>
-            <div id='footerContiner' class="modal-footer" style="margin-top:-5%;">
-                <a href="#" class="btn btn-secondary" onclick="cerrarModalFE()">Volver</a>
-                <a href="#" class="btn btn-primary" onclick="guardarInfoFE()">Guardar</a>
-            </div>
-            </form>
-        </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-</div><!-- /.modal ---->
+                <div id='footerContiner' class="modal-footer" style="margin-top:-5%;">
+                    <a href="#" class="btn btn-secondary" onclick="cerrarModalFE()">Volver</a>
+                    <a href="#" class="btn btn-primary" onclick="guardarInfoFE()">Guardar</a>
+                </div>
+                </form>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal ---->
 
 
     <div class="modal fade bd-example-modal-lg" id='mdl-cerrar-caja' tabindex="-1" role="dialog"
@@ -799,48 +879,48 @@
                 <a href="" target='_blank' class="btn btn-primary" id='btn-pdf' style="display:none"></a>
 
                 <!--
-                                                                                                                                                                                <div class="modal fade bs-example-modal-center" id='mdl-cliente' tabindex="-1" role="dialog"
-                                                                                                                                                                                    aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-                                                                                                                                                                                    <div class="modal-dialog modal-dialog-centered">
-                                                                                                                                                                                        <div class="modal-content">
-                                                                                                                                                                                            <div class="modal-header">
-                                                                                                                                                                                                <h5 class="modal-title">Buscar clientes</h5>
-                                                                                                                                                                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                                                                                                                                                                    <span aria-hidden="true">&times;</span>
-                                                                                                                                                                                                </button>
+                                                                                                                                                                                            <div class="modal fade bs-example-modal-center" id='mdl-cliente' tabindex="-1" role="dialog"
+                                                                                                                                                                                                aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                                                                                                                                                                                                <div class="modal-dialog modal-dialog-centered">
+                                                                                                                                                                                                    <div class="modal-content">
+                                                                                                                                                                                                        <div class="modal-header">
+                                                                                                                                                                                                            <h5 class="modal-title">Buscar clientes</h5>
+                                                                                                                                                                                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                                                                                                                                                                <span aria-hidden="true">&times;</span>
+                                                                                                                                                                                                            </button>
+                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                        <div class="modal-body">
+                                                                                                                                                                                                            <table class="table" id="tbl-clientes" style="max-height: 100%;">
+                                                                                                                                                                                                                <thead class="thead-light">
+                                                                                                                                                                                                                    <tr>
+                                                                                                                                                                                                                        <th scope="col">Nombre</th>
+                                                                                                                                                                                                                        <th scope="col" style="text-align: center">Teléfono</th>
+                                                                                                                                                                                                                        <th scope="col" style="text-align: center">Correo</th>
+                                                                                                                                                                                                                        <th scope="col" style="text-align: center">Ubicación</th>
+                                                                                                                                                                                                                        <th scope="col" style="text-align: center">Seleccionar</th>
+                                                                                                                                                                                                                    </tr>
+                                                                                                                                                                                                                </thead>
+                                                                                                                                                                                                                <tbody id="tbody-clientes">
+                                                                                                                                                                                                                 foreach ($data['clientes'] as $cliente)
+                                                                                                                                                                                                                        <tr>
+                                                                                                                                                                                                                            <td> $cliente->nombre </td>
+                                                                                                                                                                                                                            <td class="text-center"> $cliente->telefono }}</td>
+                                                                                                                                                                                                                            <td class="text-center">$cliente->correo }}</td>
+                                                                                                                                                                                                                            <td class="text-center"> $cliente->ubicacion }}</td>
+                                                                                                                                                                                                                            <td class="text-center"><button type="button" class="btn btn-info"
+                                                                                                                                                                                                                                    onclick="seleccionarCliente(' $cliente->id }}',' $cliente->nombre }}')"
+                                                                                                                                                                                                                                    data-dismiss="modal">
+                                                                                                                                                                                                                                    <i class="fas fa-check" aria-hidden="true"></i>
+                                                                                                                                                                                                                                </button></td>
+                                                                                                                                                                                                                        </tr>
+                                                                                                                                                                                                                    endforeach
+                                                                                                                                                                                                                </tbody>
+                                                                                                                                                                                                            </table>
+                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                </div>
                                                                                                                                                                                             </div>
-                                                                                                                                                                                            <div class="modal-body">
-                                                                                                                                                                                                <table class="table" id="tbl-clientes" style="max-height: 100%;">
-                                                                                                                                                                                                    <thead class="thead-light">
-                                                                                                                                                                                                        <tr>
-                                                                                                                                                                                                            <th scope="col">Nombre</th>
-                                                                                                                                                                                                            <th scope="col" style="text-align: center">Teléfono</th>
-                                                                                                                                                                                                            <th scope="col" style="text-align: center">Correo</th>
-                                                                                                                                                                                                            <th scope="col" style="text-align: center">Ubicación</th>
-                                                                                                                                                                                                            <th scope="col" style="text-align: center">Seleccionar</th>
-                                                                                                                                                                                                        </tr>
-                                                                                                                                                                                                    </thead>
-                                                                                                                                                                                                    <tbody id="tbody-clientes">
-                                                                                                                                                                                                     foreach ($data['clientes'] as $cliente)
-                                                                                                                                                                                                            <tr>
-                                                                                                                                                                                                                <td> $cliente->nombre </td>
-                                                                                                                                                                                                                <td class="text-center"> $cliente->telefono }}</td>
-                                                                                                                                                                                                                <td class="text-center">$cliente->correo }}</td>
-                                                                                                                                                                                                                <td class="text-center"> $cliente->ubicacion }}</td>
-                                                                                                                                                                                                                <td class="text-center"><button type="button" class="btn btn-info"
-                                                                                                                                                                                                                        onclick="seleccionarCliente(' $cliente->id }}',' $cliente->nombre }}')"
-                                                                                                                                                                                                                        data-dismiss="modal">
-                                                                                                                                                                                                                        <i class="fas fa-check" aria-hidden="true"></i>
-                                                                                                                                                                                                                    </button></td>
-                                                                                                                                                                                                            </tr>
-                                                                                                                                                                                                        endforeach
-                                                                                                                                                                                                    </tbody>
-                                                                                                                                                                                                </table>
-                                                                                                                                                                                            </div>
-                                                                                                                                                                                        </div>
-                                                                                                                                                                                    </div>
-                                                                                                                                                                                </div>
-                                                                                                                                                                            -->
+                                                                                                                                                                                        -->
             @endsection
             @section('script')
                 <script src="{{ asset('assets/bundles/datatables/datatables.min.js') }}"></script>

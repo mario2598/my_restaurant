@@ -56,7 +56,7 @@
                                                 <tbody>
                                                     @foreach ($p->detalles as $d)
                                                         <tr style="border-top:1px solid black;cursor: pointer; "
-                                                            onclick="mostrarReceta(`{{ $d->receta }}`)">
+                                                            onclick="mostrarReceta(`{{ $d->receta }}`,`{{ $d->composicion }}`,`{{ $d->nombre_producto }}`)">
                                                             <td>{{ $d->nombre_producto ?? '' }}</td>
                                                             <td>{{ $d->cantidad ?? '0' }} </td>
                                                             <td>{{ $d->observacion ?? '' }}</td>
@@ -103,12 +103,42 @@
         aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="col-sm-12" style="margin-top:5px; ">
-                    <label>Receta </label>
-                    <textarea name="receta" id="receta" style="width: 100%; height: 350px;">
-                    </textarea>
+                <div class="modal-header">
+                    <h6 id="nombreProductoAux"></h6>
                 </div>
-                <div id='footerContiner' class="modal-footer" >
+
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="recetaExistente-tab" data-toggle="tab" href="#recetaExistente"
+                            role="tab" aria-controls="recetaExistente" aria-selected="true">Receta</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="nuevaReceta-tab" data-toggle="tab" href="#nuevaReceta" role="tab"
+                            aria-controls="nuevaReceta" aria-selected="false">Composición</a>
+                    </li>
+                </ul>
+                <div class="tab-content" id="myTabContent">
+                    <!-- Tab para la receta con lo que ya hay -->
+                    <div class="tab-pane fade show active" id="recetaExistente" role="tabpanel"
+                        aria-labelledby="recetaExistente-tab">
+                        <div class="modal-content">
+                            <div class="col-sm-12">
+                                <textarea name="receta" id="receta" style="width: 100%; height: 350px;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Tab para el nuevo div modal-content -->
+                    <div class="tab-pane fade" id="nuevaReceta" role="tabpanel" aria-labelledby="nuevaReceta-tab">
+                        <div class="modal-content">
+                            <div class="col-sm-12">
+                                <textarea name="composicion" id="composicion" style="width: 100%; height: 350px;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div id='footerContiner' class="modal-footer">
                     <a href="#" class="btn btn-secondary" onclick="ocultarReceta()">Cerrar</a>
                 </div>
             </div><!-- /.modal-content -->

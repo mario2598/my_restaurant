@@ -8,6 +8,7 @@ var promocionSeleccionada = {
     "id": 0,
     "descripcion": "",
     "precio": "",
+    "categoria": "",
     "activo": "0"
 };
 
@@ -48,6 +49,7 @@ function limpiarPromocion() {
         "descripcion": "",
         "precio": "",
         "estado": "",
+        "categoria": "",
         detalles: []
     };
 }
@@ -116,6 +118,7 @@ function cerrarMdlEditarPromo() {
 function cargarPromoModal() {
     $('#descripcion').val(promocionSeleccionada.descripcion);
     $('#precio').val(promocionSeleccionada.precio);
+    $('#select_categoria').val(promocionSeleccionada.categoria);
     var activo = false;
     if (promocionSeleccionada.estado == "1") {
         activo = true;
@@ -127,6 +130,7 @@ function cargarPromoModal() {
 function cargarModalPromo() {
     promocionSeleccionada.descripcion = $('#descripcion').val();
     promocionSeleccionada.precio = $('#precio').val();
+    promocionSeleccionada.categoria = $('#select_categoria').val();
     var checkbox = document.getElementById("activo");
     promocionSeleccionada.estado = checkbox.checked ? "1" : "0";
 }
@@ -195,14 +199,19 @@ function seleccionarProductoAyudaMnu($producto) {
 
 function guardarPromocion() {
     cargarModalPromo();
+    var formData = new FormData();
+    var file = $('#foto_producto')[0].files[0];
+    formData.append('foto_producto', file);
+    formData.append('_token', CSRF_TOKEN);
+    formData.append('promocion', JSON.stringify(promocionSeleccionada));
     $.ajax({
         url: `${base_path}/mant/grupoPromocion/guardarPromocion`,
         type: 'post',
         dataType: "json",
-        data: {
-            _token: CSRF_TOKEN,
-            promocion: promocionSeleccionada
-        }
+        data: formData,
+        contentType: false, // No establecer el tipo de contenido
+        processData: false
+
     }).done(function (response) {
         if (!response['estado']) {
             showError(response['mensaje']);
@@ -214,6 +223,7 @@ function guardarPromocion() {
         } else {
             generarHTMLPromos();
         }
+        cerrarMdlEditarPromo();
 
         showSuccess("Se guardo la promoción")
     }).fail(function (jqXHR, textStatus, errorThrown) {

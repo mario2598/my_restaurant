@@ -122,15 +122,128 @@ class OrdenesListasController extends Controller
                         ->select('producto_menu.receta')
                         ->where('producto_menu.codigo', '=', $d->codigo_producto)
                         ->get()->first()->receta ?? "";
-                } else {
+
+                    $d->materia_prima = DB::table('producto_menu')
+                        ->leftjoin('mt_x_producto', 'mt_x_producto.producto', '=', 'producto_menu.id')
+                        ->leftjoin('materia_prima', 'materia_prima.id', '=', 'mt_x_producto.materia_prima')
+                        ->select('materia_prima.nombre', 'materia_prima.unidad_medida', 'mt_x_producto.cantidad', 'producto_menu.nombre as prodNom')
+                        ->where('producto_menu.codigo', '=', $d->codigo_producto)
+                        ->get() ?? [];
+
+                    $d->productos_promo = [];
+                } else if ($d->tipo_producto == 'PROMO') {
+                    $recpAux = "";
+                    $d->productos_promo = DB::table('det_grupo_promocion')
+                        ->leftjoin('producto_menu', 'producto_menu.id', '=', 'det_grupo_promocion.producto')
+                        ->select('producto_menu.*')
+                        ->where('det_grupo_promocion.tipo', '=', "R")
+                        ->get();
+
+                    $d->productosE_promo = DB::table('det_grupo_promocion')
+                        ->leftjoin('producto_externo', 'producto_externo.id', '=', 'det_grupo_promocion.producto')
+                        ->select('producto_externo.*')
+                        ->where('det_grupo_promocion.tipo', '=', "E")
+                        ->get();
+                    $d->materia_prima = [];
+
+                    foreach ($d->productos_promo as $i => $p) {
+                        $recpAux = $recpAux . ($i > 0 ? "\n" : "") . "[ Receta " . $p->nombre . " ] ";
+                        $recpAux = $recpAux . "\n" . ($p->receta ??  " ") . "\n";
+                        $p->materia_prima = DB::table('producto_menu')
+                            ->leftjoin('mt_x_producto', 'mt_x_producto.producto', '=', 'producto_menu.id')
+                            ->leftjoin('materia_prima', 'materia_prima.id', '=', 'mt_x_producto.materia_prima')
+                            ->select('materia_prima.nombre', 'materia_prima.unidad_medida', 'mt_x_producto.cantidad',)
+                            ->where('producto_menu.id', '=', $p->id)
+                            ->get() ?? [];
+                    }
+
+                    foreach ($d->productosE_promo as $p) {
+                        $p->materia_prima = DB::table('producto_externo')
+                            ->leftjoin('mt_x_producto_ext', 'mt_x_producto_ext.producto', '=', 'producto_externo.id')
+                            ->leftjoin('materia_prima', 'materia_prima.id', '=', 'mt_x_producto_ext.materia_prima')
+                            ->select('materia_prima.nombre', 'materia_prima.unidad_medida', 'mt_x_producto_ext.cantidad',)
+                            ->where('producto_externo.codigo_barra', '=', $p->id)
+                            ->get() ?? [];
+                    }
+                    $d->receta =  $recpAux;
+                } else if ($d->tipo_producto == 'E') {
                     $d->receta = "";
+
+                    $d->materia_prima = DB::table('producto_externo')
+                        ->leftjoin('mt_x_producto_ext', 'mt_x_producto_ext.producto', '=', 'producto_externo.id')
+                        ->leftjoin('materia_prima', 'materia_prima.id', '=', 'mt_x_producto_ext.materia_prima')
+                        ->select('materia_prima.nombre', 'materia_prima.unidad_medida', 'mt_x_producto_ext.cantidad', 'producto_externo.nombre as prodNom')
+                        ->where('producto_externo.codigo_barra', '=', $d->codigo_producto)
+                        ->get() ?? [];
+                    $d->productos_promo = [];
                 }
+
                 $d->extras = DB::table('extra_detalle_orden')->select('extra_detalle_orden.*')
                     ->where('extra_detalle_orden.orden', '=', $o->id)
                     ->where('extra_detalle_orden.detalle', '=', $d->id)
-
                     ->get() ?? [];
                 $d->tieneExtras = count($d->extras) > 0;
+                $composicionTxt = "";
+
+                if ($d->tipo_producto == 'R' || $d->tipo_producto == 'E') {
+
+                    foreach ($d->materia_prima as $i => $mp) {
+                        $composicionTxt = $composicionTxt .  ($i > 0 ? "\n" : "") . "[ " . $mp->nombre . ", " . $mp->cantidad . " " . $mp->unidad_medida . " ] ";
+                    }
+
+                    if ($d->tipo_producto == 'R') {
+
+                        $mpExtras = DB::table('extra_detalle_orden')->select('extra_detalle_orden.*')
+                            ->leftjoin('extra_producto_menu', 'extra_producto_menu.id', '=', 'extra_detalle_orden.extra')
+                            ->leftjoin('materia_prima', 'materia_prima.id', '=', 'extra_producto_menu.materia_prima')
+                            ->select('materia_prima.nombre', 'materia_prima.unidad_medida', 'extra_producto_menu.cant_mp')
+                            ->where('extra_detalle_orden.orden', '=', $o->id)
+                            ->where('extra_detalle_orden.detalle', '=', $d->id)
+                            ->get() ?? [];
+
+                        if (count($mpExtras) > 0) {
+                            $composicionTxt = $composicionTxt . " \n ---------- Extras ---------- \n";
+                            foreach ($mpExtras as $i => $ex) {
+                                if ($ex->nombre != null && $ex->cant_mp != null) {
+                                    $composicionTxt = $composicionTxt .  "[ " . $ex->nombre . ", " . $ex->cant_mp . " " . $ex->unidad_medida . " ]\n ";
+                                }
+                            }
+                        }
+                    }
+                } else if ($d->tipo_producto == 'PROMO') {
+                    foreach ($d->productosE_promo as $i =>  $p) {
+                        $composicionTxt = $composicionTxt .  ($i > 0 ? "\n" : "") . "--- " . $p->nombre . " --- \n";
+                        foreach ($p->materia_prima as $i => $mp) {
+                            $composicionTxt = $composicionTxt  . $mp->nombre . ", " . $mp->cantidad . " " . $mp->unidad_medida . " ";
+                        }
+                    }
+
+                    foreach ($d->productos_promo as  $p) {
+                        $composicionTxt = $composicionTxt .  "\n--- " . $p->nombre . " --- \n";
+                        foreach ($p->materia_prima as $i => $mp) {
+                            $composicionTxt = $composicionTxt  . "[ " . $mp->nombre . ", " . $mp->cantidad . " " . $mp->unidad_medida . " ]\n ";
+                        }
+                        
+                        $mpExtras = DB::table('extra_detalle_orden')
+                            ->leftjoin('extra_producto_menu', 'extra_producto_menu.id', '=', 'extra_detalle_orden.extra')
+                            ->leftjoin('materia_prima', 'materia_prima.id', '=', 'extra_producto_menu.materia_prima')
+                            ->select('materia_prima.nombre', 'materia_prima.unidad_medida', 'extra_producto_menu.cant_mp')
+                            ->where('extra_detalle_orden.orden', '=', $o->id)
+                            ->where('extra_detalle_orden.id_producto', '=', $p->id)
+                            ->where('extra_detalle_orden.detalle', '=', $d->id)
+                            ->get() ?? [];
+
+                        if (count($mpExtras) > 0) {
+                            $composicionTxt = $composicionTxt . " --- Extras de ".$p->nombre." --- \n";
+                            foreach ($mpExtras as $i => $ex) {
+                                if ($ex->nombre != null && $ex->cant_mp != null) {
+                                    $composicionTxt = $composicionTxt .  "[ " . $ex->nombre . ", " . $ex->cant_mp . " " . $ex->unidad_medida . " ]\n ";
+                                }
+                            }
+                        }
+                    }
+                }
+                $d->composicion = $composicionTxt;
             }
         }
 
@@ -250,7 +363,7 @@ class OrdenesListasController extends Controller
                 }
             }
 
-            $resCargaEst = $servEstOrd->creaEstOrden($id_orden, $idEstEntrega,$estadoAnterior);
+            $resCargaEst = $servEstOrd->creaEstOrden($id_orden, $idEstEntrega, $estadoAnterior);
 
             if (!$resCargaEst['estado']) {
                 DB::rollBack();
@@ -340,7 +453,7 @@ class OrdenesListasController extends Controller
                     return $this->responseAjaxServerError($respuesta['mensaje'], []);
                 }
             }
-            $resCargaEst = $servEstOrd->creaEstOrden($id_orden, $idEstEntrega,$estadoAnterior);
+            $resCargaEst = $servEstOrd->creaEstOrden($id_orden, $idEstEntrega, $estadoAnterior);
 
             if (!$resCargaEst['estado']) {
                 DB::rollBack();

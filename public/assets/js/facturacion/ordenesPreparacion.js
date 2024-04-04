@@ -65,9 +65,15 @@ function terminarPreparacion(orden) {
 }
 
 
-function mostrarReceta(receta) {
+function mostrarReceta(receta,composicion,producto) {
     $("#receta").html(receta);
+    $("#nombreProductoAux").html(producto);
+    $("#composicion").html(composicion);
     $("#mdl_mostrar_receta").modal("show");
+}
+
+function cargarDatosComposicion(){
+
 }
 
 

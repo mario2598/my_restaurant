@@ -39,7 +39,7 @@
                             <tbody>
                                 @foreach ($p->detalles as $d)
                                     <tr style="border-top:1px solid black;cursor: pointer;"
-                                    onclick="mostrarReceta(`{{$d->receta}}`)">
+                                    onclick="mostrarReceta(`{{$d->receta}}`,`{{ $d->composicion }}`,`{{ $d->nombre_producto }}`)">
                                         <td> {{ $d->nombre_producto ?? '' }}</td>
                                         <td>{{ $d->cantidad ?? '0' }} </td>
                                         <td>{{ $d->observacion ?? '' }}</td>

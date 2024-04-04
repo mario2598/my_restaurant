@@ -31,6 +31,7 @@ class MantGrupoPromocionesController extends Controller
         $data = [
             'menus' => $this->cargarMenus(),
             'sucursales' => $this->getSucursales(),
+            'categorias' => $this->getCategorias(),
             'productos_menu' => $productos_menu,
             'productos_externos' => ProductosExternosController::getProductos(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
@@ -77,7 +78,9 @@ class MantGrupoPromocionesController extends Controller
             return $this->responseAjaxServerError("No tienes permisos para ingresar.", []);
         }
         $actualizar = false;
-        $promocion = $request->input('promocion');
+        
+        $promocion = json_decode($request->input('promocion'),true);
+       
         if ($promocion['id'] < 1 || $this->isNull($promocion['id'])) { // Nuevo 
             $actualizar = false;
         } else {
@@ -89,6 +92,17 @@ class MantGrupoPromocionesController extends Controller
             }
         }
         $idAuxPromo = $promocion['id'];
+        $foto_producto = $request->file('foto_producto');
+      
+        $path ="";
+        if ($foto_producto != null) {
+            // Guarda el archivo en la carpeta 'productos' dentro del almacenamiento público
+            $path = $foto_producto->store('productos', 'public');
+        } else {
+            // Lógica para manejar si no se ha enviado ningún archivo
+            // Asegúrate de manejar este caso según tus requisitos
+            $path = "";
+        }
         try {
 
             DB::beginTransaction();
@@ -98,10 +112,12 @@ class MantGrupoPromocionesController extends Controller
                     ->where('id', '=', $promocion['id'])
                     ->update([
                         'descripcion' => $promocion['descripcion'], 'precio' => $promocion['precio'], 'estado' =>  $promocion["estado"]
+                        , 'categoria' =>  $promocion["categoria"], 'imagen' => $path
                     ]);
             } else {
                 $idAuxPromo = DB::table('grupo_promocion')->insertGetId([
                     'id' => null,  'descripcion' => $promocion['descripcion'], 'precio' => $promocion['precio'], 'estado' =>  $promocion["estado"]
+                    , 'categoria' =>  $promocion["categoria"], 'imagen' => $path
                 ]);
             }
 

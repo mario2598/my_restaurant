@@ -99,6 +99,18 @@
                             </div>
                         </div>
 
+                        <div class="col-sm-12 col-md-4">
+                            <div class="form-group">
+                                <select class="form-control" id="select_categoria" name="select_categoria">
+                                    <option value="T" selected>Seleccionar Categoría</option>
+                                    @foreach ($data['categorias'] as $i)
+                                        <option value="{{ $i->id ?? -1 }}" title="{{ $i->categoria ?? '' }}">
+                                            {{ $i->categoria ?? '' }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
                         <div class="col-xl-4 col-sm-4">
                             <div class="form-group form-float">
                                 <div class="form-line">
@@ -108,6 +120,16 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="form-group ">
+                                <label>Foto Producto</label>
+                                <input type="file"id="foto_producto" name="foto_producto"
+                                    accept="image/png, image/jpeg, image/jpg">
+                            </div>
+                        </div>
+
+
                         <div class="col-xl-4 col-sm-4">
                             <div class="form-group form-float">
                                 <div class="form-line">
@@ -116,7 +138,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-xl-4 col-sm-4"></div>
+                        
                         <div class="col-xl-4 col-sm-4">
                             <div class="form-group form-float">
                                 <div class="form-line">
@@ -301,7 +323,8 @@
                             </thead>
                             <tbody id="tbody_productos_ext">
                                 @foreach ($data['productos_externos'] as $i)
-                                    <tr style="cursor: pointer" onclick='seleccionarProductoAyuda("{{ $i->id }}")'>
+                                    <tr style="cursor: pointer"
+                                        onclick='seleccionarProductoAyuda("{{ $i->id }}")'>
                                         <td class="text-center">
                                             {{ strtoupper($i->codigo_barra ?? '') }}
                                         </td>
