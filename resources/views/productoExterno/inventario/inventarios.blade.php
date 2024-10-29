@@ -1,7 +1,6 @@
 @extends('layout.master')
 
 @section('style')
-
     <link rel="stylesheet" href="{{ asset('assets/bundles/datatables/datatables.min.css') }}">
     <link rel="stylesheet"
         href="{{ asset('assets/bundles/datatables/DataTables-1.10.16/css/dataTables.bootstrap4.min.css') }}">
@@ -9,7 +8,6 @@
 
 
 @section('content')
-
     @include('layout.sidebar')
 
     <div class="main-content">
@@ -38,11 +36,13 @@
                                 <div class="col-sm-12 col-md-4">
                                     <div class="form-group">
                                         <label>Sucursal</label>
-                                        <select class="form-control" id="sucursal" name="sucursal" required>
+                                        <select class="form-control" id="sucursal" name="sucursal"
+                                            onchange="cambiarSucursal()" required>
                                             <option value="-1" selected>Seleccione una sucursal</option>
                                             @foreach ($data['sucursales'] as $i)
                                                 <option value="{{ $i->id ?? '' }}" title="{{ $i->descripcion ?? '' }}"
-                                                    @if ($i->id == $data['filtros']['sucursal']) selected @endif>{{ $i->descripcion ?? '' }}
+                                                    @if ($i->id == $data['filtros']['sucursal']) selected @endif>
+                                                    {{ $i->descripcion ?? '' }}
                                                 </option>
                                             @endforeach
                                         </select>
@@ -52,8 +52,9 @@
                                 <div class="col-sm-12 col-md-4">
                                     <div class="form-group">
                                         <label>Buscar</label>
-                                        <button type="submit" class="btn btn-primary btn-icon form-control"
-                                            style="cursor: pointer;"><i class="fas fa-search"></i></button>
+                                        <button type="submit" id="btn_buscar_gen"
+                                            class="btn btn-primary btn-icon form-control" style="cursor: pointer;"><i
+                                                class="fas fa-search"></i></button>
                                     </div>
                                 </div>
                                 <div class="col-sm-12 col-md-4">
@@ -84,13 +85,16 @@
                                             <th class="text-center">
                                                 Cantidad
                                             </th>
-
+                                            <th class="text-center">
+                                                Comanda
+                                            </th>
 
                                         </tr>
                                     </thead>
                                     <tbody id="tbody_generico">
                                         @foreach ($data['inventarios'] as $i)
-                                            <tr style="cursor: pointer" onclick='editarProductoInventario("{{$i->pe_id}}","{{$i->id}}","{{$i->cantidad}}")'>
+                                            <tr style="cursor: pointer"
+                                                onclick='editarProductoInventario("{{ $i->pe_id }}","{{ $i->id }}","{{ $i->cantidad }}","{{ $i->comanda }}","{{ $i->nombre }}")'>
                                                 <td class="text-center">
                                                     {{ strtoupper($i->codigo_barra ?? '') }}
                                                 </td>
@@ -102,6 +106,10 @@
                                                 </td>
                                                 <td class="text-center">
                                                     {{ $i->cantidad ?? '' }}
+                                                </td>
+
+                                                <td class="text-center">
+                                                    {{ $i->nombreComanda ?? '' }}
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -128,64 +136,114 @@
         aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                    <input type="hidden" id="pe_id" name="pe_id" value="-1">
-                    <input type="hidden" name="sucursal_agregar_id" id="sucursal_agregar_id" value="-1">
-                    <div class="modal-header">
+                <input type="hidden" id="pe_id" name="pe_id" value="-1">
+                <input type="hidden" name="sucursal_agregar_id" id="sucursal_agregar_id" value="-1">
+                <div class="modal-header">
 
-                        <div class="spinner-border" id='modal_spinner' style='margin-right:3%;display:none;' role="status">
-                        </div>
-                        <h5 class="modal-title mt-0" id="edit_cliente_text"><i class="fas fa-cog"></i> Producto menú</h5>
-                        <button type="button" id='btnSalirFact' class="close" aria-hidden="true"
-                            data-dismiss="modal">x</button>
+                    <div class="spinner-border" id='modal_spinner' style='margin-right:3%;display:none;' role="status">
                     </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-xl-12 col-sm-8">
-                                <div class="form-group">
-                                    <label>Prodcuto</label>
-                                    <select class="form-control" id="producto_externo" name="producto_externo" required>
-                                        
-                                        @foreach ($data['productos_externos'] as $i)
-                                            <option value="{{ $i->id ?? '' }}" title="{{ $i->codigo_barra ?? '' }}">
-                                                {{ $i->nombre ?? '' }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-xl-12 col-sm-4">
-                                <div class="form-group">
-                                    <label>Busqueda</label>
-                                    <a class="btn btn-secondary" onclick="abrirProductosExternos()"
-                                        style="cursor: pointer">Buscar producto</a>
-                                </div>
-                            </div>
-                            <div class="col-xl-12 col-sm-12">
-                                <div class="form-group form-float">
-                                    <div class="form-line">
-                                        <label class="form-label">Cantidad</label>
-                                        <input type="number" class="form-control space_input_modal" id="cantidad_agregar"
-                                            name="cantidad_agregar" required max="10000" min="1">
+                    <h5 class="modal-title mt-0" id="edit_cliente_text"><i class="fas fa-cog"></i> Producto menú</h5>
+                    <button type="button" id='btnSalirFact' class="close" aria-hidden="true"
+                        data-dismiss="modal">x</button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-xl-12 col-sm-8">
+                            <div class="form-group">
+                                <label>Prodcuto</label>
+                                <select class="form-control" id="producto_externo" name="producto_externo" required>
 
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="es_desecho">¿Es desecho?</label>
-                                    <input type="checkbox" id="es_desecho" name="es_desecho">
+                                    @foreach ($data['productos_externos'] as $i)
+                                        <option value="{{ $i->id ?? '' }}" title="{{ $i->codigo_barra ?? '' }}">
+                                            {{ $i->nombre ?? '' }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-xl-12 col-sm-4" id="contBusdcarPe">
+                            <div class="form-group">
+                                <label>Busqueda</label>
+                                <a class="btn btn-secondary" onclick="abrirProductosExternos()"
+                                    style="cursor: pointer">Buscar producto</a>
+                            </div>
+                        </div>
+                        <div class="col-xl-12 col-sm-12">
+                            <div class="form-group form-float">
+                                <div class="form-line">
+                                    <label class="form-label">Cantidad</label>
+                                    <input type="number" class="form-control space_input_modal" id="cantidad_agregar"
+                                        name="cantidad_agregar" required max="10000" min="1">
+
                                 </div>
                             </div>
-                            
-
                         </div>
 
+                        <div class="col-xl-12 col-sm-12 mt-3">
+                            <label>Seleccione la comanda asignada</label>
+                            <select class="form-control" id="comanda_select" name="comanda_select" required>
+                                <option value="-1" selected>Comanda General</option>
+                                @foreach ($data['comandas'] as $i)
+                                    <option value="{{ $i->id ?? '' }}" title="{{ $i->nombre ?? '' }}">
+                                        {{ $i->nombre ?? '' }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
-                    <div id='footerContiner' class="modal-footer" >
-                        <a href="#" class="btn btn-secondary" data-dismiss="modal">Volver</a>
-                        <input type="button" class="btn btn-primary" onclick="guardarProductoSucursal()" value="Guardar" />
 
-                    </div>
+                </div>
+                <div id='footerContiner' class="modal-footer">
+                    <a href="#" class="btn btn-secondary" data-dismiss="modal">Volver</a>
+                    <input type="button" class="btn btn-primary" onclick="mdlAjustarInventario()"
+                        id="btn_ajustar_inventario" value="Ajustar Cantidad Inventario" />
+                    <input type="button" class="btn btn-primary" onclick="guardarProductoSucursal()" value="Guardar" />
+
+                </div>
             </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -- fin modal de agregar producto-->
+
+    <!-- Modal para ajustar cantidad de producto -->
+    <div class="modal fade bs-example-modal-center" id="mdl_ajustar_cant_producto" tabindex="-1" role="dialog"
+        aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <!-- Cambiado a modal-lg para darle un tamaño más grande controlado -->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="spinner-border" id="modal_spinner" style="margin-right: 3%; display: none;"
+                        role="status"></div>
+                    <h5 class="modal-title mt-0" id="lbl_ajustar_cant_producto"><i class="fas fa-cog"></i>
+                        Aumentar/Disminuir Cantidad Inventario</h5>
+                    <button type="button" id="btnSalirFact" class="close" aria-hidden="true"
+                        data-dismiss="modal">x</button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group form-float">
+                                <label for="cantidad_ajustar" class="form-label">Cantidad a Ajustar</label>
+                                <input type="number" class="form-control space_input_modal" id="cantidad_ajustar"
+                                    name="cantidad_ajustar" required min="1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="footerContiner" class="modal-footer">
+                    <div class="d-flex justify-content-between w-100">
+                        <!-- Clase para que los botones estén distribuidos de forma uniforme -->
+                        <a href="#" class="btn btn-secondary" data-dismiss="modal">Volver</a>
+                        <input type="button" class="btn btn-primary" onclick="aumentarInventario()"
+                            id="btn_aumenta_inventario" value="Aumentar Inventario" />
+                        <input type="button" class="btn btn-primary" onclick="disminuirInventario('N')"
+                            id="btn_disminuye_inventario" value="Disminuir Inventario" />
+                        <input type="button" class="btn btn-primary" onclick="desecharInventario()"
+                            id="btn_sacar_desecho" value="Sacar Desecho" />
+                    </div>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal - Fin modal de ajustar producto -->
+
+
     <!--ayuda prodcutos-->
     <div class="modal fade bs-example-modal-center" id='mdl_ayuda_producto' tabindex="-1" role="dialog"
         aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
@@ -196,13 +254,14 @@
                     <div class="spinner-border" id='modal_spinner' style='margin-right:3%;display:none;' role="status">
                     </div>
                     <h5 class="modal-title mt-0" id="edit_cliente_text"><i class="fas fa-cog"></i> Producto menú</h5>
-                    <button type="button" id='btnSalirFact' class="close" aria-hidden="true" data-dismiss="modal">x</button>
+                    <button type="button" id='btnSalirFact' class="close" aria-hidden="true"
+                        data-dismiss="modal">x</button>
                 </div>
                 <div class="modal-body">
                     <div class="input-group">
                         <input type="text" name="" id="btn_buscar_producto_ayuda" class="form-control"
                             placeholder="Buscar producto">
-    
+
                     </div>
                     <div class="table-responsive">
                         <table class="table table-striped" id="tablaProductos">
@@ -218,7 +277,8 @@
                             </thead>
                             <tbody id="tbody_productos">
                                 @foreach ($data['productos_externos'] as $i)
-                                    <tr style="cursor: pointer" onclick='seleccionarProductoAyuda("{{$i->id}}")'>
+                                    <tr style="cursor: pointer"
+                                        onclick='seleccionarProductoAyuda("{{ $i->id }}")'>
                                         <td class="text-center">
                                             {{ strtoupper($i->codigo_barra ?? '') }}
                                         </td>
@@ -245,10 +305,10 @@
         function initialice() {
             var sucursal = $("#sucursal option[value='" + "{{ $data['filtros']['sucursal'] }}" + "']").html();
 
-            var topMesage = 'Reporte de Inventario de productos externos de la sucursal ' + sucursal+'.' ;
+            var topMesage = 'Reporte de Inventario de productos externos de la sucursal ' + sucursal + '.';
             var bottomMesage = 'Reporte de Inventario de productos externos filtrado por';
 
-            topMesage +=  ' Solicitud realizada por ' + "{{ session('usuario')['usuario'] }}" + '.';
+            topMesage += ' Solicitud realizada por ' + "{{ session('usuario')['usuario'] }}" + '.';
 
             if ("{{ $data['filtros']['sucursal'] }}" != '-1') {
                 bottomMesage += ' sucursal [ ' + sucursal + ' ],';
@@ -290,10 +350,7 @@
             });
 
         }
-
     </script>
-
-
 @endsection
 
 

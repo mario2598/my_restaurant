@@ -18,9 +18,28 @@ class ProductosExternosController extends Controller
         setlocale(LC_ALL, "es_ES");
     }
 
-    public function index()
+    public static function getIdComandaByCodigoSucursal($codigo,$idSucursal)
     {
+        return DB::table('pe_x_sucursal')
+            ->leftjoin('producto_externo', 'producto_externo.id', '=', 'pe_x_sucursal.producto_externo')
+            ->select('pe_x_sucursal.comanda')
+            ->where('producto_externo.codigo_barra', '=', $codigo)
+            ->where('pe_x_sucursal.sucursal', '=', $idSucursal)
+            ->get()->first()->comanda;
     }
+
+    public static function getIdByCodigo($codigo){
+        $producto= DB::table('producto_externo')
+        ->leftjoin('impuesto', 'impuesto.id', '=', 'producto_externo.impuesto')
+        ->select('producto_externo.*','producto_externo.codigo_barra as codigo','impuesto.impuesto as valorImpuesto')
+        ->where('codigo_barra', '=', $codigo)
+        ->get()->first();
+
+        $producto->extras = [];
+        return $producto;
+    }
+
+    public function index() {}
 
     public function goProductosExternos()
     {
@@ -164,7 +183,9 @@ class ProductosExternosController extends Controller
             if ($nuevo) {
                 $mt_x_producto1 = DB::table('mt_x_producto_ext')
                     ->insertGetId([
-                        'id' => null, 'materia_prima' => $id_prod, 'producto' => $id_prod_seleccionado,
+                        'id' => null,
+                        'materia_prima' => $id_prod,
+                        'producto' => $id_prod_seleccionado,
                         'cantidad' => $cant
                     ]);
             } else {
@@ -392,16 +413,31 @@ class ProductosExternosController extends Controller
                     DB::table('producto_externo')
                         ->where('id', '=', $id)
                         ->update([
-                            'nombre' => $nombre, 'categoria' => $categoria, 'precio' => $precio,
-                            'impuesto' => $impuesto, 'precio_compra' => $precio_compra, 'codigo_barra' => $codigo_barra, 'proveedor' => $proveedor,
-                            'descripcion' => $descripcion, 'url_imagen' => $path, 'posicion_menu' => $posicion_menu
+                            'nombre' => $nombre,
+                            'categoria' => $categoria,
+                            'precio' => $precio,
+                            'impuesto' => $impuesto,
+                            'precio_compra' => $precio_compra,
+                            'codigo_barra' => $codigo_barra,
+                            'proveedor' => $proveedor,
+                            'descripcion' => $descripcion,
+                            'url_imagen' => $path,
+                            'posicion_menu' => $posicion_menu
                         ]);
                 } else { // Nuevo usuario
                     $id = DB::table('producto_externo')->insertGetId([
-                        'id' => null, 'nombre' => $nombre, 'categoria' => $categoria, 'precio' => $precio,
-                        'impuesto' => $impuesto, 'precio_compra' => $precio_compra, 'codigo_barra' => $codigo_barra,
-                        'proveedor' => $proveedor, 'estado' => 'A', 'descripcion' => $descripcion ?? "",
-                        'url_imagen' => $path, 'posicion_menu' => $posicion_menu
+                        'id' => null,
+                        'nombre' => $nombre,
+                        'categoria' => $categoria,
+                        'precio' => $precio,
+                        'impuesto' => $impuesto,
+                        'precio_compra' => $precio_compra,
+                        'codigo_barra' => $codigo_barra,
+                        'proveedor' => $proveedor,
+                        'estado' => 'A',
+                        'descripcion' => $descripcion ?? "",
+                        'url_imagen' => $path,
+                        'posicion_menu' => $posicion_menu
                     ]);
                 }
 
@@ -434,15 +470,12 @@ class ProductosExternosController extends Controller
      */
     public function guardarProductoSucursal(Request $request)
     {
-        if (!$this->validarSesion("prod_ext_prods")) {
-            return $this->responseAjaxServerError("No tienes permisos", []);
-        }
 
         $id = $request->input('pe_id');
         $producto_externo = $request->input('producto_externo');
         $sucursal = $request->input('sucursal_agregar_id');
         $cantidad_agregar = $request->input('cantidad_agregar');
-        $es_desecho = $request->input('es_desecho');
+        $comanda_select = $request->input('comanda_select');
 
         $fecha_actual = date("Y-m-d H:i:s");
         if ($sucursal < 1 || $this->isNull($sucursal)) { //  
@@ -486,29 +519,19 @@ class ProductosExternosController extends Controller
                 DB::table('pe_x_sucursal')
                     ->where('id', '=', $id)
                     ->update([
-                        'cantidad' => $cantidad_agregar, 'ultima_modificacion' => $fecha_actual, 'usuario_modifica' => session('usuario')['id']
+                        'comanda' => $comanda_select,
+                        'ultima_modificacion' => $fecha_actual,
+                        'usuario_modifica' => session('usuario')['id']
                     ]);
-
-                $cantidadInventario = $producto->cantidad;
-                $cantidadDisminuye = 0;
-                $texto = "";
-                if ($cantidadInventario < $cantidad_agregar) {
-                    $texto = "Aumento de inventario en " . ($cantidad_agregar - $cantidadInventario) . " unidades";
-                    $cantidadDisminuye = ($cantidad_agregar - $cantidadInventario);
-                } else {
-                    $texto = "Disminuye inventario en " . ($cantidadInventario  - $cantidad_agregar) . " unidades";
-                    $cantidadDisminuye = ($cantidadInventario  - $cantidad_agregar);
-                    if ($es_desecho  == 'true') {
-                        $texto .= ' | Desecho de inventario';
-                    }
-                }
-
-                $detalleMp =  'Producto Externo : ' . $producto_externoAux->nombre .
-                    ' | Detalle :' . $texto;
             } else { // Nuevo usuario
                 $id = DB::table('pe_x_sucursal')->insertGetId([
-                    'id' => null, 'sucursal' => $sucursal, 'producto_externo' => $producto_externo, 'cantidad' => $cantidad_agregar,
-                    'ultima_modificacion' => $fecha_actual, 'usuario_modifica' => session('usuario')['id']
+                    'id' => null,
+                    'sucursal' => $sucursal,
+                    'producto_externo' => $producto_externo,
+                    'cantidad' => $cantidad_agregar,
+                    'ultima_modificacion' => $fecha_actual,
+                    'usuario_modifica' => session('usuario')['id'],
+                    'comanda' => ($comanda_select === null || $comanda_select == '-1') ? null : $comanda_select
                 ]);
 
                 $cantidadInventario = 0;
@@ -517,16 +540,21 @@ class ProductosExternosController extends Controller
 
                 $detalleMp =  'Producto Externo : ' . $producto_externoAux->nombre .
                     ' | Detalle :' . $texto;
+
+                $fechaActual = date("Y-m-d H:i:s");
+                DB::table('bit_inv_producto_externo')->insert([
+                    'id' => null,
+                    'usuario' => session('usuario')['id'],
+                    'producto' => $producto_externo,
+                    'detalle' => $detalleMp,
+                    'cantidad_anterior' =>  $cantidadInventario ?? 0,
+                    'cantidad_ajustada' => $cantidadDisminuye,
+                    'cantidad_nueva' =>  $cantidad_agregar,
+                    'fecha' => $fechaActual,
+                    'sucursal' => $this->getUsuarioSucursal(),
+                    'devolucion' => 'N'
+                ]);
             }
-            $fechaActual = date("Y-m-d H:i:s");
-            DB::table('bit_inv_producto_externo')->insert([
-                'id' => null, 'usuario' => session('usuario')['id'],
-                'producto' => $producto_externo, 'detalle' => $detalleMp,
-                'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                'cantidad_ajustada' => $cantidadDisminuye,
-                'cantidad_nueva' =>  $cantidad_agregar, 'fecha' => $fechaActual, 'sucursal' => $this->getUsuarioSucursal(),
-                'devolucion' => ($es_desecho == 'true' ? 'S' : 'N')
-            ]);
 
             DB::commit();
 
@@ -663,6 +691,7 @@ class ProductosExternosController extends Controller
             'filtros' => $filtros,
             'inventarios' => [],
             'sucursales' => $this->getSucursalesAndBodegas(),
+            'comandas' => [],
             'productos_externos' => ProductosExternosController::getProductos(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
@@ -690,8 +719,9 @@ class ProductosExternosController extends Controller
         $data = [
             'menus' => $this->cargarMenus(),
             'inventarios' => ProductosExternosController::getInventario($filtroSucursal),
-            'productos_externos' => ProductosExternosController::getProductos(),
+            'productos_externos' => ProductosExternosController::getProductosNoMenuSucursal($filtroSucursal),
             'sucursales' => $this->getSucursalesAndBodegas(),
+            'comandas' => ComandasController::getBySucursal($filtroSucursal),
             'filtros' => $filtros,
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
@@ -708,10 +738,21 @@ class ProductosExternosController extends Controller
         $inventarios = DB::table('producto_externo')
             ->leftjoin('pe_x_sucursal', 'pe_x_sucursal.producto_externo', '=', 'producto_externo.id')
             ->leftjoin('sucursal', 'sucursal.id', '=', 'pe_x_sucursal.sucursal')
+            ->leftjoin('comanda', 'comanda.id', '=', 'pe_x_sucursal.comanda')
             ->leftjoin('categoria', 'categoria.id', '=', 'producto_externo.categoria')
             ->leftjoin('proveedor', 'proveedor.id', '=', 'producto_externo.proveedor')
-            ->select('producto_externo.id', 'pe_x_sucursal.id as pe_id', 'producto_externo.codigo_barra', 'producto_externo.nombre', 'categoria.categoria', 'pe_x_sucursal.cantidad', 'proveedor.nombre as nombre_prov')
-            ->groupBy('producto_externo.id', 'pe_x_sucursal.id', 'producto_externo.codigo_barra', 'producto_externo.nombre', 'categoria.categoria', 'pe_x_sucursal.cantidad', 'proveedor.nombre')
+            ->select(
+                'producto_externo.id',
+                'pe_x_sucursal.id as pe_id',
+                'pe_x_sucursal.comanda',
+                DB::raw('COALESCE(comanda.nombre, "Comanda General") as nombreComanda'),
+                'producto_externo.codigo_barra',
+                'producto_externo.nombre',
+                'categoria.categoria',
+                'pe_x_sucursal.cantidad',
+                'proveedor.nombre as nombre_prov'
+            )
+            ->groupBy('producto_externo.id', 'pe_x_sucursal.id', 'pe_x_sucursal.comanda', 'comanda.nombre', 'producto_externo.codigo_barra', 'producto_externo.nombre', 'categoria.categoria', 'pe_x_sucursal.cantidad', 'proveedor.nombre')
             ->where('pe_x_sucursal.sucursal', '=', $sucursal)
             ->get();
 
@@ -729,5 +770,220 @@ class ProductosExternosController extends Controller
             ->get();
 
         return $productos;
+    }
+
+    public static function getProductosNoMenuSucursal($idSucursal)
+    {
+        $productos = DB::table('producto_externo')
+            ->leftJoin('pe_x_sucursal', function ($join) use ($idSucursal) {
+                $join->on('pe_x_sucursal.producto_externo', '=', 'producto_externo.id')
+                    ->where('pe_x_sucursal.sucursal', '=', $idSucursal);
+            })
+            ->leftJoin('categoria', 'categoria.id', '=', 'producto_externo.categoria')
+            ->leftJoin('proveedor', 'proveedor.id', '=', 'producto_externo.proveedor')
+            ->select(
+                'producto_externo.id',
+                'producto_externo.codigo_barra',
+                'producto_externo.nombre',
+                'categoria.categoria',
+                'proveedor.nombre as nombre_prov'
+            )
+            ->where('producto_externo.estado', '=', 'A')
+            ->whereNull('pe_x_sucursal.producto_externo') // Esto asegura que no estén en pe_x_sucursal
+            ->get();
+
+        return $productos;
+    }
+
+    public function cargarComandas(Request $request)
+    {
+
+        $idSucursal = $request->input('idSucursal');
+
+        try {
+            return $this->responseAjaxSuccess("", ComandasController::getBySucursal($idSucursal));
+        } catch (QueryException $ex) {
+            return $this->responseAjaxServerError("Algo salio mal", $ex);
+        }
+    }
+
+    public function cargarPeSucursal(Request $request)
+    {
+
+        $idSucursal = $request->input('idSucursal');
+
+        try {
+            return $this->responseAjaxSuccess("", ProductosExternosController::getProductosNoMenuSucursal($idSucursal));
+        } catch (QueryException $ex) {
+            return $this->responseAjaxServerError("Algo salio mal", $ex);
+        }
+    }
+
+    public function aumentarProductoSucursal(Request $request)
+    {
+
+        $id = $request->input('pe_id');
+        $producto_externo = $request->input('producto_externo');
+        $sucursal = $request->input('sucursal_agregar_id');
+        $cantidad_agregar = $request->input('cantidad_agregar');
+        $producto_externo = $request->input('producto_externo');
+        $fecha_actual = date("Y-m-d H:i:s");
+        if (is_null($cantidad_agregar) || $cantidad_agregar <= 0) {
+            // Manejo del error
+            return $this->responseAjaxServerError("La cantidad debe ser mayor a 0 y no puede ser nula.", []);
+        }
+
+        if ($sucursal < 1 || $this->isNull($sucursal)) { //  
+            return $this->responseAjaxServerError("Debe seleccionar la sucursal", []);
+        }
+        $sucursalAux = DB::table('sucursal')->select('sucursal.*')->where('id', '=', $sucursal)->get()->first();
+        if ($sucursalAux == null) { //  
+            return $this->responseAjaxServerError("Debe seleccionar la sucursal", []);
+        }
+
+
+        if ($producto_externo < 1 || $this->isNull($producto_externo)) { //  
+            return $this->responseAjaxServerError("Debe seleccionar el producto", []);
+        }
+        $producto_externoAux = DB::table('producto_externo')->select('producto_externo.*')->where('id', '=', $producto_externo)->get()->first();
+        if ($producto_externoAux == null) { //  
+            return $this->responseAjaxServerError("Debe seleccionar el producto", []);
+        }
+
+        $producto = DB::table('pe_x_sucursal')->select('pe_x_sucursal.*')->where('id', '=', $id)->get()->first();
+
+        if ($producto == null) {
+            return $this->responseAjaxServerError("No existe un producto con los credenciales", []);
+        }
+        $actualizar = true;
+
+        try {
+            DB::beginTransaction();
+
+            DB::table('pe_x_sucursal')
+                ->where('id', '=', $id)
+                ->update([
+                    'ultima_modificacion' => $fecha_actual,
+                    'cantidad' => ($cantidad_agregar + $producto->cantidad),
+                    'usuario_modifica' => session('usuario')['id']
+                ]);
+
+            $texto = "Aumento en inventario en " . $cantidad_agregar . " unidades | Cantidad Anterior : " . $producto->cantidad . ", Cantidad Nueva : " . ($cantidad_agregar + $producto->cantidad);
+
+            $detalleMp =  'Producto Externo : ' . $producto_externoAux->nombre .
+                ' | Detalle :' . $texto;
+
+            $fechaActual = date("Y-m-d H:i:s");
+            DB::table('bit_inv_producto_externo')->insert([
+                'id' => null,
+                'usuario' => session('usuario')['id'],
+                'producto' => $producto_externo,
+                'detalle' => $detalleMp,
+                'cantidad_anterior' =>  $producto->cantidad ?? 0,
+                'cantidad_ajustada' => $cantidad_agregar,
+                'cantidad_nueva' => ($cantidad_agregar + $producto->cantidad),
+                'fecha' => $fechaActual,
+                'sucursal' => $this->getUsuarioSucursal(),
+                'devolucion' => 'N'
+            ]);
+
+            DB::commit();
+            $this->setSuccess('Aumento en inventario', 'Se actualizó el inventario correctamente');
+            return $this->responseAjaxSuccess("", "");
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            DB::table('log')->insertGetId([
+                'id' => null,
+                'documento' => 'ProductosExternosController',
+                'descripcion' => $ex->getMessage()
+            ]);
+            return $this->responseAjaxServerError("Algo salio mal...", []);
+        }
+    }
+
+    public function disminuirProductoSucursal(Request $request)
+    {
+        $id = $request->input('pe_id');
+        $producto_externo = $request->input('producto_externo');
+        $sucursal = $request->input('sucursal_agregar_id');
+        $cantidad_disminuir = $request->input('cantidad_agregar');
+        $es_desecho = $request->input('es_desecho');
+        $fecha_actual = date("Y-m-d H:i:s");
+
+        // Validar que la cantidad sea mayor a 0 y no sea nula
+        if (is_null($cantidad_disminuir) || $cantidad_disminuir <= 0) {
+            return $this->responseAjaxServerError("La cantidad debe ser mayor a 0 y no puede ser nula.", []);
+        }
+
+        if ($sucursal < 1 || $this->isNull($sucursal)) {
+            return $this->responseAjaxServerError("Debe seleccionar la sucursal", []);
+        }
+
+        $sucursalAux = DB::table('sucursal')->select('sucursal.*')->where('id', '=', $sucursal)->get()->first();
+        if ($sucursalAux == null) {
+            return $this->responseAjaxServerError("Debe seleccionar la sucursal", []);
+        }
+
+        if ($producto_externo < 1 || $this->isNull($producto_externo)) {
+            return $this->responseAjaxServerError("Debe seleccionar el producto", []);
+        }
+
+        $producto_externoAux = DB::table('producto_externo')->select('producto_externo.*')->where('id', '=', $producto_externo)->get()->first();
+        if ($producto_externoAux == null) {
+            return $this->responseAjaxServerError("Debe seleccionar el producto", []);
+        }
+
+        $producto = DB::table('pe_x_sucursal')->select('pe_x_sucursal.*')->where('id', '=', $id)->get()->first();
+
+        if ($producto == null) {
+            return $this->responseAjaxServerError("No existe un producto con los credenciales", []);
+        }
+
+        // Validar que haya suficiente cantidad para disminuir
+        if ($cantidad_disminuir > $producto->cantidad) {
+            return $this->responseAjaxServerError("No hay suficiente cantidad en inventario para disminuir.", []);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            DB::table('pe_x_sucursal')
+                ->where('id', '=', $id)
+                ->update([
+                    'ultima_modificacion' => $fecha_actual,
+                    'cantidad' => ($producto->cantidad - $cantidad_disminuir),
+                    'usuario_modifica' => session('usuario')['id']
+                ]);
+
+            $texto = "Disminución en inventario ". ( $es_desecho == 'S' ? "( DESECHO )" : "")." en " . $cantidad_disminuir . " unidades | Cantidad Anterior: " . $producto->cantidad . ", Cantidad Nueva: " . ($producto->cantidad - $cantidad_disminuir);
+
+            $detalleMp = 'Producto Externo: ' . $producto_externoAux->nombre . ' | Detalle: ' . $texto;
+
+            $fechaActual = date("Y-m-d H:i:s");
+            DB::table('bit_inv_producto_externo')->insert([
+                'id' => null,
+                'usuario' => session('usuario')['id'],
+                'producto' => $producto_externo,
+                'detalle' => $detalleMp,
+                'cantidad_anterior' => $producto->cantidad ?? 0,
+                'cantidad_ajustada' => $cantidad_disminuir,
+                'cantidad_nueva' => ($producto->cantidad - $cantidad_disminuir),
+                'fecha' => $fechaActual,
+                'sucursal' => $this->getUsuarioSucursal(),
+                'devolucion' => $es_desecho
+            ]);
+
+            DB::commit();
+            $this->setSuccess('Disminución en inventario', 'Se actualizó el inventario correctamente');
+            return $this->responseAjaxSuccess("", "");
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            DB::table('log')->insertGetId([
+                'id' => null,
+                'documento' => 'ProductosExternosController',
+                'descripcion' => $ex->getMessage()
+            ]);
+            return $this->responseAjaxServerError("Algo salió mal...", []);
+        }
     }
 }

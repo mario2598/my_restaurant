@@ -1,1 +1,0 @@
-INSERT INTO `vista` (`id`, `titulo`, `ruta`, `tipo`, `codigo_grupo`, `orden`, `peso_general`, `codigo_pantalla`, `icon`) VALUES (NULL, 'Facturar Ordenes', 'cocina/ordenes/todo', 'M', 'ped_cocina', '5', '13', 'fac_ord_tod', '');

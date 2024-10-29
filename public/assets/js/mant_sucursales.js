@@ -1,6 +1,6 @@
 window.addEventListener("load", initialice, false);
 var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
-
+var sucursalGestion = null;
 $(document).ready(function () {
   $("#input_buscar_sucursal").on("keyup", function () {
     var value = $(this).val().toLowerCase();
@@ -10,65 +10,70 @@ $(document).ready(function () {
   });
 });
 
-
 function initialice() {
-    var t=  document.getElementById('mdl_sucursal_ipt_descripcion');
-      t.addEventListener('input',function(){ // 
-        if (this.value.length > 50) 
-           this.value = this.value.slice(0,50); 
-    });
-
-    
+  var t = document.getElementById('mdl_sucursal_ipt_descripcion');
+  t.addEventListener('input', function () { // 
+    if (this.value.length > 50)
+      this.value = this.value.slice(0, 50);
+  });
 }
 
+function cargarSucursal(idSucursal) {
 
-/** modales Sucursal */
-/**
- * Abre el modal y carga los datos correspondientes
- * @param {id de la sucursal} id 
- * @param {descripcion o nombre de la sucursal} desc 
- */
-function editarSucursal(id,desc,bodega,impresora) {
-  $('#mdl_sucursal_ipt_descripcion').val(desc);
-  $('#mdl_sucursal_ipt_id').val(id);
+  $.ajax({
+    url: `${base_path}/mant/sucursales/cargar`,
+    type: 'post',
+    dataType: "json",
+    data: {
+      _token: CSRF_TOKEN,
+      idSucursal: idSucursal
+    }
+  }).done(function (response) {
+    if (!response['estado']) {
+      showError(response['mensaje']);
+      return;
+    };
+    cargarHtmlSucursal(response['datos']);
+  }).fail(function (jqXHR, textStatus, errorThrown) {
+    showError("Algo salió mal");
+  });
 
+}
+
+function cargarHtmlSucursal(sucursal) {
+  sucursalGestion = sucursal;
+
+  // Llenar los campos del modal con los valores recibidos
+  $('#mdl_sucursal_ipt_descripcion').val(sucursal.descripcion);
+  $('#mdl_sucursal_ipt_nombre_factura').val(sucursal.nombre_factura);
+  $('#mdl_sucursal_ipt_cedula_factura').val(sucursal.cedula_factura);
+  $('#mdl_sucursal_ipt_correo_factura').val(sucursal.correo_factura);
+  $('#mdl_sucursal_ipt_id').val(sucursal.id);
+
+  // Manejar el estado (A = Activo, I = Inactivo)
+  if (sucursal.estado === 'A') {
+    $('#mdl_sucursal_chk_activa').prop('checked', true);
+  } else {
+    $('#mdl_sucursal_chk_activa').prop('checked', false);
+  }
   $('#mdl_sucursal').modal('show');
 }
 
-/**
- * Cierra el modal de sucursales
- */
-function cerrarModalSucursal(){
+function editarSucursal(idSucursal) {
+  cargarSucursal(idSucursal);
+}
+
+
+function cerrarModalSucursal() {
   $('#mdl_sucursal').modal('hide');
 }
 
-/**
- * Abre el modal de sucursales y limpia los valores
- */
-function nuevaSucursal(){
+function nuevaSucursal() {
   $('#mdl_sucursal_ipt_descripcion').val("");
   $('#mdl_sucursal_ipt_id').val('-1');
+  $('#mdl_sucursal_ipt_nombre_factura').val("");
+  $('#mdl_sucursal_ipt_cedula_factura').val("");
+  $('#mdl_sucursal_ipt_correo_factura').val("");
+  $('#mdl_sucursal_chk_activa').prop('checked', true);
   $('#mdl_sucursal').modal('show');
-}
-
-function eliminarSucursal(id){
-  swal({
-    title: 'Seguro de inactivar la sucursal?',
-    text: 'No podra deshacer esta acción!',
-    icon: 'warning',
-    buttons: true,
-    dangerMode: true,
-  })
-    .then((willDelete) => {
-      if (willDelete) {
-        swal.close();
-        $('#idSucursalEliminar').val(id);
-        $('#frmEliminarSucursal').submit();
-        
-      } else {
-        swal.close();
-      }
-    });
- 
-  
 }

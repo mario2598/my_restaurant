@@ -61,8 +61,6 @@ function generarHTMLOrdenes(ordenes) {
     var texto = "";
     ordenesGen = ordenes;
     ordenes.forEach(orden => {
-        var lineas = "";
-        var tablaDetalles = "";
         texto = texto +
             `<tr style="border-bottom: 1px solid grey;">
                 <td class="text-center" onclick="imprimirTicket( ${orden.id})" style="cursor:pointer; text-decoration : underline; ">

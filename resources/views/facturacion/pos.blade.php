@@ -4,7 +4,7 @@
     @include('layout.sidebar')
     <!-- Listas de productos -->
     <script>
-        var tipos = []; // Se crea la lista  de tipos de productos
+        var tipos = []; 
         var productosGeneral = [];
         var ordenGestion = {
             "id": null,
@@ -14,8 +14,13 @@
             "envio": 0,
             "subTotal": 0,
             "codigoPromocion": "",
-            "codigo_descuento": null
+            "codigo_descuento": null,
+            "mesa": -1,
+            "numero_orden": "",
+            "mto_pagado": 0,
+            "pagado": false
         };
+        var sucursalFacturaIva = "{{ $data['sucursalFacturaIva'] ?? false }}";
         var cajaAbierta = "{{ $data['cajaAbierta'] ?? false }}";
     </script>
     <style>
@@ -38,171 +43,6 @@
         }
     </style>
 
-    @foreach ($data['tipos'] as $tipo)
-        <script>
-            var categorias = [];
-            var auxProducto;
-        </script>
-
-        @foreach ($tipo['categorias'] as $categoria)
-            <script>
-                var productos = [];
-            </script>
-
-            @foreach ($categoria->productos as $producto)
-                <script>
-                    var extrasAux = [];
-                </script>
-
-                @if ($producto->es_promocion == 'S')
-                    @foreach ($producto->detallesRestaurante ?? [] as $dr)
-                        @foreach ($dr->extras ?? [] as $extra)
-                            <script>
-                                var extraAuxL = [];
-                            </script>
-
-                            @foreach ($extra['extras'] ?? [] as $extra1)
-                                <script>
-                                    var extraAux = {
-                                        "id": "{{ $extra1->id }}",
-                                        "descripcion": "{{ $extra1->descripcion  ?? '' }}",
-                                        "precio": "{{ $extra1->precio ?? 0 }}",
-                                        "materia_prima": "{{ $extra1->materia_prima ?? 0 }}",
-                                        "cant_mp": "{{ $extra1->cant_mp ?? 0 }}",
-                                        "grupo": "{{ $extra1->dsc_grupo  ?? '' }}",
-                                        "requerido": "{{ $extra1->es_requerido ?? '' }}",
-                                        "tipo_producto": "R",
-                                        "idProd": "{{ $dr->id_producto ?? '' }}",
-                                        "seleccionado": false
-                                    };
-                                    extraAuxL.push(extraAux);
-                                </script>
-                            @endforeach
-
-                            <script>
-                                var extraAux1 = {
-                                    "dsc_grupo": "{{ $extra['grupo'] .' - ' .$dr->nombre ?? '' }}",
-                                    "requerido": "{{ $extra['requerido'] ?? 0 }}",
-                                    "multiple": "{{ $extra['multiple'] ?? 0 }}",
-                                    "extras": extraAuxL
-                                };
-                                extrasAux.push(extraAux1);
-                            </script>
-                        @endforeach
-                    @endforeach
-
-                    @foreach ($producto->detallesExternos ?? [] as $de)
-                        @foreach ($de->extras ?? [] as $extra)
-                            <script>
-                                var extraAuxL = [];
-                            </script>
-
-                            @foreach ($extra['extras'] ?? [] as $extra1)
-                                <script>
-                                    var extraAux = {
-                                        "id": "{{ $extra1->id }}",
-                                        "descripcion": "{{ $extra1->descripcion  }}",
-                                        "precio": "{{ $extra1->precio ?? 0 }}",
-                                        "materia_prima": "{{ $extra1->materia_prima ?? 0 }}",
-                                        "cant_mp": "{{ $extra1->cant_mp ?? 0 }}",
-                                        "grupo": "{{ $extra1->dsc_grupo?? '' }}",
-                                        "requerido": "{{ $extra1->es_requerido ?? '' }}",
-                                        "tipo_producto": "E",
-                                        "idProd": "{{ $dr->id_producto ?? '' }}",
-                                        "seleccionado": false
-                                    };
-                                    extraAuxL.push(extraAux);
-                                </script>
-                            @endforeach
-
-                            <script>
-                                var extraAux1 = {
-                                    "dsc_grupo": "{{ $extra['grupo']  .' - ' .$de->nombre ?? '' }}",
-                                    "requerido": "{{ $extra['requerido'] ?? 0 }}",
-                                    "multiple": "{{ $extra['multiple'] ?? 0 }}",
-                                    "extras": extraAuxL
-                                };
-                                extrasAux.push(extraAux1);
-                            </script>
-                        @endforeach
-                    @endforeach
-                @else
-                    @foreach ($producto->extras ?? [] as $extra)
-                        <script>
-                            var extraAuxL = [];
-                        </script>
-
-                        @foreach ($extra['extras'] ?? [] as $extra1)
-                            <script>
-                                var extraAux = {
-                                    "id": "{{ $extra1->id }}",
-                                    "descripcion": "{{ $extra1->descripcion ?? '' }}",
-                                    "precio": "{{ $extra1->precio ?? 0 }}",
-                                    "materia_prima": "{{ $extra1->materia_prima ?? 0 }}",
-                                    "cant_mp": "{{ $extra1->cant_mp ?? 0 }}",
-                                    "grupo": "{{ $extra1->dsc_grupo ?? '' }}",
-                                    "requerido": "{{ $extra1->es_requerido ?? '' }}",
-                                    "tipo_producto": "RE",
-                                    "idProd": "{{ $producto->id ?? '' }}",
-                                    "seleccionado": false
-                                };
-                                extraAuxL.push(extraAux);
-                            </script>
-                        @endforeach
-
-                        <script>
-                            var extraAux1 = {
-                                "dsc_grupo": "{{ $extra['grupo'] ?? '' }}",
-                                "requerido": "{{ $extra['requerido'] ?? 0 }}",
-                                "multiple": "{{ $extra['multiple'] ?? 0 }}",
-                                "extras": extraAuxL
-                            };
-                            extrasAux.push(extraAux1);
-                        </script>
-                    @endforeach
-                @endif
-                <script>
-                    auxProducto = {
-                        "id": "{{ $producto->id }}",
-                        "nombre": "{{ $producto->nombre ?? '' }}",
-                        "impuesto": "{{ $producto->impuesto ?? 0 }}",
-                        "precio": "{{ $producto->precio ?? 0 }}",
-                        "codigo": "{{ $producto->codigo ?? '' }}",
-                        "tipoComanda": "{{ $producto->tipo_comanda ?? '' }}",
-                        "cantidad": "{{ $producto->cantidad ?? -1 }}",
-                        "cantidad_original": "{{ $producto->cantidad ?? -1 }}",
-                        "tipoProducto": "{{ $producto->tipoProducto ?? -1 }}",
-                        "extras": extrasAux,
-                        "es_promocion": "{{ $producto->es_promocion ?? 'N' }}",
-                    };
-                    productos.push(auxProducto);
-                    productosGeneral.push(auxProducto);
-                </script>
-            @endforeach
-
-
-
-            <script>
-                categorias.push({
-                    "id": "{{ $categoria->id }}",
-                    "categoria": "{{ $categoria->categoria }}",
-                    "productos": productos
-                });
-            </script>
-        @endforeach
-
-        <script>
-            tipos.push({
-                "nombre": "{{ $tipo['nombre'] }}",
-                "codigo": "{{ $tipo['codigo'] }}",
-                "color": "{{ $tipo['color'] }}",
-                "categorias": categorias
-            });
-        </script>
-    @endforeach
-
-    <!-- #endregion -->
-
     <!-- Main Content -->
 
     <div class="main-content">
@@ -212,7 +52,7 @@
                     <div class="col-12 col-md-12 col-lg-12">
                         <div class="row">
 
-                            <div class="col-sm-12 col-md-4 col-lg-4" id="contEscogerProductos"
+                            <div class="col-sm-12 col-md-5 col-lg-5" id="contEscogerProductos"
                                 style="padding-right: 0px !important;padding-left: 0px !important;">
 
                                 <div class="col-lg-12 col-md-12 pr-25">
@@ -251,7 +91,7 @@
                                 </div>
 
                             </div>
-                            <div class="col-sm-12 col-md-4 col-lg-5"
+                            <div class="col-sm-12 col-md-7 col-lg-7"
                                 style="padding-right: 0px !important;padding-left: 0px !important;">
                                 <!-- Panel orden -->
                                 <div class="col-lg-12 col-md-12 pl-0">
@@ -263,20 +103,28 @@
                                                     onclick="abrirCaja()">Abrir Caja <i class="fas fa-list"
                                                         aria-hidden="true"></i></button>
                                             </li>
-                                            <li id="contCerrarCaja">
-                                                <button type="button" class="btn btn-danger px-2 mr-1"
-                                                    onclick="abrirModalCerrarCaja()">Cerrar Caja <i class="fas fa-list"
-                                                        aria-hidden="true"></i></button>
-                                            </li>
-                                            <li id="contOrdenesCaja">
+
+                                            <li id="contRecargarOrden" style="display: none">
                                                 <button type="button" class="btn btn-info px-2 mr-1"
-                                                    onclick="recargarOrdenes()">Ordenes <i class="fas fa-list"
+                                                    onclick="recargarOrden()">Recargar Orden<i class="fas fa-reload"
                                                         aria-hidden="true"></i></button>
                                             </li>
 
                                             <li id="contLimiarCaja">
                                                 <button type="button" class="btn btn-info px-2 mr-1"
-                                                    onclick="limpiarOrden()">Limpiar <i class="fas fa-broom"
+                                                    onclick="limpiarOrden()">Nueva Orden<i class="fas fa-broom"
+                                                        aria-hidden="true"></i></button>
+                                            </li>
+
+                                            <li id="contOrdenesCaja">
+                                                <button type="button" class="btn btn-info px-2 mr-1"
+                                                    onclick="recargarOrdenes()">Ver Ordenes <i class="fas fa-list"
+                                                        aria-hidden="true"></i></button>
+                                            </li>
+
+                                            <li id="contCerrarCaja">
+                                                <button type="button" class="btn btn-danger px-2 mr-1"
+                                                    onclick="abrirModalCerrarCaja()">Cerrar Caja <i class="fas fa-list"
                                                         aria-hidden="true"></i></button>
                                             </li>
 
@@ -290,32 +138,79 @@
                                                 <div class="card-title">
                                                     <div class="row">
                                                         <div class="col-sm-12 col-md-12 col-lg-12">
+                                                            <h4 id="infoHeaderOrden">Orden Nueva</h4>
+                                                        </div>
+                                                        <div class="col-sm-12 col-md-6 col-lg-6">
                                                             <div class="input-group">
                                                                 <input type="text" class="form-control h-75"
                                                                     name="txt-cliente" id="txt-cliente"
                                                                     placeholder="Nombre cliente..."
-                                                                    onkeyup="enterCampoPago(event)"
-                                                                    onchange="ordenGestion.cliente = $('#txt-cliente').val()">
-                                                                <a class="btn btn-success "
-                                                                    style="color: white; padding-top:6px; margin-left : 3px;"
-                                                                    onclick="abrirModalEnvio()"><i class="fas fa-truck"
-                                                                        aria-hidden="true"></i> Datos envío</a>
-
+                                                                    onchange="changeNombreCliente(this.value)">
                                                             </div>
                                                         </div>
-                                                        <div class="col-sm-12 col-md-12 col-lg-12" style="margin-top: 5px;">
+                                                        <div class="col-sm-12 col-md-6 col-lg-6 mt-1">
                                                             <div class="input-group">
-
-                                                                <a class="btn btn-success " id="btn_fe"
-                                                                    style="color: white; padding-top:6px; margin-left : 3px;"
-                                                                    onclick="abrirModalFE()"><i class="fas fa-user"
-                                                                        aria-hidden="true"></i> Factura Electrónica : NO</a>
+                                                                <label class="mr-4 pt-2 pl-2">Mesa</label>
+                                                                <select class="form-control" onchange="cambiarMesa()"
+                                                                    id="select_mesa" name="select_mesa">
+                                                                    <option value="-1" selected>PARA LLEVAR</option>
+                                                                    @foreach ($data['mesas'] as $i)
+                                                                        <option value="{{ $i->id ?? '' }}"
+                                                                            title="{{ $i->numero_mesa ?? '' }}, Capacidad {{ $i->capacidad ?? '' }}">
+                                                                            Mesa : {{ $i->numero_mesa ?? '' }} , Capacidad
+                                                                            {{ $i->capacidad ?? '' }}
+                                                                        </option>
+                                                                    @endforeach
+                                                                </select>
                                                             </div>
                                                         </div>
 
                                                     </div>
                                                 </div>
 
+                                            </div>
+
+
+                                            <div class="col-sm-12 col-md-2 col-lg-12" id="contFacturar" style="padding: 0;">
+                                                <div class="container-fluid">
+                                                    <div class="row" class="mb-3">
+                                                        <div class="col-12">
+                                                            <h4 id="txt-total-pagar" class="text-muted ">Total:
+                                                                0,00</h4>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-2">
+                                                        <div class="col-12">
+                                                            <ul class="nav nav-pills d-flex justify-content-start">
+                                                                <button type="button" class="btn btn-info px-2 mr-1"
+                                                                    id="btnPago" style="width: 100%;"
+                                                                    onclick="abrirModalPago()">Procesar Pago Orden<i
+                                                                        class="fas fa-bill" aria-hidden="true"></i>
+                                                                </button>
+                                                            </ul>
+
+                                                            <ul class="nav nav-pills d-flex justify-content-start">
+                                                                <button type="button" class="btn btn-info px-2 mr-1 mt-3"
+                                                                    id="btnIniciarOrden" style="width: 100%;"
+                                                                    onclick="iniciarOrden()">Iniciar Preparación Orden<i
+                                                                        class="fas fa-bill" aria-hidden="true"></i>
+                                                                </button>
+                                                            </ul>
+
+                                                            <ul class="nav nav-pills d-flex justify-content-start">
+                                                                <button type="button" class="btn btn-info px-2 mr-1 mt-3"
+                                                                    id="btnActualizarOrden"
+                                                                    style="width: 100%; display:none;"
+                                                                    onclick="actualizarOrdenGestion()">Guardar
+                                                                    Modificaciones<i class="fas fa-update"
+                                                                        aria-hidden="true"></i>
+                                                                </button>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+
+
+                                                </div>
                                             </div>
 
                                             <div class="card-body" style="padding: 5px !important;">
@@ -337,139 +232,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-sm-12 col-md-3 col-lg-3" id="contFacturar"
-                                style="padding-right: 0px !important;padding-left: 0px !important;">
-                                <div class="col-lg-12 col-md-12 pl-0">
 
-                                    <div class="col-12">
-                                        <div class="card">
-                                            <div class="card-header d-block" style="padding: 10px !important;">
-                                                <div class="card-title">
-                                                    <div class="row">
-
-
-                                                        <div class="col-sm-12 col-md-12 col-lg-12">
-                                                            <h6 id="txt-subtotal-pagar" class="text-muted"
-                                                                style="margin-left: 3%">
-                                                                SubTotal: 0,00</h6>
-                                                        </div>
-
-                                                        <div class="col-sm-12 col-md-12 col-lg-12">
-                                                            <h6 id="txt-descuento-pagar" class="text-muted"
-                                                                style="margin-left: 3%">
-                                                                Descuento: 0,00</h6>
-                                                        </div>
-
-                                                        <div class="col-sm-12 col-md-12 col-lg-12">
-                                                            <h6 id="txt-mto-envio" class="text-muted"
-                                                                style="margin-left: 3%">
-                                                                Envío: No aplica </h6>
-                                                        </div>
-
-                                                        <div class="col-sm-12 col-md-12 col-lg-12">
-                                                            <h6 id="txt-total-pagar" class="text-muted"
-                                                                style="margin-left: 3%">
-                                                                Total: 0,00</h6>
-                                                        </div>
-
-
-
-                                                        <div class="col-sm-12 col-md-12 col-lg-12">
-                                                            <div class="row">
-                                                                <div class="col-sm-12 col-md-12 col-lg-8">
-                                                                    <input type="text" class="form-control h-75"
-                                                                        name="txt_codigo_descuento"
-                                                                        onkeyup="enterDescuento(event)"
-                                                                        id="txt_codigo_descuento"
-                                                                        placeholder="Código de Descuento">
-                                                                </div>
-                                                                <div class="col-sm-12 col-md-6 col-lg-4"
-                                                                    style="padding-left:0px; ">
-                                                                    <a class="btn btn-success "
-                                                                        style="color: white;padding: 2px 6px !important;"
-                                                                        onclick="validarCodDescuento()"><i
-                                                                            class="fas fa-check"
-                                                                            aria-hidden="true"></i></a>
-                                                                    <a class="btn btn-danger "
-                                                                        style="color: white;padding: 2px 6px !important;"
-                                                                        onclick="eliminarCodDescuento()"><i
-                                                                            class="fas fa-trash"
-                                                                            aria-hidden="true"></i></a>
-                                                                </div>
-                                                                <div class="col-sm-12 col-md-12 col-lg-12"
-                                                                    id="cont-dsc_promo" style="display: none">
-                                                                    <strong id="txt-dsc_promo"> </strong>
-                                                                </div>
-
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="col-sm-12 col-md-12 col-lg-12">
-                                                            <button type="button" class="btn btn-info " id="btnPago"
-                                                                style="width: 100% !important; margin-bottom:20px;"
-                                                                onclick="verificarAbrirModalPago()">Pagar <i
-                                                                    class="fas fa-payment"
-                                                                    aria-hidden="true"></i></button>
-                                                        </div>
-
-                                                    </div>
-                                                </div>
-
-                                            </div>
-                                            <div class="card-body" style="padding: 15px !important;">
-                                                <div class="row">
-
-                                                    <div class="col-12 col-md-12 col-lg-12">
-                                                        <div class="form-group">
-                                                            <label>Monto Tarjeta (₡)</label>
-                                                            <input type="number" class="form-control" step=any
-                                                                onkeyup="enterCampoPago(event)" id="monto_tarjeta"
-                                                                name="monto_tarjeta" value="" placeholder="0.00"
-                                                                min="0">
-                                                            <button type="button" class="btn btn-info "
-                                                                id="btnPagoTarjeta"
-                                                                style="width: 100% !important; margin-bottom:20px;"
-                                                                onclick="verificarAbrirModalPagoTarjeta()">Pagar con
-                                                                tarjeta<i class="fas fa-payment"
-                                                                    aria-hidden="true"></i></button>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-12 col-md-12 col-lg-12">
-                                                        <div class="form-group">
-                                                            <label>Monto Efectivo (₡)</label>
-                                                            <input type="number" class="form-control" step=any
-                                                                onkeyup="enterCampoPago(event)" id="monto_efectivo"
-                                                                name="monto_efectivo" value="" placeholder="0.00"
-                                                                min="0">
-                                                            <button type="button" class="btn btn-info "
-                                                                id="btnPagoEfectivo"
-                                                                style="width: 100% !important; margin-bottom:20px;"
-                                                                onclick="verificarAbrirModalPagoEfectivo()">Pagar con
-                                                                efectivo<i class="fas fa-payment"
-                                                                    aria-hidden="true"></i></button>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-12 col-md-12 col-lg-12">
-                                                        <div class="form-group">
-                                                            <label>Monto Sinpe (₡)</label>
-                                                            <input type="number" class="form-control" step=any
-                                                                onkeyup="enterCampoPago(event)" id="monto_sinpe"
-                                                                name="monto_sinpe" value="" placeholder="0.00"
-                                                                min="0">
-                                                            <button type="button" class="btn btn-info "
-                                                                id="btnPagoSinpe"
-                                                                style="width: 100% !important; margin-bottom:20px;"
-                                                                onclick="verificarAbrirModalPagoSinpe()">Pagar con sinpe<i
-                                                                    class="fas fa-payment"
-                                                                    aria-hidden="true"></i></button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -477,7 +240,175 @@
         </section>
     </div>
 
-    <input type="text" style="width: 3px;" id="scanner" placeholder="scanner">
+
+    <a href="" target='_blank' class="btn btn-primary" id='btn-pdf' style="display:none"></a>
+@endsection
+
+@section('popup')
+    <div class="modal fade" id="mdl-pago" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true"
+        data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Procesar Pago</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="container-fluid">
+
+
+                        <!-- Código de descuento -->
+                        <div class="row mb-3">
+                            <div class="col-8">
+                                <input type="text" class="form-control" name="txt_codigo_descuento"
+                                    id="txt_codigo_descuento" placeholder="Código de Descuento"
+                                    onkeyup="enterDescuento(event)">
+                            </div>
+                            <div class="col-4 text-right">
+                                <button class="btn btn-success mr-2" onclick="validarCodDescuento()">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="btn btn-danger" onclick="eliminarCodDescuento()">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            <div class="col-12 mt-2" id="cont-dsc_promo" style="display: none">
+                                <strong id="txt-dsc_promo"></strong>
+                            </div>
+                        </div>
+
+                        <!-- Información del cliente -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label for="nombreCliente">Nombre del Cliente que Paga</label>
+                                <input type="text" class="form-control" id="nombreCliente"
+                                    placeholder="Nombre del Cliente">
+                            </div>
+                        </div>
+
+                        <!-- Botones de acciones adicionales -->
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <button class="btn btn-success btn-block" onclick="abrirModalEnvio()">
+                                    <i class="fas fa-truck"></i> Datos Envío
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-success btn-block" id="btn_fe" onclick="abrirModalFE()">
+                                    <i class="fas fa-user"></i> Factura Electrónica: NO
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Botón principal de pago -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <button type="button" class="btn btn-primary btn-block" id="btnPago"
+                                    onclick="procesarPagoMixto()">
+                                    Pagar en diferentes metodos
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Formas de pago -->
+                        <div class="row mb-3">
+                            <div class="col-12 col-md-4 mb-3">
+                                <label for="monto_tarjeta">Monto Tarjeta (₡)</label>
+                                <input type="number" class="form-control" step="any" id="monto_tarjeta"
+                                    name="monto_tarjeta" placeholder="0.00" onkeyup="enterCampoPago(event)"
+                                    min="0">
+                                <button type="button" class="btn btn-primary btn-block mt-2" id="btnPagoTarjeta"
+                                    onclick="verificarAbrirModalPagoTarjeta()">
+                                    Pagar Todo con Tarjeta
+                                </button>
+                            </div>
+                            <div class="col-12 col-md-4 mb-3">
+                                <label for="monto_efectivo">Monto Efectivo (₡)</label>
+                                <input type="number" class="form-control" step="any" id="monto_efectivo"
+                                    name="monto_efectivo" placeholder="0.00" onkeyup="enterCampoPago(event)"
+                                    min="0">
+                                <button type="button" class="btn btn-primary btn-block mt-2" id="btnPagoEfectivo"
+                                    onclick="verificarAbrirModalPagoEfectivo()">
+                                    Pagar Todo con Efectivo
+                                </button>
+                            </div>
+                            <div class="col-12 col-md-4 mb-3">
+                                <label for="monto_sinpe">Monto Sinpe (₡)</label>
+                                <input type="number" class="form-control" step="any" id="monto_sinpe"
+                                    name="monto_sinpe" placeholder="0.00" onkeyup="enterCampoPago(event)"
+                                    min="0">
+                                <button type="button" class="btn btn-primary btn-block mt-2" id="btnPagoSinpe"
+                                    onclick="verificarAbrirModalPagoSinpe()">
+                                    Pagar Todo con Sinpe
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Totales -->
+                        <div class="row mb-3 text-center">
+                            <div class="col-6 col-md-3">
+                                <h6 id="txt-total-pagar_mdl" class="text-muted">Total Orden: 0,00</h6>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <h6 class="text-muted" id="txt-descuento-pagar_mdl">Descuento: 0,00</h6>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <h6 id="txt-mto-envio_mdl" class="text-muted">Envío: No aplica</h6>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <h6 id="txt-mto-pagado_mdl" class="text-muted">Monto Pagado: 0,00</h6>
+                            </div>
+                            
+                        </div>
+
+                        <!-- Total seleccionado -->
+                        <div class="row mb-3">
+                            <div class="col-12 text-center">
+                                <h4 id="txt-total-seleccionado" class="text-muted">Total Seleccionado a Pagar: 0,00</h4>
+                            </div>
+                        </div>
+
+                        <!-- Opciones de selección de líneas -->
+                        <div class="row mb-3">
+                            <div class="col-12 d-flex justify-content-between">
+                                <button type="button" class="btn btn-link"
+                                    onclick="seleccionarTodasLasLineas(true)">Seleccionar Todas</button>
+                                <button type="button" class="btn btn-link"
+                                    onclick="seleccionarTodasLasLineas(false)">Deseleccionar Todas</button>
+                            </div>
+                            <div class="col-12">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>Seleccionar</th>
+                                                <th>Detalle</th>
+                                                <th>Cantidad Total</th>
+                                                <th>Cantidad Pagada</th>
+                                                <th>Cantidad a Pagar</th>
+                                                <th>Precio</th>
+                                                <th>Total Pagar</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tabla-detalles-dividir-cuentas">
+                                            <!-- Los detalles se llenarán dinámicamente aquí -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick='cerrarMdlPago()'>Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 
     <div class="modal fade bs-example-modal-center" id='mdl-loader-pago' tabindex="-1" role="dialog"
         aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
@@ -514,7 +445,7 @@
                 </div>
                 <div class="modal-footer">
                     <div class="form-group">
-                        <a class="btn btn-primary" title="Guardar Composición" onclick="seleccionarExtrasProd()"
+                        <a class="btn btn-primary" title="Guardar " onclick="seleccionarExtrasProd()"
                             style="color:white;cursor:pointer;">Agregar</a>
                         <a class="btn btn-secondary btn-icon" title="Cerrar" onclick='cerrarExtras()'
                             style="cursor: pointer;">Cerrar</a>
@@ -524,7 +455,7 @@
         </div>
     </div>
 
-    <div class="modal fade bs-example-modal-center" id='mdl-extras-detalle' tabindex="-1" role="dialog"
+    <div class="modal fade bs-example-modal-center" id='mdl-extras-detalle' role="dialog"
         aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -555,86 +486,47 @@
         </div>
     </div>
 
-    <div class="modal fade bd-example-modal-lg" id='mdl-ordenes' tabindex="-1" role="dialog"
-        aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-        <div class="modal-dialog modal-dialog-centered  modal-lg">
+    <div class="modal fade bd-example-modal-lg" id='mdl-ordenes' role="dialog" aria-labelledby="mySmallModalLabel"
+        aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content">
                 <div class="modal-header" style="width: 100%">
                     <form class="card-header-form">
                         <div class="input-group">
                             <input type="text" name="" id="input_buscar_generico" class="form-control"
-                                placeholder="Buscar..">
+                                style="width: 80%;" placeholder="Buscar..">
                         </div>
                     </form>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body" style="width: 100%">
-
-                    <table class="table" id="tbl-ordenes" style="max-height: 100%;">
-                        <thead class="thead-light">
-                            <tr>
-                                <th scope="col" style="text-align: center">No.Orden</th>
-                                <th scope="col" style="text-align: center">Fecha</th>
-                                <th scope="col" style="text-align: center">Cliente</th>
-                                <th scope="col" style="text-align: center">Total pagado</th>
-                                <th scope="col" style="text-align: center">Estado</th>
-                                <th scope="col" style="text-align: center"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-ordenes">
-
-                        </tbody>
-                    </table>
-
-                </div>
-                <div class="modal-footer">
-                    <div class="form-group">
-                        <a class="btn btn-secondary btn-icon" title="Cerrar" onclick='cerrarMdlOrdenes()'
-                            style="cursor: pointer;">Cerrar</a>
+                <div class="modal-body" style="width: 100%;">
+                    <div class="table-responsive">
+                        <table class="table" id="tbl-ordenes" style="max-height: 100%;">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th scope="col" style="text-align: center;">No.Orden</th>
+                                    <th scope="col" style="text-align: center;">Mesa</th>
+                                    <th scope="col" style="text-align: center;">Fecha</th>
+                                    <th scope="col" style="text-align: center;">Cliente</th>
+                                    <th scope="col" style="text-align: center;">Estado</th>
+                                    <th scope="col" style="text-align: center;">Estado Pago</th>
+                                    <th scope="col" style="text-align: center;">Total Pago</th>
+                                    <th scope="col" style="text-align: center;">Pagado</th>
+                                    <th scope="col" style="text-align: center;">Pendiente</th>
+                                    <th scope="col" style="text-align: center;">Tiquete</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-ordenes">
+                                <!-- Los datos de las órdenes se llenarán dinámicamente aquí -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="modal fade bd-example-modal-lg" id='mdl-detallesAnular' tabindex="-1" role="dialog"
-        aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-        <div class="modal-dialog modal-dialog-centered  modal-lg">
-            <div class="modal-content">
-                <div class="modal-header" style="width: 100%">
-                    <form class="card-header-form">
-                        <div class="input-group">
-                            <input type="text" name="" id="input_buscar_generico" class="form-control"
-                                placeholder="Buscar..">
-                        </div>
-                    </form>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body" style="width: 100%">
-
-                    <table class="table" id="tbl-detallesAnular" style="max-height: 100%;">
-                        <thead class="thead-light">
-                            <tr>
-                                <th scope="col" style="text-align: center">PRODUCTO</th>
-                                <th scope="col" style="text-align: center">CANTIDAD</th>
-                                <th scope="col" style="text-align: center">Total pagado</th>
-                                <th scope="col" style="text-align: center">Devolver a inventario?</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-detallesAnular">
-
-                        </tbody>
-                    </table>
-
-                </div>
                 <div class="modal-footer">
                     <div class="form-group">
-                        <a class="btn btn-primary" title="Anular Orden" onclick="anularOrden()"
-                            style="color:white;cursor:pointer;">Agregar</a>
                         <a class="btn btn-secondary btn-icon" title="Cerrar" onclick='cerrarMdlOrdenes()'
                             style="cursor: pointer;">Cerrar</a>
                     </div>
@@ -645,8 +537,8 @@
 
 
     <!-- modal modal -->
-    <div class="modal fade bs-example-modal-center" id='mdl_envio' tabindex="-1" role="dialog"
-        aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal fade bs-example-modal-center" id='mdl_envio' role="dialog" aria-labelledby="mySmallModalLabel"
+        aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -718,8 +610,8 @@
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal ---->
 
-    <div class="modal fade bs-example-modal-center" id='mdl_fe' tabindex="-1" role="dialog"
-        aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal fade bs-example-modal-center" id='mdl_fe' role="dialog" aria-labelledby="mySmallModalLabel"
+        aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -784,8 +676,8 @@
     </div><!-- /.modal ---->
 
 
-    <div class="modal fade bd-example-modal-lg" id='mdl-cerrar-caja' tabindex="-1" role="dialog"
-        aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal fade bd-example-modal-lg" id='mdl-cerrar-caja' role="dialog" aria-labelledby="mySmallModalLabel"
+        aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered  modal-lg">
             <div class="modal-content">
                 <div class="modal-header" style="width: 100%">
@@ -875,56 +767,13 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+@endsection
+@section('script')
+    <script src="{{ asset('assets/bundles/datatables/datatables.min.js') }}"></script>
+    <script src="{{ asset('assets/js/page/datatables.js') }}"></script>
 
-                <a href="" target='_blank' class="btn btn-primary" id='btn-pdf' style="display:none"></a>
-
-                <!--
-                                                                                                                                                                                            <div class="modal fade bs-example-modal-center" id='mdl-cliente' tabindex="-1" role="dialog"
-                                                                                                                                                                                                aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-                                                                                                                                                                                                <div class="modal-dialog modal-dialog-centered">
-                                                                                                                                                                                                    <div class="modal-content">
-                                                                                                                                                                                                        <div class="modal-header">
-                                                                                                                                                                                                            <h5 class="modal-title">Buscar clientes</h5>
-                                                                                                                                                                                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                                                                                                                                                                                <span aria-hidden="true">&times;</span>
-                                                                                                                                                                                                            </button>
-                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                        <div class="modal-body">
-                                                                                                                                                                                                            <table class="table" id="tbl-clientes" style="max-height: 100%;">
-                                                                                                                                                                                                                <thead class="thead-light">
-                                                                                                                                                                                                                    <tr>
-                                                                                                                                                                                                                        <th scope="col">Nombre</th>
-                                                                                                                                                                                                                        <th scope="col" style="text-align: center">Teléfono</th>
-                                                                                                                                                                                                                        <th scope="col" style="text-align: center">Correo</th>
-                                                                                                                                                                                                                        <th scope="col" style="text-align: center">Ubicación</th>
-                                                                                                                                                                                                                        <th scope="col" style="text-align: center">Seleccionar</th>
-                                                                                                                                                                                                                    </tr>
-                                                                                                                                                                                                                </thead>
-                                                                                                                                                                                                                <tbody id="tbody-clientes">
-                                                                                                                                                                                                                 foreach ($data['clientes'] as $cliente)
-                                                                                                                                                                                                                        <tr>
-                                                                                                                                                                                                                            <td> $cliente->nombre </td>
-                                                                                                                                                                                                                            <td class="text-center"> $cliente->telefono }}</td>
-                                                                                                                                                                                                                            <td class="text-center">$cliente->correo }}</td>
-                                                                                                                                                                                                                            <td class="text-center"> $cliente->ubicacion }}</td>
-                                                                                                                                                                                                                            <td class="text-center"><button type="button" class="btn btn-info"
-                                                                                                                                                                                                                                    onclick="seleccionarCliente(' $cliente->id }}',' $cliente->nombre }}')"
-                                                                                                                                                                                                                                    data-dismiss="modal">
-                                                                                                                                                                                                                                    <i class="fas fa-check" aria-hidden="true"></i>
-                                                                                                                                                                                                                                </button></td>
-                                                                                                                                                                                                                        </tr>
-                                                                                                                                                                                                                    endforeach
-                                                                                                                                                                                                                </tbody>
-                                                                                                                                                                                                            </table>
-                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                </div>
-                                                                                                                                                                                            </div>
-                                                                                                                                                                                        -->
-            @endsection
-            @section('script')
-                <script src="{{ asset('assets/bundles/datatables/datatables.min.js') }}"></script>
-                <script src="{{ asset('assets/js/page/datatables.js') }}"></script>
-
-                <script src="{{ asset('assets/js/facturacion/pos.js') }}"></script>
-            @endsection
+    <script src="{{ asset('assets/js/facturacion/pos.js') }}"></script>
+@endsection

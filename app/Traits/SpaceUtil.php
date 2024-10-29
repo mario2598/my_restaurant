@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Http\Controllers\ComandasController;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -23,8 +24,8 @@ trait SpaceUtil
     } catch (\Throwable $th) {
       $probarV2 = true;
     }
-    
-    if($probarV2){
+
+    if ($probarV2) {
       try {
         $url = str_replace('el_amanecer', 'el_amanecer-v2', $url);
         $cont = file_get_contents($url);
@@ -119,10 +120,10 @@ trait SpaceUtil
       ->where('estado', '=', 'A')->orderBy('posicion_menu', 'asc')
       ->get();
 
-      foreach ($categorias as $c) {
-        $c->url_imagen = asset('storage/' . $c->url_imagen );
-      }
-      return $categorias;
+    foreach ($categorias as $c) {
+      $c->url_imagen = asset('storage/' . $c->url_imagen);
+    }
+    return $categorias;
   }
 
 
@@ -237,7 +238,7 @@ trait SpaceUtil
     return DB::table('sucursal')->where('estado', 'like', 'A')->get();
   }
 
-  
+
 
   /**
    * Obtiene las sucursales activas sin bodega
@@ -250,6 +251,11 @@ trait SpaceUtil
   }
 
   public static function getSucursalesAll()
+  {
+    return DB::table('sucursal')->get();
+  }
+
+  public static function getSucursalesActivas()
   {
     return DB::table('sucursal')->where('estado', 'like', 'A')->get();
   }
@@ -265,7 +271,7 @@ trait SpaceUtil
     return DB::table('sucursal')->where('estado', 'like', 'A')->where('bodega', '=', 'S')->get();
   }
 
-   /**
+  /**
    * Obtiene las sucursales activas que son bodega
 
    * @return sucursales
@@ -275,7 +281,7 @@ trait SpaceUtil
     return DB::table('restaurante')->where('sucursal', '=', $sucursal)->where('estado', '=', 'A')->get();
   }
 
-     /**
+  /**
    * Obtiene las sucursales activas que son bodega
 
    * @return sucursales
@@ -283,9 +289,9 @@ trait SpaceUtil
   public function getImpresoraCaja()
   {
     $suc = DB::table('sucursal')->select('nombre_impresora')->where('id', '=', $this->getSucursalUsuario())->get()->first();
-    if($suc == null){
+    if ($suc == null) {
       return '';
-    }else{
+    } else {
       return $suc->nombre_impresora;
     }
   }
@@ -401,6 +407,15 @@ trait SpaceUtil
           array_push($submenus, $m);
         }
         $h->submenus = $submenus;
+      }
+      if ($h->codigo_grupo == 'comandasPrep') {
+        $comandas = ComandasController::getBySucursal($this->getUsuarioSucursal());
+        foreach ($comandas as $c) {
+          $submenu = new \stdClass();
+          $submenu->ruta = url("/comandas/preparacion/comanda/{$c->id}");
+          $submenu->titulo = $c->nombre;
+          array_push($h->submenus, $submenu);
+        }
       }
     }
 
@@ -540,88 +555,12 @@ trait SpaceUtil
     return $this->setAjaxResponse(200, $mensaje, $datos, true);
   }
 
-  /**
-   * Valida si el usuario tiene permisos para estar en el sistema
-   * @param $codigo_pantalla puede ser array o string
-   * @return si es valido (boolean)
-   */
-  public function validarSesion($codigo_pantalla = null)
-  {
-    
-    $usuarioSession = session('usuario');
-    try {
 
-      if ($usuarioSession == null) {
-        session(['usuario' => null]);
-        return false;
-      }
-      
-      $usuario = DB::table('usuario')
-        ->join('rol', 'rol.id', '=', 'usuario.rol')
-        ->select('usuario.*', 'rol.id as rol_id', 'rol.rol as rol_rol')
-        ->where('usuario.id', '=', $usuarioSession['id'])
-        ->get()->first();
-
-      if ($usuario == null) {
-        if ($usuarioSession != null) {
-          $this->setMsjSeguridad();
-        }
-        session(['usuario' => null]);
-        return false;
-      }
-
-      if ($usuario->estado != 'A') {
-        $this->setMsjSeguridad();
-        session(['usuario' => null]);
-        return false;
-      }
-      if (!is_array($codigo_pantalla)) {
-        if ($codigo_pantalla != 'inicio') {
-          $permiso = DB::table('menu')
-            ->leftjoin('vista', 'vista.id', '=', 'menu.vista')
-            ->where('menu.rol', '=', $usuario->rol_id)
-            ->where('vista.codigo_pantalla', '=', $codigo_pantalla)
-            ->get()->first();
-          if ($permiso == null) {
-            $this->setMsjSeguridad();
-            session(['usuario' => null]);
-            return false;
-          }
-        }
-      } else {
-        $entra = false;
-        foreach ($codigo_pantalla as $i) {
-          if ($i != 'inicio') {
-            $permiso = DB::table('menu')
-              ->leftjoin('vista', 'vista.id', '=', 'menu.vista')
-              ->where('menu.rol', '=', $usuario->rol_id)
-              ->where('vista.codigo_pantalla', '=', $i)
-              ->get()->first();
-
-            if ($permiso != null) {
-              $entra = true;
-            }
-          }
-        }
-        if (!$entra) {
-          $this->setMsjSeguridad();
-          session(['usuario' => null]);
-          return false;
-        }
-      }
-
-      session(['rol' => "normal"]);
-      return true;
-    } catch (QueryException $ex) {
-      session(['usuario' => null]);
-      return false;
-    }
-  }
 
   public function usuarioAdministrador()
   {
     return true;
-   /*if (!session()->has('usuario')) {
+    /*if (!session()->has('usuario')) {
       session(['usuario' => null]);
       $this->setError("Seguridad", "No tienes permisos para ingresar..");
       return redirect('/');
@@ -702,32 +641,32 @@ trait SpaceUtil
 
   public function fechaFormat($fecha)
   {
-      // Crea una instancia de Carbon a partir de la fecha
-      $carbonDate = Carbon::parse($fecha);
-  
-      // Establece la localización en español
-      $carbonDate->setLocale('es');
-  
-      // Formatea la fecha en español
-      $fechaAux = $carbonDate->isoFormat('ddd D [de] MMMM');
-      $fechaAux = ucfirst($fechaAux);
-      $phpdate = strtotime($fecha);
-      return str_replace('.', '', $fechaAux ) . " " . date("g:i a", $phpdate);
+    // Crea una instancia de Carbon a partir de la fecha
+    $carbonDate = Carbon::parse($fecha);
+
+    // Establece la localización en español
+    $carbonDate->setLocale('es');
+
+    // Formatea la fecha en español
+    $fechaAux = $carbonDate->isoFormat('ddd D [de] MMMM');
+    $fechaAux = ucfirst($fechaAux);
+    $phpdate = strtotime($fecha);
+    return str_replace('.', '', $fechaAux) . " " . date("g:i a", $phpdate);
   }
 
   public static function soloFechaFormat($fecha)
   {
-      // Crea una instancia de Carbon a partir de la fecha
-      $carbonDate = Carbon::parse($fecha);
-  
-      // Establece la localización en español
-      $carbonDate->setLocale('es');
-  
-      // Formatea la fecha en español
-      $fechaAux = $carbonDate->isoFormat('ddd D [de] MMMM');
-      $fechaAux = ucfirst($fechaAux);
-      $phpdate = strtotime($fecha);
-      return str_replace('.', '', $fechaAux );
+    // Crea una instancia de Carbon a partir de la fecha
+    $carbonDate = Carbon::parse($fecha);
+
+    // Establece la localización en español
+    $carbonDate->setLocale('es');
+
+    // Formatea la fecha en español
+    $fechaAux = $carbonDate->isoFormat('ddd D [de] MMMM');
+    $fechaAux = ucfirst($fechaAux);
+    $phpdate = strtotime($fecha);
+    return str_replace('.', '', $fechaAux);
   }
 
   /**
@@ -762,16 +701,22 @@ trait SpaceUtil
     } else {
       $fecha_actual = date("Y-m-d H:i:s");
     }
-   
+
     $usuario = DB::table('usuario')
       ->select('usuario.usuario')
       ->where('usuario.id', '=', session('usuario')['id'])
       ->get()->first();
 
-     
-    DB::table('bitacora_modificacion')->insert(['id' => null, 'usuario' => $usuario->usuario,
-     'total' => $total, 'id_entidad' => $idEntidad, 'fecha' => $fecha_actual, 'tabla' => $tabla, 'tipo' => $tipo]);
-   
+
+    DB::table('bitacora_modificacion')->insert([
+      'id' => null,
+      'usuario' => $usuario->usuario,
+      'total' => $total,
+      'id_entidad' => $idEntidad,
+      'fecha' => $fecha_actual,
+      'tabla' => $tabla,
+      'tipo' => $tipo
+    ]);
   }
 
   /**
@@ -845,7 +790,8 @@ trait SpaceUtil
       ->where('aprobado', 'like', 'S');
 
     $gastos = DB::table('gasto')
-      ->where('aprobado', 'like', 'S');
+      ->join('sis_estado', 'sis_estado.id', '=', 'gasto.estado')
+      ->where('sis_estado.cod_general', '=', "EST_GASTO_ELIMINADO");
 
     if ($sucursal != null && $sucursal != '' && $sucursal != 'T') {
       $ingresos = $ingresos->where('ingreso.sucursal', '=', $sucursal);
@@ -863,13 +809,13 @@ trait SpaceUtil
       $ingresos = $ingresos->where('ingreso.fecha', '<=', $hasta);
       $gastos = $gastos->where('gasto.fecha', '<=', $hasta);
     }
- 
+
 
     $parametros = DB::table('parametros_generales')->get()->first();
     $porcentaje_banco = $parametros->porcentaje_banco / 100;
     $totalPagoTarjeta = 0;
-  
-   
+
+
     $ingresos = $ingresos->get();
     $gastos = $gastos->sum('monto');
 
@@ -896,20 +842,20 @@ trait SpaceUtil
     }
 
     $parametros = $this->getParametrosGenerales();
-   
+
     $mesActual = date("M");
-    
+
     $subTotalFondos = $totalIngresos;
-    
+
     $totalFondos = $subTotalFondos - $gastos;
     $totalFondos = $totalFondos - $totalPagoTarjeta;
 
-     //Totales en conjunto
-    $totalIngresosEfectivoGeneral = $totalIngresosEfectivo ;
+    //Totales en conjunto
+    $totalIngresosEfectivoGeneral = $totalIngresosEfectivo;
     $totalIngresosTarjetaGeneral = $totalIngresosTarjeta;
-    $totalIngresosSinpeGeneral = $totalIngresosSinpe ;
-    $totalPagoTarjetaGeneral = $totalPagoTarjeta ;
-    
+    $totalIngresosSinpeGeneral = $totalIngresosSinpe;
+    $totalPagoTarjetaGeneral = $totalPagoTarjeta;
+
     $subTotalFondosGeneral = $subTotalFondos;
     $subTotalFondosGeneral = $subTotalFondosGeneral - $totalPagoTarjeta;;
     $totalFondosGeneral = $totalFondos;
@@ -937,7 +883,7 @@ trait SpaceUtil
       'totalFondos' => $totalFondos,
       'ingresos' => $totalIngresos,
     ];
-   // dd($resumen);
+    // dd($resumen);
     return $resumen;
   }
 }

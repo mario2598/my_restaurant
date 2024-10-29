@@ -33,6 +33,21 @@ class MantenimientoRolesController extends Controller
         return view('mant.roles',compact('data'));
     }
 
+    public static function getRolesActivos()
+    {
+        return DB::table('rol')->where('estado', 'like', 'A')->get();
+    }
+
+    public static function getIdByCodigo($codGeneral)
+    {
+        $rol = DB::table('rol')
+            ->select('rol.id')
+            ->where('codigo', '=', $codGeneral)
+            ->get()->first();
+        
+        return $rol != null ? $rol->id  : null;
+    }
+
     public function crearMenus($vistas,$rol){
         
         $headers = [];

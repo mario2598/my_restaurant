@@ -1,310 +1,90 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\QueryException;
 use App\Traits\SpaceUtil;
+
 class MantenimientoUsuariosController extends Controller
 {
+
     use SpaceUtil;
     protected $SpaceSeg;
     public $codigo_pantalla = "mantUsu";
 
-    public function __construct()
+    public function __construct() {}
+    public function index()
     {
 
-
-    }
-    public function index(){
-        
-        if(!$this->validarSesion($this->codigo_pantalla)){
-            return redirect('/');
-        }
-        
-
         $usuarios = DB::table('usuario')
-        ->join('rol', 'rol.id', '=', 'usuario.rol')
-        ->join('sucursal', 'sucursal.id', '=', 'usuario.sucursal')
-        ->select('usuario.id','usuario.nombre','usuario.ape1','usuario.ape2',
-        'usuario.correo','usuario.telefono','usuario.usuario','usuario.rol',
-        'rol.rol as rol_nombre','rol.id as rol_id',
-        'sucursal.descripcion as sucursal_nombre','sucursal.id as sucursal_id')
-        ->where('usuario.estado','like','A')->get();
-         $data = [
-             'menus'=> $this->cargarMenus(),
-             'usuarios' => $usuarios,
-             'panel_configuraciones' => $this->getPanelConfiguraciones()
-         ];
-        return view('mant.usuarios',compact('data'));
-    }
-
-    public function goNuevoUsuario(){
-        if(!$this->validarSesion($this->codigo_pantalla)){
-            return redirect('/');
-        }
-        
-        $roles = DB::table('rol')->where('estado','like','A')->where('codigo','<>','su')->get();
-        $sucursales = DB::table('sucursal')->where('estado','like','A')->get();
-        $datos = [];
-         $data = [
-             'menus'=> $this->cargarMenus(),
-             'datos' => $datos,
-             'roles' => $roles,
-             'sucursales' => $this->getSucursalesAndBodegas(),
-             'panel_configuraciones' => $this->getPanelConfiguraciones()
-         ];
-        return view('usuario.nuevoUsuario',compact('data'));
-    }
-
-    public function returnNuevoUsuarioWithData($datos){
-        if(!$this->validarSesion($this->codigo_pantalla)){
-            return redirect('/');
-        }
-        
-        $roles = DB::table('rol')->where('estado','like','A')->where('codigo','<>','su')->get();
-
-         $data = [
-             'menus'=> $this->cargarMenus(),
-             'datos' => $datos,
-             'roles' => $roles,
-             'sucursales' => $this->getSucursalesAndBodegas(),
-             'panel_configuraciones' => $this->getPanelConfiguraciones()
-         ];
-        return view('usuario.nuevoUsuario',compact('data'));
-    }
-
-    public function goEditarUsuario(Request $request){
-        if(!$this->validarSesion($this->codigo_pantalla)){
-            return redirect('/');
-        }
-        
-        
-        $id = $request->input('idUsuarioEditar');
-        $usuario = DB::table('usuario')
-        ->join('rol', 'rol.id', '=', 'usuario.rol')
-        ->join('sucursal', 'sucursal.id', '=', 'usuario.sucursal')
-        ->select('usuario.*',
-        'rol.id as rol_id',
-        'sucursal.id as sucursal_id')
-        ->where('usuario.id','=',$id)->get()->first();
-        if($usuario == null){
-            $this->setError('Editar Usuario','No existe el usuario a editar.');
-            return redirect('mant/usuarios');
-        }
-
-        $roles = DB::table('rol')->where('estado','like','A')->where('codigo','<>','su')->get();
-        
-       
-         $data = [
-             'menus'=> $this->cargarMenus(),
-             'roles' => $roles,
-             'usuario' => $usuario,
-             'sucursales' => $this->getSucursalesAndBodegas(),
-             'panel_configuraciones' => $this->getPanelConfiguraciones()
-         ];
-        return view('usuario.editarUsuario',compact('data'));
-    }
-
-    public function returnEditarUsuarioWithId($id){
-        
-        if(!$this->validarSesion($this->codigo_pantalla)){
-            return redirect('/');
-        }
-       
-        if($id < 1 || $this->isEmpty($id)){
-            $this->setError("Error","El usuario no existe..");
-            return redirect('/');
-        }
-      
-        $usuario = DB::table('usuario')
-        ->leftjoin('rol', 'rol.id', '=', 'usuario.rol')
-        ->leftjoin('sucursal', 'sucursal.id', '=', 'usuario.sucursal')
-        ->select('usuario.*',
-        'rol.id as rol_id',
-        'sucursal.id as sucursal_id')
-        ->where('usuario.id','=',$id)->get()->first();
-       
-        if($usuario == null){
-            $this->setError("Error","El usuario no existe..");
-            return redirect('/');
-        }
-       
-        $roles = DB::table('rol')->where('estado','like','A')->where('codigo','<>','su')->get();
-       
-         $data = [
-             'menus'=> $this->cargarMenus(),
-             'roles' => $roles,
-             'usuario' => $usuario,
-             'sucursales' => $this->getSucursales(),
-             'panel_configuraciones' => $this->getPanelConfiguraciones()
-         ];
-        return view('usuario.editarUsuario',compact('data'));
+            ->join('rol', 'rol.id', '=', 'usuario.rol')
+            ->join('sucursal', 'sucursal.id', '=', 'usuario.sucursal')
+            ->select(
+                'usuario.id',
+                'usuario.nombre',
+                'usuario.ape1',
+                'usuario.ape2',
+                'usuario.correo',
+                'usuario.telefono',
+                'usuario.usuario',
+                'usuario.rol',
+                'rol.rol as rol_nombre',
+                'rol.id as rol_id',
+                'sucursal.descripcion as sucursal_nombre',
+                'sucursal.id as sucursal_id'
+            )
+            ->where('usuario.estado', 'like', 'A')->get();
+        $data = [
+            'menus' => $this->cargarMenus(),
+            'usuarios' => $usuarios,
+            'panel_configuraciones' => $this->getPanelConfiguraciones()
+        ];
+        return view('mant.usuarios', compact('data'));
     }
 
     /**
      * Actualiza la contraseña de el usuario.
      * @param nueva_contra , idUsuarioEditar
      */
-    public function cambiarContra(Request $request){
-        if(!$this->validarSesion($this->codigo_pantalla)){
-            return redirect('/');
-        }
-        
-
+    public function cambiarContra(Request $request)
+    {
         $id = $request->input('idUsuarioEditar');
         $nueva_contra = $request->input('nueva_contra');
 
-        if($this->isNull($nueva_contra) || $this->isEmpty($nueva_contra) ){
-            $this->setError('Cambiar contraseña','La contraseña debe ser minimo 4 caracteres.');
-            return $this->returnEditarUsuarioWithId($id);
+        if ($this->isNull($nueva_contra) || $this->isEmpty($nueva_contra)) {
+            return $this->responseAjaxServerError("La contraseña debe ser máximo 25 caracteres.", []);
         }
-        if(!$this->isLengthMinor($nueva_contra,25)){
-            $this->setError('Cambiar contraseña',"La contraseña debe ser de máximo 25 caracteres.");
-            return $this->returnEditarUsuarioWithId($id);
+        if (!$this->isLengthMinor($nueva_contra, 25)) {
+            return $this->responseAjaxServerError("La contraseña debe ser máximo 25 caracteres.", []);
         }
 
-        if(!$this->isLengthMayor($nueva_contra,4)){
-            $this->setError('Cambiar contraseña',"La contraseña debe ser minimo 4 caracteres.");
-            return $this->returnEditarUsuarioWithId($id);
+        if (!$this->isLengthMayor($nueva_contra, 4)) {
+            return $this->responseAjaxServerError("La contraseña debe ser máximo 25 caracteres.", []);
         }
 
-        $usuario = DB::table('usuario')->select('usuario.id')->where('id','=',$id)->get()->first();
-        if($usuario == null ){
-            $this->setError('Cambiar contraseña','No existe un usuario con los credenciales.');
-            return $this->returnEditarUsuarioWithId($id);
+        $usuario = DB::table('usuario')->select('usuario.id')->where('id', '=', $id)->get()->first();
+        if ($usuario == null) {
+            return $this->responseAjaxServerError("No existe un usuario con los credenciales.", []);
         }
 
-        try { 
+        try {
             $nueva_contra = trim($nueva_contra);
-            
+
             DB::beginTransaction();
 
             DB::table('usuario')
-            ->where('id', '=', $id)
-            ->update(['contra' => md5($nueva_contra)]);
-            
+                ->where('id', '=', $id)
+                ->update(['contra' => md5($nueva_contra)]);
+
             DB::commit();
-            $this->setSuccess('Cambiar contraseña','Se actualizo la contraseña correctamente.');
-            return $this->returnEditarUsuarioWithId($id);
-        }
-        catch(QueryException $ex){ 
+            return $this->responseAjaxSuccess("Se actualizo la contraseña correctamente", []);
+        } catch (QueryException $ex) {
             DB::rollBack();
-            $this->setError('Cambiar contraseña','Ocurrio un error cambiando la contraseña.');
-            return $this->returnEditarUsuarioWithId($id);
+            DB::table('log')->insertGetId(['id' => null, 'documento' => 'MantenimientoSorteosController', 'descripcion' => $ex]);
+            return $this->responseAjaxServerError("Ocurrió un error cambiando la contraseña", []);
         }
-        
-        
-    }
-
-    /**
-     * Guarda o actualiza un Usuario
-     */
-    public function guardarUsuario(Request $request){
-        if(!$this->validarSesion($this->codigo_pantalla)){
-            return redirect('/');
-        }
-        
-       // dd($request->all());
-        $id = $request->input('id');
-        $nombreUsuario = $request->input('usuario');
-        $usuario = DB::table('usuario')->select('usuario.*')->where('id','=',$id)->get()->first();
-        
-        if($id < 1 || $this->isNull($id)){ // Nuevo usuario
-            if($this->usuarioRegistrado($nombreUsuario)){
-                $this->setError('Guardar Usuario','El nombre de usuario ya esta en uso.');
-                return $this->returnNuevoUsuarioWithData($request->all());
-            }
-            $actualizar = false;
-        }else{// Editar usuario
-            
-            if($usuario == null ){
-                $this->setError('Guardar Usuario','No existe un usuario con los credenciales.');
-                return $this->returnEditarUsuarioWithId($id);
-            }
-            if($usuario->usuario != $nombreUsuario){
-                if($this->usuarioRegistrado($nombreUsuario)){
-                    $this->setError('Guardar Usuario','El nombre de usuario ya esta en uso.');
-                    return $this->returnEditarUsuarioWithId($id);
-                }
-            }
-            $actualizar = true;
-        }
-
-       
-        if($this->validarUsuario($request)) {
-          
-            $cedula = $request->input('cedula');
-            if($actualizar){ // Editar usuario
-                if($cedula != $usuario->cedula){
-                    if($this->cedulaRegistrada($cedula)){
-                        $this->setError('Guardar Usuario','Ya existe un usuario con el número de cédula.');
-                        return $this->returnEditarUsuarioWithId($id);
-                    }
-                }
-            }else{// Nuevo usuario
-                if($this->cedulaRegistrada($cedula)){
-                    $this->setError('Guardar Usuario','Ya existe un usuario con el número de cédula.');
-                    return $this->returnNuevoUsuarioWithData($request->all());
-                }
-            }
-
-            $correo = $request->input('correo');
-            $nombre = $request->input('nombre');
-            $ape1 = $request->input('ape1');
-            $ape2 = $request->input('ape2');
-            $telefono = $request->input('telefono');
-            $contra = $request->input('contra');
-            $nacimiento = $request->input('nacimiento');
-            $sucursal = $request->input('sucursal');
-            $rol = $request->input('rol');
-            $fecha_actual = date("Y-m-d H:i:s");
-            try { 
-                DB::beginTransaction();
-                
-                if($actualizar){// Editar usuario
-                    DB::table('usuario')
-                        ->where('id', '=', $id)
-                        ->update(['nombre' => $nombre,'ape1'=> $ape1,'ape2'=> $ape2,
-                        'cedula'=> $cedula,'fecha_nacimiento' => $nacimiento,
-                        'correo'=> $correo,'telefono' => $telefono,'usuario'=> $nombreUsuario,
-                        'sucursal' => $sucursal,'rol'=> $rol
-                        ]);
-                }else{// Nuevo usuario
-                    $id = DB::table('usuario')->insertGetId( ['id' => null ,'nombre'=>$nombre,'ape1'=> $ape1,'ape2'=> $ape2,
-                        'cedula'=> $cedula,'fecha_nacimiento' => $nacimiento,'fecha_ingreso'=> $fecha_actual,
-                        'correo'=> $correo,'telefono' => $telefono,'usuario'=> $nombreUsuario,
-                        'contra'=> md5($contra),'sucursal' => $sucursal,'rol'=> $rol,'estado'=> 'A'
-                        ] );
-                }
-                 DB::table('panel_configuraciones')->insertGetId( ['id' => null ,'color_fondo' => 1,'color_sidebar' => 1,'color_tema' => "white",
-                'mini_sidebar' => 1,'sticky_topbar' => 1,'usuario'=>$id]);
-               
-                DB::commit();
-                
-                if($actualizar){// Editar usuario
-                    $this->setSuccess('Guardar Usuario','Se actualizo el usuario correctamente.');
-                }else{// Nuevo usuario
-                    
-                    $this->setSuccess('Guardar Usuario','Usuario creado correctamente.');
-                }
-                return $this->returnEditarUsuarioWithId($id);
-            }
-            catch(QueryException $ex){ 
-                DB::rollBack();
-                $this->setError('Guardar Usuario', $ex);
-                $this->index();
-            }    
-          
-        }else{
-            if($actualizar){
-                return $this->returnEditarUsuarioWithId($id);
-            }else{
-                return $this->returnNuevoUsuarioWithData($request->all());
-            }
-        }
-
     }
 
     /**
@@ -312,113 +92,430 @@ class MantenimientoUsuariosController extends Controller
      * @param $usuario nombre del usuario
      * @return boolean si esta registrado true si no false
      */
-    public function usuarioRegistrado($usuario){
-        $usuario = DB::table('usuario')->select('usuario.id')->where('usuario','=',$usuario)->get()->first();
-    
+    public function usuarioRegistrado($usuario)
+    {
+        $usuario = DB::table('usuario')->select('usuario.id')->where('usuario', '=', $usuario)->get()->first();
+
         return ($usuario == null) ? false : true;
-      }
-    
+    }
+
     /**
      * Valida si la cedula de usuario ya esta registrada
      * @param $cedula cedula del usuario
      * @return boolean si esta registrada true si no false
      */
-    public function cedulaRegistrada($cedula){
-        $usuario = DB::table('usuario')->select('usuario.id')->where('cedula','=',$cedula)->get()->first();
+    public function cedulaRegistrada($cedula)
+    {
+        $usuario = DB::table('usuario')->select('usuario.id')->where('cedula', '=', $cedula)->get()->first();
 
         return ($usuario == null) ? false : true;
     }
 
-    /**
-     * Inactiva un usuario.
-     */
-    public function eliminarUsuario(Request $request){
-        if(!$this->validarSesion($this->codigo_pantalla)){
-            return redirect('/');
+    public function validarUsuario($usuario)
+    {
+        $requeridos = "[";
+        $valido = true;
+        $esPrimero = true;
+
+        if ($this->isNull($usuario['nombre']) || $this->isEmpty($usuario['nombre'])) {
+            $requeridos .= " Nombre ";
+            $valido = false;
+            $esPrimero = false;
         }
-        
-        $id = $request->input('idGenericoEliminar');
-        if($id == null || $id == '' || $id < 1){
-            $this->setError('Eliminar Usuario','Identificador inválido.');
-            return redirect('mant/usuarios');
+        if ($this->isNull($usuario['ape1']) || $this->isEmpty($usuario['ape1'])) {
+            $requeridos .= " Primer Apellido ";
+            $valido = false;
+            $esPrimero = false;
         }
-        try { 
-            DB::beginTransaction();
-            $usuario = DB::table('usuario')->where('id','=',$id)->get()->first();
-            if($usuario == null){
-                $this->setError('Eliminar Usuario','No existe el usuario a eliminar.');
-                return redirect('mant/usuarios');
-            }else{
+        if ($this->isNull($usuario['cedula']) || $this->isEmpty($usuario['cedula'])) {
+            $requeridos .= " Cédula ";
+            $valido = false;
+            $esPrimero = false;
+        }
+
+        if ($this->isNull($usuario['usuario']) || $this->isEmpty($usuario['usuario'])) {
+            $requeridos .= " Usuario ";
+            $valido = false;
+            $esPrimero = false;
+        }
+        $requeridos .= "] ";
+        if (!$valido) {
+            return 'Campos Requeridos : ' . $requeridos;
+        }
+
+        if (!$this->isLengthMinor($usuario['nombre'], 25)) {
+            return "Tamaño exedido" . "El nombre del usuario debe ser de máximo 25 caracteres.";
+        }
+        if (!$this->isLengthMinor($usuario['ape1'], 25)) {
+            return "Tamaño exedido" . "El primer apellido del usuario debe ser de máximo 25 caracteres.";
+        }
+        if (!$this->isLengthMinor($usuario['ape2'], 25)) {
+            return "Tamaño exedido" . "El primer apellido del usuario debe ser de máximo 25 caracteres.";
+        }
+        if (!$this->isLengthMinor($usuario['cedula'], 15)) {
+            return "Tamaño exedido" . "La cédula del usuario debe ser de máximo 15 caracteres.";
+        }
+        if (!$this->isLengthMinor($usuario['cedula'], 15)) {
+            return "Tamaño exedido" . "El teléfono del usuario debe ser de máximo 15 caracteres.";
+        }
+        if (!$this->isLengthMinor($usuario['usuario'], 25)) {
+            return "Tamaño exedido" . "El usuario debe ser de máximo 25 caracteres.";
+        }
+        if (!$this->isLengthMinor($usuario['correo'], 100)) {
+            return "Tamaño exedido" . "El correo debe ser de máximo 100 caracteres.";
+        }
+
+        return null;
+    }
+
+    public static function getUsuarioById($id)
+    {
+        return DB::table('usuario')
+            ->join('rol', 'rol.id', '=', 'usuario.rol')
+            ->join('sucursal', 'sucursal.id', '=', 'usuario.sucursal')
+            ->select(
+                'usuario.*',
+                'rol.id as rol_id',
+                'sucursal.id as sucursal_id'
+            )
+            ->where('usuario.id', '=', $id)->get()->first();
+    }
+
+    public static function getUsuarioByUsuario($usuario)
+    {
+        return DB::table('usuario')
+            ->join('rol', 'rol.id', '=', 'usuario.rol')
+            ->join('sucursal', 'sucursal.id', '=', 'usuario.sucursal')
+            ->select(
+                'usuario.*',
+                'rol.id as rol_id',
+                'sucursal.id as sucursal_id'
+            )
+            ->where('usuario.usuario', '=', $usuario)->get()->first();
+    }
+
+    public static function getUsuarioByCorreo($correo)
+    {
+        return DB::table('usuario')
+            ->join('rol', 'rol.id', '=', 'usuario.rol')
+            ->join('sucursal', 'sucursal.id', '=', 'usuario.sucursal')
+            ->select(
+                'usuario.*',
+                'rol.id as rol_id',
+                'sucursal.id as sucursal_id'
+            )
+            ->where('usuario.correo', '=', $correo)->get()->first();
+    }
+
+    public function cargarUsuariosAjax()
+    {
+        try {
+            return $this->responseAjaxSuccess("", MantenimientoUsuariosController::getUsuarios());
+        } catch (QueryException $ex) {
+            DB::table('log')->insertGetId(['id' => null, 'documento' => 'MantenimientoUsuariosController', 'descripcion' => $ex]);
+            return $this->responseAjaxServerError("Error cargando los usuarios", []);
+        }
+    }
+
+    public function cargarUsuarioAjax(Request $request)
+    {
+        try {
+            $id = $request->input('idUsuario');
+            if ($id < 1) {
+                return $this->responseAjaxSuccess("", []);
+            } else {
+                $usuario = MantenimientoUsuariosController::getUsuarioById($id);
+
+                if ($usuario == null) {
+                    return $this->responseAjaxServerError("No se encontro  el usuario", []);
+                }
+                return $this->responseAjaxSuccess("", $usuario);
+            }
+        } catch (QueryException $ex) {
+            DB::table('log')->insertGetId(['id' => null, 'documento' => 'MantenimientoUsuariosController', 'descripcion' => $ex]);
+            return $this->responseAjaxServerError("Error cargando el usuario", []);
+        }
+    }
+
+    public static function getUsuarios()
+    {
+        return DB::table('usuario')
+            ->join('rol', 'rol.id', '=', 'usuario.rol')
+            ->join('sucursal', 'sucursal.id', '=', 'usuario.sucursal')
+            ->select(
+                'usuario.id',
+                'usuario.nombre',
+                'usuario.ape1',
+                'usuario.ape2',
+                'usuario.correo',
+                'usuario.cedula',
+                'usuario.telefono',
+                'usuario.usuario',
+                'usuario.rol',
+                'rol.rol as rol_nombre',
+                'rol.id as rol_id',
+                'sucursal.descripcion as sucursal_nombre',
+                'sucursal.id as sucursal_id'
+            )
+            ->get();
+    }
+
+    public function guardarUsuarioAjax(Request $request)
+    {
+
+        $usuarioR = $request->input('usuario');
+        $id = $usuarioR['id'];
+        $nombreUsuario = $usuarioR['usuario'] ?? "";
+        $usuario = DB::table('usuario')->select('usuario.*')->where('id', '=', $id)->get()->first();
+
+        if ($id < 1 || $this->isNull($id)) { // Nuevo usuario
+            if ($this->usuarioRegistrado($nombreUsuario)) {
+                return $this->responseAjaxServerError("El nombre de usuario ya esta en uso.", []);
+            }
+            $actualizar = false;
+        } else { // Editar usuario
+
+            if ($usuario == null) {
+                return $this->responseAjaxServerError('No existe un usuario con los credenciales.', []);
+            }
+            if ($usuario->usuario != $nombreUsuario) {
+                if ($this->usuarioRegistrado($nombreUsuario)) {
+                    return $this->responseAjaxServerError("El nombre de usuario ya esta en uso.", []);
+                }
+            }
+            $actualizar = true;
+        }
+
+        $mensajeValidacion = $this->validarUsuario($usuarioR);
+        if ($mensajeValidacion == null) {
+
+            $cedula = $usuarioR['cedula'];
+            if ($actualizar) { // Editar usuario
+                if ($cedula != $usuario->cedula) {
+                    if ($this->cedulaRegistrada($cedula)) {
+                        return $this->responseAjaxServerError("Ya existe un usuario con el número de cédula.", []);
+                    }
+                }
+            } else { // Nuevo usuario
+                if ($this->cedulaRegistrada($cedula)) {
+                    return $this->responseAjaxServerError("Ya existe un usuario con el número de cédula.", []);
+                }
+            }
+
+            $correo = $usuarioR['correo'];
+            $nombre = $usuarioR['nombre'];
+            $ape1 = $usuarioR['ape1'];
+            $ape2 = $usuarioR['ape2'];
+            $telefono = $usuarioR['telefono'];
+            $contra = $usuarioR['contra'];
+            $nacimiento = $usuarioR['fecha_nacimiento'];
+            $sucursal = $usuarioR['sucursal'];
+            $fecha_actual =  date("Y-m-d H:i:s");
+            $tipoUsuario = $usuarioR['tip_u_co'];
+
+            $rol = $usuarioR['rol'];
+            try {
+                DB::beginTransaction();
+
+                if ($actualizar) { // Editar usuario
+                    DB::table('usuario')
+                        ->where('id', '=', $id)
+                        ->update([
+                            'nombre' => $nombre,
+                            'ape1' => $ape1,
+                            'ape2' => $ape2,
+                            'cedula' => $cedula,
+                            'fecha_nacimiento' => $nacimiento,
+                            'correo' => $correo,
+                            'telefono' => $telefono,
+                            'usuario' => $nombreUsuario,
+                            'sucursal' => $sucursal,
+                            'rol' => $rol
+                        ]);
+                } else { // Nuevo usuario
+                    $id = DB::table('usuario')->insertGetId([
+                        'id' => null,
+                        'nombre' => $nombre,
+                        'ape1' => $ape1,
+                        'ape2' => $ape2,
+                        'cedula' => $cedula,
+                        'fecha_nacimiento' => $nacimiento,
+                        'fecha_ingreso' => $fecha_actual,
+                        'correo' => $correo,
+                        'telefono' => $telefono,
+                        'usuario' => $nombreUsuario,
+                        'contra' => md5($contra),
+                        'sucursal' => $sucursal,
+                        'rol' => $rol,
+                        'estado' => SisEstadoController::getIdEstadoByCodGeneral("USU_ACT")
+                    ]);
+
+                    DB::table('panel_configuraciones')->insertGetId([
+                        'id' => null,
+                        'color_fondo' => 1,
+                        'color_sidebar' => 1,
+                        'color_tema' => "white",
+                        'mini_sidebar' => 1,
+                        'sticky_topbar' => 1,
+                        'usuario' => $id
+                    ]);
+                }
+
+                DB::commit();
+
+                return $this->responseAjaxSuccess("Se guardo el usuario correctamente", $id);
+            } catch (QueryException $ex) {
+                DB::rollBack();
+                DB::table('log')->insertGetId(['id' => null, 'documento' => 'MantenimientoUsuariosController', 'descripcion' => $ex]);
+                return $this->responseAjaxServerError("Ocurrió un error guardando el usuario", []);
+            }
+        } else {
+            return $this->responseAjaxServerError($mensajeValidacion, []);
+        }
+    }
+
+    public function guardarUsuarioPerfilAjax(Request $request)
+    {
+
+        $usuarioR = $request->input('usuario');
+        $id = session('usuario')['id'];
+        $usuario = DB::table('usuario')->select('usuario.*')->where('id', '=', $id)->get()->first();
+
+        if ($usuario == null) {
+            return $this->responseAjaxServerError('No existe un usuario con los credenciales.', []);
+        }
+
+        $mensajeValidacion = $this->validarUsuario($usuarioR);
+        if ($mensajeValidacion == null) {
+
+            $nombre = $usuarioR['nombre'];
+            $ape1 = $usuarioR['ape1'];
+            $ape2 = $usuarioR['ape2'];
+            $telefono = $usuarioR['telefono'];
+            $nacimiento = $usuarioR['fecha_nacimiento'];
+
+            try {
+                DB::beginTransaction();
+
                 DB::table('usuario')
                     ->where('id', '=', $id)
-                    ->update(['estado' => 'I']);
+                    ->update([
+                        'nombre' => $nombre,
+                        'ape1' => $ape1,
+                        'ape2' => $ape2,
+                        'fecha_nacimiento' => $nacimiento,
+                        'telefono' => $telefono
+                    ]);
+
+                DB::commit();
+
+                return $this->responseAjaxSuccess("Se guardo el usuario correctamente", $id);
+            } catch (QueryException $ex) {
+                DB::rollBack();
+                DB::table('log')->insertGetId(['id' => null, 'documento' => 'MantenimientoUsuariosController', 'descripcion' => $ex]);
+                return $this->responseAjaxServerError("Ocurrió un error guardando el usuario", []);
             }
-            DB::commit();
-            $this->setSuccess('Eliminar Usuario','El usuario se elimino correctamente.');
-            return redirect('mant/usuarios');
+        } else {
+            return $this->responseAjaxServerError($mensajeValidacion, []);
         }
-        catch(QueryException $ex){ 
-            DB::rollBack();
-            $this->setError('Eliminar Usuario','Ocurrio un error eliminando el usuario.');
-            return redirect('mant/usuarios');
-        }
-        
-        
     }
 
-    public function restaurarPc(){
-      
+    public function goEditarUsuario(Request $request)
+    {
+
+        $id = $request->input('idUsuarioEditar');
+
+        if ($id > 0) {
+            $usuario = DB::table('usuario')
+                ->join('rol', 'rol.id', '=', 'usuario.rol')
+                ->join('sucursal', 'sucursal.id', '=', 'usuario.sucursal')
+                ->select(
+                    'usuario.*',
+                    'rol.id as rol_id',
+                    'sucursal.id as sucursal_id'
+                )
+                ->where('usuario.id', '=', $id)->get()->first();
+
+            if ($usuario == null) {
+                $this->setError('Editar Usuario', 'No existe el usuario a editar.');
+                return redirect('mant/usuarios');
+            }
+        } else {
+            $usuario = null;
+        }
+
+        $data = [
+            'menus' => $this->cargarMenus(),
+            'roles' => MantenimientoRolesController::getRolesActivos(),
+            'usuario' => $usuario,
+            'sucursales' => $this->getSucursales(),
+            'panel_configuraciones' => $this->getPanelConfiguraciones()
+        ];
+        return view('usuario.usuario', compact('data'));
+    }
+
+    public function restaurarPc()
+    {
+
         $usuario = $this->getUsuarioAuth();
-        try { 
+        try {
             DB::beginTransaction();
             DB::table('panel_configuraciones')
                 ->where('usuario', '=', $usuario['id'])
-                ->update(['color_fondo' => 1,'color_sidebar' => 1,'color_tema' => "white",
-                'mini_sidebar' => 1,'sticky_topbar' => 1,]);
+                ->update([
+                    'color_fondo' => 1,
+                    'color_sidebar' => 1,
+                    'color_tema' => "white",
+                    'mini_sidebar' => 1,
+                    'sticky_topbar' => 1,
+                ]);
             DB::commit();
             echo 1;
-        }catch(QueryException $ex){ 
+        } catch (QueryException $ex) {
             DB::rollBack();
             echo 0;
         }
     }
 
-    public function temaClaro(){
-       
-        try { 
+    public function temaClaro()
+    {
+
+        try {
             $usuario = $this->getUsuarioAuth();
             DB::beginTransaction();
             DB::table('panel_configuraciones')
                 ->where('usuario', '=', $usuario['id'])
-                ->update(['color_fondo' => 1,'color_sidebar' => 1,'color_tema' => "white"]);
+                ->update(['color_fondo' => 1, 'color_sidebar' => 1, 'color_tema' => "white"]);
             DB::commit();
             echo 1;
-        }catch(QueryException $ex){ 
+        } catch (QueryException $ex) {
             DB::rollBack();
             echo 0;
         }
     }
 
 
-    public function temaOscuro(){
+    public function temaOscuro()
+    {
 
-        try { 
+        try {
             $usuario = $this->getUsuarioAuth();
             DB::beginTransaction();
             DB::table('panel_configuraciones')
                 ->where('usuario', '=', $usuario['id'])
-                ->update(['color_fondo' => 2,'color_sidebar' => 2,'color_tema' => "black" ]);
+                ->update(['color_fondo' => 2, 'color_sidebar' => 2, 'color_tema' => "black"]);
             DB::commit();
             echo 1;
-        }catch(QueryException $ex){ 
+        } catch (QueryException $ex) {
             DB::rollBack();
             echo 0;
         }
     }
 
-    public function sideTeme(Request $request){
-       
-        try { 
+    public function sideTeme(Request $request)
+    {
+
+        try {
             $usuario = $this->getUsuarioAuth();
             $tema = $request->input('tema');
             DB::beginTransaction();
@@ -427,15 +524,16 @@ class MantenimientoUsuariosController extends Controller
                 ->update(['color_sidebar' => $tema]);
             DB::commit();
             echo 1;
-        }catch(QueryException $ex){ 
+        } catch (QueryException $ex) {
             DB::rollBack();
             echo 0;
         }
     }
 
-    public function colorTeme(Request $request){
-        
-        try { 
+    public function colorTeme(Request $request)
+    {
+
+        try {
             $usuario = $this->getUsuarioAuth();
             $color = $request->input('color');
             DB::beginTransaction();
@@ -444,15 +542,16 @@ class MantenimientoUsuariosController extends Controller
                 ->update(['color_tema' => $color]);
             DB::commit();
             echo 1;
-        }catch(QueryException $ex){ 
+        } catch (QueryException $ex) {
             DB::rollBack();
             echo 0;
         }
     }
 
-    public function sticky(Request $request){
-       
-        try { 
+    public function sticky(Request $request)
+    {
+
+        try {
             $usuario = $this->getUsuarioAuth();
             $sticky = $request->input('sticky');
             DB::beginTransaction();
@@ -461,74 +560,9 @@ class MantenimientoUsuariosController extends Controller
                 ->update(['sticky_topbar' => $sticky]);
             DB::commit();
             echo 1;
-        }catch(QueryException $ex){ 
+        } catch (QueryException $ex) {
             DB::rollBack();
             echo 0;
         }
     }
-
-
-    public function validarUsuario(Request $r){
-        $requeridos = "[";
-        $valido = true;
-        $esPrimero = true;
-       
-        if($this->isNull($r->input('nombre')) || $this->isEmpty($r->input('nombre')) ){
-            $requeridos .= " Nombre ";
-            $valido = false;
-            $esPrimero = false;
-        }
-        if($this->isNull($r->input('ape1')) || $this->isEmpty($r->input('ape1')) ){
-            $requeridos .= " Primer Apellido ";
-            $valido = false;
-            $esPrimero = false;
-        }
-        if($this->isNull($r->input('cedula')) || $this->isEmpty($r->input('cedula')) ){
-            $requeridos .= " Cédula ";
-            $valido = false;
-            $esPrimero = false;
-        }
-
-        if($this->isNull($r->input('usuario')) || $this->isEmpty($r->input('usuario')) ){
-            $requeridos .= " Usuario ";
-            $valido = false;
-            $esPrimero = false;
-        }
-        $requeridos .= "] ";
-        if(!$valido){
-            $this->setError('Campos Requeridos',$requeridos);
-            return false;
-        }
-
-        if(!$this->isLengthMinor($r->input('nombre'),25)){
-            $this->setError('Tamaño exedido',"El nombre del usuario debe ser de máximo 25 caracteres.");
-            return false;
-        }
-        if(!$this->isLengthMinor($r->input('ape1'),25)){
-            $this->setError('Tamaño exedido',"El primer apellido del usuario debe ser de máximo 25 caracteres.");
-            return false;
-        }
-        if(!$this->isLengthMinor($r->input('ape2'),25)){
-            $this->setError('Tamaño exedido',"El primer apellido del usuario debe ser de máximo 25 caracteres.");
-            return false;
-        }
-        if(!$this->isLengthMinor($r->input('cedula'),15)){
-            $this->setError('Tamaño exedido',"La cédula del usuario debe ser de máximo 15 caracteres.");
-            return false;
-        }
-        if(!$this->isLengthMinor($r->input('telefono'),8)){
-            $this->setError('Tamaño exedido',"El teléfono del usuario debe ser de máximo 8 caracteres.");
-            return false;
-        }
-        if(!$this->isLengthMinor($r->input('usuario'),25)){
-            $this->setError('Tamaño exedido',"El usuario debe ser de máximo 25 caracteres.");
-            return false;
-        }
-        if(!$this->isLengthMinor($r->input('correo'),100)){
-            $this->setError('Tamaño exedido',"El correo debe ser de máximo 100 caracteres.");
-            return false;
-        }
-        
-        return $valido;
-    } 
 }

@@ -2,7 +2,7 @@ window.addEventListener("load", initialice, false);
 var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
 
 
-function initialice() {}
+function initialice() { }
 
 $(document).ready(function () {
     $("#input_buscar_generico").on("keyup", function () {
@@ -21,12 +21,12 @@ $(document).ready(function () {
 function rechazarIngresoGasto(gasto, ingreso) {
 
     swal({
-            title: 'Confirmar?',
-            text: 'Deseas rechazar este gasto ? ',
-            icon: 'warning',
-            buttons: true,
-            dangerMode: true,
-        })
+        title: 'Confirmar?',
+        text: 'Deseas rechazar este gasto ? ',
+        icon: 'warning',
+        buttons: true,
+        dangerMode: true,
+    })
         .then((willDelete) => {
             if (willDelete) {
                 $('#idIngreso').val(ingreso);
@@ -41,12 +41,12 @@ function rechazarIngresoGasto(gasto, ingreso) {
 function eliminarIngresoAdmin(ingreso) {
 
     swal({
-            title: 'Eliminar Ingreso?',
-            text: 'Se eliminaran los gastos relacionados. ',
-            icon: 'warning',
-            buttons: true,
-            dangerMode: true,
-        })
+        title: 'Eliminar Ingreso?',
+        text: 'Se eliminaran los gastos relacionados. ',
+        icon: 'warning',
+        buttons: true,
+        dangerMode: true,
+    })
         .then((willDelete) => {
             if (willDelete) {
                 $('#idIngresoEliminar').val(ingreso);
@@ -80,12 +80,12 @@ function confirmarIngreso(ingreso) {
     }
 
     swal({
-            title: 'Confirmar Ingreso?',
-            text: 'Los montos indicados ya no podrán ser modificados.',
-            icon: 'warning',
-            buttons: true,
-            dangerMode: true,
-        })
+        title: 'Confirmar Ingreso?',
+        text: 'Los montos indicados ya no podrán ser modificados.',
+        icon: 'warning',
+        buttons: true,
+        dangerMode: true,
+    })
         .then((willDelete) => {
             if (willDelete) {
                 $.ajax({
@@ -105,7 +105,9 @@ function confirmarIngreso(ingreso) {
                         return;
                     }
                     showSuccess("Se Aprobó el ingreso");
-                    location.reload();
+                    window.location.href = document.referrer;
+                    window.location.reload(true);
+
                 }).fail(function (jqXHR, textStatus, errorThrown) {
                     showError("Algo salió mal");
                 });
@@ -119,12 +121,12 @@ function confirmarIngreso(ingreso) {
 function rechazarIngreso(ingreso) {
 
     swal({
-            title: 'Rechazar Ingreso?',
-            text: 'Se rechazaran los gastos relacionados. ',
-            icon: 'warning',
-            buttons: true,
-            dangerMode: true,
-        })
+        title: 'Rechazar Ingreso?',
+        text: 'Se rechazaran los gastos relacionados. ',
+        icon: 'warning',
+        buttons: true,
+        dangerMode: true,
+    })
         .then((willDelete) => {
             if (willDelete) {
                 $('#idIngresoRechazar').val(ingreso);

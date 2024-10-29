@@ -1,7 +1,7 @@
 
 <footer class="main-footer">
   <div class="footer-right">
-    Coffee To Go | The coffee experience
+    {{ env('APP_NAME', 'MI RESTAURANTE') }} | {{ env('APP_SLOGAN', 'Restaurante') }}
   </div>
   
 </footer>

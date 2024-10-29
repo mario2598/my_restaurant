@@ -13,32 +13,10 @@ class FacturacionController extends Controller
 {
     use SpaceUtil;
     private $admin;
+
     public function __construct()
     {
         setlocale(LC_ALL, "es_ES");
-    }
-
-    public function index()
-    {
-        if (!$this->validarSesion("facFac")) {
-            $this->setMsjSeguridad();
-            return redirect('/');
-        }
-
-        $tipos =  $this->getTiposCategoriasProductos();
-        foreach ($tipos as $i => $t) {
-            if (count($t['categorias']) < 1) {
-                unset($tipos[$i]);
-            }
-        }
-
-        $data = [
-            'menus' => $this->cargarMenus(),
-            'tipos' => $tipos,
-            'panel_configuraciones' => $this->getPanelConfiguraciones()
-        ];
-
-        return view("facturacion.facturar", compact("data"));
     }
 
     public function goOrdenesAdmin()
@@ -110,24 +88,36 @@ class FacturacionController extends Controller
         return  $this->responseAjaxSuccess("", $ordenes);
     }
 
-
-    public function goPos()
+    public function getPosProductos()
     {
-        if (!$this->validarSesion("facFac")) {
-            $this->setMsjSeguridad();
-            return redirect('/');
-        }
-
         $tipos =  $this->getTiposCategoriasProductos();
         foreach ($tipos as $i => $t) {
             if (count($t['categorias']) < 1) {
                 unset($tipos[$i]);
             }
         }
+        return $tipos;
+    }
 
+    public function cargarPosProductosAjax()
+    {
+        try {
+            return $this->responseAjaxSuccess("", $this->getPosProductos());
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            return $this->responseAjaxServerError("Algo salió mal.", "");
+        }
+    }
+
+    public function goPos()
+    {
+
+        $sucursalFactura = MantenimientoSucursalController::getSucursalById($this->getUsuarioSucursal());
         $data = [
             'menus' => $this->cargarMenus(),
-            'tipos' => $tipos,
+            'tipos' => $this->getPosProductos(),
+            'sucursalFacturaIva' => $sucursalFactura->factura_iva == 1,
+            'mesas' => MesasController::getBySucursal($this->getUsuarioSucursal()),
             'cajaAbierta' =>  CajaController::tieneCajaAbierta(session('usuario')['id'], $this->getUsuarioSucursal()),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
@@ -184,8 +174,6 @@ class FacturacionController extends Controller
 
     public function getCategorias($tipo)
     {
-
-
         $categorias = DB::table('categoria')->select('id', 'categoria')->orderBy('posicion_menu', 'asc')->get();
 
         switch ($tipo) {
@@ -226,6 +214,7 @@ class FacturacionController extends Controller
                     'producto_menu.nombre',
                     'producto_menu.precio',
                     'producto_menu.posicion_menu',
+                    'pm_x_sucursal.comanda',
                     'impuesto.impuesto as impuesto',
                     'producto_menu.tipo_comanda',
                     DB::raw("'N' as es_promocion")
@@ -764,7 +753,6 @@ class FacturacionController extends Controller
         return $categorias;
     }
 
-
     public function getCategoriasProductosExternos($categorias)
     {
         foreach ($categorias as $categoria) {
@@ -781,6 +769,7 @@ class FacturacionController extends Controller
                     'producto_externo.posicion_menu',
                     'producto_externo.nombre',
                     'producto_externo.precio',
+                    'pe_x_sucursal.comanda',
                     'impuesto.impuesto as impuesto',
                     'pe_x_sucursal.cantidad',
                     DB::raw("'N' as es_promocion")
@@ -828,19 +817,6 @@ class FacturacionController extends Controller
             }
         }
         return $categorias;
-    }
-
-
-    public function goFactura(Request $request)
-    {
-        if (!$this->validarSesion("facFac")) {
-            $this->setMsjSeguridad();
-            return redirect('cocina/facturar/ordenes');
-        }
-
-        $id = $request->input('ipt_id_orden_factura');
-
-        return $this->gofacturaById($id);
     }
 
     public function validarCodDescuento(Request $request)
@@ -892,54 +868,12 @@ class FacturacionController extends Controller
         }
     }
 
-    private function gofacturaById($id)
-    {
-        if (empty($id)) {
-            $this->setError("Factura", "Id de orden incorrecto.");
-            return redirect('cocina/facturar/ordenes');
-        }
-        $orden = $this->getOrden($id);
-
-        if ($orden == null) {
-            $this->setError("Factura", "No existe la orden.");
-            return redirect('cocina/facturar/ordenes');
-        }
-
-        if ($orden->estado == 'FC' || $orden->estado == 'EPF') {
-            $this->setError("Factura", "La orden ya fue facturada.");
-            return redirect('cocina/facturar/ordenes');
-        }
-
-        $tipos =  $this->getTiposCategoriasProductos();
-        $clientes = $this->getClientes();
-
-        foreach ($clientes as $c) {
-            if ($c->id == $orden->cliente) {
-                $c->selected = true;
-            } else {
-                $c->selected = false;
-            }
-        }
-        $data = [
-            'menus' => $this->cargarMenus(),
-            'orden' => $orden,
-            'tipos' => $tipos,
-            'mesa' => $this->getInfoMesa($orden->mobiliario_salon),
-            'panel_configuraciones' => $this->getPanelConfiguraciones()
-        ];
-
-        return view("facturacion.factura", compact("data"));
-    }
-
-
     public function getClientes()
     {
         return DB::table('cliente')
             ->where('estado', 'A')
             ->get();
     }
-
-
 
     public static function getOrden($idOrden)
     {
@@ -1022,64 +956,31 @@ class FacturacionController extends Controller
         return  $this->responseAjaxSuccess("", "");
     }
 
-    public static function calcularMontosDetalles($detalles)
+    public static function asignarMontosDetalles($detalles, $descuento, $infoEnvio = null)
     {
-        $total = 0;
-        $subtotal = 0;
+        $infoEnvio = $infoEnvio ?? ['incluye_envio' => 'false', 'precio' => 0];
+
+        $totalGeneral = 0;
+        $subtotalGeneral = 0;
+        $subtotalAntesDescuento = 0;
         $montoImpuestos = 0;
         $montoImpuestoServicioMesa = 0;
-
-        foreach ($detalles as $d) {
-            if ($d['cantidad'] > 0) {
-                $totalProducto = $d['cantidad'] * $d['precio_unidad'];
-                $totalExtras = 0;
-                if (isset($d['extras'])) {
-                    foreach ($d['extras'] as $extra) {
-                        $totalExtras = $totalExtras + ($d['cantidad'] * $extra['precio']);
-                    }
-                }
-
-
-                $totalProducto = $totalProducto + $totalExtras;
-                if ($d['impuestoServicio'] == 'S') {
-                    $impuestoServicio = $totalProducto - ($totalProducto / 1.10);
-
-                    $totalProducto = $totalProducto + $impuestoServicio;
-
-                    $montoImpuestoServicioMesa = $montoImpuestoServicioMesa + $impuestoServicio;
-                }
-
-                if ($d['impuesto'] > 0) {
-                    $productoImpuesto = $totalProducto - ($totalProducto / (floatval("1." . $d['impuesto'])));
-                    $montoImpuestos = $montoImpuestos + $productoImpuesto;
-                } else {
-                    $productoImpuesto = 0;
-                }
-                $subtotal = $subtotal + ($totalProducto - $productoImpuesto);
-            }
-        }
-        $total = $subtotal + $montoImpuestos;
-
-        return [
-            'total' => $total,
-            'subtotal' => $subtotal,
-            'montoImpuestos' => $montoImpuestos,
-            "totalExtras" => $totalExtras,
-            'montoImpuestoServicioMesa' => $montoImpuestoServicioMesa,
-        ];
-    }
-
-    public static function asignarMontosDetalles($detalles, $totalOrden, $descuento, $infoEnvio)
-    {
-        $total = 0;
-        $subtotal = 0;
-        $montoImpuestos = 0;
-        $montoImpuestoServicioMesa = 0;
+        $totalExtrasGeneral = 0;
         $listaDetallesNueva = [];  // Crear una lista vacía
+        $sucursal = DB::table('usuario')
+            ->leftjoin('sucursal', 'sucursal.id', '=', 'usuario.sucursal')
+            ->select('sucursal.*')
+            ->where('usuario.id', '=', session('usuario')['id'])
+            ->get()->first();
 
         foreach ($detalles as $d) {
+            if ($infoEnvio['incluye_envio'] == 'true') {
+                $d['impuestoServicio'] = 'N';
+            }
+
             if ($d['cantidad'] > 0) {
-                $totalProducto = $d['cantidad'] * $d['precio_unidad'];
+                $totalLinea = $d['cantidad'] * $d['precio_unidad'];
+                $subTotalLinea = 0;
                 $totalExtras = 0;
                 $extraLinea = 0;
                 if (isset($d['extras'])) {
@@ -1088,57 +989,145 @@ class FacturacionController extends Controller
                         $totalExtras = $totalExtras + $extraLinea;
                     }
                 }
+                $totalLinea = $totalLinea + $totalExtras;
 
-                $totalProducto = $totalProducto + $totalExtras;
+                $montoIvaLinea = 0;
+                $montoLineaSinIva = $totalLinea;
+                if ($d['impuesto'] > 0 && $sucursal->factura_iva == 1) {
+                    $montoLineaSinIva = ($totalLinea / (floatval("1." . $d['impuesto'])));
+                    $montoIvaLinea = $totalLinea - $montoLineaSinIva;
+                }
+
+                $impuestoServicio = 0;
                 if ($d['impuestoServicio'] == 'S') {
-                    $impuestoServicio = $totalProducto - ($totalProducto / 1.10);
-
-                    $totalProducto = $totalProducto + $impuestoServicio;
-
-                    $montoImpuestoServicioMesa = $montoImpuestoServicioMesa + $impuestoServicio;
+                    $impuestoServicio = ($montoLineaSinIva * 0.10);
+                    $montoLineaSinIva = $montoLineaSinIva + $impuestoServicio;
+                    if ($d['impuesto'] > 0  && $sucursal->factura_iva == 1) {
+                        $montoIvaLinea = ($montoLineaSinIva) * (floatval("0." . $d['impuesto']));
+                    }
                 }
 
-                $porcentajeDescuento = $totalProducto / $totalOrden;
-                $montoDescuentoLinea = $porcentajeDescuento * $descuento;
-                $totalProducto  = $totalProducto - $montoDescuentoLinea;
-                if ($d['impuesto'] > 0) {
-                    $productoImpuesto = $totalProducto - ($totalProducto / (floatval("1." . $d['impuesto'])));
-                    $montoImpuestos = $montoImpuestos + $productoImpuesto;
-                } else {
-                    $productoImpuesto = 0;
-                }
-                $d['montoIva'] = $productoImpuesto;
-                $d['subTotal'] = ($totalProducto - $productoImpuesto);
-                $d['totalGen'] = $totalProducto;
+                $subTotalLinea = $montoLineaSinIva;
+
+                $subtotalAntesDescuento += $subTotalLinea;
+
+                $d['subTotal'] = $subTotalLinea;
+                $d['totalGen'] = $subTotalLinea + $montoIvaLinea;
+
                 $objeto = [
-                    'totalGen' => $totalProducto + $montoDescuentoLinea,
-                    'subTotal' => ($totalProducto - $productoImpuesto),
-                    'totalExtras' => $extraLinea,
+                    'totalGen' => $subTotalLinea + $montoIvaLinea,
+                    'subTotal' => $subTotalLinea,
+                    'totalExtras' => $totalExtras,
                     'extras' => $d['extras'] ?? [],
-                    'montoIva' =>  $productoImpuesto,
-                    'descuento' => $montoDescuentoLinea,
+                    'linea_envio' => false,
+                    'montoIva' =>  $montoIvaLinea,
+                    'montoImpuestoServicioMesa' =>  $impuestoServicio,
+                    'descuento' => 0,
                     'detalle' =>  $d
                 ];
+
                 array_push($listaDetallesNueva, $objeto);
-                $subtotal = $subtotal + ($totalProducto - $productoImpuesto);
             }
         }
 
-        $subtotal = $subtotal + $montoImpuestos + $descuento;
-        $total = $subtotal - $descuento;
         if ($infoEnvio['incluye_envio'] == 'true') {
-            $total =   $total  + $infoEnvio['precio'];
+            $montoLineaEnvioSinIva = ($infoEnvio['precio'] / 1.13);
+            $montoIvaLineaEnvio = $infoEnvio['precio'] - ($montoLineaEnvioSinIva);
+            $envioLinea = [
+                'totalGen' => $infoEnvio['precio'],
+                'subTotal' =>  $montoLineaEnvioSinIva,
+                'totalExtras' => 0,
+                'extras' => [],
+                'linea_envio' => true,
+                'montoIva' => $montoIvaLineaEnvio,
+                'montoImpuestoServicioMesa' =>  0,
+                'descuento' => 0,
+                'detalle' => [
+                    'producto' => ['nombre' => 'Servicio de Envío'],
+                    'descripcion' => 'Envío',
+                    'cantidad' => 1,
+                    'precio_unidad' => $infoEnvio['precio'],
+                    'impuesto' => 13
+                ]
+            ];
+            $subtotalAntesDescuento += $montoLineaEnvioSinIva;
+            array_push($listaDetallesNueva, $envioLinea);
+        }
+
+        $subtotalGeneral = 0;
+        $totalDescuentoGen = 0;
+        $infoDescuento = "";
+        $codDescuento = "";
+        $idDesc = null;
+        if ($descuento != null) {
+            $verificaCodDesc = FacturacionController::verificaCodDescuento($descuento['codigo']);
+            if ($verificaCodDesc['estado']) {
+
+                $descuentoObj = $verificaCodDesc['datos'];
+
+                if ($descuentoObj->cod_general == 'DESCUENTO_ABSOLUTO') {
+                    $totalDescuentoGen = $descuentoObj->descuento;
+                } elseif ($descuentoObj->cod_general == 'DESCUENTO_PORCENTAJE') {
+                    $totalDescuentoGen = $subtotalAntesDescuento * ($descuentoObj->descuento / 100);
+                } else {
+                    $totalDescuentoGen = 0;
+                }
+
+                $infoDescuento = $descuentoObj->codigo . " : " . $descuentoObj->descripcion . " [ " . $descuentoObj->cod_general . " = " . $descuentoObj->descuento . " ]";
+                $codDescuento = $descuentoObj->codigo;
+                $idDesc = $descuentoObj->id;
+            } else {
+                return null;
+            }
+        }
+
+        $montoImpuestos = 0;
+        $totalGeneral = 0;
+        $subtotalGeneral = 0;
+        $montoImpuestoServicioMesa = 0;
+
+        foreach ($listaDetallesNueva as &$detalle) {
+            if (!$detalle['linea_envio']) {
+                if ($totalDescuentoGen > 0) {
+
+                    $porcentajeDescuento = $detalle['subTotal'] / $subtotalAntesDescuento;
+                    $montoDescuentoLinea = $porcentajeDescuento * $totalDescuentoGen;
+                    $detalle['descuento'] = $montoDescuentoLinea;
+
+                    // Recalcular el subtotal con el descuento aplicado
+                    $subtotalConDescuento = $detalle['subTotal'] - $montoDescuentoLinea;
+
+                    if ($detalle['detalle']['impuesto'] > 0 && $sucursal->factura_iva == 1) {
+                        $ivaConDescuento = ($subtotalConDescuento * (floatval("0." . $detalle['detalle']['impuesto'])));
+                    } else {
+                        $ivaConDescuento = 0;
+                    }
+
+                    $detalle['montoIva'] = $ivaConDescuento;
+                    $detalle['subTotal'] = $subtotalConDescuento;
+                    $detalle['totalGen'] = $subtotalConDescuento + $ivaConDescuento;
+                }
+            }
+
+            $totalExtrasGeneral += $detalle['totalExtras'];
+            $subtotalGeneral += $detalle['subTotal'];
+            $montoImpuestos += $detalle['montoIva'];
+            $totalGeneral += $detalle['totalGen'];
+            $montoImpuestoServicioMesa += $detalle['montoImpuestoServicioMesa'];
         }
 
         return [
-            'total' => $total,
+            'total' => $totalGeneral,
             'detalles' => $listaDetallesNueva,
-            'total_pagar' => $total,
-            'subtotal' => $subtotal,
+            'total_pagar' => $totalGeneral,
+            'codDescuento' => $codDescuento,
+            'idDesc' => $idDesc,
+            'infoDescuento' => $infoDescuento,
+            'subtotal' => $subtotalGeneral,
             'envio' => $infoEnvio['precio'] ?? 0,
-            'descuento' => $descuento,
+            'descuento' => $totalDescuentoGen,
             'montoImpuestos' => $montoImpuestos,
-            "totalExtras" => $totalExtras,
+            'totalExtras' => $totalExtrasGeneral,
             'montoImpuestoServicioMesa' => $montoImpuestoServicioMesa,
         ];
     }
@@ -1163,12 +1152,8 @@ class FacturacionController extends Controller
             ->update(['cont_ordenes' => $params->cont_ordenes + 1]);
     }
 
-
     public function crearFactura(Request $request)
     {
-        if (!$this->validarSesion("facFac")) {
-            return $this->responseAjaxServerError("No tienes permisos para realizar la acción.", []);
-        }
 
         $orden = $request->input("orden");
         $envio = $request->input("envio");
@@ -1190,47 +1175,19 @@ class FacturacionController extends Controller
             return $this->responseAjaxServerError($resValidarFE['mensaje'], []);
         }
 
-        $existeDescuento = false;
-        $descuento = 0;
         if ($orden['codigo_descuento'] != null) {
-            $descuento = $orden['codigo_descuento'];
-            $verificaCodDesc = FacturacionController::verificaCodDescuento($descuento['codigo']);
+            $verificaCodDesc = FacturacionController::verificaCodDescuento($orden['codigo_descuento']['codigo']);
             if (!$verificaCodDesc['estado']) {
-                $descuento = 0;
-                $existeDescuento = false;
-            } else {
-                $existeDescuento = true;
+                return $this->responseAjaxServerError($verificaCodDesc['mensajes'], []);
             }
         }
 
         $cliente = $orden['cliente'];
 
-        $infoFacturacionSinDescuento = FacturacionController::calcularMontosDetalles($detalles);
-        $totalFacturaGen = $infoFacturacionSinDescuento['total'];
-        $totalFacturaGenDescuento = $totalFacturaGen;
-        $totalDescuentoGen = 0;
-        $descuentoObj = null;
-        $infoDescuento = "";
-        if ($existeDescuento) {
-            $descuentoObj = $verificaCodDesc['datos'];
-            if ($descuentoObj->cod_general == 'DESCUENTO_ABSOLUTO') {
-                $totalDescuentoGen = $descuentoObj->descuento;
-                if ($totalDescuentoGen > $totalFacturaGen) {
-                    return $this->responseAjaxServerError("El total del descuento no puede ser mayor al total de la factura", []);
-                }
-                $totalFacturaGenDescuento = $totalFacturaGenDescuento - $totalDescuentoGen;
-            } else if ($descuentoObj->cod_general == 'DESCUENTO_PORCENTAJE') {
-                $totalDescuentoGen = $totalFacturaGen * ($descuentoObj->descuento / 100);
-                $totalFacturaGenDescuento = $totalFacturaGenDescuento - $totalDescuentoGen;
-            } else {
-                return $this->responseAjaxServerError("No se encontro el tipo de descuento a aplicar", []);
-            }
+        $asignarMontosDetalles = FacturacionController::asignarMontosDetalles($detalles, $orden['codigo_descuento'] ?? null, $envio);
 
-            $infoDescuento = $descuentoObj->codigo . " : " . $descuentoObj->descripcion . " [ " . $descuentoObj->cod_general . " = " . $descuentoObj->descuento . " ]";
-        }
-        $asignarMontosDetalles = FacturacionController::asignarMontosDetalles($detalles, $totalFacturaGen, $totalDescuentoGen, $envio);
         $detallesGuardar = $asignarMontosDetalles['detalles'];
-        $infoFacturacionFinal = $asignarMontosDetalles;
+
         $fechaActual = date("Y-m-d H:i:s");
 
         $mto_sinpe = $request->input("mto_sinpe");
@@ -1239,23 +1196,65 @@ class FacturacionController extends Controller
 
         try {
             DB::beginTransaction();
-
-
+            $numOrden = $this->getConsecutivoNuevaOrdenSucursal($this->getUsuarioSucursal());
             $id_orden = DB::table('orden')->insertGetId([
-                'id' => null, 'numero_orden' => $this->getConsecutivoNuevaOrdenSucursal($this->getUsuarioSucursal()),
-                'tipo' => null, 'fecha_fin' => $fechaActual, 'fecha_inicio' => $fechaActual, 'cliente' => null,
-                'nombre_cliente' => $cliente, 'estado' => null, 'total' => $infoFacturacionFinal['total'], 'total_con_descuento' => $infoFacturacionFinal['total_pagar'], 'subtotal' => $infoFacturacionFinal['subtotal'],
-                'impuesto' => $infoFacturacionFinal['montoImpuestos'], 'descuento' => $totalDescuentoGen,
-                'cajero' => session('usuario')['id'], 'monto_sinpe' => $mto_sinpe, 'monto_tarjeta' =>  $mto_tarjeta, 'monto_efectivo' => $mto_efectivo,
-                'factura_electronica' => $infoFE['incluyeFE'] == 'true' ? 'S' : 'N', 'ingreso' => null, 'sucursal' => $this->getUsuarioSucursal(),
-                'fecha_preparado' => $fechaActual, 'fecha_entregado' => $fechaActual,
-                'cocina_terminado' => 'N', 'bebida_terminado' => 'N', 'caja_cerrada' => 'N', 'pagado' => 1,
+                'id' => null,
+                'numero_orden' => $numOrden,
+                'tipo' => null,
+                'fecha_fin' => $fechaActual,
+                'fecha_inicio' => $fechaActual,
+                'cliente' => null,
+                'nombre_cliente' => $cliente,
+                'estado' => null,
+                'total' => $asignarMontosDetalles['total'],
+                'total_con_descuento' => $asignarMontosDetalles['total_pagar'],
+                'subtotal' => $asignarMontosDetalles['subtotal'],
+                'impuesto' => $asignarMontosDetalles['montoImpuestos'],
+                'descuento' => $asignarMontosDetalles['descuento'],
+                'mto_impuesto_servicio' => $asignarMontosDetalles['montoImpuestoServicioMesa'],
+                'cajero' => session('usuario')['id'],
+                'monto_sinpe' => $mto_sinpe,
+                'monto_tarjeta' =>  $mto_tarjeta,
+                'monto_efectivo' => $mto_efectivo,
+                'factura_electronica' => $infoFE['incluyeFE'] == 'true' ? 'S' : 'N',
+                'ingreso' => null,
+                'sucursal' => $this->getUsuarioSucursal(),
+                'fecha_preparado' => null,
+                'fecha_entregado' => null,
+                'cocina_terminado' => 'N',
+                'bebida_terminado' => 'N',
+                'caja_cerrada' => 'N',
+                'pagado' => 1,
                 'estado' => SisEstadoController::getIdEstadoByCodGeneral('ORD_EN_PREPARACION'),
-                'periodo' => date('Y'), 'cierre_caja' => CajaController::getIdCaja(session('usuario')['id'], $this->getUsuarioSucursal()),
-                'monto_envio' => $infoFacturacionFinal['envio'],
-                'ind_requiere_envio' => $envio['incluye_envio'] == 'true', 'info_descuento' => $infoDescuento
+                'periodo' => date('Y'),
+                'cierre_caja' => CajaController::getIdCaja(session('usuario')['id'], $this->getUsuarioSucursal()),
+                'monto_envio' => $asignarMontosDetalles['envio'],
+                'ind_requiere_envio' => $envio['incluye_envio'] == 'true',
+                'info_descuento' => $asignarMontosDetalles['infoDescuento'],
+                'mesa' => $orden['mesa'] == "-1" ? null : $orden['mesa']
             ]);
+
+            $pagoOrdenId = DB::table('pago_orden')->insertGetId([
+                'orden' => $id_orden,
+                'nombre_cliente' => $cliente,
+                'monto_tarjeta' => $mto_tarjeta,
+                'monto_efectivo' => $mto_efectivo,
+                'monto_sinpe' => $mto_sinpe,
+                'total' => $asignarMontosDetalles['total'],
+                'subtotal' => $asignarMontosDetalles['subtotal'],
+                'iva' => $asignarMontosDetalles['montoImpuestos'],
+                'descuento' => $asignarMontosDetalles['descuento'],
+                'fecha_pago' => $fechaActual,
+                'cod_promocion' => $asignarMontosDetalles['codDescuento'],
+                'impuesto_servicio' => $asignarMontosDetalles['montoImpuestoServicioMesa']
+            ]);
+
             $this->aumentarConsecutivoOrden($this->getUsuarioSucursal());
+
+            $id_comanda = DB::table('orden_comanda')->insertGetId([
+                'orden' => $id_orden,
+                'num_comanda' => $numOrden // Primera comanda para la orden recién creada
+            ]);
 
             $serv = new EntregasOrdenController();
             $servEstOrd = new EstOrdenController();
@@ -1277,33 +1276,82 @@ class FacturacionController extends Controller
             foreach ($detallesGuardar as $det) {
                 $d = $det['detalle'];
                 if ($d['cantidad'] > 0) {
-                    $producto = $d['producto'];
-                    $det_id = DB::table('detalle_orden')->insertGetId([
-                        'id' => null, 'cantidad' => $d['cantidad'],
-                        'nombre_producto' => $producto['nombre'], 'codigo_producto' => $producto['codigo'],
-                        'precio_unidad' => $d['precio_unidad'],
-                        'impuesto' => $det['montoIva'], 'total' => $det['totalGen'], 'descuento' => $det['descuento'], 'subtotal' => $det['subTotal'], 'total_extras' => $det['totalExtras'],
-                        'orden' => $id_orden, 'tipo_producto' => $d['tipo'], 'servicio_mesa' => $d['impuestoServicio'], 'observacion' => $d['observacion'],
-                        'tipo_comanda' => $d['tipoComanda'], 'cod_promocion' => $d['tipo']
-                    ]);
-                    foreach ($d['extras'] ?? [] as $extra) {
-                        $ext_id = DB::table('extra_detalle_orden')->insertGetId([
-                            'id' => null, 'detalle' => $det_id, 'extra' => $extra['id'],
-                            'orden' => $id_orden, 'descripcion_extra' => $extra['descripcion'],
-                            'total' => $extra['precio'] * $d['cantidad'],'id_producto'=>$extra['idProd'], 'tipo_producto' => $extra['tipo_producto']
+                    if (!$det['linea_envio']) {
+                        $producto = $d['producto'];
+                        $idComanda = null;
+                        if ($d['tipo'] == 'R') {
+                            $idComanda = ProductosMenuController::getIdComandaByCodigoSucursal($producto['codigo'], $this->getUsuarioSucursal());
+                        } else if ($d['tipo'] == 'E') {
+                            $idComanda = ProductosExternosController::getIdComandaByCodigoSucursal($producto['codigo'], $this->getUsuarioSucursal());
+                        }
+
+                        $det_id = DB::table('detalle_orden')->insertGetId([
+                            'id' => null,
+                            'cantidad' => $d['cantidad'],
+                            'nombre_producto' => $producto['nombre'],
+                            'codigo_producto' => $producto['codigo'],
+                            'precio_unidad' => $d['precio_unidad'],
+                            'impuesto' => $det['montoIva'],
+                            'total' => $det['totalGen'],
+                            'descuento' => $det['descuento'],
+                            'subtotal' => $det['subTotal'],
+                            'total_extras' => $det['totalExtras'],
+                            'orden' => $id_orden,
+                            'tipo_producto' => $d['tipo'],
+                            'servicio_mesa' => $d['impuestoServicio'],
+                            'monto_servicio' => $det['montoImpuestoServicioMesa'],
+                            'observacion' => $d['observacion'],
+                            'tipo_comanda' => $d['tipoComanda'],
+                            'cod_promocion' => $asignarMontosDetalles['codDescuento'],
+                            'cantidad_pagada' =>  $d['cantidad'],
+                            'comanda' =>  $idComanda
+                        ]);
+                        foreach ($d['extras'] ?? [] as $extra) {
+                            $ext_id = DB::table('extra_detalle_orden')->insertGetId([
+                                'id' => null,
+                                'detalle' => $det_id,
+                                'extra' => $extra['id'],
+                                'orden' => $id_orden,
+                                'descripcion_extra' => $extra['descripcion'],
+                                'total' => $extra['precio'] * $d['cantidad'],
+                                'id_producto' => $extra['idProd'],
+                                'tipo_producto' => $extra['tipo_producto']
+                            ]);
+                        }
+
+                        $res =  $this->restarProductoExternoInventario($det_id, $d['cantidad']);
+                        if (!$res['estado']) {
+                            DB::rollBack();
+                            return $this->responseAjaxServerError($res['mensaje'], []);
+                        }
+
+                        DB::table('detalle_orden_comanda')->insert([
+                            'orden_comanda' => $id_comanda,
+                            'detalle_orden' => $det_id,
+                            'cantidad' => $d['cantidad'],
+                            'comanda' => $idComanda,
+                            'preparado' => 0,
+                            'fecha_ingreso' => $fechaActual,
+                            'usuario_gestion' => session('usuario')['id']
                         ]);
                     }
+
+                    DB::table('detalle_pago_orden')->insert([
+                        'pago_orden' => $pagoOrdenId,
+                        'detalle_orden' => (!$det['linea_envio']) ? $det_id  : null,
+                        'cantidad_pagada' => $d['cantidad'],
+                        'subtotal' => $det['subTotal'],
+                        'mto_impuesto_servicio' => $det['montoImpuestoServicioMesa'],
+                        'dsc_linea' => ($d['producto']['nombre'] ?? 'Producto'),
+                        'descuento' => $det['descuento'],
+                        'iva' => $det['montoIva'],
+                        'total' => $det['totalGen']
+                    ]);
                 }
             }
 
-            $res = $this->restarInventarioOrden($id_orden);
-            if ($existeDescuento) {
-                CodigosPromocionController::usarPromocion($descuentoObj->id);
-            }
-
-            if (!$res['estado']) {
-                DB::rollBack();
-                return $this->responseAjaxServerError($res['mensaje'], []);
+            if ($asignarMontosDetalles['idDesc'] != null) {
+                CodigosPromocionController::usarPromocion($asignarMontosDetalles['idDesc']);
             }
 
             if ($infoFE['incluyeFE'] == 'true') {
@@ -1311,7 +1359,8 @@ class FacturacionController extends Controller
                     $infoFE["info_ced_fe"],
                     $infoFE["info_nombre_fe"],
                     $infoFE["info_correo_fe"],
-                    $id_orden
+                    $id_orden,
+                    null
                 );
                 if (!$resCreaFe['estado']) {
                     DB::rollBack();
@@ -1328,15 +1377,19 @@ class FacturacionController extends Controller
         }
     }
 
-    public function crearInfoFacturaElectronica($cedula, $nombre, $correo, $orden)
+    public function crearInfoFacturaElectronica($cedula, $nombre, $correo, $orden, $id_pago)
     {
         try {
             $idEst = SisEstadoController::getIdEstadoByCodGeneral('FE_ORDEN_PEND');
             $ext_id = DB::table('fe_info')->insertGetId([
-                'id' => null, 'orden' => $orden, 'cedula' => $cedula,
-                'nombre' => $nombre, 'correo' => $correo,
+                'id' => null,
+                'orden' => $orden,
+                'cedula' => $cedula,
+                'nombre' => $nombre,
+                'correo' => $correo,
                 'estado' => SisEstadoController::getIdEstadoByCodGeneral('FE_ORDEN_PEND'),
-                'num_comprobante' => ''
+                'num_comprobante' => '',
+                'id_pago' => $id_pago
             ]);
 
 
@@ -1350,9 +1403,13 @@ class FacturacionController extends Controller
     {
         try {
             $ext_id = DB::table('entrega_orden')->insertGetId([
-                'id' => null, 'orden' => $orden, 'precio' => $precio,
-                'descripcion_lugar' => $dsc_contacto, 'contacto' => $dsc_contacto,
-                'estado' => SisEstadoController::getIdEstadoByCodGeneral('ENTREGA_PREPARACION_PEND'), 'encargado' => null
+                'id' => null,
+                'orden' => $orden,
+                'precio' => $precio,
+                'descripcion_lugar' => $dsc_contacto,
+                'contacto' => $dsc_contacto,
+                'estado' => SisEstadoController::getIdEstadoByCodGeneral('ENTREGA_PREPARACION_PEND'),
+                'encargado' => null
             ]);
             return $this->responseAjaxSuccess("", $ext_id);
         } catch (QueryException $ex) {
@@ -1383,6 +1440,11 @@ class FacturacionController extends Controller
         if ($orden == null) {
             return $this->responseAjaxServerError("Número de orden invalido", []);
         }
+
+        if ($orden->caja_cerrada == 'S') {
+            return $this->responseAjaxServerError("La caja de esta orden ya fue cerrada.", []);
+        }
+
 
         if ($orden->cod_general == 'ORD_ANULADA') {
             return $this->responseAjaxServerError("La orden no se encuentra en un estado para ser anulada", []);
@@ -1417,7 +1479,8 @@ class FacturacionController extends Controller
 
         $ordenes = DB::table('orden')
             ->leftjoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
-            ->select('orden.*', 'sis_estado.nombre as estadoOrden', 'sis_estado.cod_general')
+            ->leftjoin('mesa', 'mesa.id', '=', 'orden.mesa')
+            ->select('orden.*', 'sis_estado.nombre as estadoOrden', 'sis_estado.cod_general', 'mesa.numero_mesa')
             ->where('orden.cierre_caja', '=', CajaController::getIdCaja(session('usuario')['id'], $this->getUsuarioSucursal()))
             ->orderBy('orden.fecha_inicio', 'DESC')->get();
 
@@ -1435,11 +1498,8 @@ class FacturacionController extends Controller
         return $this->responseAjaxSuccess("", $ordenes);
     }
 
-
     public function devolverInventarioOrden($id_orden, $lineas)
     {
-
-
         $detalles = DB::table('detalle_orden')->select('detalle_orden.*')->where('orden', '=', $id_orden)->whereIn('detalle_orden.id', $lineas)->get();
         foreach ($detalles as $d) {
             if ($d->tipo_producto == 'R') {
@@ -1487,6 +1547,78 @@ class FacturacionController extends Controller
         return $this->responseAjaxSuccess("", "");
     }
 
+    public function restarProductoMenuMatPrima($id_detalle_orden, $cantidad_rebajar)
+    {
+        try {
+            $d = DB::table('detalle_orden')->select('detalle_orden.*')->where('id', '=', $id_detalle_orden)->get()->first();
+            if ($d->tipo_producto == 'R') {
+                $res = $this->devolverInventarioMateriaPrima($d, $cantidad_rebajar);
+                if (!$res['estado']) {
+                    return $this->responseAjaxServerError($res['mensaje'], []);
+                }
+            } else if ($d->tipo_producto == 'PROMO') {
+                $cantidadLinea = $cantidad_rebajar;
+
+                $prodR = DB::table('det_grupo_promocion')
+                    ->join('producto_menu', 'producto_menu.id', '=', 'det_grupo_promocion.producto')
+                    ->select('det_grupo_promocion.*', 'producto_menu.codigo as codigo_producto', 'producto_menu.descripcion as nomProd')
+                    ->where('det_grupo_promocion.tipo', '=', "R")
+                    ->where('det_grupo_promocion.grupo_promocion', '=', $d->codigo_producto)->get();
+
+                foreach ($prodR as $p) {
+                    $cantProdAux = $cantidadLinea * $p->cantidad;
+                    $res = $this->devolverInventarioMateriaPrimaPromo($cantProdAux, $p->codigo_producto, $d->orden, $d->id);
+                    if (!$res['estado']) {
+                        return $this->responseAjaxServerError($res['mensaje'], []);
+                    }
+                }
+            }
+
+            return $this->responseAjaxSuccess("", "");
+        } catch (QueryException $ex) {
+            return $this->responseAjaxServerError("Algo salió mal.", "");
+        }
+    }
+
+    private function restarProductoExternoInventario($id_detalle_orden, $cantidad_rebajar)
+    {
+        try {
+            $d = DB::table('detalle_orden')->select('detalle_orden.*')->where('id', '=', $id_detalle_orden)->get()->first();
+
+            if ($d->tipo_producto == 'E') {
+                $res = $this->restarInventarioProductoExterno($cantidad_rebajar, $d->codigo_producto);
+                if (!$res['estado']) {
+                    return $this->responseAjaxServerError($res['mensaje'], []);
+                }
+
+                $res2 = $this->restarInventarioMateriaPrimaPE($cantidad_rebajar, $d->codigo_producto, $d->nombre_producto);
+                if (!$res2['estado']) {
+                    return $this->responseAjaxServerError($res2['mensaje'], []);
+                }
+            } else if ($d->tipo_producto == 'PROMO') {
+                $prodE = DB::table('det_grupo_promocion')
+                    ->join('producto_externo', 'producto_externo.id', '=', 'det_grupo_promocion.producto')
+                    ->select('det_grupo_promocion.*', 'producto_externo.codigo_barra', 'producto_externo.id as idProd', 'producto_externo.nombre as nomProd')
+                    ->where('det_grupo_promocion.tipo', '=', "E")
+                    ->where('det_grupo_promocion.grupo_promocion', '=', $d->codigo_producto)->get();
+
+                foreach ($prodE as $p) {
+                    $res = $this->restarInventarioProductoExternoProm($p->cantidad * $cantidad_rebajar, $p->idProd, $p->codigo_barra);
+                    if (!$res['estado']) {
+                        return $this->responseAjaxServerError($res['mensaje'], []);
+                    }
+
+                    $res2 = $this->restarInventarioMateriaPrimaPE($p->cantidad * $cantidad_rebajar, $p->codigo_barra, $p->nomProd);
+                    if (!$res2['estado']) {
+                        return $this->responseAjaxServerError($res2['mensaje'], []);
+                    }
+                }
+            }
+            return $this->responseAjaxSuccess("", "");
+        } catch (QueryException $ex) {
+            return $this->responseAjaxServerError("Algo salió mal.", "");
+        }
+    }
 
     private function restarInventarioOrden($id_orden)
     {
@@ -1546,11 +1678,11 @@ class FacturacionController extends Controller
         return $this->responseAjaxSuccess("", "");
     }
 
-    public function devolverInventarioMateriaPrima($detalle)
+    public function devolverInventarioMateriaPrima($detalle, $cantidad_rebajar)
     {
         try {
             $fechaActual = date("Y-m-d H:i:s");
-            $cantidadRebajar = $detalle->cantidad;
+            $cantidadRebajar = $cantidad_rebajar;
             $codigoProductoRebajar = $detalle->codigo_producto;
             $mt_prod = DB::table('mt_x_producto')
                 ->leftjoin('producto_menu', 'producto_menu.id', '=', 'mt_x_producto.producto')
@@ -1577,9 +1709,15 @@ class FacturacionController extends Controller
                     ' | Detalle : Aumento, devolución al inventario por anulación de factura. Producto  : ' . $codigoProductoRebajar . '-' . $detalle->nombre_producto;
 
                 DB::table('bit_materia_prima')->insert([
-                    'id' => null, 'usuario' => session('usuario')['id'],
-                    'materia_prima' => $i->materia_prima, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                    'cantidad_ajuste' => ($i->cantidad * $cantidadRebajar), 'cantidad_nueva' =>  $cantAux, 'fecha' => $fechaActual, 'sucursal' => $this->getUsuarioSucursal()
+                    'id' => null,
+                    'usuario' => session('usuario')['id'],
+                    'materia_prima' => $i->materia_prima,
+                    'detalle' => $detalleMp,
+                    'cantidad_anterior' =>  $cantidadInventario ?? 0,
+                    'cantidad_ajuste' => ($i->cantidad * $cantidadRebajar),
+                    'cantidad_nueva' =>  $cantAux,
+                    'fecha' => $fechaActual,
+                    'sucursal' => $this->getUsuarioSucursal()
                 ]);
             }
             $extras = [];
@@ -1616,9 +1754,15 @@ class FacturacionController extends Controller
                         ' | Detalle : Aumento, devolución al inventario por anulación de factura. Extra  : ' . $e->descripcion_extra . '. Producto :' . $detalle->nombre_producto;
 
                     DB::table('bit_materia_prima')->insert([
-                        'id' => null, 'usuario' => session('usuario')['id'],
-                        'materia_prima' => $e->materia_prima, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                        'cantidad_ajuste' => ($e->cant_mp * $cantidadRebajar), 'cantidad_nueva' =>  $cantAux, 'fecha' => $fechaActual, 'sucursal' => $this->getUsuarioSucursal()
+                        'id' => null,
+                        'usuario' => session('usuario')['id'],
+                        'materia_prima' => $e->materia_prima,
+                        'detalle' => $detalleMp,
+                        'cantidad_anterior' =>  $cantidadInventario ?? 0,
+                        'cantidad_ajuste' => ($e->cant_mp * $cantidadRebajar),
+                        'cantidad_nueva' =>  $cantAux,
+                        'fecha' => $fechaActual,
+                        'sucursal' => $this->getUsuarioSucursal()
                     ]);
                 }
             }
@@ -1659,9 +1803,15 @@ class FacturacionController extends Controller
                 ' | Detalle : Aumento, devolución al inventario por anulación de factura. Producto  : ' . $i->nomProd . '-' . $codigoProductoRebajar;
 
             DB::table('bit_materia_prima')->insert([
-                'id' => null, 'usuario' => session('usuario')['id'],
-                'materia_prima' => $i->materia_prima, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                'cantidad_ajuste' => ($i->cantidad * $cantidadDetalleLinea), 'cantidad_nueva' =>  $cantAux, 'fecha' => $fechaActual, 'sucursal' => $this->getUsuarioSucursal()
+                'id' => null,
+                'usuario' => session('usuario')['id'],
+                'materia_prima' => $i->materia_prima,
+                'detalle' => $detalleMp,
+                'cantidad_anterior' =>  $cantidadInventario ?? 0,
+                'cantidad_ajuste' => ($i->cantidad * $cantidadDetalleLinea),
+                'cantidad_nueva' =>  $cantAux,
+                'fecha' => $fechaActual,
+                'sucursal' => $this->getUsuarioSucursal()
             ]);
         }
         $extras = [];
@@ -1698,9 +1848,15 @@ class FacturacionController extends Controller
                     ' | Detalle : Aumento, devolución al inventario por anulación de factura. Extra  : ' . $e->descripcion_extra . '. Producto :' . $codigo_producto;
 
                 DB::table('bit_materia_prima')->insert([
-                    'id' => null, 'usuario' => session('usuario')['id'],
-                    'materia_prima' => $e->materia_prima, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                    'cantidad_ajuste' => ($e->cant_mp ?? "0" * $cantidadDetalleLinea), 'cantidad_nueva' =>  $cantAux, 'fecha' => $fechaActual, 'sucursal' => $this->getUsuarioSucursal()
+                    'id' => null,
+                    'usuario' => session('usuario')['id'],
+                    'materia_prima' => $e->materia_prima,
+                    'detalle' => $detalleMp,
+                    'cantidad_anterior' =>  $cantidadInventario ?? 0,
+                    'cantidad_ajuste' => ($e->cant_mp ?? "0" * $cantidadDetalleLinea),
+                    'cantidad_nueva' =>  $cantAux,
+                    'fecha' => $fechaActual,
+                    'sucursal' => $this->getUsuarioSucursal()
                 ]);
             }
         }
@@ -1742,11 +1898,15 @@ class FacturacionController extends Controller
                     ' | Detalle : Rebajo por venta producto  : ' . $codigoProductoRebajar . '-' . $nombre_producto;
 
                 DB::table('bit_materia_prima')->insert([
-                    'id' => null, 'usuario' => session('usuario')['id'],
-                    'materia_prima' => $i->materia_prima, 'detalle' => $detalleMp,
+                    'id' => null,
+                    'usuario' => session('usuario')['id'],
+                    'materia_prima' => $i->materia_prima,
+                    'detalle' => $detalleMp,
                     'cantidad_anterior' =>  $cantidadInventario ?? 0,
                     'cantidad_ajuste' => ($i->cantidad * $cantidadRebajar),
-                    'cantidad_nueva' =>  $cantAux, 'fecha' => $fechaActual, 'sucursal' => $this->getUsuarioSucursal()
+                    'cantidad_nueva' =>  $cantAux,
+                    'fecha' => $fechaActual,
+                    'sucursal' => $this->getUsuarioSucursal()
                 ]);
             }
 
@@ -1805,9 +1965,15 @@ class FacturacionController extends Controller
                     ' | Detalle : Rebajo por venta producto  : ' . $codigoProductoRebajar . '-' . $nombreProducto;
 
                 DB::table('bit_materia_prima')->insert([
-                    'id' => null, 'usuario' => session('usuario')['id'],
-                    'materia_prima' => $i->materia_prima, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                    'cantidad_ajuste' => ($i->cantidad * $cantidadRebajar), 'cantidad_nueva' =>  $cantAux, 'fecha' => $fechaActual, 'sucursal' => $this->getUsuarioSucursal()
+                    'id' => null,
+                    'usuario' => session('usuario')['id'],
+                    'materia_prima' => $i->materia_prima,
+                    'detalle' => $detalleMp,
+                    'cantidad_anterior' =>  $cantidadInventario ?? 0,
+                    'cantidad_ajuste' => ($i->cantidad * $cantidadRebajar),
+                    'cantidad_nueva' =>  $cantAux,
+                    'fecha' => $fechaActual,
+                    'sucursal' => $this->getUsuarioSucursal()
                 ]);
             }
             $extras = DB::table('extra_detalle_orden')
@@ -1840,9 +2006,15 @@ class FacturacionController extends Controller
                             ' | Detalle : Rebajo por venta de extra : ' . $e->descripcion_extra .
                             ' | Producto :' . $codigoProductoRebajar . '-' . $nombreProducto;
                         DB::table('bit_materia_prima')->insert([
-                            'id' => null, 'usuario' => session('usuario')['id'],
-                            'materia_prima' => $extraAux->materia_prima, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                            'cantidad_ajuste' => ($extraAux->cant_mp  * $cantidadRebajar), 'cantidad_nueva' =>  $cantAux, 'fecha' => $fechaActual, 'sucursal' => $this->getUsuarioSucursal()
+                            'id' => null,
+                            'usuario' => session('usuario')['id'],
+                            'materia_prima' => $extraAux->materia_prima,
+                            'detalle' => $detalleMp,
+                            'cantidad_anterior' =>  $cantidadInventario ?? 0,
+                            'cantidad_ajuste' => ($extraAux->cant_mp  * $cantidadRebajar),
+                            'cantidad_nueva' =>  $cantAux,
+                            'fecha' => $fechaActual,
+                            'sucursal' => $this->getUsuarioSucursal()
                         ]);
                     }
                 }
@@ -1961,9 +2133,15 @@ class FacturacionController extends Controller
                 ' | Detalle : Aumento, devolución al inventario por anulación de factura. Producto  : ' . $codigoProductoRebajar;
 
             DB::table('bit_materia_prima')->insert([
-                'id' => null, 'usuario' => session('usuario')['id'],
-                'materia_prima' => $i->materia_prima, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                'cantidad_ajuste' => ($i->cantidad * $cantidadRebajar), 'cantidad_nueva' =>  $cantAux, 'fecha' => $fechaActual, 'sucursal' => $this->getUsuarioSucursal()
+                'id' => null,
+                'usuario' => session('usuario')['id'],
+                'materia_prima' => $i->materia_prima,
+                'detalle' => $detalleMp,
+                'cantidad_anterior' =>  $cantidadInventario ?? 0,
+                'cantidad_ajuste' => ($i->cantidad * $cantidadRebajar),
+                'cantidad_nueva' =>  $cantAux,
+                'fecha' => $fechaActual,
+                'sucursal' => $this->getUsuarioSucursal()
             ]);
         }
 
@@ -2012,9 +2190,15 @@ class FacturacionController extends Controller
                     ' | Detalle : Devolución al inventario por anulación de factura de venta. Producto  : ' . $codigoProductoRebajar . '-' . $detalle->nombre_producto;
 
                 DB::table('bit_materia_prima')->insert([
-                    'id' => null, 'usuario' => session('usuario')['id'],
-                    'materia_prima' => $i->materia_prima, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                    'cantidad_ajuste' => ($i->cantidad * $cantidadRebajar), 'cantidad_nueva' =>  $cantAux, 'fecha' => $fechaActual, 'sucursal' => $this->getUsuarioSucursal()
+                    'id' => null,
+                    'usuario' => session('usuario')['id'],
+                    'materia_prima' => $i->materia_prima,
+                    'detalle' => $detalleMp,
+                    'cantidad_anterior' =>  $cantidadInventario ?? 0,
+                    'cantidad_ajuste' => ($i->cantidad * $cantidadRebajar),
+                    'cantidad_nueva' =>  $cantAux,
+                    'fecha' => $fechaActual,
+                    'sucursal' => $this->getUsuarioSucursal()
                 ]);
             }
         }
@@ -2022,41 +2206,693 @@ class FacturacionController extends Controller
         return $this->responseAjaxSuccess("", "");
     }
 
-    /**
-     * Pagar
-     */
-    public function pagar(Request $request)
+    public function cargarOrdenGestion(Request $request)
     {
-        if (!$this->validarSesion("facFac")) {
-            $this->setMsjSeguridad();
-            return redirect('/');
-        }
-
-        $id = $request->input('ipt_id_orden');
-
-        if (empty($id)) {
-            $this->setError("Pagar", "No existe la orden.");
-            return redirect('cocina/facturar/ordenes');
-        }
-
-        $orden = $this->getOrden($id);
+        $idOrden = $request->input('idOrden');
+        $orden = DB::table('orden')
+            ->select(
+                "orden.id",
+                "orden.subtotal",
+                "orden.total",
+                "orden.pagado",
+                "orden.mto_pagado",
+                "orden.numero_orden",
+                "orden.mesa",
+                "orden.nombre_cliente",
+                DB::raw("'' as codigo_descuento"),
+                DB::raw('0 as envio'),
+                DB::raw('false as nueva')
+            )
+            ->where('orden.id', "=", $idOrden)
+            ->get()->first();
 
         if ($orden == null) {
-            $this->setError("Pagar", "No existe la orden.");
-            return redirect('cocina/facturar/ordenes');
+            return $this->responseAjaxServerError("La orden no existe", "");
+        }
+        if ($orden->pagado == 1) {
+            return $this->responseAjaxServerError("La orden fue pagada", "");
         }
 
-        if ($orden->estado == 'FC') {
-            $this->setError("Pagar", "La orden ya fue facturada.");
-            return $this->gofacturaById($id);
-        }
-        $data = [
-            'clientes' => $this->getClientes(),
-            'menus' => $this->cargarMenus(),
-            'orden' => $orden,
-            'panel_configuraciones' => $this->getPanelConfiguraciones()
-        ];
+        $detallesAux = DB::table('detalle_orden')->where('detalle_orden.orden', "=", $orden->id)
+            ->get();
 
-        return view("facturacion.pagar", compact("data"));
+        $detallesA = [];
+        foreach ($detallesAux as $d) {
+            $producto = [];
+            if ($d->tipo_producto == 'R') {
+                $producto = ProductosMenuController::getIdByCodigo($d->codigo_producto);
+            } else if ($d->tipo_producto == 'E') {
+                $producto = ProductosExternosController::getIdByCodigo($d->codigo_producto);
+            } else if ($d->tipo_producto == 'PROMO') {
+                $producto = MantGrupoPromocionesController::getProdPromoByCodigo($d->codigo_producto);
+            }
+
+            $extras = DB::table('extra_detalle_orden')
+                ->where('orden', '=', $orden->id)
+                ->where('detalle', '=', $d->id)->get();
+
+            $detalleObj = [
+                'id' => $d->id,
+                'cantidad' => $d->cantidad,
+                'impuestoServicio' => $d->servicio_mesa,
+                'impuesto' => $producto != null ? $producto->valorImpuesto : 0,
+                'precio_unidad' => $d->precio_unidad,
+                'total' => $d->total,
+                'observacion' => $d->observacion,
+                'tipo' => $d->tipo_producto,
+                'tipoComanda' => '',
+                'cantidad_preparada' => $d->cantidad_preparada,
+                'cantidad_pagada' => $d->cantidad_pagada,
+                'producto' =>  $producto ?? [],
+                'extras' => $extras ?? []
+            ];
+
+            array_push($detallesA, $detalleObj);
+        }
+        $orden->detalles = $detallesA;
+        return $this->responseAjaxSuccess("", $orden);
+    }
+
+    public function iniciarOrden(Request $request)
+    {
+
+        $orden = $request->input("orden");
+        $detalles = $request->input("detalles");
+
+        $resValidar = $this->validarOrden($orden, $detalles);
+        if (!$resValidar['estado']) {
+            return $this->responseAjaxServerError($resValidar['mensaje'], []);
+        }
+        $cliente = $orden['cliente'];
+
+        $asignarMontosDetalles = FacturacionController::asignarMontosDetalles($detalles,  0, null);
+        $detallesGuardar = $asignarMontosDetalles['detalles'];
+        $infoFacturacionFinal = $asignarMontosDetalles;
+        $fechaActual = date("Y-m-d H:i:s");
+
+
+        try {
+            DB::beginTransaction();
+
+            $numOrden = $this->getConsecutivoNuevaOrdenSucursal($this->getUsuarioSucursal());
+            $id_orden = DB::table('orden')->insertGetId([
+                'id' => null,
+                'numero_orden' => $numOrden,
+                'tipo' => null,
+                'fecha_fin' => $fechaActual,
+                'fecha_inicio' => $fechaActual,
+                'cliente' => null,
+                'nombre_cliente' => $cliente,
+                'estado' => null,
+                'total' => $infoFacturacionFinal['total'],
+                'total_con_descuento' => $infoFacturacionFinal['total_pagar'],
+                'subtotal' => $infoFacturacionFinal['subtotal'],
+                'impuesto' => $infoFacturacionFinal['montoImpuestos'],
+                'descuento' => 0,
+                'cajero' => session('usuario')['id'],
+                'monto_sinpe' => 0,
+                'monto_tarjeta' =>  0,
+                'monto_efectivo' => 0,
+                'factura_electronica' => 'N',
+                'ingreso' => null,
+                'sucursal' => $this->getUsuarioSucursal(),
+                'fecha_preparado' => null,
+                'fecha_entregado' => null,
+                'cocina_terminado' => 'N',
+                'bebida_terminado' => 'N',
+                'caja_cerrada' => 'N',
+                'pagado' => 0,
+                'estado' => SisEstadoController::getIdEstadoByCodGeneral('ORD_EN_PREPARACION'),
+                'periodo' => date('Y'),
+                'cierre_caja' => CajaController::getIdCaja(session('usuario')['id'], $this->getUsuarioSucursal()),
+                'monto_envio' => 0,
+                'ind_requiere_envio' => false,
+                'info_descuento' => '',
+                'mesa' => $orden['mesa'] == "-1" ? null : $orden['mesa']
+            ]);
+            $this->aumentarConsecutivoOrden($this->getUsuarioSucursal());
+
+            $id_comanda = DB::table('orden_comanda')->insertGetId([
+                'orden' => $id_orden,
+                'num_comanda' => $numOrden // Primera comanda para la orden recién creada
+            ]);
+
+            $serv = new EntregasOrdenController();
+            $servEstOrd = new EstOrdenController();
+
+            $resCargaEst = $servEstOrd->creaEstOrden($id_orden, SisEstadoController::getIdEstadoByCodGeneral('ORD_EN_PREPARACION'), null);
+
+            if (!$resCargaEst['estado']) {
+                DB::rollBack();
+                return $this->responseAjaxServerError($resCargaEst['mensaje'], []);
+            }
+
+            foreach ($detallesGuardar as $det) {
+                $d = $det['detalle'];
+                if ($d['cantidad'] > 0) {
+                    $producto = $d['producto'];
+                    $idComanda = null;
+                    if ($d['tipo'] == 'R') {
+                        $idComanda = ProductosMenuController::getIdComandaByCodigoSucursal($producto['codigo'], $this->getUsuarioSucursal());
+                    } else if ($d['tipo'] == 'E') {
+                        $idComanda = ProductosExternosController::getIdComandaByCodigoSucursal($producto['codigo'], $this->getUsuarioSucursal());
+                    }
+                    $det_id = DB::table('detalle_orden')->insertGetId([
+                        'id' => null,
+                        'cantidad' => $d['cantidad'],
+                        'nombre_producto' => $producto['nombre'],
+                        'codigo_producto' => $producto['codigo'],
+                        'precio_unidad' => $d['precio_unidad'],
+                        'impuesto' => $det['montoIva'],
+                        'total' => $det['totalGen'],
+                        'descuento' => $det['descuento'],
+                        'subtotal' => $det['subTotal'],
+                        'total_extras' => $det['totalExtras'],
+                        'orden' => $id_orden,
+                        'tipo_producto' => $d['tipo'],
+                        'servicio_mesa' => $d['impuestoServicio'],
+                        'monto_servicio' => $det['montoImpuestoServicioMesa'],
+                        'observacion' => $d['observacion'],
+                        'tipo_comanda' => $d['tipoComanda'],
+                        'cod_promocion' => $d['tipo'],
+                        'comanda' => $idComanda,
+                        'cantidad_preparada' => 0
+                    ]);
+                    foreach ($d['extras'] ?? [] as $extra) {
+                        $ext_id = DB::table('extra_detalle_orden')->insertGetId([
+                            'id' => null,
+                            'detalle' => $det_id,
+                            'extra' => $extra['id'],
+                            'orden' => $id_orden,
+                            'descripcion_extra' => $extra['descripcion'],
+                            'total' => $extra['precio'] * $d['cantidad'],
+                            'id_producto' => $extra['idProd'],
+                            'tipo_producto' => $extra['tipo_producto']
+                        ]);
+                    }
+
+                    DB::table('detalle_orden_comanda')->insert([
+                        'orden_comanda' => $id_comanda,
+                        'detalle_orden' => $det_id,
+                        'cantidad' => $d['cantidad'],
+                        'comanda' => $idComanda,
+                        'fecha_ingreso' => $fechaActual,
+                        'usuario_gestion' => session('usuario')['id']
+                    ]);
+                }
+            }
+
+            DB::commit();
+            return $this->responseAjaxSuccess("Se inicio la orden " . $numOrden . " correctamente", $id_orden);
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            return $this->responseAjaxServerError("Algo salío mal.");
+        }
+    }
+
+    public function actualizarOrden(Request $request)
+    {
+        $orden = $request->input("orden");
+        $detalles = $request->input("detalles");
+
+        // Validar si la orden existe
+        $ordenExistente = DB::table('orden')->where('id', '=', $orden['id'])->first();
+        if (!$ordenExistente) {
+            return $this->responseAjaxServerError('La orden no existe.', $orden['id']);
+        }
+
+        // Verificar si la orden ya está pagada
+        if ($ordenExistente->estado == 'pagada') {
+            return $this->responseAjaxServerError('La orden ya ha sido pagada y no puede ser modificada.', $orden['id']);
+        }
+
+        // Validar la orden y detalles
+        $resValidar = $this->validarOrden($orden, $detalles);
+        if (!$resValidar['estado']) {
+            return $this->responseAjaxServerError($resValidar['mensaje'], $orden['id']);
+        }
+
+        $cliente = $orden['cliente'];
+
+
+        $asignarMontosDetalles = FacturacionController::asignarMontosDetalles($detalles, 0, null);
+        $detallesGuardar = $asignarMontosDetalles['detalles'];
+        $infoFacturacionFinal = $asignarMontosDetalles;
+        $fechaActual = date("Y-m-d H:i:s");
+        try {
+            DB::beginTransaction();
+
+            // Actualizar la tabla 'orden'
+            DB::table('orden')->where("id", "=", $orden['id'])->update([
+                'nombre_cliente' => $orden['cliente'],
+                'mesa' => $orden['mesa'] == "-1" ? null : $orden['mesa'],
+                'total' => $infoFacturacionFinal['total'],
+                'total_con_descuento' => $infoFacturacionFinal['total'],
+                'subtotal' => $infoFacturacionFinal['subtotal'],
+                'mto_impuesto_servicio' => $infoFacturacionFinal['montoImpuestoServicioMesa'],
+                'impuesto' => $infoFacturacionFinal['montoImpuestos'],
+                'descuento' => 0
+            ]);
+
+            // Obtener detalles anteriores de la orden
+            $detallesAnteriores = DB::table('detalle_orden')->where('orden', '=', $orden['id'])->get()->keyBy('id')->toArray();
+
+            $comandaCabezaCreada = false;
+            $id_comanda = null;
+            // Iterar sobre los detalles nuevos y guardar/actualizar
+            foreach ($detallesGuardar as $det) {
+                $d = $det['detalle'];
+
+                if ($d['cantidad'] > 0) {
+                    if ($d['tipo'] == 'R') {
+                        $id_comanda = ProductosMenuController::getIdComandaByCodigoSucursal($d['producto']['codigo'], $this->getUsuarioSucursal());
+                    } else if ($d['tipo'] == 'E') {
+                        $id_comanda = ProductosExternosController::getIdComandaByCodigoSucursal($d['producto']['codigo'], $this->getUsuarioSucursal());
+                    }
+
+                    if (!$comandaCabezaCreada) {
+                        $id_orden_comanda = DB::table('orden_comanda')->insertGetId([
+                            'orden' => $orden['id'],
+                            'num_comanda' =>  $ordenExistente->numero_orden // Primera comanda para la orden recién creada
+                        ]);
+                        $comandaCabezaCreada = true;
+                    }
+                    // Validar que la cantidad no sea menor a la cantidad preparada
+                    if ($d['nueva'] == 0) {
+                        $idDetAux = $d['id'];
+                        $detalleAnterior = DB::table('detalle_orden')->where("id", "=", $idDetAux)->first();
+
+                        // Verificar que la nueva cantidad no sea menor a la cantidad preparada
+                        if ($d['cantidad'] < $detalleAnterior->cantidad_preparada) {
+                            DB::rollBack();
+                            return $this->responseAjaxServerError(
+                                "La cantidad para el producto '" . $detalleAnterior->nombre_producto .
+                                    "' no puede ser menor a lo que ya está preparado. Cantidad preparada: " . $detalleAnterior->cantidad_preparada,
+                                $orden['id']
+                            );
+                        }
+
+                        // Verificar que la nueva cantidad no sea menor a la cantidad pagada
+                        if ($d['cantidad'] < $detalleAnterior->cantidad_pagada) {
+                            DB::rollBack();
+                            return $this->responseAjaxServerError(
+                                "La cantidad para el producto '" . $detalleAnterior->nombre_producto .
+                                    "' no puede ser menor a lo que ya se ha pagado. Cantidad pagada: " . $detalleAnterior->cantidad_pagada,
+                                $orden['id']
+                            );
+                        }
+
+                        if ($comandaCabezaCreada) {
+                            if ($d['cantidad'] > $detalleAnterior->cantidad) {
+
+                                DB::table('detalle_orden_comanda')->insert([
+                                    'orden_comanda' => $id_orden_comanda,
+                                    'detalle_orden' => $idDetAux,
+                                    'cantidad' => $d['cantidad'] - $detalleAnterior->cantidad,
+                                    'comanda' => $id_comanda,
+                                    'fecha_ingreso' => $fechaActual,
+                                    'usuario_gestion' => session('usuario')['id']
+                                ]);
+                                DB::table('orden')->where("id", "=", $orden['id'])->update(['estado' => SisEstadoController::getIdEstadoByCodGeneral("ORD_EN_PREPARACION")]);
+                            } else if ($d['cantidad'] < $detalleAnterior->cantidad) {
+                                $detalleComandaMasReciente = DB::table('detalle_orden_comanda')
+                                    ->where('detalle_orden', '=', $idDetAux)
+                                    ->orderBy('id', 'desc')
+                                    ->first();
+
+                                if ($detalleComandaMasReciente) {
+                                    $nuevaCantidad = $detalleComandaMasReciente->cantidad - ($detalleAnterior->cantidad - $d['cantidad']);
+                                    if ($nuevaCantidad <= 0) {
+                                        // Si la nueva cantidad es menor o igual a cero, eliminar la entrada
+                                        DB::table('detalle_orden_comanda')->where('id', '=', $detalleComandaMasReciente->id)->delete();
+                                    } else {
+                                        // Actualizar la cantidad en la entrada más reciente
+                                        DB::table('detalle_orden_comanda')
+                                            ->where('id', '=', $detalleComandaMasReciente->id)
+                                            ->update(['cantidad' => $nuevaCantidad]);
+                                    }
+                                }
+                            }
+                        }
+
+                        // Actualizar detalle existente
+                        DB::table('detalle_orden')->where("id", "=", $idDetAux)->update([
+                            'cantidad' => $d['cantidad'],
+                            'impuesto' => $det['montoIva'],
+                            'total' => $det['totalGen'],
+                            'descuento' => $det['descuento'],
+                            'total_extras' => $det['totalExtras'],
+                            'observacion' => $d['observacion'],
+                            'subtotal' => $det['subTotal']
+                        ]);
+
+                        DB::table('extra_detalle_orden')->where('detalle', '=', $idDetAux)->delete();
+                        unset($detallesAnteriores[$idDetAux]);
+                    } else {
+                        // Si el detalle es nuevo, insertarlo
+                        $producto = $d['producto'];
+                        $idDetAux = DB::table('detalle_orden')->insertGetId([
+                            'id' => null,
+                            'cantidad' => $d['cantidad'],
+                            'nombre_producto' => $producto['nombre'],
+                            'codigo_producto' => $producto['codigo'],
+                            'precio_unidad' => $d['precio_unidad'],
+                            'impuesto' => $det['montoIva'],
+                            'total' => $det['totalGen'],
+                            'descuento' => $det['descuento'],
+                            'subtotal' => $det['subTotal'],
+                            'total_extras' => $det['totalExtras'],
+                            'orden' => $orden['id'],
+                            'tipo_producto' => $d['tipo'],
+                            'servicio_mesa' => $d['impuestoServicio'],
+                            'monto_servicio' => $det['montoImpuestoServicioMesa'],
+                            'observacion' => $d['observacion'],
+                            'tipo_comanda' => $d['tipoComanda'],
+                            'comanda' => $id_comanda,
+                            'cod_promocion' => $d['tipo'],
+                            'cantidad_preparada' => 0
+                        ]);
+
+                        if ($comandaCabezaCreada) {
+                            DB::table('detalle_orden_comanda')->insert([
+                                'orden_comanda' => $id_orden_comanda,
+                                'detalle_orden' => $idDetAux,
+                                'cantidad' => $d['cantidad'],
+                                'comanda' => $id_comanda,
+                                'fecha_ingreso' => $fechaActual,
+                                'usuario_gestion' => session('usuario')['id']
+                            ]);
+                        }
+
+                        DB::table('orden')->where("id", "=", $orden['id'])->update(['estado' => SisEstadoController::getIdEstadoByCodGeneral("ORD_EN_PREPARACION")]);
+                    }
+
+                    foreach ($d['extras'] ?? [] as $extra) {
+                        DB::table('extra_detalle_orden')->insertGetId([
+                            'id' => null,
+                            'detalle' => $idDetAux,
+                            'extra' => $extra['id'],
+                            'orden' => $orden['id'],
+                            'descripcion_extra' => $extra['descripcion'],
+                            'total' => $extra['precio'] * $d['cantidad'],
+                            'id_producto' => $extra['idProd'],
+                            'tipo_producto' => $extra['tipo_producto']
+                        ]);
+                    }
+                }
+            }
+
+            // Eliminar detalles anteriores que no estén en la lista de detalles nuevos y que tengan cantidad_preparada = 0
+            foreach ($detallesAnteriores as $idDetAux => $detalleAnterior) {
+                if ($detalleAnterior->cantidad_preparada > 0) {
+                    DB::rollBack();
+                    return $this->responseAjaxServerError(
+                        "La línea para el producto '" . $detalleAnterior->nombre_producto .
+                            "' no puede ser eliminada porque ya esta preparada. Cantidad preparada: " . $detalleAnterior->cantidad_preparada,
+                        $orden['id']
+                    );
+                } else if ($detalleAnterior->cantidad_pagada > 0) {
+                    DB::rollBack();
+                    return $this->responseAjaxServerError(
+                        "La línea para el producto '" . $detalleAnterior->nombre_producto .
+                            "' no puede ser eliminada porque ya esta pagada. Cantidad pagada: " . $detalleAnterior->cantidad_pagada,
+                        $orden['id']
+                    );
+                }
+                DB::table('detalle_orden')->where("id", "=", $idDetAux)->delete();
+                DB::table('detalle_orden_comanda')->where("detalle_orden", "=", $idDetAux)->delete();
+                DB::table('extra_detalle_orden')->where('detalle', '=', $idDetAux)->delete();
+            }
+
+            DB::commit();
+            return $this->responseAjaxSuccess("Se actualizó la orden correctamente", $orden['id']);
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            return $this->responseAjaxServerError("Algo salió mal.", $orden['id']);
+        }
+    }
+
+    public function pagarOrden(Request $request)
+    {
+        $orden = $request->input("orden");
+        $infoFE = $request->input("infoFE");
+        $detalles = $request->input("detalles");
+        $envio = $request->input("envio");
+
+        $montoSinpe = $request->input("mto_sinpe", 0);
+        $montoEfectivo = $request->input("mto_efectivo", 0);
+        $montoTarjeta = $request->input("mto_tarjeta", 0);
+
+        $totalPagos = $montoSinpe + $montoEfectivo + $montoTarjeta;
+
+        $ordenExistente = DB::table('orden')->where('id', '=', $orden['id'])->first();
+        if (!$ordenExistente) {
+            return $this->responseAjaxServerError('La orden no existe.', []);
+        }
+
+        if ($orden['codigo_descuento'] != null) {
+            $verificaCodDesc = FacturacionController::verificaCodDescuento($orden['codigo_descuento']['codigo']);
+            if (!$verificaCodDesc['estado']) {
+                return $this->responseAjaxServerError($verificaCodDesc['mensajes'], []);
+            }
+        }
+
+        // Verificar si la orden ya está pagada
+        if ($ordenExistente->estado == 'pagada') {
+            return $this->responseAjaxServerError('La orden ya ha sido pagada y no puede ser modificada.', []);
+        }
+
+        $resValidar = $this->validarOrden($orden, $detalles);
+        if (!$resValidar['estado']) {
+            return $this->responseAjaxServerError($resValidar['mensaje'], []);
+        }
+
+        $resValidarFE = $this->validarInfoFe($infoFE);
+        if (!$resValidarFE['estado']) {
+            return $this->responseAjaxServerError($resValidarFE['mensaje'], []);
+        }
+
+        $resValidarEnvio = $this->validarInfoEnvio($envio);
+        if (!$resValidarEnvio['estado']) {
+            return $this->responseAjaxServerError($resValidarEnvio['mensaje'], []);
+        }
+
+        if ($envio['incluye_envio'] == 'true') {
+            if ($ordenExistente->mto_pagado > 0) {
+                return $this->responseAjaxServerError("No se puede incluir el envío en una factura con pagos parciales.", []);
+            }
+        }
+
+        $detallesOrden = DB::table('detalle_orden')
+            ->where('orden', '=', $orden['id'])
+            ->get();
+
+        $unSoloPago = true;
+        foreach ($detallesOrden as $detalleAux) {
+
+            $detalleRecibido = collect($detalles)->firstWhere('id', $detalleAux->id);
+
+            if ($detalleRecibido) {
+                if ($detalleRecibido['cantidad'] < $detalleAux->cantidad) {
+                    $unSoloPago = false;
+                    break;
+                }
+            } else {
+                $unSoloPago = false;
+                break;
+            }
+        }
+        if ($envio['incluye_envio'] == 'true') {
+            if (!$unSoloPago) {
+                return $this->responseAjaxServerError("No se puede incluir el envío en una factura con pagos parciales.", []);
+            }
+        }
+
+        $cubreMontoCompleto = true;
+        foreach ($detallesOrden as $detalleAux) {
+            $nuevaCantidadPagada = $detalleAux->cantidad_pagada;
+
+            $detalleRecibido = collect($detalles)->firstWhere('id', $detalleAux->id);
+
+            if ($detalleRecibido) {
+                $nuevaCantidadPagada = $nuevaCantidadPagada + $detalleRecibido['cantidad'];
+            }
+
+            if ($nuevaCantidadPagada < $detalleAux->cantidad) {
+                $cubreMontoCompleto = false;
+                break;
+            }
+        }
+
+        $asignarMontosDetalles = FacturacionController::asignarMontosDetalles($detalles, $orden['codigo_descuento'], $envio);
+        if ($asignarMontosDetalles == null) {
+            return $this->responseAjaxServerError("Error calculando el monto de la factura.", []);
+        }
+
+        $detallesGuardar = $asignarMontosDetalles['detalles'];
+
+        if ($totalPagos != $asignarMontosDetalles['total']) {
+            return $this->responseAjaxServerError('El monto total pagado no coincide con el total de los detalles seleccionados.', []);
+        }
+
+        $cliente = $orden['cliente'];
+        $fechaActual = date("Y-m-d H:i:s");
+
+        try {
+
+            DB::beginTransaction();
+
+            $pagoOrdenId = DB::table('pago_orden')->insertGetId([
+                'orden' => $orden['id'],
+                'nombre_cliente' => $cliente,
+                'monto_tarjeta' => $montoTarjeta,
+                'monto_efectivo' => $montoEfectivo,
+                'monto_sinpe' => $montoSinpe,
+                'total' => $asignarMontosDetalles['total'],
+                'subtotal' => $asignarMontosDetalles['subtotal'],
+                'iva' => $asignarMontosDetalles['montoImpuestos'],
+                'descuento' => $asignarMontosDetalles['descuento'],
+                'fecha_pago' => $fechaActual,
+                'cod_promocion' => $asignarMontosDetalles['codDescuento'],
+                'impuesto_servicio' => $asignarMontosDetalles['montoImpuestoServicioMesa']
+            ]);
+
+
+            foreach ($detallesGuardar as $det) {
+                $d = $det['detalle'];
+                if ($d['cantidad'] > 0) {
+                    if (!$det['linea_envio']) {
+                        $cantidadPagadaActual = DB::table('detalle_orden')
+                            ->where("id", "=", $d['id'])
+                            ->value('cantidad_pagada') ?? 0;
+
+                        $nuevaCantidadPagada = $cantidadPagadaActual + $d['cantidad'];
+
+                        DB::table('detalle_orden')->where("id", "=", $d['id'])->update([
+                            'cantidad_pagada' => $nuevaCantidadPagada,
+                            'descuento' => $det['descuento'],
+                            'subtotal' => $det['subTotal'],
+                            'monto_servicio' => $det['montoImpuestoServicioMesa'],
+                            'total' => $det['totalGen'],
+                            'impuesto' => $det['montoIva'],
+                            'cod_promocion' => $asignarMontosDetalles['codDescuento'],
+                        ]);
+
+                        $res =  $this->restarProductoExternoInventario($d['id'], $d['cantidad']);
+                        if (!$res['estado']) {
+                            return $this->responseAjaxServerError($res['mensaje'], []);
+                        }
+                    }
+                    DB::table('detalle_pago_orden')->insert([
+                        'pago_orden' => $pagoOrdenId,
+                        'detalle_orden' => (!$det['linea_envio']) ? $d['id'] : null,
+                        'cantidad_pagada' => $d['cantidad'],
+                        'subtotal' => $det['subTotal'],
+                        'mto_impuesto_servicio' => $det['montoImpuestoServicioMesa'],
+                        'dsc_linea' => ($d['producto']['nombre'] ?? 'Producto'),
+                        'descuento' => $det['descuento'],
+                        'iva' => $det['montoIva'],
+                        'total' => $det['totalGen']
+                    ]);
+                }
+            }
+
+            if ($unSoloPago) {
+                DB::table('orden')->where("id", "=", $orden['id'])->update([
+                    'mto_pagado' => (float)($totalPagos),
+                    'pagado' => 1,
+                    'total' => ($asignarMontosDetalles['total']),
+                    'total_con_descuento' => ($asignarMontosDetalles['total_pagar']),
+                    'subtotal' => ($asignarMontosDetalles['subtotal']),
+                    'impuesto' => ($asignarMontosDetalles['montoImpuestos']),
+                    'mto_impuesto_servicio' => ($asignarMontosDetalles['montoImpuestoServicioMesa']),
+                    'descuento' => ($asignarMontosDetalles['descuento']),
+                    'monto_sinpe' => $montoSinpe,
+                    'monto_efectivo' => $montoEfectivo,
+                    'monto_tarjeta' => $montoTarjeta
+                ]);
+                $cubreMontoCompleto = true;
+            } else {
+                DB::table('orden')->where("id", "=", $orden['id'])->update([
+                    'pagado' =>  $cubreMontoCompleto ? 1 : 0,
+                    'mto_pagado' => (float)($ordenExistente->mto_pagado + $totalPagos)
+                ]);
+                if ($cubreMontoCompleto) {
+                    $sumaPagos = DB::table('pago_orden')
+                        ->where('orden', '=', $orden['id'])
+                        ->selectRaw('
+                        SUM(subtotal) as total_subtotal,
+                        SUM(total) as total_total,
+                        SUM(iva) as total_iva,
+                        SUM(descuento) as total_descuento,
+                        SUM(impuesto_servicio) as total_servicio_mesa,
+                        SUM(monto_sinpe) as total_sinpe,
+                        SUM(monto_efectivo) as total_efectivo,
+                        SUM(monto_tarjeta) as total_tarjeta
+                    ')
+                        ->first();
+
+                    // Actualizar el encabezado de la orden con los nuevos totales basados en los pagos
+                    DB::table('orden')->where("id", "=", $orden['id'])->update([
+                        'subtotal' => $sumaPagos->total_subtotal,
+                        'total' => $sumaPagos->total_total,
+                        'total_con_descuento' => $sumaPagos->total_total,
+                        'impuesto' => $sumaPagos->total_iva,
+                        'descuento' => $sumaPagos->total_descuento,
+                        'mto_impuesto_servicio' => $sumaPagos->total_servicio_mesa,
+                        'monto_sinpe' => $sumaPagos->total_sinpe,
+                        'monto_efectivo' => $sumaPagos->total_efectivo,
+                        'monto_tarjeta' => $sumaPagos->total_tarjeta
+                    ]);
+                }
+            }
+
+            $serv = new EntregasOrdenController();
+            if ($envio['incluye_envio'] == 'true') {
+                $resCreaEnvio = $serv->crearEntregaOrden(
+                    $envio["precio"],
+                    $envio["descripcion_lugar"],
+                    $envio["contacto"],
+                    $envio["descripcion_lugar_maps"],
+                    $ordenExistente->id
+                );
+                if (!$resCreaEnvio['estado']) {
+                    DB::rollBack();
+                    return $this->responseAjaxServerError($resCreaEnvio['mensaje'], []);
+                }
+            }
+
+            // Crear la factura electrónica si es necesario
+            if ($infoFE['incluyeFE'] == 'true') {
+                $resCreaFe = $this->crearInfoFacturaElectronica(
+                    $infoFE["info_ced_fe"],
+                    $infoFE["info_nombre_fe"],
+                    $infoFE["info_correo_fe"],
+                    $ordenExistente->id,
+                    $pagoOrdenId
+                );
+                if (!$resCreaFe['estado']) {
+                    DB::rollBack();
+                    return $this->responseAjaxServerError($resCreaFe['mensaje'], []);
+                }
+            }
+
+            if ($asignarMontosDetalles['idDesc'] != null) {
+                CodigosPromocionController::usarPromocion($asignarMontosDetalles['idDesc']);
+            }
+
+
+            DB::commit();
+            $numFactura = (!$unSoloPago ? ($ordenExistente->numero_orden . ':' . $pagoOrdenId) : $ordenExistente->id);
+            return $this->responseAjaxSuccess("Pedido creado correctamente.", [
+                'variasFacturas' => !$unSoloPago,
+                'pago_completo' => $cubreMontoCompleto,
+                'numFactura' => $numFactura,
+                'idOrden' => $ordenExistente->id
+            ]);
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            return $this->responseAjaxServerError("Algo salió mal.", $orden['id']);
+        }
     }
 }

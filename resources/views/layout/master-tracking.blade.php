@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Coffee To Go</title>
-    <meta name="keywords" content="The coffee experience">
+    <title>{{ env('APP_NAME', 'MI RESTAURANTE') }}</title>
+    <meta name="keywords" content="{{ env('APP_NAME', 'MI RESTAURANTE') }}">
     <meta name="description" content="@yield('meta_description', config('app.name'))">
     <meta name="author" content="@yield('meta_author', config('app.name'))">
     <!-- Favicon -->

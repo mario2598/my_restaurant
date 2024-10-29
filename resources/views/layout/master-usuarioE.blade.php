@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Coffee To Go</title>
-    <meta name="keywords" content="The coffee experience">
+    <title>{{ env('APP_NAME', 'MI RESTAURANTE') }}</title>
+    <meta name="keywords" content="{{ env('APP_NAME', 'MI RESTAURANTE') }}">
     <meta name="description" content="@yield('meta_description', config('app.name'))">
     <meta name="author" content="@yield('meta_author', config('app.name'))">
     <!-- Favicon -->
@@ -16,9 +16,7 @@
 
     <link rel="stylesheet" href="{{ asset('assets/css/app.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/bundles/izitoast/css/iziToast.min.css') }}">
-    <link 
-    id="ligthStyle"
-    href="{{ asset('assets/bundles/lightgallery/dist/css/lightgallery.css') }}" rel="stylesheet">
+    <link id="ligthStyle" href="{{ asset('assets/bundles/lightgallery/dist/css/lightgallery.css') }}" rel="stylesheet">
     <!-- Template CSS -->
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/components.css') }}">
@@ -31,7 +29,7 @@
     @yield('styles')
 </head>
 
-<body style="sidebar-gone" style="background:white;"  >
+<body style="sidebar-gone" style="background:white;">
     <input type="hidden" value="{{ url('/') }}" id="base_path">
 
     <!-- Begin page -->
@@ -55,8 +53,7 @@
     <script src="{{ asset('assets/js/space.js') }}"></script>
     <script src="{{ asset('assets/js/page/ion-icons.js') }}"></script>
     <!-- JS Libraies -->
-    <script id="script1"
-    src="{{ asset('assets/bundles/lightgallery/dist/js/lightgallery-all.js') }}"></script>
+    <script id="script1" src="{{ asset('assets/bundles/lightgallery/dist/js/lightgallery-all.js') }}"></script>
     <!-- Page Specific JS File -->
     <script id="script2" src="{{ asset('assets/js/page/light-gallery.js') }}"></script>
     @yield('script')

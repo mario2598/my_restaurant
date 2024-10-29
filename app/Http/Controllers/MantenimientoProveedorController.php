@@ -29,6 +29,12 @@ class MantenimientoProveedorController extends Controller
         return view('mant.proveedores',compact('data'));
     }
 
+    
+    public static function getProvedoresActivos()
+    {
+        return DB::table('proveedor')->where('estado', 'like', 'A')->get();
+    }
+    
     /**
      * Guarda o actualiza un proveedor.
      */

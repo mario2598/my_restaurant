@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\QueryException;
 use App\Traits\SpaceUtil;
 
 class CajaController extends Controller
 {
+    
     use SpaceUtil;
     private $admin;
     public $codigo_pantalla = "cajCerrar";
@@ -131,6 +131,13 @@ class CajaController extends Controller
             return $this->responseAjaxServerError("No tiene un cierre de caja abierto.", []);
         }
 
+        $ordenSinPagar = DB::table('orden')
+        ->where('cierre_caja', '=', $idCaja )
+        ->where('pagado', '=', 0) // Suponiendo que 'pagado' es 0 para no pagado y 1 para pagado
+        ->exists();
+
+      
+
         $fecha_actual = date("Y-m-d H:i:s");
         $sucursal = $this->getSucursalUsuario();
         $idUsuario = session('usuario')['id'];
@@ -154,7 +161,7 @@ class CajaController extends Controller
                 'monto_sinpe' => $caja_calculada['total_sinpe'],
                 'usuario' => $idUsuario, 'fecha' => $fecha_actual,
                 'tipo' => MantenimientoTiposIngresoController::getIdByCodGeneral('ING_CIERRE_CAJA'), 'observacion' => $descripcion,
-                'sucursal' => $sucursal, 'aprobado' => "N", 'cliente' => null, 'descripcion' => $descripcion
+                'sucursal' => $sucursal, 'estado' => SisEstadoController::getIdEstadoByCodGeneral("ING_PEND_APB"), 'cliente' => null, 'descripcion' => $descripcion
             ]);
 
             DB::table('cierre_caja')

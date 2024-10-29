@@ -92,6 +92,7 @@
                                                     Categoría
                                                 </th>
                                                 <th class="text-center">Precio</th>
+                                                <th class="text-center">Comanda</th>
                                                 <th class="text-center">Acciones</th>
 
                                             </tr>
@@ -117,6 +118,10 @@
                                                     </td>
 
                                                     <td class="text-center">
+                                                        {{ $g->nombreComanda ?? 'Comanda General' }}
+                                                    </td>
+
+                                                    <td class="text-center">
                                                         <a style="cursor: pointer; color: white;" class="btn btn-primary"
                                                             onclick="eliminarProdcutoDeMenu('{{ $g->id }}')">Eliminar
                                                             del menú</a>
@@ -138,8 +143,7 @@
         </section>
 
     </div>
-    <form id="form_eliminar_menu" action="{{ URL::to('menu/menus/eliminar') }}" autocomplete="off"
-        method="POST">
+    <form id="form_eliminar_menu" action="{{ URL::to('menu/menus/eliminar') }}" autocomplete="off" method="POST">
         {{ csrf_field() }}
         <input type="hidden" name="idSucursal" value="{{ $data['sucursal']->id ?? '-1' }}">
         <input type="hidden" name="producto_menu_eliminar" id="producto_menu_eliminar" value="-1">
@@ -166,6 +170,7 @@
                         <div class="row">
                             <input type="hidden" name="idSucursal" value="{{ $data['sucursal']->id ?? '-1' }}">
                             <div class="col-xl-12 col-sm-12">
+                                <label>Producto</label>
                                 <select class="form-control" id="prodcuto_menu" name="prodcuto_menu" required>
                                     <option value="-1" selected>Seleccione un producto</option>
                                     @foreach ($data['productos_menu'] as $i)
@@ -174,11 +179,23 @@
                                     @endforeach
                                 </select>
                             </div>
+
+                            <div class="col-xl-12 col-sm-12 mt-3">
+                                <label>Seleccione la comanda asignada</label>
+                                <select class="form-control" id="comanda_select" name="comanda_select" required>
+                                    <option value="-1" selected>Comanda General</option>
+                                    @foreach ($data['comandas'] as $i)
+                                        <option value="{{ $i->id ?? '' }}" title="{{ $i->nombre ?? '' }}">
+                                            {{ $i->nombre ?? '' }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
 
                     </div>
                     <div id='footerContiner' class="modal-footer" style="margin-top:-5%;">
-                        <a href="#" onclick="$('#mdl_generico').modal('hide');" class="btn btn-secondary">Volver</a>
+                        <a href="#" onclick="$('#mdl_generico').modal('hide');"
+                            class="btn btn-secondary">Volver</a>
                         <input type="submit" class="btn btn-primary" value="Agregar" />
                     </div>
                 </form>
@@ -190,13 +207,22 @@
         window.addEventListener("load", initialice, false);
 
         function initialice() {
-            var topMesage = 'Reporte de Menús';
-            var bottomMesage = 'Reporte de Menús.';
+            // Obtener la fecha actual en formato deseado
+            var currentDate = new Date().toLocaleDateString('es-CR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
 
-            topMesage += '.' + ' Solicitud realizada por ' + "{{ session('usuario')['usuario'] }}" + '.';
+            var topMessage = 'Reporte de Menús';
+            var bottomMessage = 'Reporte de Menús generado el ' + currentDate + '.';
 
-            bottomMesage += ' Desarrollado por Space Software CR. ';
-
+            // Detalle adicional sobre el usuario que realiza la solicitud
+            topMessage += '.' + ' Solicitud realizada por ' + "{{ session('usuario')['usuario'] }}" + ' el ' +
+                currentDate + '.';
+            bottomMessage += ' Desarrollado por Space Software CR. ';
 
             $('#tablaMenus').DataTable({
                 dom: 'Bfrtip',
@@ -207,26 +233,31 @@
                     'footer': true
                 },
                 buttons: [{
-                    extend: 'excel',
-                    title: 'COFFEE TO GO',
-                    messageTop: topMesage,
-                    messageBottom: bottomMesage,
-                    filename: 'reporte_menu_coffee_to_go'
-                }, {
-                    extend: 'pdf',
-                    title: 'COFFEE TO GO',
-                    messageTop: topMesage,
-                    messageBottom: bottomMesage,
-                    filename: 'reporte_menu_coffee_to_go'
-                }, {
-                    extend: 'print',
-                    title: 'COFFEE TO GO',
-                    messageTop: topMesage,
-                    messageBottom: bottomMesage,
-                    filename: 'reporte_menu_coffee_to_go'
-                }]
+                        extend: 'excel',
+                        title: '{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}',
+                        messageTop: topMessage,
+                        messageBottom: bottomMessage,
+                        filename: 'reporte_menu_{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}_' + currentDate
+                            .replace(/[\s,:]/g, '_')
+                    },
+                    {
+                        extend: 'pdf',
+                        title: '{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}',
+                        messageTop: topMessage,
+                        messageBottom: bottomMessage,
+                        filename: 'reporte_menu_{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}_' + currentDate
+                            .replace(/[\s,:]/g, '_')
+                    },
+                    {
+                        extend: 'print',
+                        title: '{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}',
+                        messageTop: topMessage,
+                        messageBottom: bottomMessage,
+                        filename: 'reporte_menu_{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}_' + currentDate
+                            .replace(/[\s,:]/g, '_')
+                    }
+                ]
             });
-
         }
     </script>
 @endsection
@@ -234,7 +265,6 @@
 
 
 @section('script')
-
     <script src="{{ asset('assets/bundles/datatables/datatables.min.js') }}"></script>
     <script src="{{ asset('assets/js/page/datatables.js') }}"></script>
     <script src="{{ asset('assets/js/productosMenu/menus/editar.js') }}"></script>

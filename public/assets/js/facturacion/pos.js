@@ -1,32 +1,27 @@
-/*
-    tipos[
-        "nombre": "nombre",
-        "color": "#000000",
-        "categorias": [
-            "id": 0,
-            "categoria": "categoria",
-            "productos": [
-                "id": 0,
-                "nombre": "nombre",
-                "descripcion": "descripcion",
-                "categoria": 0,
-                "impuesto": 0,
-                "imagen": "ruta",
-                "precio": 0,
-                "estado": "A",
-                "codigo": "codigo"
-            ]
-        ]
-    ]
-*/
+var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
+var procentajeServicioRestaurante = 0.1;
+var tipoSeleccionado = 0;
+var extrasDetalleAux = [];
+var impServicioAux = null;
+var categoriaSeleccionada = 0;
+var productoSeleccionado = null;
+var detalleSeleccionado = null;
+var salonSeleccionado = 0;
+var mobiliarioSeleccionado = 0;
+var clienteSeleccionado = 0;
+var contenedores = new Map();
+var detalles = [];
 
+var totalSeleccionado = 0;
+var cambiosPendientes = false;
+var mtoDescuentoGen = 0;
+var detallesSeleccionados = [];
 var infoEnvio = {
     "incluye_envio": false,
     "precio": 0,
     "descripcion_lugar": "",
     "contacto": ""
 };
-
 var infoFE = {
     "incluyeFE": false,
     "info_ced_fe": "",
@@ -34,6 +29,33 @@ var infoFE = {
     "info_correo_fe": ""
 };
 
+var guardandoOrden = false;
+var idOrdenAnular = 0;
+var detallesAnular = [];
+var cambiosPendientes = false;
+
+window.addEventListener("load", init, false);
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    //Inicializa scroll para las dos listas
+    inicializarScroller('scrl-categorias');
+    inicializarScroller('scrl-productos');
+    inicializarScroller('scrl-orden');
+});
+
+function init() {
+    cargarProductosPos();
+    limpiar();
+    inicializarMapaContenedores();
+
+}
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    //Inicializa scroll para las dos listas
+
+});
 
 $(document).ready(function () {
     $("#input_buscar_generico").on("keyup", function () {
@@ -45,20 +67,6 @@ $(document).ready(function () {
 
     validarCajaAbierta();
 
-});
-
-var guardandoOrden = false;
-var idOrdenAnular = 0;
-var detallesAnular = [];
-/**
- * Eventos iniciales
- */
-window.addEventListener("load", init, false);
-document.addEventListener('DOMContentLoaded', function () {
-    //Inicializa scroll para las dos listas
-    inicializarScroller('scrl-categorias');
-    inicializarScroller('scrl-productos');
-    inicializarScroller('scrl-orden');
 });
 
 function validarCajaAbierta() {
@@ -144,44 +152,15 @@ function inicializarScroller(id) {
 
 }
 
-/**
- * Variables para el control de lógica
- */
-var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
-var procentajeServicioRestaurante = 0.1;
-var tipoSeleccionado = 0;
-var extrasDetalleAux = [];
-var impServicioAux = null;
-var categoriaSeleccionada = 0;
-var productoSeleccionado = null;
-var detalleSeleccionado = null;
-var salonSeleccionado = 0;
-var mobiliarioSeleccionado = 0;
-var clienteSeleccionado = 0;
-var contenedores = new Map();
-var detalles = [];
 
 
-function init() {
-    limpiar();
-    inicializarMapaContenedores();
-    generarTipos();
-    seleccionarTipo(0);
-
-}
-
-
-
-
-/**
- * Asigna el valor por defecto de las variables
- */
 function limpiar() {
     procentajeServicioRestaurante = 0.1;
     tipoSeleccionado = 0;
     categoriaSeleccionada = 0;
     productoSeleccionado = null;
     clienteSeleccionado = 0;
+
 }
 
 function inicializarMapaContenedores() {
@@ -228,8 +207,10 @@ function generarCategorias() {
     var cards = '';
     var contador = 0;
     var tipo = tipos[tipoSeleccionado];
-    //Por cada categoría, genera el HTML correspondiente para el card que será insertado en el scroller
-    tipo.categorias.forEach(categoria => {
+
+    var categorias = Array.isArray(tipo.categorias) ? tipo.categorias : Object.values(tipo.categorias);
+
+    categorias.forEach(categoria => {
         cards += generarHTMLCategoria(contador, categoria.categoria, tipo.color);
         contador++;
     });
@@ -360,7 +341,7 @@ function generarHTMLExtrasDetalle() {
                     extra1.seleccionado = true;
                 }
                 texto += `<label style="margin-left:10px;">
-                            <input type="checkbox" name="${extra.dsc_grupo}" ${ (found == null || found == undefined)? "" : "checked"} 
+                            <input type="checkbox" name="${extra.dsc_grupo}" ${(found == null || found == undefined) ? "" : "checked"} 
                             onchange="seleccionarExtraCheck(this, ${extra1.id})"
                             value="${extra1.id}">${extra1.descripcion} ₡${extra1.precio}
                         </label>
@@ -376,7 +357,7 @@ function generarHTMLExtrasDetalle() {
                     selecciono = true;
                 }
                 texto += `<label style="margin-left:10px;">
-                            <input type="radio" name="${extra.dsc_grupo}"  ${ (found == null || found == undefined)? "" : "checked"} 
+                            <input type="radio" name="${extra.dsc_grupo}"  ${(found == null || found == undefined) ? "" : "checked"} 
                             onchange="seleccionarExtraRadio(this, '${extra.dsc_grupo}', ${extra.multiple}, ${extra1.id})"
                             value="${extra1.id}">${extra1.descripcion} ₡${extra1.precio}
                         </label>
@@ -385,7 +366,7 @@ function generarHTMLExtrasDetalle() {
             });
             if (extra.requerido == 0) {
                 texto += `<label style="margin-left:10px;">
-                            <input type="radio" name="${extra.dsc_grupo}" ${ (!selecciono) ? "checked" : ""} 
+                            <input type="radio" name="${extra.dsc_grupo}" ${(!selecciono) ? "checked" : ""} 
                             onchange="seleccionarExtraRadio(this, '${extra.dsc_grupo}', ${extra.multiple}, -1)"
                             value="null">Ninguno
                         </label>
@@ -480,7 +461,8 @@ function seleccionarExtrasProd() {
 
     if (continuar) {
         extrasDetalleAux = extrasDetalleAux2;
-        agregarProducto(productoSeleccionado, impServicioAux);
+        cambiosPendientes = true;
+        agregarProducto(productoSeleccionado);
         cerrarExtras();
     }
 }
@@ -510,6 +492,7 @@ function actualizarExtrasDetalle() {
     if (continuar) {
         detalleSeleccionado.extras = extrasDetalleAux2;
         detalleSeleccionado.observacion = $('#detAdicional').val();
+        cambiosPendientes = true;
         actualizarOrden();
         cerrarExtrasDetalle();
     }
@@ -530,23 +513,16 @@ function cerrarExtras() {
     $("#mdl-extras").modal("hide");
 }
 
-/**
- * Agrega un producto a la orden.
- * @param {Boolean} impuestoServicio Indica si es un producto que utiliza servicio a la mesa.
- * @param {String} codigo Código del producto.
- * @param {Boolean} todos Indica si debe buscar el producto en la lista de todos los productos.
- */
 function seleccionarProducto(impuestoServicio, codigo, todos = false) {
     let producto = buscarProductoCodigo(codigo, todos);
     if (producto !== undefined) {
 
         if (validarCantidadProducto(producto)) {
-            impServicioAux = impuestoServicio;
             if (producto.extras.length > 0) {
                 abrirModalExtrasProd(producto);
             } else {
                 extrasDetalleAux = [];
-                agregarProducto(producto, impuestoServicio);
+                agregarProducto(producto);
             }
         } else {
             swal('Agregar producto', "Existencias agotadas para este producto.", 'error');
@@ -556,13 +532,14 @@ function seleccionarProducto(impuestoServicio, codigo, todos = false) {
     }
 }
 
-function agregarProducto(producto, impuestoServicio) {
+function agregarProducto(producto) {
     productoSeleccionado = producto;
-    let indice = buscarDetallePrevio(impuestoServicio, producto);
+    let indice = buscarDetallePrevio(producto);
     if (indice >= 0) {
         actualizarDetalleOrden(indice);
     } else {
-        detalles.push(crearDetalleOrden(detalles.length, 1, impuestoServicio, producto, ""));
+        const indiceMasAlto = obtenerIndiceMasAlto(detalles) + 1;
+        detalles.push(crearDetalleOrden(indiceMasAlto, 1, producto, ""));
         reducirCantidadProducto(producto.codigo);
     }
 
@@ -571,18 +548,23 @@ function agregarProducto(producto, impuestoServicio) {
             extra1.seleccionado = false;
         });
     });
+    cambiosPendientes = true;
     actualizarOrden();
+}
+
+function obtenerIndiceMasAlto(detalles) {
+    if (detalles.length === 0) {
+        return 0; // Si no hay detalles, empezar desde 0
+    }
+
+    // Obtener el índice más alto
+    return Math.max(...detalles.map(detalle => detalle.indice));
 }
 
 function buscarProductoCodigo(codigo, todos = false) {
     if (codigo != null && codigo != undefined) {
         let productos;
-        if (!todos) {
-            productos = tipos[tipoSeleccionado].categorias[categoriaSeleccionada].productos;
-        } else {
-            productos = productosGeneral;
-        }
-
+        productos = productosGeneral;
         var productoEncontrado;
         productos.forEach(producto => {
             if (producto.codigo == codigo) {
@@ -611,7 +593,7 @@ function arraysSonIguales(arr1, arr2) {
 }
 
 
-function buscarDetallePrevio(impuestoServicio, producto) {
+function buscarDetallePrevio(producto) {
     let indice = -1;
     let contador = 0;
     let aumentar = true;
@@ -619,7 +601,7 @@ function buscarDetallePrevio(impuestoServicio, producto) {
     detalles.forEach(detalle => {
         var existeDetalle = arraysSonIguales(extrasDetalleAux, detalle.extras);
 
-        if (detalle.producto.codigo == producto.codigo && detalle.impuestoServicio == impuestoServicio && existeDetalle) {
+        if (detalle.producto.codigo == producto.codigo && existeDetalle) {
             indice = contador;
             aumentar = false;
         }
@@ -641,6 +623,7 @@ function eliminarLineaDetalleOrden(indice) {
             producto.cantidad += detalle.cantidad;
         }
     }
+    cambiosPendientes = true;
     actualizarOrden();
     generarProductos();
 }
@@ -651,11 +634,7 @@ function actualizarDetalleOrden(indice, aumenta = true) {
     if (aumenta) {
         detalle.cantidad = detalle.cantidad + 1;
         detalle.total = detalle.cantidad * detalle.producto.precio;
-        if (detalle.impuestoServicio == 'S') {
-            let impuestoMesa = 0;
-            impuestoMesa = detalle.total - (detalle.total / 1.10);
-            detalle.total = detalle.total + impuestoMesa;
-        }
+
         detalles[indice] = detalle;
         reducirCantidadProducto(detalle.producto.codigo);
     } else {
@@ -664,15 +643,12 @@ function actualizarDetalleOrden(indice, aumenta = true) {
             detalles.splice(indice, 1);
         } else {
             detalle.total = detalle.cantidad * detalle.producto.precio;
-            if (detalle.impuestoServicio == 'S') {
-                let impuestoMesa = 0;
-                impuestoMesa = detalle.total - (detalle.total / 1.10);
-                detalle.total = detalle.total + impuestoMesa;
-            }
+
             detalles[indice] = detalle;
         }
         aumentarCantidadProducto(detalle.producto.codigo);
     }
+    cambiosPendientes = true;
     actualizarOrden();
     generarProductos();
 }
@@ -704,11 +680,6 @@ function actualizarDetalleOrdenInput(indice, cantidad) {
     }
     detalle.cantidad = cantidad;
     detalle.total = detalle.cantidad * detalle.producto.precio;
-    if (detalle.impuestoServicio == 'S') {
-        let impuestoMesa = 0;
-        impuestoMesa = detalle.total - (detalle.total / 1.10);
-        detalle.total = detalle.total + impuestoMesa;
-    }
     detalles[indice] = detalle;
     actualizarOrden();
 }
@@ -734,17 +705,14 @@ function aumentarCantidadProducto(codigo) {
     }
 }
 
-function crearDetalleOrden(indice, cantidad, impuestoServicio, producto, descripcion) {
+function crearDetalleOrden(indice, cantidad, producto, descripcion) {
     let totalAux = parseFloat(producto.precio * cantidad).toFixed(2);
-    if (impuestoServicio == 'S') {
-        let impuestoMesa = 0;
-        impuestoMesa = totalAux - (totalAux / 1.10);
-        totalAux = parseInt(totalAux) + parseInt(impuestoMesa);
-    }
+
     return {
         "indice": indice,
+        "id": -1,
         "cantidad": cantidad,
-        "impuestoServicio": impuestoServicio,
+        "impuestoServicio": '',
         "impuesto": producto.impuesto,
         "precio_unidad": producto.precio,
         "total": parseFloat(totalAux).toFixed(2),
@@ -752,158 +720,238 @@ function crearDetalleOrden(indice, cantidad, impuestoServicio, producto, descrip
         //"tipo": tipos[tipoSeleccionado].codigo,
         "tipo": producto.tipoProducto,
         "tipoComanda": producto.tipoComanda,
+        "cantidad_preparada": 0,
+        "cantidad_pagada": 0,
+        "objRowAux": null,
         "producto": producto,
-        "extras": extrasDetalleAux
+        "extras": extrasDetalleAux,
+        "nueva": 1
     };
+}
+
+function validarVisibilidadBotonesGestion() {
+
+    if (ordenGestion.nueva) {
+        $('#btnActualizarOrden').fadeOut();
+        if (ordenGestion.mesa != -1) {
+            $('#btnPago').fadeOut();
+        } else {
+            $('#btnPago').fadeIn();
+        }
+        $('#btnIniciarOrden').fadeIn();
+        $('#contRecargarOrden').fadeOut();
+    } else {
+        if (cambiosPendientes) {
+            $('#btnActualizarOrden').fadeIn();
+            $('#btnPago').fadeOut();
+            $('#btnIniciarOrden').fadeOut();
+        } else {
+            $('#btnPago').fadeIn();
+            $('#btnActualizarOrden').fadeOut();
+            $('#btnIniciarOrden').fadeOut();
+        }
+        $('#contRecargarOrden').fadeIn();
+    }
+
+
 }
 
 function actualizarOrden() {
     let cards = '';
     let contador = 0;
     let subTotal = 0;
+    let iva = 0;
     let total = 0;
+    $('#txt-id-cliente').val("");
+
+
+    detalles.forEach(d => {
+        if (ordenGestion.mesa != null && ordenGestion.mesa != -1) {
+            d.impuestoServicio = 'S';
+        } else {
+            d.impuestoServicio = 'N';
+        }
+    });
+
+
     detalles.forEach(detalle => {
         let totalExtrasAux = 0;
         let textoExtras = "";
+
+        // Calcular el total de los extras y construir el texto de extras
         detalle.extras.forEach(extra => {
-            totalExtrasAux = totalExtrasAux + (detalle.cantidad * parseFloat(extra.precio));
-            textoExtras += extra.descripcion + " " + (extra.precio > 0 ? currencyCRFormat((detalle.cantidad * parseFloat(extra.precio))) : " ") + " </br> ";
+            totalExtrasAux += detalle.cantidad * parseFloat(extra.precio);
+            textoExtras += `${extra.descripcion} ${(extra.precio > 0 ? currencyCRFormat(detalle.cantidad * parseFloat(extra.precio)) : "")} </br>`;
         });
-        let totalAux = detalle.cantidad * parseFloat(detalle.precio_unidad);
 
-        totalAux = totalAux + totalExtrasAux;
-        subTotal = subTotal + totalAux;
-        if (detalle.impuestoServicio == 'S') {
-            impuestoMesa = totalAux - (totalAux / 1.10);
-            subTotal = subTotal + impuestoMesa;
+        let totalAux = detalle.cantidad * parseFloat(detalle.precio_unidad) + totalExtrasAux;
+        let montoIvaLinea = 0;
+        let montoLineaSinIva = totalAux;
+
+        // Calcular el monto sin IVA y el IVA de la línea
+        if (detalle.impuesto > 0 && sucursalFacturaIva) {
+            montoLineaSinIva = totalAux / (1 + parseFloat(`0.${detalle.impuesto}`));
+            montoIvaLinea = totalAux - montoLineaSinIva;
         }
-        detalle.total = totalAux;
-        cards += generarHTMLProductoOrden(contador, detalle.producto.nombre, parseFloat(detalle.producto.precio).toFixed(2), detalle.cantidad, parseFloat(totalAux).toFixed(2), detalle.producto.codigo, detalle.impuestoServicio, totalExtrasAux, textoExtras);
 
+        // Aplicar el impuesto de servicio si corresponde
+        if (detalle.impuestoServicio === 'S') {
+            let impuestoMesa = montoLineaSinIva * 0.10;
+            montoLineaSinIva += impuestoMesa;
+            if (detalle.impuesto > 0 && sucursalFacturaIva) {
+                montoIvaLinea = (montoLineaSinIva) * (parseFloat(`0.${detalle.impuesto}`));
+
+            }
+        }
+
+        detalle.total = montoLineaSinIva + montoIvaLinea;
+        detalle.montoIva = montoIvaLinea;
+        detalle.subTotal = montoLineaSinIva;
+
+        cards += generarHTMLProductoOrden(contador, detalle.producto.nombre, parseFloat(detalle.producto.precio).toFixed(2), detalle.cantidad,
+            parseFloat(detalle.total).toFixed(2), detalle.producto.codigo, detalle.impuestoServicio, totalExtrasAux, textoExtras, detalle.cantidad_preparada,
+            detalle.cantidad_pagada);
         contador++;
     });
-    ordenGestion.subTotal = subTotal;
-    total = subTotal;
-    let aux = 0;
 
-    if (ordenGestion.codigo_descuento != null) {
-        if (ordenGestion.codigo_descuento.cod_general == 'DESCUENTO_PORCENTAJE') {
-            const porcentaje = ordenGestion.codigo_descuento.descuento / 100;
-            aux = subTotal * porcentaje;
-        } else if (ordenGestion.codigo_descuento.cod_general == 'DESCUENTO_ABSOLUTO') {
-            aux = ordenGestion.codigo_descuento.descuento;
+
+    cargarDetallesSeleccionados();
+
+    detalles.forEach(detalle => {
+        if (sucursalFacturaIva) {
+
+            let detalleSelAux;
+            if (ordenGestion.nueva) {
+                detalleSelAux = detalles.find(det => det.indice == detalle.indice);
+            } else {
+                detalleSelAux = detalles.find(det => det.id == detalle.id);
+            }
+
+            if (detalleSelAux) {
+                total += detalleSelAux.total;
+            } else {
+                total += detalle.total;
+            }
+        } else {
+            total += detalle.total;
         }
-        $('#txt-dsc_promo').html("<small>Descuento Aplicado : " + ordenGestion.codigo_descuento.descripcion + "</small>");
-        $('#cont-dsc_promo').fadeIn(1000);
-        $('#txt-id-cliente').val(ordenGestion.cliente);
-    } else {
-        $('#cont-dsc_promo').fadeOut(1000);
-        $('#txt-dsc_promo').val("");
-    }
 
-    total = subTotal - aux;
+        iva += detalle.montoIva;
+        subTotal += detalle.subTotal;
+
+    });
+
+    let descuentoAplicado = 0;
+
+    ordenGestion.subTotal = subTotal;
+
     if (infoEnvio.incluye_envio) {
-        total = total + (parseFloat(ordenGestion.envio));
+        total += parseFloat(ordenGestion.envio);
     }
 
     ordenGestion.total = total;
 
-    $('#txt-id-cliente').val(ordenGestion.cliente);
+    // Actualizar los valores en el DOM
+    $('#txt-cliente').val(ordenGestion.cliente);
+    $('#select_mesa').val(ordenGestion.mesa ?? -1);
 
-    $('#txt-subtotal-pagar').html("SubTotal: " + (ordenGestion.subTotal).toLocaleString('es-CR', {
-        style: 'currency',
-        currency: 'CRC',
-    }));
 
-    $('#txt-descuento-pagar').html("Descuento: " + (aux).toLocaleString('es-CR', {
-        style: 'currency',
-        currency: 'CRC',
-    }));
-
-    if (infoEnvio.incluye_envio) {
-        $('#txt-mto-envio').html("Envío: " + (parseFloat(ordenGestion.envio)).toLocaleString('es-CR', {
-            style: 'currency',
-            currency: 'CRC',
-        }));
-    } else {
-        $('#txt-mto-envio').html("Envío: No aplica");
-    }
-
-    $('#txt-total-pagar').html("Total: " + (ordenGestion.total).toLocaleString('es-CR', {
-        style: 'currency',
-        currency: 'CRC',
-    }));
-
+    $('#txt-subtotal-pagar').html(`SubTotal: ${(ordenGestion.subTotal).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
+    $('#txt-mto-envio_mdl').html(infoEnvio.incluye_envio ? `Envío: ${(parseFloat(ordenGestion.envio)).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}` : "Envío: No aplica");
+    $('#txt-total-pagar').html(`Total Orden: ${(ordenGestion.total).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
+    $('#txt-mto-pagado_mdl').html(`Monto Pagado : ${(ordenGestion.mto_pagado).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
+    $('#txt-total-pagar_mdl').html(`Total: ${(ordenGestion.total).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
 
     $(contenedores.get("orden")).html(cards);
 
-    if (infoFE.incluyeFE) {
-       $('#btn_fe').html(`<i class="fas fa-pay"
-         aria-hidden="true"></i> Factura Electrónica : SÍ`);
-    }else{
-        $('#btn_fe').html(`<i class="fas fa-pay"
-        aria-hidden="true"></i> Factura Electrónica : NO`);
-    }
+    // Actualizar el botón de Factura Electrónica
+    $('#btn_fe').html(`<i class="fas fa-pay" aria-hidden="true"></i> Factura Electrónica : ${infoFE.incluyeFE ? 'SÍ' : 'NO'}`);
 
+    validarVisibilidadBotonesGestion();
+    mtoDescuentoGen = descuentoAplicado;
 }
 
-/**
- * Genera el elemento HTML correspondiente a la categoría
- */
-function generarHTMLProductoOrden(indice, detalle, precio, cantidad, total, codigo, impuestoServicio = "N", totalExtrasAux, textoExtras) {
+
+function generarHTMLProductoOrden(indice, detalle, precio, cantidad, total, codigo, impuestoServicio = "N", totalExtrasAux,
+    textoExtras, cantidad_preparada, cantidad_pagada) {
+    const pendiente = cantidad - cantidad_preparada;
     var icono = "fas fa-box text-secondary";
     if (impuestoServicio == "S") {
         icono = "fas fa-utensils text-secondary";
     }
 
-    return `<tr style="border-bottom: 1px solid grey; ">
-                <td> 
-                <small>
-                    ${detalle}
-                    <div class="input-group w-auto justify-content-center align-items-center" style="padding: 0px !important;display: block!important; margin-top:2px;margin-bottom:2px;">
-                                    <input type="button" value="-" 
-                                        class="button-minus border rounded-circle  icon-shape icon-sm mx-1 " 
-                                        data-field="quantity" onclick="agregarDetalleInpt(${indice},'${codigo}',false)">
-                                    <input type="number" step="1" min=1 value="${cantidad}"
-                                        readonly
-                                       name="quantity" class="quantity-field border-0 text-center w-25"
-                                       style="width:28%!important;">
-                                    <input type="button" value="+" class="button-plus border rounded-circle icon-shape icon-sm "
-                                     data-field="quantity" onclick="agregarDetalleInpt(${indice},'${codigo}',true)">
-                    </div>
-                    
-                    <p style="line-height: 1.5;">
-                    Precio : ${currencyCRFormat(precio)}
-                    </br>
-                    ${totalExtrasAux > 0 ? "Extras : "+ currencyCRFormat(totalExtrasAux) + " </br>" : ""}
-                   
-                      Total : ${currencyCRFormat(total)} 
-                        </small>
-                </td>
+    let texto = `<tr style="border-bottom: 1px solid grey;">
+                    <td> 
+                    <small>
+                        ${detalle}
+                        <div class="input-group w-auto justify-content-center align-items-center" 
+                        style="padding: 0px !important; display: block!important; margin-top:2px; margin-bottom:2px;">`;
 
-                <td >
-                <p style="line-height: 1.5;"><small>${textoExtras}</small></p>
-                </td>
-                <td >
-                    <div class="row" style="padding: 0px !important;">
-                        <div class="col-sm-12 col-md-12 col-lg-12">
-                            <div class="input-group w-auto justify-content-center align-items-center">
-                                <div class="row">
-                                    <div class="col-sm-6 col-md-6 col-lg-6  justify-content-center align-items-center">
-                                        <button type="button" class="btn btn-danger px-2" onclick="eliminarLineaDetalleOrden(${indice})"><i
-                                        class="fas fa-trash" aria-hidden="true"></i></button>
-                                    </div>
-                                    <div class="col-sm-6 col-md-6 col-lg-6  justify-content-center align-items-center">
-                                        <button type="button" class="btn btn-warning px-2" title="Agregar observación a la orden" onclick="agregarDescripcionDetalle(${indice})"><i
-                                        class="fas fa-clipboard" aria-hidden="true"></i></button>
+    // Verificar si el botón de disminución debe estar deshabilitado
+    const botonMenosDisabled = cantidad_pagada >= cantidad ? "disabled" : "";
+
+    if (pendiente > 0) {
+        texto += `<input type="button" value="-" 
+                            class="button-minus border rounded-circle icon-shape icon-sm mx-1" 
+                            data-field="quantity" onclick="agregarDetalleInpt(${indice},'${codigo}',false)" ${botonMenosDisabled}>`;
+    }
+
+    texto += `<input type="number" step="1" min="1" value="${cantidad}" readonly
+                            name="quantity" class="quantity-field border-0 text-center w-25"
+                            style="width:28%!important;">`;
+
+    if (pendiente > 0) {
+        texto += `<input type="button" value="+" class="button-plus border rounded-circle icon-shape icon-sm"
+                            data-field="quantity" onclick="agregarDetalleInpt(${indice},'${codigo}',true)">`;
+    }
+
+    texto += `</div>
+                        
+                        <p style="line-height: 1.5;">
+                        Precio : ${currencyCRFormat(precio)}
+                        <br>
+                        ${totalExtrasAux > 0 ? "Extras : " + currencyCRFormat(totalExtrasAux) + "<br>" : ""}
+                        Total : ${currencyCRFormat(total)}
+                        <br>
+                        ${cantidad_pagada > 0 ? `<span class="badge badge-success">Pagado: ${cantidad_pagada}</span>` : ""}
+                        </small>
+                    </td>
+    
+                    <td>
+                        <p style="line-height: 1.5;"><small>${textoExtras}</small></p>
+                    </td>
+    
+                    <td>
+                        <div class="row" style="padding: 0px !important;">
+                            <div class="col-sm-12 col-md-12 col-lg-12">
+                                <div class="input-group w-auto justify-content-center align-items-center">
+                                    <div class="row">
+                                        ${pendiente > 0
+            ? `<div class="col-sm-6 col-md-6 col-lg-6 justify-content-center align-items-center">
+                                                <button type="button" class="btn btn-danger px-2" 
+                                                    onclick="eliminarLineaDetalleOrden(${indice})" 
+                                                    ${cantidad_pagada > 0 ? "disabled" : ""}>
+                                                    <i class="fas fa-trash" aria-hidden="true"></i>
+                                                </button>
+                                            </div>
+                                            <div class="col-sm-6 col-md-6 col-lg-6 justify-content-center align-items-center">
+                                                <button type="button" class="btn btn-warning px-2" 
+                                                    title="Agregar observación a la orden"  ${cantidad_pagada > 0 ? "disabled" : ""}
+                                                    onclick="agregarDescripcionDetalle(${indice})">
+                                                    <i class="fas fa-clipboard" aria-hidden="true"></i>
+                                                </button>
+                                            </div>`
+            : `<p class="text-muted">Todo preparado</p>`}
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </td>
-            </tr>`;
+                    </td>
+                </tr>`;
+
+    return texto;
 }
+
 
 function reducirCantidadProducto(codigo) {
     var producto = buscarProductoCodigo(codigo);
@@ -923,15 +971,6 @@ function generarHTMLOpcion(valor, detalle) {
     return `<option value='${valor}'>${detalle}</option>`;
 }
 
-
-
-/* Métodos de botones de acción */
-
-function seleccionarCliente(id, nombre) {
-    $("#txt-id-cliente").val(id);
-    $("#txt-cliente").val(nombre);
-}
-
 function limpiarOrden() {
     ordenGestion = {
         "id": null,
@@ -940,17 +979,26 @@ function limpiarOrden() {
         "total": 0,
         "envio": 0,
         "subTotal": 0,
+        "mesa": -1,
+        "numero_orden": "",
+        "mto_pagado": 0,
+        "pagado": false,
         "codigo_descuento": null
     };
     $('#monto_sinpe').val(""); // Supongo que txt-sinpe es el campo para el pago con SINPE
     $('#monto_tarjeta').val(""); // Supongo que txt-tarjeta es el campo para el pago con tarjeta
     $('#monto_efectivo').val("");
+    $("#txt-cliente").val("");
+    $('#select_mesa').val(-1);
     reiniciarCantidadesProductos();
     detalles = [];
+    cambiosPendientes = false;
     actualizarOrden();
     generarProductos();
-    $("#txt-cliente").val("");
     guardandoOrden = false;
+    $('#btnIniciarOrden').fadeIn();
+    $('#btnActualizarOrden').fadeOut();
+    $('#infoHeaderOrden').html("Orden Nueva");
 }
 
 function reiniciarCantidadesProductos() {
@@ -968,41 +1016,6 @@ function reiniciarCantidadesProductos() {
 
 }
 
-function confirmarOrden() {
-    if (!guardandoOrden) {
-        $('#btn_facturar_confirmar').attr("disabled", true);
-        iziToast.success({
-            title: 'Crear orden',
-            message: 'Procesando orden...',
-            position: 'topRight'
-        });
-        guardandoOrden = true;
-        generarOrden();
-    } else {
-        $('#btn_facturar_confirmar').attr("disabled", false);
-        iziToast.error({
-            title: 'Crear orden',
-            message: 'Existe una orden en proceso de creación',
-            position: 'topRight'
-        });
-    }
-
-    /*swal({
-            title: 'Desea confirmar la orden?',
-            text: 'No podrá deshacer esta acción!',
-            icon: 'info',
-            buttons: true,
-            dangerMode: true,
-        })
-        .then((willDelete) => {
-            if (willDelete) {
-                swal.close();
-                generarOrden();
-            } else {
-                swal.close();
-            }
-        });*/
-}
 
 function eliminarCodDescuento() {
     if (ordenGestion.codigo_descuento == null) {
@@ -1054,62 +1067,6 @@ function validarCodDescuento() {
     });
 }
 
-function generarOrden() {
-    if (validarFormularioOrden()) {
-        try {
-            var ordenProcesar = {
-                "id": "null",
-                "estado": "",
-                "idCliente": $('#txt-id-cliente').val(),
-                "nombreCliente": $('#txt-cliente').val(),
-                "mesaId": $('#sel-mobiliario').val(),
-                "detalles": detalles
-            };
-
-            $.ajax({
-                url: `${base_path}/cocina/facturar/ordenes/crearOrden`,
-                type: 'post',
-                dataType: "json",
-                data: {
-                    _token: CSRF_TOKEN,
-                    orden: ordenProcesar
-                }
-            }).done(function (res) {
-                if (!res['estado']) {
-                    swal('Generar Orden', res['mensaje'], 'error');
-                } else {
-                    let datos = res["datos"];
-                    $('#btn_facturar_confirmar').attr("disabled", false);
-                    if (!tienePedidosMesa()) {
-                        swal('Orden realizada!', 'Redirigiendo al pago.', 'success');
-                        redirigirCobro(datos);
-                    } else {
-                        //Orden completada
-                        limpiarOrden();
-                        swal('Orden realizada!', '', 'success');
-                        //TODO agregar orden al sidebar
-
-                    }
-                }
-            }).fail(function (jqXHR, textStatus, errorThrown) {
-                swal('Procesar Orden', "Algo salió mal.", 'error');
-                $('#btn_facturar_confirmar').attr("disabled", false);
-                guardandoOrden = false;
-            });
-
-        } finally {
-            guardandoOrden = false;
-        }
-    } else {
-        $('#btn_facturar_confirmar').attr("disabled", false);
-        guardandoOrden = false;
-    }
-}
-
-function redirigirCobro(id) {
-    $("#ipt_id_orden").val(id);
-    $("#frm-caja-rapida").submit();
-}
 
 function validarFormularioOrden() {
 
@@ -1121,22 +1078,53 @@ function validarFormularioOrden() {
     return true;
 }
 
+function abrirModalPago() {
+    
+    if (ordenGestion.nueva) {
+        if (ordenGestion.mesa != -1) {
+            showError("Debe iniciar la orden primero en un pedido que no es para llevar.");
+            return;
+        } 
+
+    }
+
+    if (!ordenGestion.nueva) {
+     
+        if (cambiosPendientes) {
+            showError("Existen modificaciones sin guardar. Por favor, guarde los cambios antes de continuar.");
+            return;
+        }
+    }
+
+    if (detalles.length === 0) {
+        showError("Debe agregar al menos un detalle a la orden.");
+        return false;
+    }
+
+
+    $('#monto_sinpe_mdl').val(""); // Supongo que txt-sinpe es el campo para el pago con SINPE
+    $('#monto_tarjeta_mdl').val(""); // Supongo que txt-tarjeta es el campo para el pago con tarjeta
+    $('#monto_efectivo_mdl').val("");
+    $('#nombreCliente').val(ordenGestion.cliente ?? "");
+    cargarDetallesDividirCuentas(detalles);
+    $('#mdl-pago').modal("show");
+}
+
 function verificarAbrirModalPago() {
     if (detalles.length < 1) {
         showError('Debe seleccionar los productos para facturar');
         return false;
     }
-    var cliente = $('#txt-cliente').val();
+    var cliente = $('#nombreCliente').val();
     if (cliente == "" || cliente == null || cliente == undefined) {
-        $('#txt-cliente').focus();
+        $('#nombreCliente').focus();
         showError("Debe indicar el nombre del cliente");
         return;
     }
 
-    var pago_sinpe = parseFloat($('#monto_sinpe').val()); // Supongo que txt-sinpe es el campo para el pago con SINPE
-    var pago_tarjeta = parseFloat($('#monto_tarjeta').val()); // Supongo que txt-tarjeta es el campo para el pago con tarjeta
-    var pago_efectivo = parseFloat($('#monto_efectivo').val()); // Supongo que txt-efectivo es el campo para el pago en efectivo
-    var ordenGestionTotal = parseFloat(ordenGestion.total); // Supongo que ordenGestion.total es el total de la orden
+    pago_sinpe = $('#monto_sinpe').val();
+    pago_tarjeta = $('#monto_tarjeta').val();
+    pago_efectivo = $('#monto_efectivo').val();
 
     if (isNaN(pago_sinpe)) {
         $('#monto_sinpe').val("0");
@@ -1152,177 +1140,102 @@ function verificarAbrirModalPago() {
         pago_efectivo = 0;
     }
 
-    var sumaPagos = pago_sinpe + pago_tarjeta + pago_efectivo;
-
     var textoPago = "Espere mientras se procesa la factura";
 
     if (pago_tarjeta > 0) {
         textoPago = "Esperando información de pago mediante tarjeta";
     }
-    if (sumaPagos === ordenGestionTotal) {
-        $('#mdl-loader-pago').modal("show");
-        $('#texto_pago_aux').html(textoPago);
-        procesarPago(pago_sinpe, pago_efectivo, pago_tarjeta);
+
+    $('#texto_pago_aux').html(textoPago);
+    if (ordenGestion.nueva) {
+        procesarPagoInmediato(pago_sinpe, pago_efectivo, pago_tarjeta);
     } else {
-        showError("La suma de los pagos no coincide con el total de la orden.");
-        return;
+        realizarPagoDividido(pago_sinpe, pago_efectivo, pago_tarjeta)
     }
+
+
 }
 
+function procesarPagoMixto() {
+    verificarAbrirModalPago($('#monto_sinpe').val(), $('#monto_tarjeta').val(), $('#monto_efectivo').val());
+}
 
 function verificarAbrirModalPagoEfectivo() {
-    if (detalles.length < 1) {
-        showError('Debe seleccionar los productos para facturar');
-        return false;
-    }
-    var cliente = $('#txt-cliente').val();
-    if (cliente == "" || cliente == null || cliente == undefined) {
-        $('#txt-cliente').focus();
-        showError("Debe indicar el nombre del cliente");
-        return;
-    }
-    $('#monto_sinpe').val(ordenGestion.total);
-    var ordenGestionTotal = parseFloat(ordenGestion.total); // Supongo que ordenGestion.total es el total de la orden
-    var pago_efectivo = ordenGestionTotal;
+
+    cargarDetallesSeleccionados();
+
+    $('#monto_efectivo').val(totalSeleccionado + parseFloat(ordenGestion.envio));
     $('#monto_tarjeta').val("0");
-    var pago_sinpe = 0;
+    $('#monto_sinpe').val("0");
 
-    $('#monto_efectivo').val("0");
-    var pago_tarjeta = 0;
-
-    var sumaPagos = pago_sinpe + pago_tarjeta + pago_efectivo;
-
-    var textoPago = "Espere mientras se procesa la factura";
-
-    if (pago_tarjeta > 0) {
-        textoPago = "Esperando información de pago mediante tarjeta";
-    }
-    if (sumaPagos === ordenGestionTotal) {
-        $('#mdl-loader-pago').modal("show");
-        $('#texto_pago_aux').html(textoPago);
-        procesarPago(pago_sinpe, pago_efectivo, pago_tarjeta);
-    } else {
-        showError("La suma de los pagos no coincide con el total de la orden.");
-        return;
-    }
+    verificarAbrirModalPago();
 }
 
 function verificarAbrirModalPagoTarjeta() {
-    if (detalles.length < 1) {
-        showError('Debe seleccionar los productos para facturar');
-        return false;
-    }
-    var cliente = $('#txt-cliente').val();
-    if (cliente == "" || cliente == null || cliente == undefined) {
-        $('#txt-cliente').focus();
-        showError("Debe indicar el nombre del cliente");
-        return;
-    }
-    $('#monto_tarjeta').val(ordenGestion.total);
-    var ordenGestionTotal = parseFloat(ordenGestion.total); // Supongo que ordenGestion.total es el total de la orden
-    var pago_tarjeta = ordenGestionTotal;
+    cargarDetallesSeleccionados();
+    $('#monto_tarjeta').val(totalSeleccionado + parseFloat(ordenGestion.envio));
     $('#monto_sinpe').val("0");
-    var pago_sinpe = 0;
-
     $('#monto_efectivo').val("0");
-    var pago_efectivo = 0;
 
-    var sumaPagos = pago_sinpe + pago_tarjeta + pago_efectivo;
-
-    var textoPago = "Espere mientras se procesa la factura";
-
-    if (pago_tarjeta > 0) {
-        textoPago = "Esperando información de pago mediante tarjeta";
-    }
-    if (sumaPagos === ordenGestionTotal) {
-        $('#mdl-loader-pago').modal("show");
-        $('#texto_pago_aux').html(textoPago);
-        procesarPago(pago_sinpe, pago_efectivo, pago_tarjeta);
-    } else {
-        showError("La suma de los pagos no coincide con el total de la orden.");
-        return;
-    }
+    verificarAbrirModalPago();
 }
 
 function verificarAbrirModalPagoSinpe() {
-    if (detalles.length < 1) {
-        showError('Debe seleccionar los productos para facturar');
-        return false;
-    }
-    var cliente = $('#txt-cliente').val();
-    if (cliente == "" || cliente == null || cliente == undefined) {
-        $('#txt-cliente').focus();
-        showError("Debe indicar el nombre del cliente");
-        return;
-    }
-    $('#monto_sinpe').val(ordenGestion.total);
-    var ordenGestionTotal = parseFloat(ordenGestion.total); // Supongo que ordenGestion.total es el total de la orden
-    var pago_sinpe = ordenGestionTotal;
-    $('#monto_tarjeta').val("0");
-    var pago_tarjeta = 0;
-
+    cargarDetallesSeleccionados();
+    $('#monto_sinpe').val(totalSeleccionado + parseFloat(ordenGestion.envio));
     $('#monto_efectivo').val("0");
-    var pago_efectivo = 0;
+    $('#monto_tarjeta').val("0");
 
-    var sumaPagos = pago_sinpe + pago_tarjeta + pago_efectivo;
+    verificarAbrirModalPago();
+}
 
-    var textoPago = "Espere mientras se procesa la factura";
+function procesarPagoInmediato(mto_sinpe, mto_efectivo, mto_tarjeta) {
+    var sumaPagos = parseFloat(mto_sinpe) + parseFloat(mto_tarjeta) + parseFloat(mto_efectivo);
+    if (sumaPagos == (parseFloat(totalSeleccionado) + parseFloat(ordenGestion.envio))) {
 
-    if (pago_tarjeta > 0) {
-        textoPago = "Esperando información de pago mediante tarjeta";
-    }
-    if (sumaPagos === ordenGestionTotal) {
         $('#mdl-loader-pago').modal("show");
-        $('#texto_pago_aux').html(textoPago);
-        procesarPago(pago_sinpe, pago_efectivo, pago_tarjeta);
+        ordenGestion.cliente = $('#nombreCliente').val();
+        $.ajax({
+            url: `${base_path}/facturacion/pos/crearFactura`,
+            type: 'post',
+            dataType: "json",
+            data: {
+                _token: CSRF_TOKEN,
+                orden: ordenGestion,
+                envio: infoEnvio,
+                infoFE: infoFE,
+                detalles: detalles,
+                mto_sinpe: mto_sinpe,
+                mto_efectivo: mto_efectivo,
+                mto_tarjeta: mto_tarjeta
+            }
+        }).done(function (res) {
+            if (!res['estado']) {
+                showError(res['mensaje']);
+                $('#mdl-loader-pago').modal("hide");
+                return;
+            } else {
+                id = res['datos'];
+                imprimirTicket(id);
+                showSuccess("Orden realizada!");
+            }
+            $('#mdl-loader-pago').modal("hide");
+            location.reload();
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            showError("Algo salió mal");
+            $('#mdl-loader-pago').modal("hide");
+        }).always(function () {
+            $('#mdl-loader-pago').modal("hide");
+        });
+
     } else {
         showError("La suma de los pagos no coincide con el total de la orden.");
         return;
     }
 }
 
-
-function procesarPago(mto_sinpe, mto_efectivo, mto_tarjeta) {
-
-    $.ajax({
-        url: `${base_path}/facturacion/pos/crearFactura`,
-        type: 'post',
-        dataType: "json",
-        data: {
-            _token: CSRF_TOKEN,
-            orden: ordenGestion,
-            envio: infoEnvio,
-            infoFE : infoFE,
-            detalles: detalles,
-            mto_sinpe: mto_sinpe,
-            mto_efectivo: mto_efectivo,
-            mto_tarjeta: mto_tarjeta
-        }
-    }).done(function (res) {
-        console.log(res);
-        if (!res['estado']) {
-            showError(res['mensaje']);
-            $('#mdl-loader-pago').modal("hide");
-            return;
-        } else {
-            id = res['datos'];
-            imprimirTicket(id);
-            showSuccess("Orden realizada!");
-        }
-        $('#mdl-loader-pago').modal("hide");
-        location.reload();
-    }).fail(function (jqXHR, textStatus, errorThrown) {
-        console.log(jqXHR);
-        console.log(textStatus);
-        console.log(errorThrown);
-        showError("Algo salió mal");
-        $('#mdl-loader-pago').modal("hide");
-    });
-    $('#mdl-loader-pago').modal("hide");
-
-}
-
 function recargarOrdenes() {
+    $('#loader').fadeIn();
     $.ajax({
         url: `${base_path}/facturacion/pos/recargarOrdenes`,
         type: 'post',
@@ -1338,6 +1251,8 @@ function recargarOrdenes() {
         generarHTMLOrdenes(response['datos']);
     }).fail(function (jqXHR, textStatus, errorThrown) {
         showError("Algo salió mal");
+    }).always(function () {
+        $('#loader').fadeOut();
     });
 }
 
@@ -1382,27 +1297,44 @@ function generarHTMLOrdenes(ordenes) {
         lineas.slice(0, -1);
         texto = texto +
             `<tr style="border-bottom: 1px solid grey;">
-                <td class="text-center" onclick="imprimirTicket( ${orden.id})" style="cursor:pointer; text-decoration : underline; ">
-                    ${orden.numero_orden}
+                <td class="text-center"  onclick="cargarOrdenGestion(${orden.id})" style="cursor:pointer; text-decoration : underline; ">
+                   <i class="fas fa-cog" aria-hidden="true"> </i> ${orden.numero_orden}
                 </td> 
+                 <td class="text-center">
+                    ${orden.numero_mesa ?? 'PARA LLEVAR'}
+                </td>
                 <td class="text-center">
                     ${orden.fecha_inicio}
                 </td>
                 <td class="text-center">
                     ${orden.nombre_cliente ?? ""}
                 </td>
-                <td class="text-center">
-                ${orden.total_con_descuento ?? 0}
-            </td> <td class="text-center">
-
+                 <td class="text-center">
                 ${orden.estadoOrden ?? ""}
             </td>
+             <td class="text-center">
+                ${orden.pagado == 1 ? "Pagado" : "Pendiente de Pagar"}
+            </td>
+                <td class="text-center">
+                ${orden.total_con_descuento ?? 0}
+            </td> 
+             <td class="text-center">
+                ${orden.mto_pagado ?? 0}
+            </td>
+                <td class="text-center">
+                ${(orden.total_con_descuento ?? 0) - (orden.mto_pagado ?? 0)}
+            </td> 
+               
            
-            <td class="text-center"> 
-                <a href="${msjTrackingWhatsp ?? ""}" style="display: block;width: 100%;" target="_blank">
-                    <i class="fas fa-barcode" aria-hidden="true"> </i> Envíar link de rastreo de orden
-                </a>
-            </td>`;
+            <td class="text-center" style="cursor:pointer; text-decoration : underline;" onclick="imprimirTicket( ${orden.id})"> 
+                <i class="fas fa-print" aria-hidden="true"> </i> Imprimir Tiquete
+            </td>
+           `;
+        /* <td class="text-center"> 
+             <a href="${msjTrackingWhatsp ?? ""}" style="display: block;width: 100%;" target="_blank">
+                 <i class="fas fa-barcode" aria-hidden="true"> </i> Envíar link de rastreo de orden
+             </a>
+         </td>*/
 
         texto = texto + `</tr>`;
     });
@@ -1413,7 +1345,7 @@ function generarHTMLOrdenes(ordenes) {
 
 function generarMensajeTrackingWhatsApp(nombreUsuario, numeroOrden, telefono, url) {
     // Formatear el mensaje con los datos proporcionados
-    var mensaje = "Hola " + nombreUsuario + ", de parte de COFFEE TO GO te informamos que puedes rastrear el estado de tú orden " + numeroOrden + " siguiendo el siguiente link : " + url;
+    var mensaje = "Hola " + nombreUsuario + ", te informamos que puedes rastrear el estado de tú orden " + numeroOrden + " siguiendo el siguiente link : " + url;
 
     // Formatear el enlace con el mensaje y el número de teléfono del usuario
     var enlaceWhatsApp = "https://api.whatsapp.com/send?phone=506" + telefono + "&text=" + encodeURIComponent(mensaje);
@@ -1539,7 +1471,7 @@ function cargarCajaPrevia() {
         $('#monto_sinpe_lbl').html("CRC <strong>" + parseFloat(datos.total_sinpe).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,' + "</strong>"));
         var total = parseFloat(datos.total_efectivo) + parseFloat(datos.total_tarjeta) + parseFloat(datos.total_sinpe);
         $('#monto_total_lbl').html("CRC <strong>" + parseFloat(total).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,' + "</strong>"));
-    }).fail(function (jqXHR, textStatus, errorThrown) {});
+    }).fail(function (jqXHR, textStatus, errorThrown) { });
 }
 
 function enterDescuento(event) {
@@ -1580,6 +1512,12 @@ function enterCampoPago(event) {
     }
 }
 
+function changeNombreCliente(nombre) {
+    ordenGestion.cliente = nombre;
+    cambiosPendientes = true;
+    validarVisibilidadBotonesGestion();
+}
+
 function abrirModalEnvio() {
     cargarInfoEnvio();
     $("#mdl_envio").modal("show");
@@ -1613,6 +1551,7 @@ function guardarInfoEnvio() {
     infoEnvio.descripcion_lugar = $("#mdl_lugar_entrega").val();
     infoEnvio.descripcion_lugar_maps = $("#mdl_lugar_entrega_maps").val();
     ordenGestion.envio = infoEnvio.precio;
+    ordenGestion.mesa = $('#incluyeEnvio').prop("checked") ? -1 : ordenGestion.mesa;
     cerrarModalEnvio();
     actualizarOrden();
     iziToast.success({
@@ -1628,7 +1567,7 @@ function guardarInfoFE() {
     infoFE.info_ced_fe = $('#info_ced_fe').val();
     infoFE.incluyeFE = $('#incluyeFE').prop("checked");
     infoFE.info_correo_fe = $("#info_correo_fe").val();
-   
+
     cerrarModalFe();
     actualizarOrden();
     iziToast.success({
@@ -1647,6 +1586,7 @@ function cerrarModalFe() {
 }
 
 function cerrarCaja() {
+    $('#loader').fadeIn();
     $.ajax({
         url: `${base_path}/caja/cerrarcaja`,
         type: 'post',
@@ -1657,18 +1597,22 @@ function cerrarCaja() {
     }).done(function (response) {
         if (!response['estado']) {
             cajaAbierta = true;
-            showError(res['mensaje']);
+            showError(response['mensaje']);
             return;
         }
         showSuccess("Se cerró la caja correctamente");
         cajaAbierta = false;
         cerrarModalCerrarCaja();
-        window.location.href = window.location.href;
+        location.reload();
 
     }).fail(function (jqXHR, textStatus, errorThrown) {
         cajaAbierta = true;
         showError("Algo salió mal");
+    }).always(function () {
+        $('#loader').fadeOut();
     });
+    $('#loader').fadeOut();
+
 }
 
 function abrirCaja() {
@@ -1693,4 +1637,540 @@ function abrirCaja() {
         cajaAbierta = false;
         showError("Algo salió mal");
     });
+}
+
+
+function cargarOrdenGestion(idOrden) {
+
+    $.ajax({
+        url: `${base_path}/facturacion/pos/cargarOrdenGestion`,
+        type: 'get',
+        dataType: "json",
+        data: {
+            _token: CSRF_TOKEN,
+            idOrden: idOrden
+        }
+    }).done(function (response) {
+        if (!response['estado']) {
+            showError(response['mensaje']);
+            return;
+        }
+
+        ordenGestion = transformarEncabezado(response['datos']);
+        detalles = transformarDetalles(response['datos']);
+        cambiosPendientes = false;
+        $('#btnIniciarOrden').fadeOut();
+        $('#btnActualizarOrden').fadeIn();
+        $('#mdl-ordenes').modal('hide');
+        $('#infoHeaderOrden').html("Orden : " + ordenGestion.numero_orden);
+        actualizarOrden();
+
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+        cajaAbierta = false;
+        showError("Algo salió mal");
+
+    });
+}
+
+// Función para transformar solo el encabezado
+function transformarEncabezado(phpObject) {
+    return {
+        id: phpObject.id,
+        subtotal: phpObject.subtotal,
+        total: phpObject.total,
+        cliente: phpObject.nombre_cliente,
+        codigo_descuento: phpObject.codigo_descuento || '',
+        envio: phpObject.envio,
+        nueva: phpObject.nueva,
+        mesa: phpObject.mesa,
+        numero_orden: phpObject.numero_orden,
+        mto_pagado: phpObject.mto_pagado,
+        pagado: phpObject.pagado == 1
+    };
+}
+
+// Función para transformar solo los detalles
+function transformarDetalles(phpObject) {
+    return phpObject.detalles.map(detalle => ({
+        indice: 0,
+        id: detalle.id,
+        cantidad: detalle.cantidad,
+        impuestoServicio: detalle.impuestoServicio || 'N',
+        impuesto: detalle.impuesto.toString(),
+        precio_unidad: detalle.precio_unidad.toString(),
+        total: detalle.total,
+        observacion: detalle.observacion || '',
+        tipo: detalle.tipo,
+        tipoComanda: detalle.tipoComanda || '',
+        cantidad_preparada: detalle.cantidad_preparada,
+        cantidad_pagada: detalle.cantidad_pagada,
+        nueva: 0,
+        objRowAux: null,
+        producto: {
+            id: detalle.producto.id,
+            nombre: detalle.producto.nombre,
+            impuesto: detalle.producto.impuesto,
+            precio: detalle.producto.precio,
+            codigo: detalle.producto.codigo,
+            tipoComanda: detalle.producto.tipo_comanda || '',
+            cantidad: detalle.producto.cantidad ? detalle.producto.cantidad : '-1',
+            cantidad_original: detalle.producto.cantidad_original ? detalle.producto.cantidad_original : '-1',
+            tipoProducto: detalle.producto.tipoProducto || detalle.tipo,
+            extras: transformarExtras(detalle.producto.extras),
+            es_promocion: detalle.producto.es_promocion || 'N'
+        },
+        extras: detalle.extras.map(extra => ({
+            id: extra.extra,
+            descripcion: extra.descripcion_extra,
+            precio: extra.total / detalle.cantidad,
+            materia_prima: extra.materia_prima ? extra.materia_prima : '',
+            cant_mp: extra.cant_mp ? extra.cant_mp : '',
+            grupo: extra.dsc_grupo,
+            requerido: extra.requerido,
+            tipo_producto: extra.tipo_producto,
+            idProd: extra.id_producto,
+            seleccionado: false
+        }))
+    }));
+}
+
+// Función para transformar la estructura de los extras dentro del producto
+function transformarExtras(extras) {
+    return extras.map(grupo => ({
+        dsc_grupo: grupo.grupo,
+        requerido: grupo.requerido.toString(),
+        multiple: grupo.multiple.toString(),
+        extras: grupo.extras.map(extra => ({
+            id: extra.id.toString(),
+            descripcion: extra.descripcion,
+            precio: extra.precio.toString(),
+            materia_prima: extra.materia_prima ? extra.materia_prima.toString() : '',
+            cant_mp: extra.cant_mp ? extra.cant_mp.toString() : '',
+            grupo: extra.dsc_grupo,
+            requerido: extra.es_requerido.toString(),
+            tipo_producto: 'RE',
+            idProd: extra.producto.toString(),
+            seleccionado: false
+        }))
+    }));
+}
+
+function cambiarMesa() {
+    const mesaSeleccionada = $('#select_mesa').val();
+
+    // Verificar si incluye envío
+    if (infoEnvio.incluye_envio) {
+        $('#select_mesa').val(-1);
+        ordenGestion.mesa = -1;
+        showError("No se puede asignar una mesa a una orden PARA LLEVAR (Debes deseleccionar la opción de envío)");
+        return;
+    }
+
+    // Validar si el monto pagado es mayor a 0
+    if (ordenGestion.mto_pagado > 0) {
+        // Si la mesa actual es -1 o null, no permitir cambiar a otra mesa
+        if ((ordenGestion.mesa === -1 || ordenGestion.mesa === null) && mesaSeleccionada != -1) {
+            $('#select_mesa').val(ordenGestion.mesa);
+            showError("No se puede asignar una mesa ya que la orden está configurada PARA LLEVAR y ya ha sido pagada.");
+            return;
+        }
+        // Si la mesa actual es diferente de -1, no permitir cambiar a PARA LLEVAR
+        if (ordenGestion.mesa != -1 && mesaSeleccionada == -1) {
+            $('#select_mesa').val(ordenGestion.mesa);
+            showError("No se puede cambiar la orden a PARA LLEVAR ya que la mesa ya ha sido asignada y la orden está pagada.");
+            return;
+        }
+    }
+
+    $('#loader').fadeIn();
+    
+    // Asignar la nueva mesa
+    ordenGestion.mesa = mesaSeleccionada;
+    cambiosPendientes = true;
+    actualizarOrden();
+    $('#loader').fadeOut();
+}
+
+
+function iniciarOrden() {
+    if (ordenGestion.pagado != 0) {
+        showError("Error");
+        return false;
+    }
+    let nombreCliente = document.getElementById('txt-cliente').value;
+
+    if (detalles.length === 0) {
+        showError("Debe agregar al menos un detalle a la orden.");
+        return false;
+    }
+
+    if (nombreCliente.trim() === "") {
+        showError("Debe escribir el nombre del cliente.");
+        return false;
+    }
+
+    $('#loader').fadeIn();
+    $.ajax({
+        url: `${base_path}/facturacion/pos/iniciarOrden`,
+        type: 'post',
+        dataType: "json",
+        data: {
+            _token: CSRF_TOKEN,
+            orden: ordenGestion,
+            detalles: detalles
+        }
+    }).done(function (res) {
+        if (!res['estado']) {
+            showError(res['mensaje']);
+        } else {
+            id = res['datos'];
+            showSuccess(res['mensaje']);
+            cargarOrdenGestion(id);
+        }
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+        showError("Algo salió mal");
+    }).always(function () {
+        $('#loader').fadeOut();
+    });
+}
+
+function cerrarMdlPago() {
+    $('#mdl-pago').modal("hide");
+}
+
+function actualizarOrdenGestion() {
+    if (ordenGestion.pagado != 0) {
+        showError("Error");
+        return false;
+    }
+
+    if (detalles.length === 0) {
+        showError("Debe agregar al menos un detalle a la orden.");
+        return false;
+    }
+
+    $('#loader').fadeIn();
+    $.ajax({
+        url: `${base_path}/facturacion/pos/actualizarOrden`,
+        type: 'post',
+        dataType: "json",
+        data: {
+            _token: CSRF_TOKEN,
+            orden: ordenGestion,
+            detalles: detalles
+        }
+    }).done(function (res) {
+        id = res['datos'];
+        if (!res['estado']) {
+            showError(res['mensaje']);
+            return;
+        } else {
+            showSuccess(res['mensaje']);
+            cargarOrdenGestion(ordenGestion.id);
+        }
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+        showError("Algo salió mal");
+    }).always(function () {
+        $('#loader').fadeOut();
+    });
+}
+
+function cargarDetallesDividirCuentas() {
+    const tabla = document.getElementById('tabla-detalles-dividir-cuentas');
+    tabla.innerHTML = '';
+
+    detalles.forEach((detalle, index) => {
+        // Verificar si los checkboxes deben ser deshabilitados
+        const cantPendientePagar = detalle.cantidad - (detalle.cantidad_pagada ?? 0);
+        const checkboxDisabled = (ordenGestion.nueva || cantPendientePagar < 1) ? 'disabled' : '';
+        const checkboxChecked = (ordenGestion.nueva || cantPendientePagar > 0) ? 'checked' : '';
+
+        let totalExtrasAux = 0;
+        detalle.extras.forEach(extra => {
+            totalExtrasAux = totalExtrasAux + parseFloat(extra.precio);
+        });
+
+        let precioExtras = parseFloat(detalle.precio_unidad) + parseFloat(totalExtrasAux);
+
+        let precioFinal = (detalle.cantidad * parseFloat(precioExtras));
+        const row = `<tr>
+                        <td><input type="checkbox" class="detalle-checkbox" data-id="${detalle.id}" ${checkboxChecked} ${checkboxDisabled} onchange="actualizarOrden()" /></td>
+                        <td>${detalle.producto.nombre}</td>
+                        <td>${detalle.cantidad}</td>
+                        <td>${(detalle.cantidad_pagada ?? 0)}</td>
+                        <td>
+                            <input type="number" class="form-control cantidad-a-pagar" min="0" max="${cantPendientePagar}" ${checkboxDisabled}
+                                value="${cantPendientePagar}" data-precio="${precioExtras}" data-id="${detalle.id}" data-indice="${detalle.indice}"
+                                onchange="actualizarOrden()" />
+                        </td>
+                        <td>${currencyCRFormat(precioExtras)}</td>
+                        <td class="total-parcial">${currencyCRFormat(precioFinal)}</td>
+                     </tr>`;
+        tabla.innerHTML += row;
+    });
+    actualizarOrden(); // Calcular el total inicialmente
+}
+
+function seleccionarTodasLasLineas(seleccionar) {
+    document.querySelectorAll('.detalle-checkbox').forEach(cb => {
+        if (!cb.disabled) {
+            cb.checked = seleccionar;
+        }
+    });
+    actualizarOrden();
+}
+
+function cargarDetallesSeleccionados() {
+    detallesSeleccionados = [];
+
+    document.querySelectorAll('.detalle-checkbox:checked').forEach(cb => {
+        const fila = cb.closest('tr');
+        const id = cb.dataset.id;
+
+        const indice = parseFloat(fila.querySelector('.cantidad-a-pagar').dataset.indice) || 0;
+        const cantidad = parseFloat(fila.querySelector('.cantidad-a-pagar').value) || 0;
+        let detalleOriginal = false;
+        if (ordenGestion.nueva) {
+            detalleOriginal = detalles.find(det => det.indice == indice);
+        } else {
+            detalleOriginal = detalles.find(det => det.id == id);
+        }
+
+
+        if (detalleOriginal) {
+            // Crear una copia del objeto encontrado
+            const detalleCopia = { ...detalleOriginal };
+
+            const subTotalFraccion = detalleCopia.subTotal / detalleOriginal.cantidad;
+
+            // Actualizar la cantidad en la copia
+            detalleCopia.cantidad = cantidad;
+            detalleCopia.subTotal = (detalleOriginal.subTotal / detalleOriginal.cantidad) * cantidad;
+            detalleCopia.montoIva = (detalleOriginal.montoIva / detalleOriginal.cantidad) * cantidad;
+            detalleCopia.total = (detalleOriginal.total / detalleOriginal.cantidad) * cantidad;
+            detalleCopia.objRowAux = fila;
+            // Añadir la copia con la cantidad actualizada a la lista de seleccionados
+            detallesSeleccionados.push(detalleCopia);
+        }
+    });
+    descuentoAplicado = 0;
+    if (ordenGestion.codigo_descuento && ordenGestion.codigo_descuento.cod_general) {
+        let subTotalSeleccionado = detallesSeleccionados.reduce((acc, detalle) => acc + detalle.subTotal, 0);
+        if (ordenGestion.codigo_descuento.cod_general === 'DESCUENTO_PORCENTAJE') {
+            descuentoAplicado = subTotalSeleccionado * (ordenGestion.codigo_descuento.descuento / 100);
+        } else if (ordenGestion.codigo_descuento.cod_general === 'DESCUENTO_ABSOLUTO') {
+            descuentoAplicado = ordenGestion.codigo_descuento.descuento;
+        }
+        $('#txt-dsc_promo').html(`<small>Descuento Aplicado : ${ordenGestion.codigo_descuento.descripcion}</small>`);
+        $('#cont-dsc_promo').fadeIn(1000);
+
+        detallesSeleccionados.forEach(detalle => {
+            let porcentajeDescuento = detalle.subTotal / subTotalSeleccionado;
+            let montoDescuentoLinea = porcentajeDescuento * descuentoAplicado;
+
+            // Recalcular el submontoIva e IVA con el descuento aplicado
+            let subtotalConDescuento = detalle.subTotal - montoDescuentoLinea;
+            let ivaConDescuento = 0;
+
+            if (detalle.impuesto > 0 && sucursalFacturaIva) {
+                ivaConDescuento = subtotalConDescuento * parseFloat(`0.${detalle.impuesto}`);
+            }
+
+            detalle.montoIva = ivaConDescuento;
+            detalle.subTotal = subtotalConDescuento;
+            detalle.total = subtotalConDescuento + ivaConDescuento;
+
+        });
+    } else {
+        $('#cont-dsc_promo').fadeOut(1000);
+        $('#txt-dsc_promo').val("");
+    }
+
+    var totalSeleccionadoAux = 0;
+
+    detallesSeleccionados.forEach(detalle => {
+        detalle.objRowAux.querySelector('.total-parcial').innerText = currencyCRFormat(detalle.total);
+        detalle.objRowAux = null;
+        totalSeleccionadoAux += detalle.total;
+    });
+
+
+    totalSeleccionado = totalSeleccionadoAux;
+    mtoDescuentoGen = descuentoAplicado;
+    $('#txt-descuento-pagar_mdl').html(`Descuento: ${descuentoAplicado.toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
+    document.getElementById('txt-total-seleccionado').innerText = `Total Seleccionado a Pagar : ${currencyCRFormat(totalSeleccionadoAux)}`;
+}
+
+function realizarPagoDividido(montoSinpe, montoEfectivo, montoTarjeta) {
+    if (!ordenGestion.nueva) {
+        if (cambiosPendientes) {
+            showError("Existen modificaciones sin guardar. Por favor, guarde los cambios antes de continuar.");
+            return;
+        }
+    }
+
+    var sumaPagos = parseFloat(montoSinpe) + parseFloat(montoTarjeta) + parseFloat(montoEfectivo);
+
+    if (sumaPagos == (totalSeleccionado + parseFloat(ordenGestion.envio))) {
+        ordenGestion.cliente = document.getElementById('nombreCliente').value;
+
+        if (detallesSeleccionados.length === 0) {
+            showError('Seleccione al menos un detalle.');
+            return;
+        }
+        $('#mdl-loader-pago').modal("show");
+        $.ajax({
+            url: `${base_path}/facturacion/pos/pagarOrden`,
+            type: 'post',
+            dataType: "json",
+            data: {
+                _token: CSRF_TOKEN,
+                orden: ordenGestion,
+                infoFE: infoFE,
+                envio: infoEnvio,
+                detalles: detallesSeleccionados,
+                mto_sinpe: montoSinpe,
+                mto_efectivo: montoEfectivo,
+                mto_tarjeta: montoTarjeta
+            }
+        }).done(function (res) {
+            $('#mdl-loader-pago').modal("hide");
+            if (!res['estado']) {
+                showError(res['mensaje']);
+                return;
+            } else {
+                data = res['datos'];
+                showSuccess("Se generó el pago");
+                if (data.pago_completo) {
+                    if (!data.variasFacturas) {
+                        imprimirTicket(data.idOrden);
+                    } else {
+                        imprimirTicket(data.numFactura);
+                    }
+                    location.reload();
+                } else {
+                    imprimirTicket(data.numFactura);
+                    cerrarMdlPago();
+                    cargarOrdenGestion(ordenGestion.id);
+                    cargarProductosPos();
+                }
+            }
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            $('#mdl-loader-pago').modal("hide");
+            showError("Algo salió mal");
+        });
+    } else {
+        showError("La suma de los pagos no coincide con el total de la orden.");
+        return;
+    }
+}
+
+function recargarOrden() {
+
+    cargarOrdenGestion(ordenGestion.id);
+    showSuccess("Se recargo la orden " + ordenGestion.numero_orden);
+
+}
+
+function cargarProductosPos() {
+
+    $.ajax({
+        url: '/facturacion/pos/cargarPosProductos',
+        type: 'get',
+        dataType: "json",
+        data: {
+            _token: CSRF_TOKEN
+        }
+    }).done(function (respuesta) {
+
+        if (!respuesta['estado']) {
+            showError(respuesta.mensaje);
+            return;
+        }
+        procesarDatosAjax(respuesta['datos']);
+
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+        showError("Ocurrió un error consultando el servidor");
+    });
+}
+function procesarDatosAjax(tiposAux) {
+    // Limpiar el arreglo de tipos
+    tipos = [];
+    productosGeneral = []; // Asegurarse de limpiar también productosGeneral
+
+    tiposAux.forEach(tipo => {
+        // Reiniciar el arreglo de categorías para cada tipo
+        var categorias = [];
+
+        // Convertir categorías a un arreglo, si es necesario
+        var categoriasArray = Array.isArray(tipo.categorias) ? tipo.categorias : Object.values(tipo.categorias);
+        if (Array.isArray(categoriasArray)) {
+            // Recorrer las categorías dentro de cada tipo
+            categoriasArray.forEach(categoria => {
+                // Reiniciar el arreglo de productos para cada categoría
+                var productos = [];
+
+                // Convertir productos a un arreglo, si es necesario
+                var productosArray = Array.isArray(categoria.productos) ? categoria.productos : Object.values(categoria.productos);
+                if (Array.isArray(productosArray)) {
+                    productosArray.forEach(producto => {
+                        var extrasAux = [];
+
+                        // Verificar si el producto es una promoción
+                        if (producto.es_promocion === 'S') {
+                            producto.detallesRestaurante?.forEach(dr => {
+                                var extrasTransf = transformarExtras(dr.extras || [], 'R', dr.id_producto || '');
+                                extrasAux = extrasAux.concat(extrasTransf);
+                            });
+
+                            producto.detallesExternos?.forEach(de => {
+                                var extrasTransf = transformarExtras(de.extras || [], 'E', de.id_producto || '');
+                                extrasAux = extrasAux.concat(extrasTransf);
+                            });
+                        } else {
+                            extrasAux = transformarExtras(producto.extras || [], 'RE', producto.id || '');
+                        }
+
+                        // Crear el objeto de producto
+                        var auxProducto = {
+                            id: producto.id,
+                            nombre: producto.nombre || '',
+                            impuesto: producto.impuesto || 0,
+                            precio: producto.precio || 0,
+                            codigo: producto.codigo || '',
+                            tipoComanda: producto.tipoComanda || '',
+                            cantidad: producto.cantidad || -1,
+                            cantidad_original: producto.cantidad || -1,
+                            tipoProducto: producto.tipoProducto || -1,
+                            extras: extrasAux,
+                            es_promocion: producto.es_promocion || 'N'
+                        };
+                        productos.push(auxProducto);
+                        productosGeneral.push(auxProducto); // Agregar el producto a productosGeneral
+                    });
+                }
+
+                // Agregar la categoría actual con sus productos
+                categorias.push({
+                    id: categoria.id,
+                    categoria: categoria.categoria,
+                    productos: productos
+                });
+            });
+        } else {
+            console.warn("tipo.categorias no es un arreglo:", tipo.categorias);
+        }
+
+        // Agregar el tipo actual con sus categorías
+        tipos.push({
+            nombre: tipo.nombre,
+            codigo: tipo.codigo,
+            color: tipo.color,
+            categorias: categorias
+        });
+    });
+
+    // Generar la interfaz y seleccionar el primer tipo
+    generarTipos();
+    seleccionarTipo(0);
 }

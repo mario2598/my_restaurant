@@ -1,39 +1,50 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Traits\AuthUtil;
 use Illuminate\Database\QueryException;
 use App\Traits\SpaceUtil;
+
 class LogInController extends Controller
 {
     use SpaceUtil;
-    public $codigo_pantalla = "inicio";
+    use AuthUtil;
 
     public function __construct()
     {
-        
     }
-    public function index(){
-        if(!$this->validarSesion($this->codigo_pantalla)){
-            return redirect('login');
-        }else{
-           
-            $data = [
-                'menus'=> $this->cargarMenus(),
-                'panel_configuraciones' => $this->getPanelConfiguraciones()
-            ];
-            return view('inicio',compact('data'));
+
+    public function index()
+    {
+
+        if (!$this->validarSesion()) {
+            return $this->goLogIn();
+        } else {
+            return $this->goInicio();
         }
     }
 
-    public function goLogIn(){
-        session(['usuario'=>null]);
+    public function goLogIn()
+    {
+        $this->clearAuthUser();
         return view('login');
     }
+    
 
-    public function ingresar(Request $request)
+    public function goInicio()
+    {
+        $data = [
+            'menus' => $this->cargarMenus(),
+            'panel_configuraciones' => $this->getPanelConfiguraciones()
+        ];
+        return view('inicio', compact('data'));
+    }
+
+    public function logIn(Request $request)
     {
 
         $user = $request->input('user');
@@ -42,7 +53,6 @@ class LogInController extends Controller
         $password = trim($password);
         $requeridos = "[";
         $valido = true;
-        $estadoLogin = '';
 
         if ($this->isNull($user) || $this->isEmpty($user)) {
             $requeridos .= " Usuario ";
@@ -64,6 +74,7 @@ class LogInController extends Controller
                 ->join('rol', 'rol.id', '=', 'usuario.rol')
                 ->select('usuario.*', 'rol.codigo as codigo_rol')
                 ->where('usuario', '=', $user)
+                ->where('rol.estado', '=', 'A')
                 ->where('contra', '=', md5($password))
                 ->get()->first();
 
@@ -74,7 +85,7 @@ class LogInController extends Controller
                 return redirect('login');
             }
 
-            if ($usuario->estado != 'A') {
+            if ($usuario->estado == SisEstadoController::getIdEstadoByCodGeneral("USU_INACTIVO")) {
                 $this->bitacoraInicioSesion($user, "noAuth");
                 session(['usuario' => null]);
                 $this->setError('Inicio de sesión', "El usuario esta inactivo!");
@@ -82,21 +93,14 @@ class LogInController extends Controller
             }
             $this->bitacoraInicioSesion($user, "auth");
 
-            if (!$this->isNull($usuario->fecha_nacimiento) && !$this->isEmpty($usuario->fecha_nacimiento)) {
-                $current_date = date("d-m");
-
-                $cumplenos  = date("d-m", strtotime($usuario->fecha_nacimiento));
-
-
-                if ($current_date == $cumplenos) {
-                    $this->setInfo('Felicidades ' . $usuario->nombre . "!", "Te deseamos un feliz cumpleaños!");
-                }
-            }
+            $this->verificaCumple($usuario);
 
             session(['usuario' => [
                 'id' => $usuario->id,
                 'nombre' => $usuario->nombre,
-                'usuario' => $usuario->usuario
+                'usuario' => $usuario->usuario,
+                'sucursal' => $usuario->sucursal,
+                'token' => $this->asignaTokenUser($usuario) 
             ]]);
 
             DB::commit();
@@ -104,9 +108,53 @@ class LogInController extends Controller
         } catch (QueryException $ex) {
             DB::rollBack();
             $this->bitacoraInicioSesion($user, "noAuth");
+            DB::table('log')->insertGetId(['id' => null, 'documento' => 'LogInController', 'descripcion' => $ex]);
             session(['usuario' => null]);
             $this->setError('Inicio de sesión', "Algo salío mal, reintentalo!");
             return redirect('login');
         }
+    }
+
+    private function asignaTokenUser($usuario)
+    {
+        $token = $this->generarToken(50);
+        DB::table('usuario')->where("usuario.id","=",$usuario->id)->update(['token_auth' => $token]);
+        DB::commit();
+        return  $token;
+    }
+
+    private function verificaCumple($usuario)
+    {
+        if (!$this->isNull($usuario->fecha_nacimiento) && !$this->isEmpty($usuario->fecha_nacimiento)) {
+            $current_date = date("d-m");
+
+            $cumplenos  = date("d-m", strtotime($usuario->fecha_nacimiento));
+
+
+            if ($current_date == $cumplenos) {
+                $this->setInfo('Felicidades ' . $usuario->nombre . "!", "Te deseamos un feliz cumpleaños!");
+            }
+        }
+    }
+
+    private function generarToken($longitud = 32)
+    {
+        // Caracteres permitidos para el token
+        $caracteres = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $caracteres_longitud = strlen($caracteres);
+        $token = '';
+
+        // Generar un token aleatorio
+        for ($i = 0; $i < $longitud; $i++) {
+            $token .= $caracteres[random_int(0, $caracteres_longitud - 1)];
+        }
+
+        return $token;
+    }
+
+    public function logOut()
+    {
+        session()->flush();
+        return redirect('/');
     }
 }

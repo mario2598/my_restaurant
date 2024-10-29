@@ -13,9 +13,7 @@ class MantGrupoPromocionesController extends Controller
     use SpaceUtil;
 
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function goGruposPromociones()
     {
@@ -78,9 +76,9 @@ class MantGrupoPromocionesController extends Controller
             return $this->responseAjaxServerError("No tienes permisos para ingresar.", []);
         }
         $actualizar = false;
-        
-        $promocion = json_decode($request->input('promocion'),true);
-       
+
+        $promocion = json_decode($request->input('promocion'), true);
+
         if ($promocion['id'] < 1 || $this->isNull($promocion['id'])) { // Nuevo 
             $actualizar = false;
         } else {
@@ -93,8 +91,8 @@ class MantGrupoPromocionesController extends Controller
         }
         $idAuxPromo = $promocion['id'];
         $foto_producto = $request->file('foto_producto');
-      
-        $path ="";
+
+        $path = "";
         if ($foto_producto != null) {
             // Guarda el archivo en la carpeta 'productos' dentro del almacenamiento público
             $path = $foto_producto->store('productos', 'public');
@@ -111,13 +109,20 @@ class MantGrupoPromocionesController extends Controller
                 DB::table('grupo_promocion')
                     ->where('id', '=', $promocion['id'])
                     ->update([
-                        'descripcion' => $promocion['descripcion'], 'precio' => $promocion['precio'], 'estado' =>  $promocion["estado"]
-                        , 'categoria' =>  $promocion["categoria"], 'imagen' => $path
+                        'descripcion' => $promocion['descripcion'],
+                        'precio' => $promocion['precio'],
+                        'estado' =>  $promocion["estado"],
+                        'categoria' =>  $promocion["categoria"],
+                        'imagen' => $path
                     ]);
             } else {
                 $idAuxPromo = DB::table('grupo_promocion')->insertGetId([
-                    'id' => null,  'descripcion' => $promocion['descripcion'], 'precio' => $promocion['precio'], 'estado' =>  $promocion["estado"]
-                    , 'categoria' =>  $promocion["categoria"], 'imagen' => $path
+                    'id' => null,
+                    'descripcion' => $promocion['descripcion'],
+                    'precio' => $promocion['precio'],
+                    'estado' =>  $promocion["estado"],
+                    'categoria' =>  $promocion["categoria"],
+                    'imagen' => $path
                 ]);
             }
 
@@ -143,7 +148,7 @@ class MantGrupoPromocionesController extends Controller
         }
         return $this->responseAjaxSuccess("", $promo);
     }
-    
+
 
     public function guardarDetallePromocion(Request $request)
     {
@@ -164,32 +169,35 @@ class MantGrupoPromocionesController extends Controller
         }
 
         $detalleExiste = DB::table('det_grupo_promocion')
-        ->select('det_grupo_promocion.*')->where('det_grupo_promocion.grupo_promocion', '=', $promo->id)
-        ->where('det_grupo_promocion.producto', '=',$detalle['producto'])
-        ->where('det_grupo_promocion.tipo', '=',$detalle['tipo'])->get()->first();
-     
+            ->select('det_grupo_promocion.*')->where('det_grupo_promocion.grupo_promocion', '=', $promo->id)
+            ->where('det_grupo_promocion.producto', '=', $detalle['producto'])
+            ->where('det_grupo_promocion.tipo', '=', $detalle['tipo'])->get()->first();
+
         $actualiza = false;
         if ($detalleExiste != null) {
             $actualiza = true;
         }
-        
 
-            DB::beginTransaction();
-            if(!$actualiza){
-                $id = DB::table('det_grupo_promocion')->insertGetId([
-                    'id' => null,  'producto' => $detalle['producto'], 'cantidad' => $detalle['cantidad'], 'grupo_promocion' =>  $promocion['id'], 
-                    'tipo' =>  $detalle['tipo']
-                ]);
-            }else{
-                DB::table('det_grupo_promocion')
+
+        DB::beginTransaction();
+        if (!$actualiza) {
+            $id = DB::table('det_grupo_promocion')->insertGetId([
+                'id' => null,
+                'producto' => $detalle['producto'],
+                'cantidad' => $detalle['cantidad'],
+                'grupo_promocion' =>  $promocion['id'],
+                'tipo' =>  $detalle['tipo']
+            ]);
+        } else {
+            DB::table('det_grupo_promocion')
                 ->where('id', '=', $detalleExiste->id)
                 ->update([
                     'cantidad' => $detalle['cantidad']
                 ]);
-            }
-           
-            DB::commit();
-       
+        }
+
+        DB::commit();
+
         $promo = DB::table('grupo_promocion')
             ->select('grupo_promocion.*')->where('id', '=', $promocion['id'])->get()->first();
         $promo->detalles =  DB::table('det_grupo_promocion')
@@ -229,16 +237,16 @@ class MantGrupoPromocionesController extends Controller
             DB::beginTransaction();
 
             DB::table('det_grupo_promocion')
-            ->where('id', '=', $detalle)
-            ->delete();
-           
-           
+                ->where('id', '=', $detalle)
+                ->delete();
+
+
             DB::commit();
         } catch (QueryException $ex) {
             DB::rollBack();
             return $this->responseAjaxServerError("Error creando el detalle de la promoción", []);
         }
-       
+
         $promo = DB::table('grupo_promocion')
             ->select('grupo_promocion.*')->where('id', '=', $aux->grupo_promocion)->get()->first();
         $promo->detalles =  DB::table('det_grupo_promocion')
@@ -254,5 +262,147 @@ class MantGrupoPromocionesController extends Controller
             }
         }
         return $this->responseAjaxSuccess("", $promo);
+    }
+
+    public static function getProdPromoByCodigo($idPromo)
+    {
+        $promo = DB::table("grupo_promocion")
+            ->where('id', $idPromo)
+            ->select(
+                'grupo_promocion.id',
+                'grupo_promocion.id as codigo',
+                DB::raw('0 as posicion_menu'),
+                'grupo_promocion.descripcion as nombre',
+                'grupo_promocion.precio',
+                DB::raw('0 as impuesto'),
+                DB::raw("'C' as tipo_comanda"),
+                DB::raw("'S' as es_promocion")
+            )->get()->first();
+
+        $promo->valorImpuesto = 13;
+        $promo->tipoProducto = 'PROMO';
+        $promo->extras = []; // Inicializar como arreglo vacío
+
+        $detallesE = DB::table("det_grupo_promocion")
+            ->join('producto_externo', 'producto_externo.id', '=', 'det_grupo_promocion.producto')
+            ->where('det_grupo_promocion.grupo_promocion', $promo->id)
+            ->where('det_grupo_promocion.tipo', "E")
+            ->select(
+                'det_grupo_promocion.id',
+                'producto_externo.id as id_producto',
+                DB::raw('0 as posicion_menu'),
+                DB::raw("'E' as tipo_producto"),
+                'producto_externo.nombre',
+                'producto_externo.precio',
+                'det_grupo_promocion.cantidad',
+                DB::raw('0 as impuesto')
+            )
+            ->orderBy('producto_externo.posicion_menu', 'asc')->get();
+        $promo->detallesExternos = $detallesE;
+
+        foreach ($promo->detallesExternos as $p) {
+            $p->tipoProducto = 'PROMO';
+
+            $grupos = DB::table('extra_producto_externo')
+                ->select(
+                    'extra_producto_externo.dsc_grupo',
+                    'extra_producto_externo.multiple'
+                )->distinct()
+                ->where('extra_producto_externo.producto', '=', $p->id_producto)
+                ->get();
+
+            $extrasAux = [];
+            foreach ($grupos as $g) {
+                $requerido = false;
+                $multiple = false;
+                $listExtras = DB::table('extra_producto_externo')
+                    ->select('extra_producto_externo.*')
+                    ->where('extra_producto_externo.producto', '=', $p->id_producto)
+                    ->where('extra_producto_externo.dsc_grupo', '=', $g->dsc_grupo)
+                    ->where('extra_producto_externo.multiple', '=', $g->multiple)
+                    ->get() ?? [];
+
+                foreach ($listExtras as $le) {
+                    if ($le->es_requerido) {
+                        $requerido = true;
+                    }
+                    if ($le->multiple) {
+                        $multiple = true;
+                    }
+                }
+
+                $extras = [
+                    'grupo' => $g->dsc_grupo,
+                    'requerido' => $requerido ? 1 : 0,
+                    'multiple' => $multiple ? 1 : 0,
+                    'extras' => $listExtras
+                ];
+                array_push($extrasAux, $extras);
+            }
+            $p->extras = $extrasAux; // Asignar extras al producto individual
+        }
+
+        $detallesR = DB::table("det_grupo_promocion")
+            ->join('producto_menu', 'producto_menu.id', '=', 'det_grupo_promocion.producto')
+            ->where('det_grupo_promocion.grupo_promocion', $promo->id)
+            ->select(
+                'det_grupo_promocion.id',
+                'producto_menu.id as id_producto',
+                'producto_menu.codigo',
+                'producto_menu.nombre',
+                'producto_menu.precio',
+                DB::raw("'R' as tipo_producto"),
+                'det_grupo_promocion.cantidad',
+                DB::raw('0 as posicion_menu'),
+                DB::raw('0 as impuesto')
+            )
+            ->orderBy('producto_menu.posicion_menu', 'asc')->get();
+
+        $promo->detallesRestaurante = $detallesR;
+
+        foreach ($promo->detallesRestaurante as $p) {
+            $p->tipoProducto = 'PROMO';
+
+            $grupos = DB::table('extra_producto_menu')
+                ->select(
+                    'extra_producto_menu.dsc_grupo',
+                    'extra_producto_menu.multiple'
+                )->distinct()
+                ->where('extra_producto_menu.producto', '=', $p->id_producto)
+                ->orderBy('extra_producto_menu.es_requerido', 'DESC')
+                ->get();
+
+            $extrasAux = [];
+            foreach ($grupos as $g) {
+                $requerido = false;
+                $multiple = false;
+                $listExtras = DB::table('extra_producto_menu')
+                    ->select('extra_producto_menu.*')
+                    ->where('extra_producto_menu.producto', '=', $p->id_producto)
+                    ->where('extra_producto_menu.dsc_grupo', '=', $g->dsc_grupo)
+                    ->where('extra_producto_menu.multiple', '=', $g->multiple)
+                    ->get() ?? [];
+
+                foreach ($listExtras as $le) {
+                    if ($le->es_requerido) {
+                        $requerido = true;
+                    }
+                    if ($le->multiple) {
+                        $multiple = true;
+                    }
+                }
+
+                $extras = [
+                    'grupo' => $g->dsc_grupo,
+                    'requerido' => $requerido ? 1 : 0,
+                    'multiple' => $multiple ? 1 : 0,
+                    'extras' => $listExtras
+                ];
+                array_push($extrasAux, $extras);
+            }
+            $p->extras = $extrasAux; // Asignar extras al producto individual
+        }
+
+        return $promo;
     }
 }

@@ -18,8 +18,65 @@ class ProductosMenuController extends Controller
         setlocale(LC_ALL, "es_ES");
     }
 
-    public function index()
+    public function index() {}
+
+    public static function getIdComandaByCodigoSucursal($codigo,$idSucursal)
     {
+        return DB::table('pm_x_sucursal')
+            ->leftjoin('producto_menu', 'producto_menu.id', '=', 'pm_x_sucursal.producto_menu')
+            ->select('pm_x_sucursal.comanda')
+            ->where('producto_menu.codigo', '=', $codigo)
+            ->where('pm_x_sucursal.sucursal', '=', $idSucursal)
+            ->get()->first()->comanda;
+    }
+
+    public static function getIdByCodigo($codigo)
+    {
+        $producto = DB::table('producto_menu')
+            ->leftjoin('impuesto', 'impuesto.id', '=', 'producto_menu.impuesto')
+            ->select('producto_menu.*','producto_menu.codigo as codigo', 'impuesto.impuesto as valorImpuesto')
+            ->where('codigo', '=', $codigo)
+            ->get()->first();
+
+        $grupos = DB::table('extra_producto_menu')
+            ->select(
+                'extra_producto_menu.dsc_grupo',
+                'extra_producto_menu.multiple'
+            )->distinct()
+            ->where('extra_producto_menu.producto', '=', $producto->id)
+            ->orderBy('extra_producto_menu.es_requerido', 'DESC')
+            ->get();
+        $extrasAux = [];
+        foreach ($grupos as $g) {
+            $requerido = false;
+            $multiple = false;
+            $listExtras = DB::table('extra_producto_menu')
+                ->select(
+                    'extra_producto_menu.*'
+                )
+                ->where('extra_producto_menu.producto', '=', $producto->id)
+                ->where('extra_producto_menu.dsc_grupo', '=', $g->dsc_grupo)
+                ->where('extra_producto_menu.multiple', '=', $g->multiple)
+                ->get() ?? [];
+            foreach ($listExtras as $le) {
+                if ($le->es_requerido) {
+                    $requerido = true;
+                }
+
+                if ($le->multiple) {
+                    $multiple = true;
+                }
+            }
+            $extras = [
+                'grupo' => $g->dsc_grupo,
+                'requerido' =>  $requerido ? 1 : 0,
+                'multiple' =>  $multiple ? 1 : 0,
+                'extras' =>  $listExtras
+            ];
+            array_push($extrasAux, $extras);
+        }
+        $producto->extras = $extrasAux;
+        return $producto;
     }
 
     public function goProductosMenu()
@@ -182,17 +239,30 @@ class ProductosMenuController extends Controller
                     DB::table('producto_menu')
                         ->where('id', '=', $id)
                         ->update([
-                            'nombre' => $nombre, 'categoria' => $categoria, 'precio' => $precio,
-                            'impuesto' => $impuesto, 'descripcion' => $descripcion,
-                            'codigo' => $codigo, 'tipo_comanda' => $tipo_comanda,
-                            'url_imagen' => $path, 'receta' => $receta, 'posicion_menu' => $posicion_menu
+                            'nombre' => $nombre,
+                            'categoria' => $categoria,
+                            'precio' => $precio,
+                            'impuesto' => $impuesto,
+                            'descripcion' => $descripcion,
+                            'codigo' => $codigo,
+                            'tipo_comanda' => $tipo_comanda,
+                            'url_imagen' => $path,
+                            'receta' => $receta,
+                            'posicion_menu' => $posicion_menu
                         ]);
                 } else { // Nuevo usuario
                     $id = DB::table('producto_menu')->insertGetId([
-                        'id' => null, 'nombre' => $nombre, 'categoria' => $categoria, 'precio' => $precio,
-                        'impuesto' => $impuesto, 'descripcion' => $descripcion,
-                        'codigo' => $codigo, 'estado' => 'A',
-                        'tipo_comanda' => $tipo_comanda, 'url_imagen' => $path, 'receta' => $receta,
+                        'id' => null,
+                        'nombre' => $nombre,
+                        'categoria' => $categoria,
+                        'precio' => $precio,
+                        'impuesto' => $impuesto,
+                        'descripcion' => $descripcion,
+                        'codigo' => $codigo,
+                        'estado' => 'A',
+                        'tipo_comanda' => $tipo_comanda,
+                        'url_imagen' => $path,
+                        'receta' => $receta,
                         'posicion_menu' => $posicion_menu
                     ]);
                 }
@@ -454,15 +524,21 @@ class ProductosMenuController extends Controller
 
         $menusSucursal = DB::table('pm_x_sucursal')
             ->leftjoin('producto_menu', 'producto_menu.id', '=', 'pm_x_sucursal.producto_menu')
+            ->leftjoin('comanda', 'comanda.id', '=', 'pm_x_sucursal.comanda')
             ->leftjoin('categoria', 'categoria.id', '=', 'producto_menu.categoria')
-            ->select('producto_menu.*', 'categoria.categoria as nombre_categoria')
+            ->select('producto_menu.*', 'categoria.categoria as nombre_categoria', DB::raw('COALESCE(comanda.nombre, "Comanda General") as nombreComanda'))
             ->where('pm_x_sucursal.sucursal', '=', $sucursal->id)
             ->get();
 
         $productos_menu = DB::table('producto_menu')
-            ->leftjoin('categoria', 'categoria.id', '=', 'producto_menu.categoria')
+            ->leftJoin('categoria', 'categoria.id', '=', 'producto_menu.categoria')
             ->select('producto_menu.*', 'categoria.categoria as nombre_categoria')
-            ->where('producto_menu.estado', '=', "A")
+            ->where('producto_menu.estado', '=', 'A')
+            ->whereNotIn('producto_menu.id', function ($query) use ($sucursal) {
+                $query->select('producto_menu')
+                    ->from('pm_x_sucursal')
+                    ->where('sucursal', '=', $sucursal->id);
+            })
             ->get();
 
         $filtros = [
@@ -475,6 +551,7 @@ class ProductosMenuController extends Controller
             'productos_menu' => $productos_menu,
             'filtros' => $filtros,
             'sucursal' => $sucursal,
+            'comandas' => ComandasController::getBySucursal($sucursal->id),
             'menusSucursal' => $menusSucursal,
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
@@ -508,15 +585,21 @@ class ProductosMenuController extends Controller
 
         $menusSucursal = DB::table('pm_x_sucursal')
             ->leftjoin('producto_menu', 'producto_menu.id', '=', 'pm_x_sucursal.producto_menu')
+            ->leftjoin('comanda', 'comanda.id', '=', 'pm_x_sucursal.comanda')
             ->leftjoin('categoria', 'categoria.id', '=', 'producto_menu.categoria')
-            ->select('producto_menu.*', 'categoria.categoria as nombre_categoria')
+            ->select('producto_menu.*', 'categoria.categoria as nombre_categoria', DB::raw('COALESCE(comanda.nombre, "Comanda General") as nombreComanda'))
             ->where('pm_x_sucursal.sucursal', '=', $sucursal->id)
             ->get();
 
         $productos_menu = DB::table('producto_menu')
-            ->leftjoin('categoria', 'categoria.id', '=', 'producto_menu.categoria')
+            ->leftJoin('categoria', 'categoria.id', '=', 'producto_menu.categoria')
             ->select('producto_menu.*', 'categoria.categoria as nombre_categoria')
-            ->where('producto_menu.estado', '=', "A")
+            ->where('producto_menu.estado', '=', 'A')
+            ->whereNotIn('producto_menu.id', function ($query) use ($sucursal) {
+                $query->select('producto_menu')
+                    ->from('pm_x_sucursal')
+                    ->where('sucursal', '=', $sucursal->id);
+            })
             ->get();
 
         $filtros = [
@@ -529,6 +612,7 @@ class ProductosMenuController extends Controller
             'productos_menu' => $productos_menu,
             'filtros' => $filtros,
             'sucursal' => $sucursal,
+            'comandas' => ComandasController::getBySucursal($sucursal->id),
             'menusSucursal' => $menusSucursal,
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
@@ -555,6 +639,7 @@ class ProductosMenuController extends Controller
             'productos_menu' => [],
             'filtros' => $filtros,
             'sucursal' => [],
+            'comandas' => [],
             'menusSucursal' => [],
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
@@ -571,15 +656,16 @@ class ProductosMenuController extends Controller
 
         $idSucursal = $request->input('idSucursal');
         $producto_menu_id = $request->input('prodcuto_menu');
+        $comanda_select = $request->input('comanda_select');
 
         if ($this->isNull($idSucursal) || $idSucursal == '-1') {
             $this->setError("Agregar menú", "Sucursal inexistente.");
-            return $this->goEditarMenu();
+            return $this->goEditarMenuByid($idSucursal);
         }
 
         if ($this->isNull($producto_menu_id) || $producto_menu_id == '-1') {
             $this->setError("Agregar menú", "Producto inexistente.");
-            return $this->goEditarMenu();
+            return $this->goEditarMenuByid($idSucursal);
         }
 
         $sucursal = DB::table('sucursal')
@@ -588,7 +674,7 @@ class ProductosMenuController extends Controller
 
         if ($this->isNull($sucursal)) {
             $this->setError("Editar menú", "Sucursal inexistente.");
-            return $this->goEditarMenu();
+            return $this->goEditarMenuByid($idSucursal);
         }
 
         $producto_menu = DB::table('producto_menu')
@@ -598,7 +684,7 @@ class ProductosMenuController extends Controller
 
         if ($this->isNull($producto_menu)) {
             $this->setError("Editar menú", "Producto inexistente.");
-            return $this->goEditarMenu();
+            return $this->goEditarMenuByid($idSucursal);
         }
         if ($producto_menu->estado != "A") {
             $this->setError("Editar menú", "Producto Inactivo.");
@@ -619,7 +705,9 @@ class ProductosMenuController extends Controller
             DB::beginTransaction();
             $id = DB::table('pm_x_sucursal')->insertGetId([
                 'id' => null,
-                'producto_menu' => $producto_menu->id, 'sucursal' => $sucursal->id
+                'producto_menu' => $producto_menu->id,
+                'comanda' => ($comanda_select === null || $comanda_select == '-1') ? null : $comanda_select,
+                'sucursal' => $sucursal->id
             ]);
             DB::commit();
             $this->setSuccess('Agregar menú', 'El menú se agrego correctamente.');
@@ -627,7 +715,7 @@ class ProductosMenuController extends Controller
         } catch (QueryException $ex) {
             DB::rollBack();
             $this->setError('Agregar menú', "Algo salio mal...");
-            return $this->goEditarMenu();
+            return $this->goEditarMenuByid($idSucursal);
         }
     }
 
@@ -757,7 +845,9 @@ class ProductosMenuController extends Controller
             if ($nuevo) {
                 $mt_x_producto1 = DB::table('mt_x_producto')
                     ->insertGetId([
-                        'id' => null, 'materia_prima' => $id_prod, 'producto' => $id_prod_seleccionado,
+                        'id' => null,
+                        'materia_prima' => $id_prod,
+                        'producto' => $id_prod_seleccionado,
                         'cantidad' => $cant
                     ]);
             } else {
@@ -839,7 +929,7 @@ class ProductosMenuController extends Controller
 
         try {
             $mat_prim = DB::table('extra_producto_menu')
-            ->leftjoin('materia_prima', 'materia_prima.id', '=', 'extra_producto_menu.materia_prima')
+                ->leftjoin('materia_prima', 'materia_prima.id', '=', 'extra_producto_menu.materia_prima')
                 ->select(
                     'extra_producto_menu.*',
                     'materia_prima.nombre as nombreMp'
@@ -934,15 +1024,18 @@ class ProductosMenuController extends Controller
             ->where('extra_producto_menu.multiple', '=', ($multiple == 'true' ? 1 : 0))
             ->get()->first();
 
-      
+
         try {
             DB::beginTransaction();
             if ($nuevo) {
                 $mt_x_producto1 = DB::table('extra_producto_menu')
                     ->insertGetId([
-                        'id' => null, 'descripcion' => $dsc, 'precio' => $precio,
-                        'producto' => $producto, 'dsc_grupo' => $dsc_grupo, 
-                        'es_requerido' => ($es_Requerido == 'true' ? 1 : 0), 
+                        'id' => null,
+                        'descripcion' => $dsc,
+                        'precio' => $precio,
+                        'producto' => $producto,
+                        'dsc_grupo' => $dsc_grupo,
+                        'es_requerido' => ($es_Requerido == 'true' ? 1 : 0),
                         'multiple' => ($multiple == 'true' ? 1 : 0),
                         'materia_prima' => $materia_prima_extra,
                         'cant_mp' => $cantidad_mp_extra
@@ -950,12 +1043,14 @@ class ProductosMenuController extends Controller
             } else {
                 DB::table('extra_producto_menu')
                     ->where('id', '=', $id)
-                    ->update(['precio' => $precio, 'descripcion' => $dsc, 
-                    'dsc_grupo' => $dsc_grupo,
-                     'es_requerido' => ($es_Requerido == 'true' ? 1 : 0),
-                      'multiple' => ($multiple == 'true'  ? 1 : 0),
-                      'materia_prima' => $materia_prima_extra,
-                      'cant_mp' => $cantidad_mp_extra
+                    ->update([
+                        'precio' => $precio,
+                        'descripcion' => $dsc,
+                        'dsc_grupo' => $dsc_grupo,
+                        'es_requerido' => ($es_Requerido == 'true' ? 1 : 0),
+                        'multiple' => ($multiple == 'true'  ? 1 : 0),
+                        'materia_prima' => $materia_prima_extra,
+                        'cant_mp' => $cantidad_mp_extra
                     ]);
             }
 

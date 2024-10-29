@@ -17,11 +17,9 @@ class OrdenesController extends Controller
         setlocale(LC_ALL, "es_ES");
     }
 
-    public function index()
-    {
-    }
+    public function index() {}
 
- 
+
     public static function calcularFacturacionNuevaOrden($detalles)
     {
 
@@ -128,7 +126,8 @@ class OrdenesController extends Controller
     public static function getOrden($idOrden)
     {
         $orden = DB::table('orden')->leftjoin('sucursal', 'sucursal.id', '=', 'orden.sucursal')
-            ->select('orden.*',  'sucursal.descripcion as nombre_sucursal')
+            ->leftjoin('mesa', 'mesa.id', '=', 'orden.mesa')
+            ->select('orden.*',  'sucursal.descripcion as nombre_sucursal','mesa.numero_mesa')
             ->where('orden.id', '=', $idOrden)->get()->first();
         if ($orden == null) {
             return [
@@ -140,7 +139,45 @@ class OrdenesController extends Controller
 
         foreach ($detalles as $d) {
             $d->extras = DB::table('extra_detalle_orden')->where('orden', '=', $idOrden)
-            ->where('detalle', '=',  $d->id)->get();
+                ->where('detalle', '=',  $d->id)->get();
+        }
+
+        if (count($detalles) < 1) {
+            return [
+                'estado' => false,
+                'mensaje' => 'No hay detalles en la orden.'
+            ];
+        }
+
+        $orden->detalles = $detalles;
+        return [
+            'estado' => true,
+            'mensaje' => '',
+            'orden' => $orden
+        ];
+    }
+
+    public static function getOrdenPorPago($idPago)
+    {
+        $orden = DB::table('orden')
+            ->leftjoin('sucursal', 'sucursal.id', '=', 'orden.sucursal')
+            ->join('pago_orden', 'pago_orden.orden', '=', 'orden.id')
+            ->select('orden.*',  'sucursal.descripcion as nombre_sucursal')
+            ->where('pago_orden.id', '=', $idPago)->get()->first();
+        if ($orden == null) {
+            return [
+                'estado' => false,
+                'mensaje' => 'Orden no existe.'
+            ];
+        }
+        $detalles = DB::table('detalle_orden')
+            ->join('detalle_pago_orden', 'detalle_pago_orden.detalle_orden', '=', 'detalle_orden.id')
+            ->select('detalle_pago_orden.*',  'detalle_orden.servicio_mesa',  'detalle_orden.precio_unidad', 'detalle_orden.id as idDo', 'detalle_orden.nombre_producto')
+            ->where('detalle_pago_orden.pago_orden', '=', $idPago)->get();
+
+        foreach ($detalles as $d) {
+            $d->extras = DB::table('extra_detalle_orden')->where('orden', '=', $orden->id)
+                ->where('detalle', '=',  $d->idDo)->get();
         }
 
         if (count($detalles) < 1) {
@@ -252,7 +289,8 @@ class OrdenesController extends Controller
             DB::table('orden')
                 ->where('id', '=', $id_orden)
                 ->update([
-                    'estado' => 'EM', 'fecha_preparado' => date("Y-m-d H:i:s")
+                    'estado' => 'EM',
+                    'fecha_preparado' => date("Y-m-d H:i:s")
                 ]);
 
             DB::commit();

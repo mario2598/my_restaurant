@@ -17,9 +17,7 @@ class MateriaPrimaController extends Controller
         setlocale(LC_ALL, "es_ES");
     }
 
-    public function index()
-    {
-    }
+    public function index() {}
 
     public function goProductos()
     {
@@ -140,6 +138,36 @@ class MateriaPrimaController extends Controller
         return view('materiaPrima.inventario.inventarios', compact('data'));
     }
 
+    public function cargarMateriPrimaInvSucursal(Request $request)
+    {
+        $filtroSucursal = $request->input('idSucursal');
+
+        if ($this->isNull($filtroSucursal) || $filtroSucursal == '-1') {
+            return $this->responseAjaxServerError("Debe seleccionar la sucursal", "");
+        }
+        try {
+
+            return $this->responseAjaxSuccess("", MateriaPrimaController::getInventario($filtroSucursal));
+        } catch (QueryException $ex) {
+            return $this->responseAjaxServerError("Algo salio mal", $ex);
+        }
+    }
+
+    public function cargarMateriPrimaNotinSucursal(Request $request)
+    {
+        $filtroSucursal = $request->input('idSucursal');
+
+        if ($this->isNull($filtroSucursal) || $filtroSucursal == '-1') {
+            return $this->responseAjaxServerError("Debe seleccionar la sucursal", "");
+        }
+        try {
+
+            return $this->responseAjaxSuccess("", MateriaPrimaController::getProductosNoInSucursal($filtroSucursal));
+        } catch (QueryException $ex) {
+            return $this->responseAjaxServerError("Algo salio mal", $ex);
+        }
+    }
+
     public function goInventariosFiltroD($filtroSucursal)
     {
         if (!$this->validarSesion('mt_inv')) {
@@ -184,7 +212,7 @@ class MateriaPrimaController extends Controller
 
         return $inventarios;
     }
-    
+
 
     public static function getProductos()
     {
@@ -198,7 +226,21 @@ class MateriaPrimaController extends Controller
         return $productos;
     }
 
+    public static function getProductosNoInSucursal($idSucursal)
+    {
+        $productos = DB::table('materia_prima')
+            ->leftJoin('mt_x_sucursal', function ($join) use ($idSucursal) {
+                $join->on('mt_x_sucursal.materia_prima', '=', 'materia_prima.id')
+                    ->where('mt_x_sucursal.sucursal', '=', $idSucursal);
+            })
+            ->leftJoin('proveedor', 'proveedor.id', '=', 'materia_prima.proveedor')
+            ->select('materia_prima.*', 'proveedor.nombre as nombre_prov')
+            ->whereNull('mt_x_sucursal.id') // Solo trae los que no están en mt_x_sucursal para esa sucursal
+            ->where('materia_prima.activo', '=', 1)
+            ->get();
 
+        return $productos;
+    }
 
     public function getProductosMatPrima()
     {
@@ -241,7 +283,6 @@ class MateriaPrimaController extends Controller
         }
     }
 
-
     public function guardarProducto(Request $request)
     {
         if (!$this->validarSesion("mt_product")) {
@@ -272,13 +313,21 @@ class MateriaPrimaController extends Controller
                 DB::table('materia_prima')
                     ->where('id', '=', $id)
                     ->update([
-                        'nombre' => $nombre, 'unidad_medida' => $unidad_medida, 'precio' => $precio,
-                        'proveedor' => $proveedor,'cant_min_deseada' => $min_deseado
+                        'nombre' => $nombre,
+                        'unidad_medida' => $unidad_medida,
+                        'precio' => $precio,
+                        'proveedor' => $proveedor,
+                        'cant_min_deseada' => $min_deseado
                     ]);
             } else { // Nuevo usuario
                 $id = DB::table('materia_prima')->insertGetId([
-                    'id' => null,  'nombre' => $nombre, 'unidad_medida' => $unidad_medida, 'precio' => $precio,
-                    'proveedor' => $proveedor, 'activo' => 1,'cant_min_deseada' => $min_deseado
+                    'id' => null,
+                    'nombre' => $nombre,
+                    'unidad_medida' => $unidad_medida,
+                    'precio' => $precio,
+                    'proveedor' => $proveedor,
+                    'activo' => 1,
+                    'cant_min_deseada' => $min_deseado
                 ]);
             }
 
@@ -378,122 +427,273 @@ class MateriaPrimaController extends Controller
         return $valido;
     }
 
-    public function guardarProductoSucursal(Request $request)
+    public function crearProductoSucursal(Request $request)
     {
-        if (!$this->validarSesion("mt_inv")) {
-            return redirect('/');
-        }
-
-        $id = $request->input('pe_id');
         $producto_externo = $request->input('producto_externo');
         $sucursal = $request->input('sucursal_agregar_id');
         $cantidad_agregar = $request->input('cantidad_agregar');
         $fecha_actual = date("Y-m-d H:i:s");
-        if ($sucursal < 1 || $this->isNull($sucursal)) { //  
-            $this->setError('Agregar Producto', 'Debe seleccionar la sucursal.');
-            return redirect('productoExterno/inventario/inventarios');
+
+        // Validación de que la sucursal es válida
+        if ($sucursal < 1 || $this->isNull($sucursal)) {
+            return $this->responseAjaxServerError("Debe seleccionar la sucursal", "");
         }
-        $sucursalAux = DB::table('sucursal')->select('sucursal.*')->where('id', '=', $sucursal)->get()->first();
-        if ($sucursalAux == null) { //  
-            $this->setError('Agregar Producto', 'Debe seleccionar la sucursal.');
-            return $this->goInventariosFiltroD($sucursal);
+        $sucursalAux = DB::table('sucursal')->select('sucursal.*')->where('id', '=', $sucursal)->first();
+
+        if ($sucursalAux == null) {
+            return $this->responseAjaxServerError("Debe seleccionar la sucursal", "");
         }
 
-        if ($producto_externo < 1 || $this->isNull($producto_externo)) { //  
-            $this->setError('Agregar Producto', 'Debe seleccionar el producto.');
-            return $this->goInventariosFiltroD($sucursal);
+        // Validación de que el producto es válido
+        if ($producto_externo < 1 || $this->isNull($producto_externo)) {
+            return $this->responseAjaxServerError("Debe seleccionar el producto", "");
         }
-        $producto_inv = DB::table('materia_prima')->select('materia_prima.*')
-            ->where('id', '=', $producto_externo)->get()->first();
-        if ($producto_inv == null) { //  
-            $this->setError('Agregar Producto', 'Debe seleccionar el producto.');
-            return $this->goInventariosFiltroD($sucursal);
-        }
-        
-        if ($cantidad_agregar < 0 || $this->isNull($cantidad_agregar)) { //  
-            $this->setError('Agregar Producto', 'La cantidad debe ser mayor a -1.');
-            return $this->goInventariosFiltroD($sucursal);
+        $producto_inv = DB::table('materia_prima')->select('materia_prima.*')->where('id', '=', $producto_externo)->first();
+
+        if ($producto_inv == null) {
+            return $this->responseAjaxServerError("Debe seleccionar el producto", "");
         }
 
-        if ($id < 1 || $this->isNull($id)) { //
-            $productoExistente = DB::table('mt_x_sucursal')->select('mt_x_sucursal.*')->where('materia_prima', '=', $producto_externo)
-                ->where('sucursal', '=', $sucursal)->get()->first();
-            if ($productoExistente == null) { //  
-                $actualizar = false;
-            } else {
-                $this->setError('Agregar Producto', 'Ya existe un producto registrado para la sucursal.');
-                return $this->goInventariosFiltroD($sucursal);
-            }
-        } else { // Editar usuario
-            $producto = DB::table('mt_x_sucursal')->select('mt_x_sucursal.*')->where('id', '=', $id)->get()->first();
+        // Validación de cantidad
+        if ($cantidad_agregar <= 0 || $this->isNull($cantidad_agregar)) {
+            return $this->responseAjaxServerError("La cantidad debe ser mayor a 0", "");
+        }
 
-            if ($producto == null) {
-                $this->setError('Agregar Producto', 'No existe un producto con los credenciales.');
-                return $this->goInventariosFiltroD($sucursal);
-            }
-            $actualizar = true;
+        // Validación de que el producto no esté previamente en el inventario de la sucursal
+        $productoExistente = DB::table('mt_x_sucursal')
+            ->where('sucursal', '=', $sucursal)
+            ->where('materia_prima', '=', $producto_externo)
+            ->first();
+
+        if ($productoExistente) {
+            return $this->responseAjaxServerError("El producto ya existe en el inventario de esta sucursal", "");
         }
 
         try {
             DB::beginTransaction();
 
-            if ($actualizar) { // Editar usuario
-                DB::table('mt_x_sucursal')
-                    ->where('id', '=', $id)
-                    ->update([
-                        'cantidad' => $cantidad_agregar, 'ultima_modificacion' => $fecha_actual, 'usuario_modifica' => session('usuario')['id']
-                    ]);
+            // Inserción del producto en la tabla de inventario de la sucursal
+            $id = DB::table('mt_x_sucursal')->insertGetId([
+                'id' => null,
+                'sucursal' => $sucursal,
+                'materia_prima' => $producto_externo,
+                'cantidad' => $cantidad_agregar,
+                'ultima_modificacion' => $fecha_actual,
+                'usuario_modifica' => session('usuario')['id']
+            ]);
 
-                $cantidadInventario = $producto->cantidad;
-                $cantidadDisminuye = 0;
-                $texto = "";
-                if ($cantidadInventario < $cantidad_agregar) {
-                    $texto = "Aumento de inventario materia prima en " . ($cantidad_agregar - $cantidadInventario) . " " . $producto_inv->unidad_medida;
-                    $cantidadDisminuye = ($cantidad_agregar - $cantidadInventario);
-                } else {
-                    $texto = "Disminuye inventario materia prima en " . ($cantidadInventario  - $cantidad_agregar) . " " . $producto_inv->unidad_medida;
-                    $cantidadDisminuye = ($cantidadInventario  - $cantidad_agregar);
-                }
+            $cantidadInventario = 0;
+            $cantidadDisminuye = $cantidad_agregar;
+            $texto = "Ingreso en inventario en " . ($cantidad_agregar - $cantidadInventario) . " " . $producto_inv->unidad_medida;
 
-                $detalleMp =  'Materia Prima : ' . $producto_inv->nombre .
-                    ' | Detalle :' . $texto;
-            } else { // Nuevo usuario
-                $id = DB::table('mt_x_sucursal')->insertGetId([
-                    'id' => null, 'sucursal' => $sucursal, 'materia_prima' => $producto_externo,
-                    'cantidad' => $cantidad_agregar, 'ultima_modificacion' => $fecha_actual, 'usuario_modifica' => session('usuario')['id']
+            $detalleMp = 'Producto Externo : ' . $producto_inv->nombre .
+                ' | Detalle :' . $texto;
+
+            $fechaActual = date("Y-m-d H:i:s");
+
+            // Registro en la bitácora de materia prima
+            DB::table('bit_materia_prima')->insert([
+                'id' => null,
+                'usuario' => session('usuario')['id'],
+                'materia_prima' => $producto_externo,
+                'detalle' => $detalleMp,
+                'cantidad_anterior' => $cantidadInventario ?? 0,
+                'cantidad_ajuste' => $cantidadDisminuye,
+                'cantidad_nueva' => $cantidad_agregar,
+                'fecha' => $fechaActual,
+                'sucursal' => $this->getUsuarioSucursal()
+            ]);
+
+            DB::commit();
+
+            return $this->responseAjaxSuccess("Producto agregado al inventario correctamente", "");
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            return $this->responseAjaxServerError("Error agregando el producto al inventario de Materia Prima", "");
+        }
+    }
+
+    public function aumentarProductoSucursal(Request $request)
+    {
+
+        $id = $request->input('pe_id');
+        $producto_externo = $request->input('producto_externo');
+        $sucursal = $request->input('sucursal_agregar_id');
+        $cantidad_agregar = $request->input('cantidad_agregar');
+        $producto_externo = $request->input('prodExt');
+        $fecha_actual = date("Y-m-d H:i:s");
+        // Validación de que la sucursal es válida
+        if ($sucursal < 1 || $this->isNull($sucursal)) {
+            return $this->responseAjaxServerError("Debe seleccionar la sucursal", "");
+        }
+        $sucursalAux = DB::table('sucursal')->select('sucursal.*')->where('id', '=', $sucursal)->first();
+
+        if ($sucursalAux == null) {
+            return $this->responseAjaxServerError("Debe seleccionar la sucursal", "");
+        }
+
+        // Validación de que el producto es válido
+        if ($producto_externo < 1 || $this->isNull($producto_externo)) {
+            return $this->responseAjaxServerError("Debe seleccionar el producto", "");
+        }
+        $producto_inv = DB::table('materia_prima')->select('materia_prima.*')->where('id', '=', $producto_externo)->first();
+
+        if ($producto_inv == null) {
+            return $this->responseAjaxServerError("Debe seleccionar el producto", "");
+        }
+
+        // Validación de cantidad
+        if ($cantidad_agregar <= 0 || $this->isNull($cantidad_agregar)) {
+            return $this->responseAjaxServerError("La cantidad debe ser mayor a 0", "");
+        }
+
+        // Validación de que el producto no esté previamente en el inventario de la sucursal
+        $productoExistente = DB::table('mt_x_sucursal')
+            ->where('sucursal', '=', $sucursal)
+            ->where('materia_prima', '=', $producto_externo)
+            ->first();
+
+        if (!$productoExistente) {
+            return $this->responseAjaxServerError("El producto no existe en el inventario de esta sucursal", "");
+        }
+
+        try {
+            DB::beginTransaction();
+            $cantidadInventario = $productoExistente->cantidad;
+
+            DB::table('mt_x_sucursal')
+                ->where('id', '=', $id)
+                ->update([
+                    'cantidad' => $cantidadInventario + $cantidad_agregar,
+                    'ultima_modificacion' => $fecha_actual,
+                    'usuario_modifica' => session('usuario')['id']
                 ]);
 
-                $cantidadInventario = 0;
-                $cantidadDisminuye = $cantidad_agregar;
-                $texto = "Ingreso en inventario en " . ($cantidad_agregar - $cantidadInventario) . " " . $producto_inv->unidad_medida;
 
-                $detalleMp =  'Producto Externo : ' . $producto_inv->nombre .
-                    ' | Detalle :' . $texto;
-            }
+            $texto = "Aumento de inventario materia prima en " . ($cantidadInventario) . " " . $producto_inv->unidad_medida;
+
+            $detalleMp =  'Materia Prima : ' . $producto_inv->nombre .
+                ' | Detalle :' . $texto;
 
             $fechaActual = date("Y-m-d H:i:s");
 
 
             DB::table('bit_materia_prima')->insert([
-                'id' => null, 'usuario' => session('usuario')['id'],
-                'materia_prima' => $producto_externo, 'detalle' => $detalleMp, 'cantidad_anterior' =>  $cantidadInventario ?? 0,
-                'cantidad_ajuste' => $cantidadDisminuye, 'cantidad_nueva' =>  $cantidad_agregar,'fecha' => $fechaActual ,'sucursal' => $this->getUsuarioSucursal()
+                'id' => null,
+                'usuario' => session('usuario')['id'],
+                'materia_prima' => $producto_externo,
+                'detalle' => $detalleMp,
+                'cantidad_anterior' =>  $cantidadInventario ?? 0,
+                'cantidad_ajuste' => $cantidad_agregar,
+                'cantidad_nueva' =>  $cantidadInventario + $cantidad_agregar,
+                'fecha' => $fechaActual,
+                'sucursal' => $this->getUsuarioSucursal()
             ]);
 
             DB::commit();
-
-
-            if ($actualizar) { // Editar usuario
-                $this->setSuccess('Agregar Producto', 'Se actualizo el producto correctamente.');
-            } else { // Nuevo usuario
-
-                $this->setSuccess('Agregar Producto', 'Producto agregado correctamente.');
-            }
-            return $this->goInventariosFiltroD($sucursal);
+            $this->setSuccess('Aumento en inventario', 'Se actualizó el inventario correctamente');
+            return $this->responseAjaxSuccess("", "");
         } catch (QueryException $ex) {
             DB::rollBack();
-            $this->setError('Agregar Producto', 'Algo salio mal...');
-            return redirect('productoExterno/inventario/inventarios');
+            DB::table('log')->insertGetId([
+                'id' => null,
+                'documento' => 'MateriaPrimaController',
+                'descripcion' => $ex->getMessage()
+            ]);
+            return $this->responseAjaxServerError("Error aumentando el producto en el inventario de Materia Prima", "");
+        }
+    }
+
+    public function disminuirProductoSucursal(Request $request)
+    {
+        $id = $request->input('pe_id');
+        $producto_externo = $request->input('producto_externo');
+        $sucursal = $request->input('sucursal_agregar_id');
+        $cantidad_agregar = $request->input('cantidad_agregar');
+        $producto_externo = $request->input('prodExt');
+        $fecha_actual = date("Y-m-d H:i:s");
+
+        // Validación de que la sucursal es válida
+        if ($sucursal < 1 || $this->isNull($sucursal)) {
+            return $this->responseAjaxServerError("Debe seleccionar la sucursal", "");
+        }
+        $sucursalAux = DB::table('sucursal')->select('sucursal.*')->where('id', '=', $sucursal)->first();
+
+        if ($sucursalAux == null) {
+            return $this->responseAjaxServerError("Debe seleccionar la sucursal", "");
+        }
+
+        // Validación de que el producto es válido
+        if ($producto_externo < 1 || $this->isNull($producto_externo)) {
+            return $this->responseAjaxServerError("Debe seleccionar el producto", "");
+        }
+        $producto_inv = DB::table('materia_prima')->select('materia_prima.*')->where('id', '=', $producto_externo)->first();
+
+        if ($producto_inv == null) {
+            return $this->responseAjaxServerError("Debe seleccionar el producto", "");
+        }
+
+        // Validación de cantidad
+        if ($cantidad_agregar <= 0 || $this->isNull($cantidad_agregar)) {
+            return $this->responseAjaxServerError("La cantidad debe ser mayor a 0", "");
+        }
+
+        // Validación de que el producto no esté previamente en el inventario de la sucursal
+        $productoExistente = DB::table('mt_x_sucursal')
+            ->where('sucursal', '=', $sucursal)
+            ->where('materia_prima', '=', $producto_externo)
+            ->first();
+
+        if (!$productoExistente) {
+            return $this->responseAjaxServerError("El producto no existe en el inventario de esta sucursal", "");
+        }
+
+        if ($cantidad_agregar > $productoExistente->cantidad) {
+            return $this->responseAjaxServerError("La cantidad a rebajar excede la cantidad disponible en inventario", "");
+        }
+
+        try {
+            DB::beginTransaction();
+            $cantidadInventario = $productoExistente->cantidad;
+            DB::table('mt_x_sucursal')
+                ->where('id', '=', $id)
+                ->update([
+                    'cantidad' => $cantidadInventario - $cantidad_agregar,
+                    'ultima_modificacion' => $fecha_actual,
+                    'usuario_modifica' => session('usuario')['id']
+                ]);
+
+
+            $texto = "Disminuye inventario materia prima en " . ($cantidad_agregar) . " " . $producto_inv->unidad_medida;
+
+            $detalleMp =  'Materia Prima : ' . $producto_inv->nombre .
+                ' | Detalle :' . $texto;
+            $fechaActual = date("Y-m-d H:i:s");
+
+
+            DB::table('bit_materia_prima')->insert([
+                'id' => null,
+                'usuario' => session('usuario')['id'],
+                'materia_prima' => $producto_externo,
+                'detalle' => $detalleMp,
+                'cantidad_anterior' =>  $cantidadInventario ?? 0,
+                'cantidad_ajuste' => $cantidad_agregar,
+                'cantidad_nueva' =>  $cantidadInventario + $cantidad_agregar,
+                'fecha' => $fechaActual,
+                'sucursal' => $this->getUsuarioSucursal()
+            ]);
+
+            DB::commit();
+            $this->setSuccess('Aumento en inventario', 'Se actualizó el inventario correctamente');
+            return $this->responseAjaxSuccess("", "");
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            DB::table('log')->insertGetId([
+                'id' => null,
+                'documento' => 'MateriaPrimaController',
+                'descripcion' => $ex->getMessage()
+            ]);
+            return $this->responseAjaxServerError("Error disminuyendo el producto en el inventario de Materia Prima", "");
         }
     }
 }
