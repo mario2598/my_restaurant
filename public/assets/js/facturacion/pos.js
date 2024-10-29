@@ -2075,7 +2075,7 @@ function recargarOrden() {
 function cargarProductosPos() {
 
     $.ajax({
-        url: '/facturacion/pos/cargarPosProductos',
+        url: '${base_path}/facturacion/pos/cargarPosProductos',
         type: 'get',
         dataType: "json",
         data: {
