@@ -1,5 +1,5 @@
 window.addEventListener("load", initialice, false);
-
+var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
 
 let anteriorCantidadDetalle = null;
 // Luego, configura un intervalo para seguir consultando cada 5 segundos
