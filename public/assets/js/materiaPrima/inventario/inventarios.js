@@ -65,7 +65,7 @@ function cargarMateriPrimaInvSucursal() {
 }
 
 function generarHTMLMp(inventario) {
-    
+    $('#tablaInventariosMp').DataTable().destroy();
     $('#tbody_genericoMp').html('');
     let htmlContent = '';
 

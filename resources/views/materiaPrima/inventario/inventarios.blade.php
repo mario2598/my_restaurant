@@ -209,10 +209,6 @@
 @section('script')
     <script>
         function initTabla() {
-            if ($.fn.DataTable.isDataTable('#tablaInventariosMp')) {
-                $('#tablaInventariosMp').DataTable().destroy();
-            }
-
             // Obtener el nombre de la sucursal o asignar "Todas las sucursales" si no está definido
             var sucursal = $("#sucursal option:selected").html();
             sucursal = sucursal ? sucursal : "Sin asignar sucursal";
