@@ -1503,7 +1503,7 @@ class FacturacionController extends Controller
         $detalles = DB::table('detalle_orden')->select('detalle_orden.*')->where('orden', '=', $id_orden)->whereIn('detalle_orden.id', $lineas)->get();
         foreach ($detalles as $d) {
             if ($d->tipo_producto == 'R') {
-                $res = $this->devolverInventarioMateriaPrima($d);
+                $res = $this->devolverInventarioMateriaPrima($d,$d->cantidad_preparada);
                 if (!$res['estado']) {
                     return $this->responseAjaxServerError($res['mensaje'], []);
                 }
@@ -1552,7 +1552,7 @@ class FacturacionController extends Controller
         try {
             $d = DB::table('detalle_orden')->select('detalle_orden.*')->where('id', '=', $id_detalle_orden)->get()->first();
             if ($d->tipo_producto == 'R') {
-                $res = $this->devolverInventarioMateriaPrima($d, $cantidad_rebajar);
+                $res = $this->restarInventarioMateriaPrima($cantidad_rebajar, $d->codigo_producto, $d->nombre_producto, $d->id);
                 if (!$res['estado']) {
                     return $this->responseAjaxServerError($res['mensaje'], []);
                 }
@@ -1567,7 +1567,7 @@ class FacturacionController extends Controller
 
                 foreach ($prodR as $p) {
                     $cantProdAux = $cantidadLinea * $p->cantidad;
-                    $res = $this->devolverInventarioMateriaPrimaPromo($cantProdAux, $p->codigo_producto, $d->orden, $d->id);
+                    $res = $this->restarInventarioMateriaPrima($p->cantidad, $p->codigo, $p->nomProd, $d->id);
                     if (!$res['estado']) {
                         return $this->responseAjaxServerError($res['mensaje'], []);
                     }
