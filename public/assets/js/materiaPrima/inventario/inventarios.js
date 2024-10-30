@@ -151,7 +151,7 @@ function crearProductoSucursal() {
         data: {
             _token: CSRF_TOKEN,
             sucursal_agregar_id: idSuc,
-            prodExt: prodExt,
+            producto_externo: prodExt,
             cantidad_agregar: cant
         }
     }).done(function (response) {
