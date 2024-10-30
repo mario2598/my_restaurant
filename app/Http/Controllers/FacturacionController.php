@@ -1508,7 +1508,7 @@ class FacturacionController extends Controller
                     return $this->responseAjaxServerError($res['mensaje'], []);
                 }
             } else if ($d->tipo_producto == 'E') {
-                $res = $this->devolverInventarioProductoExterno($d);
+                $res = $this->devolverInventarioProductoExterno($d,$d->cantidad_pagada);
                 if (!$res['estado']) {
                     return $this->responseAjaxServerError($res['mensaje'], []);
                 }
