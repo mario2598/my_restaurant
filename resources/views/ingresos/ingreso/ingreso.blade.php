@@ -210,7 +210,7 @@
                 alerta.classList.add('alert-danger');
                 alerta.classList.remove('alert-warning');
                 alerta.textContent =
-                    `El monto calculado por el sistema es ${calculadoSistema.toFixed(2)} CRC. El monto ingresado (${montoIngresado.toFixed(2)} CRC) difiere del monto reportado (${efectivoReportado.toFixed(2)} CRC). Por favor, verifica las diferencias.`;
+                    `El monto calculado por el sistema es ${calculadoSistema.toFixed(2)} CRC. El monto ingresado (${montoIngresado.toFixed(2)} CRC) difiere del monto reportado por el usuario (${efectivoReportado.toFixed(2)} CRC). Por favor, verifica las diferencias.`;
             } else {
                 alerta.classList.remove('alert-danger');
                 alerta.classList.add('alert-warning');
