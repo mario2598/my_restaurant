@@ -2215,6 +2215,7 @@ class FacturacionController extends Controller
                 "orden.subtotal",
                 "orden.total",
                 "orden.pagado",
+                "orden.estado",
                 "orden.mto_pagado",
                 "orden.numero_orden",
                 "orden.mesa",
@@ -2229,10 +2230,15 @@ class FacturacionController extends Controller
         if ($orden == null) {
             return $this->responseAjaxServerError("La orden no existe", "");
         }
+        if ($orden->estado == SisEstadoController::getIdEstadoByCodGeneral("ORD_ANULADA")) {
+            return $this->responseAjaxServerError("La orden fue anuladá", "");
+        }
+
         if ($orden->pagado == 1) {
             return $this->responseAjaxServerError("La orden fue pagada", "");
         }
 
+       
         $detallesAux = DB::table('detalle_orden')->where('detalle_orden.orden', "=", $orden->id)
             ->get();
 
