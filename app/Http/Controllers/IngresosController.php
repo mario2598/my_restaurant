@@ -47,6 +47,14 @@ class IngresosController extends Controller
             return redirect('ingresos/administracion');
         }
 
+        
+        $caja = CajaController::getByIdIngreso($id);
+
+        if ($caja == null) {
+            $efectivoReportado = null;
+        }else{
+            $efectivoReportado = $caja->efectivo_reportado ?? 0;
+        }
 
         $ventas = DB::table('orden')
             ->select('orden.*')
@@ -80,6 +88,7 @@ class IngresosController extends Controller
             'ventas' => $ventas,
             'tieneVentas' => $tieneVentas,
             'tipos_ingreso' => $this->getTiposIngreso(),
+            'efectivoReportado' => $efectivoReportado,
             'estados_ingreso' => SisEstadoController::getEstadosByCodClase("INGRESOS_EST"),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
@@ -253,8 +262,13 @@ class IngresosController extends Controller
             ->where('ingreso.estado', '=', SisEstadoController::getIdEstadoByCodGeneral("ING_PEND_APB"))->orderby('ingreso.id', 'desc')->get();
 
         foreach ($ingresosSinAprobar as $i) {
+            $caja = CajaController::getByIdIngreso($i->id);
+            if($caja != null){
+                $efectivo = $caja->efectivo_reportado ?? 0;
+            }else{
+                $efectivo = $i->monto_efectivo ?? 0;
+            }
             $sinpe = $i->monto_sinpe ?? 0;
-            $efectivo = $i->monto_efectivo ?? 0;
             $tarjeta = $i->monto_tarjeta ?? 0;
             $i->subTotal = $sinpe + $efectivo + $tarjeta;
             $i->total = $i->subTotal;

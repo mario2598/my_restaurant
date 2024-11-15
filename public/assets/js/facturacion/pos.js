@@ -1407,13 +1407,9 @@ function calcularMontoEfectivo() {
 }
 
 function calcularCaja() {
-    let efectivo = $('#monto_efectivo_cierre').val();
     let tarjeta = $('#monto_tarjeta_cierre').val();
     let sinpe = $('#monto_sinpe_cierre').val();
 
-    if (efectivo == "") {
-        efectivo = 0;
-    }
     if (tarjeta == '') {
         tarjeta = 0;
 
@@ -1421,24 +1417,9 @@ function calcularCaja() {
     if (sinpe == '') {
         sinpe = 0;
     }
-
-    let subtotal = parseFloat(efectivo) + parseFloat(tarjeta) + parseFloat(sinpe);
-
-    let total = parseFloat(subtotal);
-    $('#totalCaja').val(subtotal);
-    total = parseFloat(total).toFixed(2);
     subtotal = parseFloat(subtotal).toFixed(2);
-    efectivo = parseFloat(efectivo).toFixed(2);
-    tarjeta = parseFloat(tarjeta).toFixed(2);
     sinpe = parseFloat(sinpe).toFixed(2);
 
-    if (parseFloat(total) >= 0) {
-        $('#monto_total_lbl').html("CRC <strong>" + total.replace(/\d(?=(\d{3})+\.)/g, '$&,' + "</strong>"));
-        $('#monto_efectivo').val(total);
-    }
-    if (parseFloat(efectivo) >= 0) {
-        $('#monto_efectivo_lbl').html("CRC <strong>" + efectivo.replace(/\d(?=(\d{3})+\.)/g, '$&,' + "</strong>"));
-    }
     if (parseFloat(tarjeta) >= 0) {
         $('#monto_tarjetas_lbl').html("CRC <strong>" + tarjeta.replace(/\d(?=(\d{3})+\.)/g, '$&,' + "</strong>"));
     }
@@ -1466,11 +1447,8 @@ function cargarCajaPrevia() {
             return;
         }
         var datos = response['datos'];
-        $('#monto_efectivo_lbl').html("CRC <strong>" + parseFloat(datos.total_efectivo).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,' + "</strong>"));
         $('#monto_tarjetas_lbl').html("CRC <strong>" + parseFloat(datos.total_tarjeta).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,' + "</strong>"));
         $('#monto_sinpe_lbl').html("CRC <strong>" + parseFloat(datos.total_sinpe).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,' + "</strong>"));
-        var total = parseFloat(datos.total_efectivo) + parseFloat(datos.total_tarjeta) + parseFloat(datos.total_sinpe);
-        $('#monto_total_lbl').html("CRC <strong>" + parseFloat(total).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,' + "</strong>"));
     }).fail(function (jqXHR, textStatus, errorThrown) { });
 }
 
@@ -1586,12 +1564,14 @@ function cerrarModalFe() {
 }
 
 function cerrarCaja() {
+    var efectivoR = $('#monto_efectivo_input').val();
     $('#loader').fadeIn();
     $.ajax({
         url: `${base_path}/caja/cerrarcaja`,
         type: 'post',
         dataType: "json",
         data: {
+            efectivoReportado : efectivoR,
             _token: CSRF_TOKEN
         }
     }).done(function (response) {

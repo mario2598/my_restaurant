@@ -4,7 +4,7 @@
     @include('layout.sidebar')
     <!-- Listas de productos -->
     <script>
-        var tipos = []; 
+        var tipos = [];
         var productosGeneral = [];
         var ordenGestion = {
             "id": null,
@@ -360,7 +360,7 @@
                             <div class="col-6 col-md-3">
                                 <h6 id="txt-mto-pagado_mdl" class="text-muted">Monto Pagado: 0,00</h6>
                             </div>
-                            
+
                         </div>
 
                         <!-- Total seleccionado -->
@@ -689,22 +689,30 @@
                         <!-- cierre caja -->
                         <div class="col-12 col-md-12 col-lg-12" style="margin-top: 15px;">
                             <div class="card">
-
                                 <div class="card-body">
                                     <div class="text-white">
-                                        <div class="row" style="border-bottom: dotted 1px black; margin-top:15px;">
+                                        <!-- Efectivo con Input -->
+                                        <div class="row"
+                                            style="border-bottom: dotted 1px black; margin-top:15px; align-items: center;">
                                             <div class="col-xs-4 col-md-4 col-lg-4">
                                                 <p class="font-20"
-                                                    style="font-size:12px;color: black;  text-align: left;">
-                                                    Efectivo</p>
+                                                    style="font-size:14px; color: black; text-align: left; margin: 0;">
+                                                    Efectivo
+                                                </p>
                                             </div>
-                                            <div class="col-xs-8 col-md-8 col-lg-8">
-                                                <p class="font-20" style="color: black; text-align: right;"
-                                                    id="monto_efectivo_lbl">CRC <strong>
-                                                        {{ number_format('0.00', 2, '.', ',') }}</strong></p>
+                                            <div class="col-xs-8 col-md-8 col-lg-8 pb-3">
+                                                <div class="input-group">
+                                                    <span class="input-group-text"
+                                                        style="background-color: #f8f9fa; border: 1px solid #ced4da;">CRC</span>
+                                                    <input type="number" class="form-control" id="monto_efectivo_input"
+                                                        name="monto_efectivo" placeholder="Ingrese el monto en efectivo de la caja"
+                                                        style="text-align: right; border: 1px solid #ced4da;"
+                                                        min="0">
+                                                </div>
                                             </div>
-
                                         </div>
+
+                                        <!-- Tarjetas -->
                                         <div class="row" style="border-bottom: dotted 1px black; margin-top:15px;">
                                             <div class="col-xs-4 col-md-4 col-lg-4">
                                                 <p class="font-20" style="font-size:12px;color: black; text-align: left;">
@@ -713,45 +721,31 @@
                                             </div>
                                             <div class="col-xs-8 col-md-8 col-lg-8">
                                                 <p class="font-20" style="color: black; text-align: right;"
-                                                    id="monto_tarjetas_lbl">CRC <strong>
-                                                        {{ number_format('0.00', 2, '.', ',') }}</strong></p>
-                                            </div>
-
-                                        </div>
-                                        <div class="row" style="border-bottom: dotted 1px black; margin-top:15px;">
-                                            <div class="col-xs-4 col-md-4 col-lg-4">
-                                                <p class="font-20"
-                                                    style="font-size:12px;color: black;  text-align: left;">SINPE
+                                                    id="monto_tarjetas_lbl">
+                                                    CRC <strong>{{ number_format('0.00', 2, '.', ',') }}</strong>
                                                 </p>
                                             </div>
-                                            <div class="col-xs-8 col-md-8 col-lg-8">
-                                                <p class="font-20" style="color: black;text-align: right;"
-                                                    id="monto_sinpe_lbl">CRC <strong>
-                                                        {{ number_format('0.00', 2, '.', ',') }}</strong></p>
-                                            </div>
-
                                         </div>
 
-
-
+                                        <!-- SINPE -->
                                         <div class="row" style="border-bottom: dotted 1px black; margin-top:15px;">
                                             <div class="col-xs-4 col-md-4 col-lg-4">
                                                 <p class="font-20" style="font-size:12px;color: black; text-align: left;">
-                                                    Total
-                                                </p>
+                                                    SINPE</p>
                                             </div>
                                             <div class="col-xs-8 col-md-8 col-lg-8">
-                                                <p class="font-20" style="color: black; text-align: right;"
-                                                    id="monto_total_lbl">CRC <strong>
-                                                        {{ number_format('0.00', 2, '.', ',') }}</strong></p>
+                                                <p class="font-20" style="color: black;text-align: right;"
+                                                    id="monto_sinpe_lbl">
+                                                    CRC <strong>{{ number_format('0.00', 2, '.', ',') }}</strong>
+                                                </p>
                                             </div>
-
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
                     <div>
 
                         <div class="form-group">

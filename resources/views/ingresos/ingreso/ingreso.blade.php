@@ -43,34 +43,41 @@
 
                                         <div class="col-12 col-md-4 col-lg-4">
                                             <div class="form-group">
-                                                <label>Monto Efectivo (CRC)
-                                                </label>
-                                                <input type="number" class="form-control" step=any id="monto_efectivo"
-                                                    name="monto_efectivo"
+                                                <label>Monto Efectivo (CRC)</label>
+                                                <input type="number" class="form-control" step="any"
+                                                    id="monto_efectivo" name="monto_efectivo"
                                                     value="{{ $data['ingreso']->monto_efectivo ?? '' }}" placeholder="0.00"
+                                                    min="0">
+                                                @if (isset($data['efectivoReportado']) && $data['efectivoReportado'] !== null)
+                                                    <div class="alert alert-warning mt-2" id="alerta-efectivo-reportado">
+                                                        Monto reportado:
+                                                        <strong>{{ number_format($data['efectivoReportado'], 2, '.', ',') }}
+                                                            CRC</strong>.
+                                                        Verifica si hay diferencias.
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12 col-md-4 col-lg-4">
+                                            <div class="form-group">
+                                                <label>Monto Tarjeta (CRC)</label>
+                                                <input type="number" class="form-control" step="any" id="monto_tarjeta"
+                                                    name="monto_tarjeta"
+                                                    value="{{ $data['ingreso']->monto_tarjeta ?? '' }}" placeholder="0.00"
                                                     min="0">
                                             </div>
                                         </div>
 
                                         <div class="col-12 col-md-4 col-lg-4">
                                             <div class="form-group">
-                                                <label>Monto Tarjeta (CRC)
-                                                </label>
-                                                <input type="number" class="form-control" step=any id="monto_tarjeta"
-                                                    name="monto_tarjeta" value="{{ $data['ingreso']->monto_tarjeta ?? '' }}"
-                                                    placeholder="0.00" min="0">
-                                            </div>
-                                        </div>
-
-                                        <div class="col-12 col-md-4 col-lg-4">
-                                            <div class="form-group">
-                                                <label>Monto SINPE (CRC)
-                                                </label>
-                                                <input type="number" class="form-control" step=any id="monto_sinpe"
+                                                <label>Monto SINPE (CRC)</label>
+                                                <input type="number" class="form-control" step="any" id="monto_sinpe"
                                                     name="monto_sinpe" value="{{ $data['ingreso']->monto_sinpe ?? '' }}"
                                                     placeholder="0.00" min="0">
                                             </div>
                                         </div>
+
                                         <div class="col-12 col-md-4 col-lg-4">
                                             <div class="form-group">
                                                 <label>Tipo ingreso</label>
@@ -84,6 +91,7 @@
                                                 </select>
                                             </div>
                                         </div>
+
                                         <div class="col-12 col-md-4 col-lg-4">
                                             <div class="form-group mb-0">
                                                 <label>Descripción del ingreso</label>
@@ -100,6 +108,7 @@
 
                                     </div>
                                 </div>
+
                                 <div class="card-footer text-right">
                                     @if ($data['ingreso']->cod_general == 'ING_PEND_APB')
                                         <a onclick='confirmarIngreso("{{ $data['ingreso']->id }}")'
@@ -177,5 +186,38 @@
 
 @endsection
 @section('script')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const montoEfectivoInput = document.getElementById('monto_efectivo');
+
+
+            const montoIngresado = parseFloat(montoEfectivoInput.value) || 0;
+
+            validarMtos(montoEfectivoInput);
+            montoEfectivoInput.addEventListener('input', function() {
+                validarMtos(montoEfectivoInput);
+            });
+        });
+
+        function validarMtos(montoEfectivoInput) {
+            const montoIngresado = parseFloat(montoEfectivoInput.value) || 0;
+            const calculadoSistema = parseFloat({{ $data['ingreso']->monto_efectivo ?? '0.00' }});
+            const efectivoReportado = parseFloat({{ $data['efectivoReportado'] ?? '0.00' }});
+
+            const alerta = document.getElementById('alerta-efectivo-reportado');
+
+            if (montoIngresado !== efectivoReportado) {
+                alerta.classList.add('alert-danger');
+                alerta.classList.remove('alert-warning');
+                alerta.textContent =
+                    `El monto calculado por el sistema es ${calculadoSistema.toFixed(2)} CRC. El monto ingresado (${montoIngresado.toFixed(2)} CRC) difiere del monto reportado (${efectivoReportado.toFixed(2)} CRC). Por favor, verifica las diferencias.`;
+            } else {
+                alerta.classList.remove('alert-danger');
+                alerta.classList.add('alert-warning');
+                alerta.textContent =
+                    `El monto calculado por el sistema es ${calculadoSistema.toFixed(2)} CRC. El monto ingresado coincide con el monto reportado (${efectivoReportado.toFixed(2)} CRC). Verifica si es correcto.`;
+            }
+        }
+    </script>
     <script src="{{ asset('assets/js/ingresos.js') }}"></script>
 @endsection

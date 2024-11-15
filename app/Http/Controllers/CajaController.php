@@ -9,7 +9,7 @@ use App\Traits\SpaceUtil;
 
 class CajaController extends Controller
 {
-    
+
     use SpaceUtil;
     private $admin;
     public $codigo_pantalla = "cajCerrar";
@@ -19,8 +19,22 @@ class CajaController extends Controller
         setlocale(LC_ALL, "es_ES");
     }
 
-    public function index()
+    public function index() {}
+
+    public static function getById($idCaja)
     {
+        return DB::table('cierre_caja')
+            ->select('cierre_caja.*')
+            ->where('id', '=', $idCaja)
+            ->get()->first();
+    }
+
+    public static function getByIdIngreso($idIngreso)
+    {
+        return DB::table('cierre_caja')
+            ->select('cierre_caja.*')
+            ->where('ingreso', '=', $idIngreso)
+            ->get()->first();
     }
 
     public function goCierre()
@@ -101,9 +115,17 @@ class CajaController extends Controller
             $fondoInicio = SisParametroController::getValorByCodGeneral('MTO_FONDO_INI_CAJA');
 
             $idCierre = DB::table('cierre_caja')->insertGetId([
-                'id' => null, 'fecha' => date("Y-m-d H:i:s"), 'fondo' => $fondoInicio, 'monto_tarjeta' => 0, 'monto_sinpe' => 0,
-                'monto_efectivo' => 0, 'cajero' => session('usuario')['id'],
-                'ingreso' => null, 'estado' => SisEstadoController::getIdEstadoByCodGeneral('CAJA_ABIERTO'), 'sucursal' => $this->getUsuarioSucursal()
+                'id' => null,
+                'fecha' => date("Y-m-d H:i:s"),
+                'fondo' => $fondoInicio,
+                'monto_tarjeta' => 0,
+                'monto_sinpe' => 0,
+                'efectivo_reportado' => 0,
+                'monto_efectivo' => 0,
+                'cajero' => session('usuario')['id'],
+                'ingreso' => null,
+                'estado' => SisEstadoController::getIdEstadoByCodGeneral('CAJA_ABIERTO'),
+                'sucursal' => $this->getUsuarioSucursal()
             ]);
 
             return $this->responseAjaxSuccess("Se abrio la caja.", $idCierre);
@@ -132,16 +154,23 @@ class CajaController extends Controller
         }
 
         $ordenSinPagar = DB::table('orden')
-        ->where('cierre_caja', '=', $idCaja )
-        ->where('pagado', '=', 0) // Suponiendo que 'pagado' es 0 para no pagado y 1 para pagado
-        ->exists();
+            ->where('cierre_caja', '=', $idCaja)
+            ->where('pagado', '=', 0) // Suponiendo que 'pagado' es 0 para no pagado y 1 para pagado
+            ->exists();
 
-      
+        if ($ordenSinPagar) {
+            return $this->responseAjaxServerError("Tiene ordenes con el proceso de pago pendiente.", []);
+        }
 
         $fecha_actual = date("Y-m-d H:i:s");
         $sucursal = $this->getSucursalUsuario();
         $idUsuario = session('usuario')['id'];
         $descripcion = "Cierre de caja " . "realizado por " . session('usuario')['usuario'] . ". Fecha : " . $fecha_actual;
+        $efectivoReportado = $request->input('efectivoReportado');
+
+        if (!is_numeric($efectivoReportado) || $efectivoReportado < 0) {
+            return $this->responseAjaxServerError("El campo efectivo reportado debe ser un número mayor o igual a 0.", []);
+        }
 
         $caja_calculada = $this->calcularCajaUsuario($idCaja);
 
@@ -151,24 +180,35 @@ class CajaController extends Controller
 
         $caja_calculada = $caja_calculada['caja'];
 
-        $total = $caja_calculada['total_sinpe'] + $caja_calculada['total_tarjeta'] + $caja_calculada['total_efectivo'] ;
+        $total = $caja_calculada['total_sinpe'] + $caja_calculada['total_tarjeta'] + $caja_calculada['total_efectivo'];
 
         try {
             DB::beginTransaction();
 
             $idIngreso = DB::table('ingreso')->insertGetId([
-                'id' => null, 'monto_efectivo' => $caja_calculada['total_efectivo'], 'monto_tarjeta' => $caja_calculada['total_tarjeta'],
+                'id' => null,
+                'monto_efectivo' => $caja_calculada['total_efectivo'],
+                'monto_tarjeta' => $caja_calculada['total_tarjeta'],
                 'monto_sinpe' => $caja_calculada['total_sinpe'],
-                'usuario' => $idUsuario, 'fecha' => $fecha_actual,
-                'tipo' => MantenimientoTiposIngresoController::getIdByCodGeneral('ING_CIERRE_CAJA'), 'observacion' => $descripcion,
-                'sucursal' => $sucursal, 'estado' => SisEstadoController::getIdEstadoByCodGeneral("ING_PEND_APB"), 'cliente' => null, 'descripcion' => $descripcion
+                'usuario' => $idUsuario,
+                'fecha' => $fecha_actual,
+                'tipo' => MantenimientoTiposIngresoController::getIdByCodGeneral('ING_CIERRE_CAJA'),
+                'observacion' => $descripcion,
+                'sucursal' => $sucursal,
+                'estado' => SisEstadoController::getIdEstadoByCodGeneral("ING_PEND_APB"),
+                'cliente' => null,
+                'descripcion' => $descripcion
             ]);
 
             DB::table('cierre_caja')
                 ->where('id', '=', $idCaja)
                 ->update([
-                    'monto_efectivo' => $caja_calculada['total_efectivo'], 'monto_tarjeta' => $caja_calculada['total_tarjeta'],
-                    'monto_sinpe' => $caja_calculada['total_sinpe'], 'ingreso' => $idIngreso, 'fecha_cierra' => $fecha_actual,
+                    'monto_efectivo' => $caja_calculada['total_efectivo'],
+                    'monto_tarjeta' => $caja_calculada['total_tarjeta'],
+                    'monto_sinpe' => $caja_calculada['total_sinpe'],
+                    'ingreso' => $idIngreso,
+                    'fecha_cierra' => $fecha_actual,
+                    'efectivo_reportado' => $efectivoReportado,
                     'estado' => SisEstadoController::getIdEstadoByCodGeneral('CAJA_FINALIZADO')
                 ]);
 
@@ -177,7 +217,7 @@ class CajaController extends Controller
                 ->update(['ingreso' => $idIngreso, 'caja_cerrada' => "S"]);
 
 
-            $this->bitacoraMovimientos('ingreso', 'nuevo [Cierre Caja]', $idIngreso, $total, $fecha_actual);
+            $this->bitacoraMovimientos('ingreso', 'Nuevo [Cierre Caja]', $idIngreso, $total, $fecha_actual);
 
             DB::commit();
             return $this->responseAjaxSuccess("Se cerro la caja correctamente.", null);
@@ -187,7 +227,8 @@ class CajaController extends Controller
         }
     }
 
-    public function getCajaPrevia(Request $request){
+    public function getCajaPrevia(Request $request)
+    {
         if (!$this->validarSesion("facFac")) {
             return $this->responseAjaxServerError("No tienes permisos para realizar la acción.", []);
         }
@@ -202,7 +243,6 @@ class CajaController extends Controller
             return $this->responseAjaxServerError("Error calculando caja.", []);
         }
         return $this->responseAjaxSuccess("", $caja_calculada['caja']);
-
     }
     public static function calcularCajaUsuario($idCaja)
     {
