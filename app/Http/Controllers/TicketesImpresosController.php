@@ -107,8 +107,8 @@ class TicketesImpresosController extends Controller
         $this->pdf->AddPage();
 
         $this->pdf->SetFont('Arial', 'B', 10);
-        $this->pdf->Image($path, '23', '0', '50', '50');
-        $this->pdf->Ln(23);
+        $this->pdf->Image($path, '15', '0', '50', '50');
+        $this->pdf->Ln(24);
         $this->pdf->SetFont('Helvetica', '', 7);
         $this->pdf->setX(6);
         $this->pdf->MultiCell(63, 4, $titulo3, 0);
