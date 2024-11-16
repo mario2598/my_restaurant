@@ -67,7 +67,7 @@ class TicketesImpresosController extends Controller
             $correo_empresa_fe = $sucursalFactura->correo_factura ?? '';
         }
 
-        $tamPdf = 120;
+        $tamPdf = 110;
 
         $aumento = (count($detalles) + count($detallesAdicionales)) * 10;
         $aumento2 = 0;
@@ -107,9 +107,8 @@ class TicketesImpresosController extends Controller
         $this->pdf->AddPage();
 
         $this->pdf->SetFont('Arial', 'B', 10);
-        $this->pdf->Image($path, '5', '2', '50', '50');
-
-        $this->pdf->Ln(20);
+        $this->pdf->Image($path, '23', '0', '30', '30');
+        $this->pdf->Ln(23);
         $this->pdf->SetFont('Helvetica', '', 7);
         $this->pdf->setX(6);
         $this->pdf->MultiCell(63, 4, $titulo3, 0);
@@ -290,7 +289,7 @@ class TicketesImpresosController extends Controller
             $correo_empresa_fe = $sucursalFactura->correo_factura ?? '';
         }
 
-        $tamPdf = 120;
+        $tamPdf = 110;
         if ($orden->ind_requiere_envio == 1) {
             $tamPdf = 110;
         }
@@ -325,7 +324,7 @@ class TicketesImpresosController extends Controller
         $this->pdf->AddPage();
 
         $this->pdf->SetFont('Arial', 'B', 10);
-        $this->pdf->Image($path, '5', '2', '50', '50');
+        $this->pdf->Image($path, '5', '2', '70', '30');
 
         // $this->pdf->SetTextColor(220, 50, 50);
 
