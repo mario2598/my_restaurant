@@ -67,7 +67,7 @@ class TicketesImpresosController extends Controller
             $correo_empresa_fe = $sucursalFactura->correo_factura ?? '';
         }
 
-        $tamPdf = 110;
+        $tamPdf = 120;
 
         $aumento = (count($detalles) + count($detallesAdicionales)) * 10;
         $aumento2 = 0;
@@ -108,7 +108,7 @@ class TicketesImpresosController extends Controller
 
         $this->pdf->SetFont('Arial', 'B', 10);
         $this->pdf->Image($path, '15', '0', '50', '50');
-        $this->pdf->Ln(24);
+        $this->pdf->Ln(26);
         $this->pdf->SetFont('Helvetica', '', 7);
         $this->pdf->setX(6);
         $this->pdf->MultiCell(63, 4, $titulo3, 0);
