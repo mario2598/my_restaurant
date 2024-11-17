@@ -67,7 +67,7 @@ class TicketesImpresosController extends Controller
             $correo_empresa_fe = $sucursalFactura->correo_factura ?? '';
         }
 
-        $tamPdf = 120;
+        $tamPdf = 110;
 
         $aumento = (count($detalles) + count($detallesAdicionales)) * 10;
         $aumento2 = 0;
@@ -82,7 +82,6 @@ class TicketesImpresosController extends Controller
         if ($sucursalFactura->factura_iva == 1) {
             $tamPdf = $tamPdf  + 10;
         }
-
 
         $titulo3 = iconv('UTF-8', 'ISO-8859-1', $nombre_empresa_fe ?? env('APP_NAME', 'SPACE SOFTWARE CR'));
         $titulo4 = iconv('UTF-8', 'ISO-8859-1', 'Cédula : ' . $cedula_empresa_fe ?? '---');
@@ -289,7 +288,7 @@ class TicketesImpresosController extends Controller
             $correo_empresa_fe = $sucursalFactura->correo_factura ?? '';
         }
 
-        $tamPdf = 120;
+        $tamPdf = 110;
 
         $aumento = count($detalles) * 10;
         $aumento2 = 0;
@@ -454,10 +453,9 @@ class TicketesImpresosController extends Controller
         $this->pdf->MultiCell(63, 4, 'GRACIAS POR PREFERIRNOS ');
 
         $this->pdf->SetFont('Helvetica', 'B', 6);
-        $this->pdf->setX(28);
+        $this->pdf->setX(32);
         $this->pdf->Cell(63, 4, env('APP_NAME', 'SPACE SOFTWARE CR'));
         $this->pdf->Ln(10);
-        // $this->footer();
 
         $this->pdf->Output('ordenNo-' . $orden->numero_orden . '.pdf', 'I');
 
