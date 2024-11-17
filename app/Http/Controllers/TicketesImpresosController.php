@@ -391,11 +391,11 @@ class TicketesImpresosController extends Controller
             }
             $this->pdf->Ln(1);
             $this->pdf->setX(10);
-            $this->pdf->Cell(63, 4,  $d->cantidad, 0);
+            $this->pdf->Cell(63, 4,  $d->cantidad_pagada, 0);
             $this->pdf->setX(32);
             $this->pdf->Cell(63, 4, number_format($d->precio_unidad, 2, ".", ","), 0);
             $this->pdf->setX(56);
-            $this->pdf->Cell(63, 4, number_format(($d->precio_unidad * $d->cantidad) + $totalExtra, 2, ".", ","), 0);
+            $this->pdf->Cell(63, 4, number_format(($d->precio_unidad * $d->cantidad_pagada) + $totalExtra, 2, ".", ","), 0);
             $this->pdf->Ln(4);
             $this->pdf->setX(6);
             $this->pdf->Cell(63, 0, '', 'T');
