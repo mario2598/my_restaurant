@@ -416,7 +416,7 @@ class TicketesImpresosController extends Controller
             $this->pdf->Cell(63, 4, number_format((($pago_orden->subtotal + $pago_orden->iva) + $pago_orden->descuento) - $pago_orden->impuesto_servicio, 2, ".", ","), 0);
         }
 
-        if ($orden->impuesto_servicio > 0) {
+        if ($pago_orden->impuesto_servicio > 0) {
             $this->pdf->Ln(4);
             $this->pdf->setX(6);
             $this->pdf->Cell(63, 4, 'Servicio a la Mesa (10%)', 0);
@@ -445,7 +445,7 @@ class TicketesImpresosController extends Controller
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 4, 'Total', 0);
         $this->pdf->setX(55);
-        $this->pdf->Cell(63, 4, number_format($orden->total_con_descuento, 2, ".", ","), 0);
+        $this->pdf->Cell(63, 4, number_format($pago_orden->total, 2, ".", ","), 0);
 
 
         $this->pdf->Ln(10);
