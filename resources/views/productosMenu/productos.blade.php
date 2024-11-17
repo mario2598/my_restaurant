@@ -380,7 +380,7 @@
                 bottomMesage += 'tipo de impuesto [ Todos ].';
             }
 
-            bottomMesage += ' Coffee To Go CR. ';
+            bottomMesage += ' {{ env('APP_NAME', 'SPACE SOFTWARE CR') }} ';
 
 
             $('#tablaProductos').DataTable({
@@ -393,19 +393,19 @@
                 },
                 buttons: [{
                     extend: 'excel',
-                    title: 'Coffee To Go',
+                    title: '{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
                     filename: 'reporte_productos_coffee_to_coffee'
                 }, {
                     extend: 'pdf',
-                    title: 'Coffee To Go',
+                    title: '{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
                     filename: 'reporte_productos_coffee_to_coffee'
                 }, {
                     extend: 'print',
-                    title: 'Coffee To Go',
+                    title: '{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
                     filename: 'reporte_productos_coffee_to_coffee'

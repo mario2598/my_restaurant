@@ -232,21 +232,21 @@
                 "paging": false,
                 buttons: [{
                     extend: 'excel',
-                    title: 'COFFEE TO GO',
+                    title: '{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}',
                     messageTop: topMesage,
                     footer: true,
                     messageBottom: bottomMesage,
                     filename: 'reporte_ventasGenProductos_COFFETOGO'
                 }, {
                     extend: 'pdf',
-                    title: 'COFFEE TO GO',
+                    title: '{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
                     filename: 'reporte_ventasGenProductos_COFFETOGO'
                 }, {
                     extend: 'print',
-                    title: 'COFFEE TO GO',
+                    title: '{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,

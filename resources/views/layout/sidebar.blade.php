@@ -5,7 +5,6 @@
               <img title="Nombre empresa" alt="Logo empresa"
                   src="{{ asset('assets/images/default-logo.png') }}"
                   style="background-color: transparent; border-color: transparent;" class="img-thumbnail" />
-              <span class="logo-name" style="color: transparent;">{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}</span>
           </a>
       </div>
       <ul class="sidebar-menu">

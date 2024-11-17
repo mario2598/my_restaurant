@@ -9772,7 +9772,7 @@ INSERT INTO `sis_parametro` (`id`, `descripcion`, `valor`, `cod_general`) VALUES
 (1, 'Monto correspondiente a fondo de plata con el que inicia la caja', '30000', 'MTO_FONDO_INI_CAJA'),
 (2, 'Correo usado para enviar notificaciones a clientes', 'admin@coffeetogocr.com', 'CORREO_ENVIO_NOT_CLIENTE'),
 (3, 'Asunto que aparecera en el correo de verificacion de registro de usuario', 'Verificación cuenta', 'ASUNTO_VERIFICACION_CLIENTE'),
-(4, 'Nombre del usuario que envia correos de notificicacion a clientes', 'COFFEE TO GO', 'NOMBRE_ENVIO_NOT_CLIENTE'),
+(4, 'Nombre del usuario que envia correos de notificicacion a clientes', '{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}', 'NOMBRE_ENVIO_NOT_CLIENTE'),
 (5, 'Correos a los que se les enviara el reporte de consumo diario, generalmente administradores del negocio (Separados por ,)', 'mario.flores251998@gmail.com,scarranzagarita30@gmail.com,juvargas018@hotmail.com', 'CORREOS_REP_CONSUMO_GEN'),
 (6, 'Asunto que aparecerá en el correo de reporte de consumo general', 'Reporte de consumo diario', 'ASUNTO_REP_CONSUMO_GEN'),
 (7, 'Asunto que aparecera en el correo de restauracion contraseña cliente', 'Nueva contraseña de ingreso', 'ASUNTO_REST_PSWD_CLIENTE');

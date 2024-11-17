@@ -171,21 +171,21 @@
                 "paging": false,
                 buttons: [{
                     extend: 'excel',
-                    title: 'COFFEE TO GO',
+                    title: '{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}',
                     messageTop: topMesage,
                     footer: true,
                     messageBottom: bottomMesage,
                     filename: 'consumo_mp_COFFETOGO'
                 }, {
                     extend: 'pdf',
-                    title: 'COFFEE TO GO',
+                    title: '{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
                     filename: 'consumo_mp_COFFETOGO'
                 }, {
                     extend: 'print',
-                    title: 'COFFEE TO GO',
+                    title: '{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,

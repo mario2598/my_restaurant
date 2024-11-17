@@ -274,21 +274,21 @@
                 "paging": false,
                 buttons: [{
                     extend: 'excel',
-                    title: 'COFFEE TO GO',
+                    title: '{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}',
                     messageTop: topMesage,
                     footer: true,
                     messageBottom: bottomMesage,
                     filename: 'reporte_ventasXhora_COFFEETOGO'
                 }, {
                     extend: 'pdf',
-                    title: 'COFFEE TO GO',
+                    title: '{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
                     filename: 'reporte_ventasXhora_COFFEETOGO'
                 }, {
                     extend: 'print',
-                    title: 'COFFEE TO GO',
+                    title: '{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}',
                     footer: true,
                     messageTop: topMesage,
                     messageBottom: bottomMesage,

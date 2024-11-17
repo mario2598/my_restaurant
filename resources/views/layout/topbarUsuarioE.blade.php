@@ -12,8 +12,6 @@
                             src="{{ asset('assets/images/default-image_small.png') }}"
                             style="background-color: transparent;border-color: transparent;
                             height: 75px;position: fixed;" class="img-thumbnail" />
-                        <span class="logo-name" style="color: transparent;">COFFEE TO GO</span>
-                    
                 </div>
             </li>
 

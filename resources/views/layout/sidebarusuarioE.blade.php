@@ -2,8 +2,7 @@
     <aside id="sidebar-wrapper">
       <div class="sidebar-brand">
         <a href="{{ url('/') }}"> <img title="Nombre empresa" alt="Nombre empresa" src="{{asset("assets/images/default-image_small.png")}}"
-           style="background-color: transparent;border-color: transparent;" class="img-thumbnail"/> <span
-            class="logo-name" style="color: transparent;" >Admin</span>
+           style="background-color: transparent;border-color: transparent;" class="img-thumbnail"/>
         </a>
       </div>
       <ul class="sidebar-menu">
