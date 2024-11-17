@@ -83,12 +83,12 @@ class TicketesImpresosController extends Controller
             $tamPdf = $tamPdf  + 10;
         }
 
-        
+
         $titulo3 = iconv('UTF-8', 'ISO-8859-1', $nombre_empresa_fe ?? env('APP_NAME', 'SPACE SOFTWARE CR'));
         $titulo4 = iconv('UTF-8', 'ISO-8859-1', 'Cédula : ' . $cedula_empresa_fe ?? '---');
         $titulo5 = iconv('UTF-8', 'ISO-8859-1', 'Correo : ' . $correo_empresa_fe ?? '---');
         $sucursal = iconv('UTF-8', 'ISO-8859-1', 'Sucursal : ' . $orden->nombre_sucursal);
-        $detalleMesa = iconv('UTF-8', 'ISO-8859-1', $orden->mesa == null ?  'Tipo : PARA LLEVAR' : 'Mesa : ' . $orden->numero_mesa );
+        $detalleMesa = iconv('UTF-8', 'ISO-8859-1', $orden->mesa == null ?  'Tipo : PARA LLEVAR' : 'Mesa : ' . $orden->numero_mesa);
         $numero_orden = iconv('UTF-8', 'ISO-8859-1', 'No.Orden : ' . $orden->numero_orden);
         if ($orden->nombre_cliente == null || $orden->nombre_cliente == "") {
             $cliente = null;
@@ -107,7 +107,7 @@ class TicketesImpresosController extends Controller
         $this->pdf->AddPage();
 
         $this->pdf->SetFont('Arial', 'B', 10);
-        $this->pdf->Image($path, '15', '0', '50', '50');
+        $this->pdf->Image($path, '15', '-5', '50', '50');
         $this->pdf->Ln(28);
         $this->pdf->SetFont('Helvetica', '', 7);
         $this->pdf->setX(6);
@@ -215,7 +215,7 @@ class TicketesImpresosController extends Controller
             $this->pdf->setX(6);
             $this->pdf->Cell(63, 4, 'SubTotal', 0);
             $this->pdf->setX(55);
-            $this->pdf->Cell(63, 4, number_format((($orden->subtotal +$orden->impuesto) + $orden->descuento) - $orden->mto_impuesto_servicio, 2, ".", ","), 0);
+            $this->pdf->Cell(63, 4, number_format((($orden->subtotal + $orden->impuesto) + $orden->descuento) - $orden->mto_impuesto_servicio, 2, ".", ","), 0);
         }
 
         if ($orden->mto_impuesto_servicio > 0) {
@@ -289,10 +289,8 @@ class TicketesImpresosController extends Controller
             $correo_empresa_fe = $sucursalFactura->correo_factura ?? '';
         }
 
-        $tamPdf = 110;
-        if ($orden->ind_requiere_envio == 1) {
-            $tamPdf = 110;
-        }
+        $tamPdf = 120;
+
         $aumento = count($detalles) * 10;
         $aumento2 = 0;
         foreach ($detalles as $d) {
@@ -324,11 +322,8 @@ class TicketesImpresosController extends Controller
         $this->pdf->AddPage();
 
         $this->pdf->SetFont('Arial', 'B', 10);
-        $this->pdf->Image($path, '5', '2', '70', '30');
-
-        // $this->pdf->SetTextColor(220, 50, 50);
-
-        $this->pdf->Ln(20);
+        $this->pdf->Image($path, '15', '-5', '50', '50');
+        $this->pdf->Ln(28);
         $this->pdf->SetFont('Helvetica', '', 7);
         $this->pdf->setX(6);
         $this->pdf->MultiCell(63, 4, $titulo3, 0);
@@ -378,8 +373,8 @@ class TicketesImpresosController extends Controller
             $this->pdf->Ln(1);
             $this->pdf->setX(6);
             $producto = $d->nombre_producto;
-            if ($d->servicio_mesa == 'S') {
-                $producto .= ' (10%)';
+            if ($d->monto_servicio > 0) {
+                $producto .= ' ( + 10% )';
             }
             $totalExtra = 0;
             $this->pdf->MultiCell(63, 4, iconv('UTF-8', 'ISO-8859-1', $producto), 0);
@@ -389,68 +384,69 @@ class TicketesImpresosController extends Controller
                 $this->pdf->Cell(63, 4,  iconv('UTF-8', 'ISO-8859-1', $e->descripcion_extra), 0);
                 $this->pdf->setX(32);
                 $this->pdf->Cell(63, 4, "", 0);
-                $this->pdf->setX(53);
+                $this->pdf->setX(56);
                 $this->pdf->Cell(63, 4, number_format($e->total, 2, ".", ","), 0);
                 $this->pdf->Ln(4);
                 $totalExtra = $totalExtra  + $e->total;
             }
             $this->pdf->Ln(1);
             $this->pdf->setX(10);
-            $this->pdf->Cell(63, 4,  $d->cantidad_pagada, 0);
+            $this->pdf->Cell(63, 4,  $d->cantidad, 0);
             $this->pdf->setX(32);
             $this->pdf->Cell(63, 4, number_format($d->precio_unidad, 2, ".", ","), 0);
-            $this->pdf->setX(53);
-            $this->pdf->Cell(63, 4, number_format(($d->precio_unidad * $d->cantidad_pagada) + $totalExtra, 2, ".", ","), 0);
+            $this->pdf->setX(56);
+            $this->pdf->Cell(63, 4, number_format(($d->precio_unidad * $d->cantidad) + $totalExtra, 2, ".", ","), 0);
             $this->pdf->Ln(4);
             $this->pdf->setX(6);
             $this->pdf->Cell(63, 0, '', 'T');
         }
 
-        $this->pdf->Ln(4);
-        $this->pdf->setX(6);
-        $this->pdf->Cell(63, 4, 'Descuento', 0);
-        $this->pdf->setX(52);
-        $this->pdf->Cell(63, 4, number_format($pago_orden->descuento, 2, ".", ","), 0);
-
-        if ($orden->ind_requiere_envio == 1) {
-            $this->pdf->Ln(4);
-            $this->pdf->setX(6);
-            $this->pdf->Cell(63, 4, iconv('UTF-8', 'ISO-8859-1', 'Envío'), 0);
-            $this->pdf->setX(52);
-            $this->pdf->Cell(63, 4, number_format($orden->monto_envio, 2, ".", ","), 0);
-        }
-
+        $this->pdf->SetFont('Arial', '', 8);    //Letra Arial, negrita (Bold), tam. 20
         if ($sucursalFactura->factura_iva == 1) {
             $this->pdf->Ln(4);
-            $this->pdf->SetFont('Arial', 'B', 9);    //Letra Arial, negrita (Bold), tam. 20
             $this->pdf->setX(6);
             $this->pdf->Cell(63, 4, 'SubTotal', 0);
-            $this->pdf->setX(52);
-            $this->pdf->Cell(63, 4, number_format($pago_orden->subtotal, 2, ".", ","), 0);
+            $this->pdf->setX(55);
+            $this->pdf->Cell(63, 4, number_format(($pago_orden->subtotal + $pago_orden->descuento) - $pago_orden->impuesto_servicio, 2, ".", ","), 0);
         } else {
             $this->pdf->Ln(4);
-            $this->pdf->SetFont('Arial', 'B', 9);    //Letra Arial, negrita (Bold), tam. 20
             $this->pdf->setX(6);
             $this->pdf->Cell(63, 4, 'SubTotal', 0);
-            $this->pdf->setX(52);
-            $this->pdf->Cell(63, 4, number_format($pago_orden->subtotal + $pago_orden->iva, 2, ".", ","), 0);
+            $this->pdf->setX(55);
+            $this->pdf->Cell(63, 4, number_format((($pago_orden->subtotal + $pago_orden->iva) + $pago_orden->descuento) - $pago_orden->impuesto_servicio, 2, ".", ","), 0);
         }
 
+        if ($orden->impuesto_servicio > 0) {
+            $this->pdf->Ln(4);
+            $this->pdf->setX(6);
+            $this->pdf->Cell(63, 4, 'Servicio a la Mesa (10%)', 0);
+            $this->pdf->setX(55);
+            $this->pdf->Cell(63, 4, number_format($pago_orden->impuesto_servicio, 2, ".", ","), 0);
+        }
+
+        if ($pago_orden->descuento > 0) {
+            $this->pdf->Ln(4);
+            $this->pdf->setX(6);
+            $this->pdf->Cell(63, 4, 'Descuento', 0);
+            $this->pdf->setX(55);
+            $this->pdf->Cell(63, 4, number_format($pago_orden->descuento, 2, ".", ","), 0);
+        }
 
         if ($sucursalFactura->factura_iva == 1) {
             $this->pdf->Ln(4);
             $this->pdf->setX(6);
             $this->pdf->Cell(63, 4, 'Impuesto (IVA)', 0);
-            $this->pdf->setX(52);
+            $this->pdf->setX(55);
             $this->pdf->Cell(63, 4, number_format($pago_orden->iva, 2, ".", ","), 0);
         }
-
-
-        $this->pdf->Ln(4);
+       
+        $this->pdf->SetFont('Arial', 'B', 11);    //Letra Arial, negrita (Bold), tam. 20
+        $this->pdf->Ln(6);
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 4, 'Total', 0);
-        $this->pdf->setX(52);
-        $this->pdf->Cell(63, 4, number_format($pago_orden->total, 2, ".", ","), 0);
+        $this->pdf->setX(55);
+        $this->pdf->Cell(63, 4, number_format($orden->total_con_descuento, 2, ".", ","), 0);
+
 
         $this->pdf->Ln(10);
         $this->pdf->setX(14);
