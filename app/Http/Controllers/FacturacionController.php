@@ -2738,7 +2738,9 @@ class FacturacionController extends Controller
         $detallesGuardar = $asignarMontosDetalles['detalles'];
 
         if ($totalPagos != $asignarMontosDetalles['total']) {
-            return $this->responseAjaxServerError('El monto total pagado no coincide con el total de los detalles seleccionados.', []);
+            return $this->responseAjaxServerError('El monto total pagado no coincide con el total de los detalles seleccionados.' . 
+            "PAGOS : ".$totalPagos. "| calculado : ".$asignarMontosDetalles['total'], 
+            []);
         }
 
         $cliente = $orden['cliente'];
