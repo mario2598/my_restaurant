@@ -373,7 +373,7 @@ class TicketesImpresosController extends Controller
             $this->pdf->Ln(1);
             $this->pdf->setX(6);
             $producto = $d->nombre_producto;
-            if ($d->monto_servicio > 0) {
+            if ($d->mto_impuesto_servicio > 0) {
                 $producto .= ' ( + 10% )';
             }
             $totalExtra = 0;
