@@ -747,20 +747,11 @@ class ProductosMenuController extends Controller
             return $this->goEditarMenu();
         }
 
-        $producto_menu = DB::table('producto_menu')
-            ->select('producto_menu.id', 'producto_menu.estado')
-            ->where('producto_menu.id', '=', $producto_menu_id)
-            ->get()->first();
-
-        if ($this->isNull($producto_menu)) {
-            $this->setError("Eliminar menú", "Producto inexistente.");
-            return $this->goEditarMenuByid($idSucursal);
-        }
 
         $pm = DB::table('pm_x_sucursal')
             ->select('pm_x_sucursal.id')
             ->where('pm_x_sucursal.sucursal', '=', $idSucursal)
-            ->where('pm_x_sucursal.producto_menu', '=', $producto_menu->id)
+            ->where('pm_x_sucursal.producto_menu', '=', $producto_menu_id)
             ->get()->first();
 
         if ($this->isNull($pm)) {
@@ -771,7 +762,7 @@ class ProductosMenuController extends Controller
         try {
             DB::beginTransaction();
             DB::table('pm_x_sucursal')->where('pm_x_sucursal.sucursal', '=', $idSucursal)
-                ->where('pm_x_sucursal.producto_menu', '=', $producto_menu->id)
+                ->where('pm_x_sucursal.producto_menu', '=', $producto_menu_id)
                 ->delete();
 
             DB::commit();
