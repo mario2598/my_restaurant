@@ -266,19 +266,19 @@
                     title: '{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
-                    filename: 'reporte_productos_coffee_to_go'
+                    filename: 'reporte_productos'
                 }, {
                     extend: 'pdf',
                     title: '{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
-                    filename: 'reporte_productos_coffee_to_go'
+                    filename: 'reporte_productos'
                 }, {
                     extend: 'print',
                     title: '{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}',
                     messageTop: topMesage,
                     messageBottom: bottomMesage,
-                    filename: 'reporte_productos_coffee_to_go'
+                    filename: 'reporte_productos'
                 }]
             });
 

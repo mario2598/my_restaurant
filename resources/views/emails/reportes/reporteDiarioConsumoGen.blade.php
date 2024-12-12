@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Reporte consumo diario {{ $data['fechaReporte'] }} - Coffee To Go</title>
+    <title>Reporte consumo diario {{ $data['fechaReporte'] }} - {{ env('APP_NAME', 'SPACE SOFTWARE CR') }}</title>
     <style>
         body {
             background: #fff;

@@ -60,7 +60,7 @@
             <div class="row">
                 <div class="col-md-2">
                     <a> <img title="Nombre empresa" alt="Nombre empresa"
-                            src="{{ asset('assets/images/default-image_small.png') }}"
+                            src="{{ asset('assets/images/default-logo.png') }}"
                             style="background-color: transparent;border-color: transparent;" class="img-thumbnail" /> 
                     </a>
                     <div class="categories">
