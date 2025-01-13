@@ -519,7 +519,7 @@ class ProductosExternosController extends Controller
                 DB::table('pe_x_sucursal')
                     ->where('id', '=', $id)
                     ->update([
-                        'comanda' => $comanda_select,
+                        'comanda' => $comanda_select == '-1' ? NULL :  $comanda_select,
                         'ultima_modificacion' => $fecha_actual,
                         'usuario_modifica' => session('usuario')['id']
                     ]);

@@ -3,14 +3,16 @@ function initialice() {
     $("#btn_buscar_producto_ayuda").on("keyup", function () {
         var value = $(this).val().toLowerCase();
         $("#tbody_productos tr").filter(function () {
-          $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
         });
-      });
+    });
+
+    cargarComandas();
 }
 
 
 
-function abrirAgregarProducto(){
+function abrirAgregarProducto() {
     $('#pe_id').val('-1');
     cargarProductosExternosSucursal();
     $('#producto_externo').val('-1');
@@ -21,36 +23,64 @@ function abrirAgregarProducto(){
     $('#producto_externo').prop('disabled', false);
     $('#comanda_select').val(-1);
     $('#mdl_agregar_producto').modal('show');
-    
+
 }
 
 
-function cambiarSucursal(){
-    cargarComandas();
+function cambiarSucursal(form) {
+    form.submit();
 }
 
 function cargarComandas() {
-    $('#loader').fadeIn();
-    comandasGeneral = {};
-    $.ajax({
-        url: `${base_path}/productoExterno/inventario/inventarios/cargarComandas`,
-        type: 'get',
-        dataType: "json",
-        data: {
-            _token: CSRF_TOKEN,
-            idSucursal: $('#sucursal').val()
-        }
-    }).done(function (response) {
-        if (!response['estado']) {
-            return;
-        }
+    if ($('#sucursal').val() != '-1') {
+        $('#loader').fadeIn();
+        comandasGeneral = {};
+        $.ajax({
+            url: `${base_path}/productoExterno/inventario/inventarios/cargarComandas`,
+            type: 'get',
+            dataType: "json",
+            data: {
+                _token: CSRF_TOKEN,
+                idSucursal: $('#sucursal').val()
+            }
+        }).done(function (response) {
+            if (!response['estado']) {
+                return;
+            }
 
-        generarHTMLComandas(response['datos']);
+            generarHTMLComandas(response['datos']);
+            $('#loader').fadeOut();
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            $('#loader').fadeOut();
+        });
         $('#loader').fadeOut();
-    }).fail(function (jqXHR, textStatus, errorThrown) {
-        $('#loader').fadeOut();
+
+    }
+}
+
+
+function generarHTMLComandas(comandas) {
+    // Obtener el elemento select
+    var selectComandas = document.getElementById('comanda_select');
+
+    // Limpiar el contenido actual del select
+    selectComandas.innerHTML = '';
+
+    // Añadir la opción de "Comanda General"
+    var optionGeneral = document.createElement('option');
+    optionGeneral.value = '-1';
+    optionGeneral.text = 'Comanda General';
+    optionGeneral.selected = true;
+    selectComandas.appendChild(optionGeneral);
+
+    // Iterar sobre el array de comandas y crear opciones
+    comandas.forEach(function (comanda) {
+        var option = document.createElement('option');
+        option.value = comanda.id || '';
+        option.text = comanda.nombre || '';
+        option.title = comanda.nombre || '';
+        selectComandas.appendChild(option);
     });
-    $('#loader').fadeOut();
 }
 
 function cargarProductosExternosSucursal() {
@@ -84,7 +114,7 @@ function generarHTMLProductos(productos) {
 
 
     // Iterar sobre el array de comandas y crear opciones
-    productos.forEach(function(producto) {
+    productos.forEach(function (producto) {
         var option = document.createElement('option');
         option.value = producto.id || '';
         option.text = producto.nombre || '';
@@ -94,42 +124,19 @@ function generarHTMLProductos(productos) {
 }
 
 
-function generarHTMLComandas(comandas) {
-    // Obtener el elemento select
-    var selectComandas = document.getElementById('comanda_select');
 
-    // Limpiar el contenido actual del select
-    selectComandas.innerHTML = '';
-
-    // Añadir la opción de "Comanda General"
-    var optionGeneral = document.createElement('option');
-    optionGeneral.value = '-1';
-    optionGeneral.text = 'Comanda General';
-    optionGeneral.selected = true;
-    selectComandas.appendChild(optionGeneral);
-
-    // Iterar sobre el array de comandas y crear opciones
-    comandas.forEach(function(comanda) {
-        var option = document.createElement('option');
-        option.value = comanda.id || '';
-        option.text = comanda.nombre || '';
-        option.title = comanda.nombre || '';
-        selectComandas.appendChild(option);
-    });
-}
-
-function abrirProductosExternos(){
+function abrirProductosExternos() {
     $('#mdl_ayuda_producto').modal('show');
 }
 
-function seleccionarProductoAyuda($producto){
+function seleccionarProductoAyuda($producto) {
     $('#producto_externo').val($producto);
     $('#mdl_ayuda_producto').modal('hide');
 }
 
-function editarProductoInventario(id_pe,id_prod,cantidad,comanda,nombreProducto){
+function editarProductoInventario(id_pe, id_prod, cantidad, comanda, nombreProducto) {
     $('#pe_id').val(id_pe);
-    
+
     $('#producto_externo').val(id_prod);
     $('#cantidad_agregar').val(cantidad);
     $('#cantidad_agregar').prop('disabled', true);
@@ -151,7 +158,7 @@ function editarProductoInventario(id_pe,id_prod,cantidad,comanda,nombreProducto)
 
 function guardarProductoSucursal() {
     var id = $('#pe_id').val();
-    var idSuc = $('#sucursal').val( );
+    var idSuc = $('#sucursal').val();
     var prodExt = $('#producto_externo').val();
     var cant = $('#cantidad_agregar').val();
     var desecho = $('#es_desecho').prop('checked');
@@ -162,27 +169,27 @@ function guardarProductoSucursal() {
         data: {
             _token: CSRF_TOKEN,
             pe_id: id,
-            sucursal_agregar_id:idSuc,
-            producto_externo:prodExt,
-            cantidad_agregar:cant,comanda_select : $('#comanda_select').val()
+            sucursal_agregar_id: idSuc,
+            producto_externo: prodExt,
+            cantidad_agregar: cant, comanda_select: $('#comanda_select').val()
         }
     }).done(function (response) {
         if (!response['estado']) {
             showError(response['mensaje']);
             return;
         }
-        document.getElementById('btn_buscar_gen').click();
+        $('#form_cargar_menu').submit();
     }).fail(function (jqXHR, textStatus, errorThrown) {
         showError("Algo salió mal");
     });
 }
 
-function mdlAjustarInventario(){
+function mdlAjustarInventario() {
     $('#cantidad_ajutar').val(1);
     $('#mdl_ajustar_cant_producto').modal('show');
 }
 
-function cerrarMdlAjustarInventario(){
+function cerrarMdlAjustarInventario() {
     $('#cantidad_ajutar').val(1);
     $('#mdl_ajustar_cant_producto').modal('hide');
 }
@@ -190,7 +197,7 @@ function cerrarMdlAjustarInventario(){
 function aumentarInventario() {
     var id = $('#pe_id').val();
     var cant = $('#cantidad_ajustar').val();
-    var idSuc = $('#sucursal').val( );
+    var idSuc = $('#sucursal').val();
     var prodExt = $('#producto_externo').val();
     $.ajax({
         url: `${base_path}/productoExterno/inventario/inventarios/aumentar`,
@@ -199,9 +206,9 @@ function aumentarInventario() {
         data: {
             _token: CSRF_TOKEN,
             pe_id: id,
-            sucursal_agregar_id:idSuc,
-            producto_externo:prodExt,
-            cantidad_agregar:cant
+            sucursal_agregar_id: idSuc,
+            producto_externo: prodExt,
+            cantidad_agregar: cant
         }
     }).done(function (response) {
         if (!response['estado']) {
@@ -210,7 +217,7 @@ function aumentarInventario() {
         }
         cerrarMdlAjustarInventario();
         $('#mdl_agregar_producto').modal('hide');
-        document.getElementById('btn_buscar_gen').click();
+        $('#form_cargar_menu').submit();
     }).fail(function (jqXHR, textStatus, errorThrown) {
         showError("Algo salió mal");
     });
@@ -219,7 +226,7 @@ function aumentarInventario() {
 function disminuirInventario(desecho) {
     var id = $('#pe_id').val();
     var cant = $('#cantidad_ajutar').val();
-    var idSuc = $('#sucursal').val( );
+    var idSuc = $('#sucursal').val();
     var prodExt = $('#producto_externo').val();
     $.ajax({
         url: `${base_path}/productoExterno/inventario/inventarios/disminuir`,
@@ -228,10 +235,10 @@ function disminuirInventario(desecho) {
         data: {
             _token: CSRF_TOKEN,
             pe_id: id,
-            sucursal_agregar_id:idSuc,
-            producto_externo:prodExt,
-            cantidad_agregar:cant,
-            es_desecho:desecho
+            sucursal_agregar_id: idSuc,
+            producto_externo: prodExt,
+            cantidad_agregar: cant,
+            es_desecho: desecho
         }
     }).done(function (response) {
         if (!response['estado']) {
@@ -240,7 +247,7 @@ function disminuirInventario(desecho) {
         }
         cerrarMdlAjustarInventario();
         $('#mdl_agregar_producto').modal('hide');
-        document.getElementById('btn_buscar_gen').click();
+        $('#form_cargar_menu').submit();
     }).fail(function (jqXHR, textStatus, errorThrown) {
         showError("Algo salió mal");
     });

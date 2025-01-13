@@ -30,14 +30,14 @@
                     </div>
 
                     <div class="card-body">
-                        <form action="{{ URL::to('productoExterno/inventario/inventarios/filtro') }}" method="POST">
+                        <form id="form_cargar_menu" action="{{ URL::to('productoExterno/inventario/inventarios/filtro') }}" method="POST">
                             {{ csrf_field() }}
                             <div class="row" style="width: 100%">
                                 <div class="col-sm-12 col-md-4">
                                     <div class="form-group">
                                         <label>Sucursal</label>
                                         <select class="form-control" id="sucursal" name="sucursal"
-                                            onchange="cambiarSucursal()" required>
+                                            onchange="cambiarSucursal(this.form)" required>
                                             <option value="-1" selected>Seleccione una sucursal</option>
                                             @foreach ($data['sucursales'] as $i)
                                                 <option value="{{ $i->id ?? '' }}" title="{{ $i->descripcion ?? '' }}"
@@ -49,14 +49,6 @@
                                     </div>
                                 </div>
 
-                                <div class="col-sm-12 col-md-4">
-                                    <div class="form-group">
-                                        <label>Buscar</label>
-                                        <button type="submit" id="btn_buscar_gen"
-                                            class="btn btn-primary btn-icon form-control" style="cursor: pointer;"><i
-                                                class="fas fa-search"></i></button>
-                                    </div>
-                                </div>
                                 <div class="col-sm-12 col-md-4">
                                     <div class="form-group">
                                         <label>Agregar</label>

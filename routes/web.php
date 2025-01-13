@@ -377,6 +377,7 @@ Route::post('menu/menus/filtro', 'ProductosMenuController@goEditarMenuFiltro');
 Route::get('menu/menus', 'ProductosMenuController@goEditarMenu');
 Route::post('menu/menus/agregar', 'ProductosMenuController@agregarProductoAMenu');
 Route::post('menu/menus/eliminar', 'ProductosMenuController@eliminarProductoAMenu');
+Route::post('menu/menus/cambiarComanda', 'ProductosMenuController@cambiarComandera');
 
 /*****************Materia Prima**************************** */
 Route::get('materiaPrima/productos', 'MateriaPrimaController@goProductos');

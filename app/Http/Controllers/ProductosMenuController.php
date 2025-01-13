@@ -1061,4 +1061,75 @@ class ProductosMenuController extends Controller
             return $this->responseAjaxServerError("Algo salio mal", $ex);
         }
     }
+
+    public function cambiarComandera(Request $request)
+    {
+        if (!$this->validarSesion("mnus")) {
+            $this->setMsjSeguridad();
+            return redirect('/');
+        }
+
+        $idSucursal = $request->input('idSucursal');
+        $producto_menu_id = $request->input('idMenu');
+        $idComanda = $request->input('idComandaNueva');
+
+        if ($this->isNull($idSucursal) || $idSucursal == '-1') {
+            $this->setError("Editar menú", "Sucursal inexistente.");
+            return $this->responseAjaxServerError("Sucursal inexistente.");
+        }
+
+        if ($this->isNull($producto_menu_id) || $producto_menu_id == '-1') {
+            $this->setError("Editar menú", "Producto inexistente.");
+            return $this->responseAjaxServerError("Producto inexistente.");
+        }
+
+        $sucursal = DB::table('sucursal')
+            ->select('sucursal.id')
+            ->where('sucursal.id', '=', $idSucursal)->get()->first();
+
+        if ($this->isNull($sucursal)) {
+            $this->setError("Editar menú", "Sucursal inexistente.");
+            return $this->responseAjaxServerError("Sucursal inexistente.");
+        }
+
+        $producto_menu = DB::table('producto_menu')
+            ->select('producto_menu.id', 'producto_menu.estado')
+            ->where('producto_menu.id', '=', $producto_menu_id)
+            ->get()->first();
+
+        if ($this->isNull($producto_menu)) {
+            $this->setError("Editar menú", "Producto inexistente.");
+            return $this->responseAjaxServerError("Producto inexistente.");
+        }
+
+        $pm = DB::table('pm_x_sucursal')
+            ->select('pm_x_sucursal.id')
+            ->where('pm_x_sucursal.sucursal', '=', $idSucursal)
+            ->where('pm_x_sucursal.producto_menu', '=', $producto_menu->id)
+            ->get()->first();
+
+        if ($this->isNull($pm)) {
+            $this->setError("Editar menú", "Producto no existente en el menú.");
+            return $this->responseAjaxServerError("Producto no existente en el menú.");
+        }
+
+        try {
+            DB::beginTransaction();
+
+            DB::table('pm_x_sucursal')
+            ->where('id', '=', $pm->id)
+            ->update([
+                'comanda' => $idComanda == -1 ? NULL : $idComanda
+            ]);
+
+
+            DB::commit();
+            $this->setSuccess('Editar menú', 'El cambio la comanda correctamente.');
+            return $this->responseAjaxSuccess("", "");
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            $this->setError('Editar menú', "Algo salio mal...");
+            return $this->responseAjaxServerError("Algo salio mal...");
+        }
+    }
 }

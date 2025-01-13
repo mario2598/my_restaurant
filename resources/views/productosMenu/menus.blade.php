@@ -40,7 +40,7 @@
                                         <div class="col-sm-12 col-md-4 col-xl-4">
                                             <div class="form-group">
                                                 <label>Sucursal</label>
-                                                <select class="form-control" id="sucursal" name="sucursal" required>
+                                                <select class="form-control" id="sucursal" name="sucursal" required onchange="this.form.submit()">
                                                     <option value="-1" selected>Seleccione una sucursal</option>
                                                     @foreach ($data['sucursales'] as $i)
                                                         <option value="{{ $i->id ?? '' }}"
@@ -50,14 +50,6 @@
                                                     @endforeach
                                                 </select>
                                             </div>
-                                        </div>
-
-                                        <div class="col-sm-12 col-md-2 col-xl-4">
-                                            <div class="form-group">
-                                                <label style="color: transparent">Cargar Menú</label><br>
-                                                <input type="submit" class="btn btn-primary" value="Cargar" />
-                                            </div>
-
                                         </div>
 
                                         <div class="col-sm-12 col-md-2 col-xl-4">
@@ -92,7 +84,7 @@
                                                     Categoría
                                                 </th>
                                                 <th class="text-center">Precio</th>
-                                                <th class="text-center">Comanda</th>
+                                                <th class="text-center">Comanda Asignada</th>
                                                 <th class="text-center">Acciones</th>
 
                                             </tr>
@@ -118,7 +110,9 @@
                                                     </td>
 
                                                     <td class="text-center">
-                                                        {{ $g->nombreComanda ?? 'Comanda General' }}
+                                                        <a style="cursor: pointer; color: white;" class="btn btn-success"
+                                                            onclick="cambiarComandera('{{ $g->id }}','{{ $g->nombreComanda }}',' {{ $g->nombre }}')"
+                                                            title="Cambiar Comanda">{{ $g->nombreComanda ?? 'Comanda General' }}</a>
                                                     </td>
 
                                                     <td class="text-center">
@@ -199,6 +193,51 @@
                         <input type="submit" class="btn btn-primary" value="Agregar" />
                     </div>
                 </form>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -- fin modal de agregar sucursal-->
+
+    <div class="modal fade bs-example-modal-center" id='mdl_cambio_comanda' tabindex="-1" role="dialog"
+        aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <div class="spinner-border" id='modal_spinner' style='margin-right:3%;display:none;' role="status">
+                    </div>
+                    <h5 class="modal-title mt-0"><i class="fas fa-cog"></i> Cambiar Comanda Asignada</h5>
+                    <button type="button" id='btnSalirFact1' class="close" aria-hidden="true"
+                        onclick="$('#mdl_cambio_comanda').modal('hide');">x</button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-xl-12 col-sm-12">
+                            <label id='lblProdCambioComanda'></label>
+                        </div>
+                        <div class="col-xl-12 col-sm-12">
+                            <label id='lblComdAsigCambioComanda'></label>
+                        </div>
+
+                        <div class="col-xl-12 col-sm-12 mt-3">
+                            <label>Seleccione la nueva comanda </label>
+                            <select class="form-control" id="comanda_cambio_select" name="comanda_cambio_select"
+                                required>
+                                <option value="-1" selected>Comanda General</option>
+                                @foreach ($data['comandas'] as $i)
+                                    <option value="{{ $i->id ?? '' }}" title="{{ $i->nombre ?? '' }}">
+                                        {{ $i->nombre ?? '' }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                </div>
+                <div id='footerContiner' class="modal-footer" style="margin-top:-5%;">
+                    <a href="#" onclick="$('#mdl_cambio_comanda').modal('hide');"
+                        class="btn btn-secondary">Volver</a>
+                    <input type="button"  onclick="cambiarComanda()" class="btn btn-primary" value="Cambiar Comanda" />
+                </div>
             </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -- fin modal de agregar sucursal-->
