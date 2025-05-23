@@ -2078,7 +2078,16 @@ function procesarDatosAjax(tiposAux) {
     tipos = [];
     productosGeneral = []; // Asegurarse de limpiar también productosGeneral
 
-    tiposAux.forEach(tipo => {
+    // Verificar si tiposAux existe
+    if (!tiposAux) {
+        console.warn("No hay datos para procesar en tiposAux");
+        generarTipos();
+        seleccionarTipo(0);
+        return;
+    }
+
+    // Acceder directamente a los datos
+    Object.values(tiposAux).forEach(tipo => {
         // Reiniciar el arreglo de categorías para cada tipo
         var categorias = [];
 
@@ -2118,7 +2127,7 @@ function procesarDatosAjax(tiposAux) {
                             impuesto: producto.impuesto || 0,
                             precio: producto.precio || 0,
                             codigo: producto.codigo || '',
-                            tipoComanda: producto.tipoComanda || '',
+                            tipoComanda: producto.comanda || '',
                             cantidad: producto.cantidad || -1,
                             cantidad_original: producto.cantidad || -1,
                             tipoProducto: producto.tipoProducto || -1,
