@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Crypt;
 use Codedge\Fpdf\Fpdf\Fpdf;
 use Mike42\Escpos\PrintConnectors\WindowsPrintConnector;
 use Mike42\Escpos\Printer;
@@ -78,6 +79,7 @@ class OrdenesFacturarController extends Controller
             $o->detalles = DB::table('detalle_orden')->select('detalle_orden.*')
                 ->where('detalle_orden.orden', '=', $o->id)
                 ->get();
+            $o->idOrdenEnc = encrypt($o->id);
         }
 
         return $ordenes;
@@ -115,6 +117,7 @@ class OrdenesFacturarController extends Controller
             $o->detalles = DB::table('detalle_orden')->select('detalle_orden.*')
                 ->where('detalle_orden.orden', '=', $o->id)
                 ->get();
+            $o->idOrdenEnc = encrypt($o->id);
         }
 
         return $ordenes;

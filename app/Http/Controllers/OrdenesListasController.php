@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Crypt;
 use App\Traits\SpaceUtil;
 
 class OrdenesListasController extends Controller
@@ -85,6 +86,7 @@ class OrdenesListasController extends Controller
                     ->get() ?? [];
                 $d->tieneExtras = count($d->extras) > 0;
             }
+            $o->idOrdenEnc = encrypt($o->id);
         }
 
         return $ordenes;
@@ -245,6 +247,7 @@ class OrdenesListasController extends Controller
                 }
                 $d->composicion = $composicionTxt;
             }
+            $o->idOrdenEnc = encrypt($o->id);
         }
 
         return $ordenes;

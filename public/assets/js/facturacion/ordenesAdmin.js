@@ -154,7 +154,7 @@ function anularOrden() {
     var detallesAux = arrayDeCadenas.map(function (numero) {
         return parseInt(numero, 10);
     });
-
+    $('#loader').fadeIn();
     $.ajax({
         url: `${base_path}/facturacion/pos/anularOrden`,
         type: 'post',
@@ -174,5 +174,7 @@ function anularOrden() {
         filtrar();
     }).fail(function (jqXHR, textStatus, errorThrown) {
         showError("Algo salió mal");
+    }).always(function () {
+        $('#loader').fadeOut();
     });
 }

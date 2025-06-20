@@ -1231,7 +1231,8 @@ class FacturacionController extends Controller
                 'monto_envio' => $asignarMontosDetalles['envio'],
                 'ind_requiere_envio' => $envio['incluye_envio'] == 'true',
                 'info_descuento' => $asignarMontosDetalles['infoDescuento'],
-                'mesa' => $orden['mesa'] == "-1" ? null : $orden['mesa']
+                'mesa' => $orden['mesa'] == "-1" ? null : $orden['mesa'],
+                'mto_pagado' => $asignarMontosDetalles['total']
             ]);
 
             $pagoOrdenId = DB::table('pago_orden')->insertGetId([
@@ -2428,8 +2429,11 @@ class FacturacionController extends Controller
         }
 
         // Verificar si la orden ya está pagada
-        if ($ordenExistente->estado == 'pagada') {
+        if ($ordenExistente->pagada == 1) {
             return $this->responseAjaxServerError('La orden ya ha sido pagada y no puede ser modificada.', $orden['id']);
+        }
+        if ($ordenExistente->estado == SisEstadoController::getIdEstadoByCodGeneral("ORD_ANULADA")) {
+            return $this->responseAjaxServerError('La orden ya ha sido anulada y no puede ser modificada.', $orden['id']);
         }
 
         // Validar la orden y detalles
@@ -2663,9 +2667,12 @@ class FacturacionController extends Controller
             }
         }
 
-        // Verificar si la orden ya está pagada
-        if ($ordenExistente->estado == 'pagada') {
+        if ($ordenExistente->pagada == 1) {
             return $this->responseAjaxServerError('La orden ya ha sido pagada y no puede ser modificada.', []);
+        }
+
+        if ($ordenExistente->estado == SisEstadoController::getIdEstadoByCodGeneral("ORD_ANULADA")) {
+            return $this->responseAjaxServerError('La orden ya ha sido anulada y no puede ser modificada.', []);
         }
 
         $resValidar = $this->validarOrden($orden, $detalles);

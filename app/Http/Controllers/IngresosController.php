@@ -57,7 +57,8 @@ class IngresosController extends Controller
         }
 
         $ventas = DB::table('orden')
-            ->select('orden.*')
+            ->leftjoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+            ->select('orden.*', 'sis_estado.nombre as dscEstado', 'sis_estado.cod_general as cod_general')
             ->where('orden.ingreso', '=', $id)->get();
 
         $tieneVentas = count($ventas) > 0;

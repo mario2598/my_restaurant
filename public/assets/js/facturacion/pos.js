@@ -1110,6 +1110,14 @@ function abrirModalPago() {
     $('#mdl-pago').modal("show");
 }
 
+function calcularCambio(montoRecibido, montoTotal, montoTarjeta = 0, montoSinpe = 0) {
+    // Calcular el monto que falta por pagar (total - tarjeta - sinpe)
+    let montoFaltante = montoTotal - montoTarjeta - montoSinpe;
+    // Calcular el cambio basado en el monto recibido en efectivo menos el monto faltante
+    let cambio = parseFloat(montoRecibido) - montoFaltante;
+    return cambio >= 0 ? cambio.toFixed(2) : 0;
+}
+
 function verificarAbrirModalPago() {
     if (detalles.length < 1) {
         showError('Debe seleccionar los productos para facturar');
@@ -1126,20 +1134,57 @@ function verificarAbrirModalPago() {
     pago_tarjeta = $('#monto_tarjeta').val();
     pago_efectivo = $('#monto_efectivo').val();
 
-    if (isNaN(pago_sinpe)) {
+    if (isNaN(pago_sinpe) || pago_sinpe == "" || pago_sinpe == null || pago_sinpe == undefined) {
         $('#monto_sinpe').val("0");
         pago_sinpe = 0;
     }
 
-    if (isNaN(pago_tarjeta)) {
+    if (isNaN(pago_tarjeta) || pago_tarjeta == "" || pago_tarjeta == null || pago_tarjeta == undefined) {
         $('#monto_tarjeta').val("0");
         pago_tarjeta = 0;
     }
-    if (isNaN(pago_efectivo)) {
+    if (isNaN(pago_efectivo) || pago_efectivo == "" || pago_efectivo == null || pago_efectivo == undefined) {
         $('#monto_efectivo').val("0");
         pago_efectivo = 0;
     }
 
+    // Calcular el cambio si hay pago en efectivo
+    if (parseFloat(pago_efectivo) > 0) {
+        let montoTotal = totalSeleccionado + parseFloat(ordenGestion.envio);
+        let cambio = calcularCambio(pago_efectivo, montoTotal, parseFloat(pago_tarjeta), parseFloat(pago_sinpe));
+        let montoFaltante = montoTotal - parseFloat(pago_tarjeta) - parseFloat(pago_sinpe);
+        pago_efectivo = montoFaltante;
+        if (parseFloat(cambio) > 0) {
+            swal({
+                title: 'Cambio a entregar',
+                text: `El cambio a entregar es: ${parseFloat(cambio).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`,
+                icon: 'info',
+                buttons: {
+                    cancel: "Cancelar",
+                    confirm: "Continuar con el pago"
+                },
+                dangerMode: true,
+            })
+            .then((willProceed) => {
+                if (willProceed) {
+                    procesarPago();
+                }
+            });
+            return;
+        }else{
+            procesarPago();
+        }
+    }else{
+        procesarPago();
+    }
+    
+}
+
+function procesarPagoMixto() {
+    verificarAbrirModalPago($('#monto_sinpe').val(), $('#monto_tarjeta').val(), $('#monto_efectivo').val());
+}
+
+function procesarPago() {
     var textoPago = "Espere mientras se procesa la factura";
 
     if (pago_tarjeta > 0) {
@@ -1152,24 +1197,21 @@ function verificarAbrirModalPago() {
     } else {
         realizarPagoDividido(pago_sinpe, pago_efectivo, pago_tarjeta)
     }
-
-
-}
-
-function procesarPagoMixto() {
-    verificarAbrirModalPago($('#monto_sinpe').val(), $('#monto_tarjeta').val(), $('#monto_efectivo').val());
 }
 
 function verificarAbrirModalPagoEfectivo() {
-
     cargarDetallesSeleccionados();
-
-    $('#monto_efectivo').val(totalSeleccionado + parseFloat(ordenGestion.envio));
+    
+    // Solo establecer el valor si el input está vacío o es 0
+    if (!$('#monto_efectivo').val() || $('#monto_efectivo').val() === "0") {
+        $('#monto_efectivo').val(totalSeleccionado + parseFloat(ordenGestion.envio));
+    }
     $('#monto_tarjeta').val("0");
     $('#monto_sinpe').val("0");
 
     verificarAbrirModalPago();
 }
+
 
 function verificarAbrirModalPagoTarjeta() {
     cargarDetallesSeleccionados();
@@ -1257,6 +1299,8 @@ function recargarOrdenes() {
 }
 
 function imprimirTicket(id) {
+ 
+    
     $("#btn-pdf").prop('href', `${base_path}/impresora/tiquete/${id}`);
     document.getElementById('btn-pdf').click();
 }
@@ -1313,16 +1357,16 @@ function generarHTMLOrdenes(ordenes) {
                 ${orden.estadoOrden ?? ""}
             </td>
              <td class="text-center">
-                ${orden.pagado == 1 ? "Pagado" : "Pendiente de Pagar"}
+                ${orden.cod_general == "ORD_ANULADA" ? "Anulada" : (orden.pagado == 1 ? "Pagado" : "Pendiente de Pagar")}
             </td>
                 <td class="text-center">
-                ${orden.total_con_descuento ?? 0}
+                ${orden.cod_general == "ORD_ANULADA" ? 0 : (orden.total_con_descuento ?? 0)}
             </td> 
              <td class="text-center">
-                ${orden.mto_pagado ?? 0}
+                ${orden.cod_general == "ORD_ANULADA" ? 0 : (orden.mto_pagado ?? 0)}
             </td>
                 <td class="text-center">
-                ${(orden.total_con_descuento ?? 0) - (orden.mto_pagado ?? 0)}
+                ${orden.cod_general == "ORD_ANULADA" ? 0 : ((orden.total_con_descuento ?? 0) - (orden.mto_pagado ?? 0))}
             </td> 
                
            

@@ -360,8 +360,9 @@
                             <div class="col-6 col-md-3">
                                 <h6 id="txt-mto-pagado_mdl" class="text-muted">Monto Pagado: 0,00</h6>
                             </div>
-
                         </div>
+
+                     
 
                         <!-- Total seleccionado -->
                         <div class="row mb-3">

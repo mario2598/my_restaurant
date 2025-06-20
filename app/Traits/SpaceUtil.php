@@ -785,9 +785,9 @@ trait SpaceUtil
    */
   public function resumenContable($desde = null, $hasta = null, $sucursal = null)
   {
-
     $ingresos = DB::table('ingreso')
-      ->where('aprobado', 'like', 'S');
+      ->join('sis_estado', 'sis_estado.id', '=', 'ingreso.estado')
+      ->where('sis_estado.cod_general', '=', 'ING_EST_APROBADO');
 
     $gastos = DB::table('gasto')
       ->join('sis_estado', 'sis_estado.id', '=', 'gasto.estado')

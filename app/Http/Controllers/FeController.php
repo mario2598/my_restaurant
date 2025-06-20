@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use App\Traits\SpaceUtil;
 use Illuminate\Database\QueryException;
 
@@ -88,7 +89,7 @@ class FeController extends Controller
             $fechaAux = iconv('ISO-8859-2', 'UTF-8', strftime("%A, %d de %B ", strtotime($date)));
             $fechaAux .= ' - ' . date("g:i a", $phpdate);
             $o->fechaFormat =  $fechaAux;
-           
+            $o->idOrdenEnc = encrypt($o->id);
         }
         return  $this->responseAjaxSuccess("", $ordenes);
     }

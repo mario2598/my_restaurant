@@ -140,6 +140,7 @@
                                     <thead class="thead-light">
                                         <tr>
                                             <th scope="col" style="text-align: center">No.Factura</th>
+                                            <th scope="col" style="text-align: center">Estado</th>
                                             <th scope="col" style="text-align: center">Fecha</th>
                                             <th scope="col" style="text-align: center">Total pagado</th>
                                             <th scope="col" style="text-align: center">Tarjeta</th>
@@ -153,16 +154,17 @@
                                         @foreach ($data['ventas'] as $i)
                                             <tr>
                                                 <td style="text-align: center">{{ $i->numero_orden }}</td>
+                                                <td style="text-align: center">{{ $i->dscEstado }}</td>
                                                 <td style="text-align: center">{{ $i->fecha_inicio }}</td>
                                                 <td style="text-align: center">
-                                                    {{ number_format($i->total ?? '0.00', 2, '.', ',') }}</td>
+                                                    {{ $i->cod_general == "ORD_ANULADA" ? 0 : number_format($i->total ?? '0.00', 2, '.', ',') }}</td>
 
                                                 <td style="text-align: center">
-                                                    {{ number_format($i->monto_tarjeta ?? '0.00', 2, '.', ',') }}</td>
+                                                    {{ $i->cod_general == "ORD_ANULADA" ? 0 : number_format($i->monto_tarjeta ?? '0.00', 2, '.', ',') }}</td>
                                                 <td style="text-align: center">
-                                                    {{ number_format($i->monto_efectivo ?? '0.00', 2, '.', ',') }}</td>
+                                                    {{ $i->cod_general == "ORD_ANULADA" ? 0 : number_format($i->monto_efectivo ?? '0.00', 2, '.', ',') }}</td>
                                                 <td style="text-align: center">
-                                                    {{ number_format($i->monto_sinpe ?? '0.00', 2, '.', ',') }}</td>
+                                                    {{ $i->cod_general == "ORD_ANULADA" ? 0 : number_format($i->monto_sinpe ?? '0.00', 2, '.', ',') }}</td>
 
                                                 <td style="text-align: center">{{ $i->nombre_cliente ?? '*' }}</td>
                                                 <td style="text-align: center"><button class="btn btn-primary"
@@ -209,13 +211,11 @@
             if (montoIngresado !== efectivoReportado) {
                 alerta.classList.add('alert-danger');
                 alerta.classList.remove('alert-warning');
-                alerta.textContent =
-                    `El monto calculado por el sistema es ${calculadoSistema.toFixed(2)} CRC. El monto ingresado (${montoIngresado.toFixed(2)} CRC) difiere del monto reportado por el usuario (${efectivoReportado.toFixed(2)} CRC). Por favor, verifica las diferencias.`;
+                alerta.innerHTML = 'El monto calculado por el sistema es ' + calculadoSistema.toFixed(2) + ' CRC.<br>El monto ingresado por el usuario es ' + efectivoReportado.toFixed(2) + ' CRC.<br>El monto registrado por el sistema difiere del monto reportado por el usuario.<br> Por favor, verifica las diferencias.';
             } else {
                 alerta.classList.remove('alert-danger');
                 alerta.classList.add('alert-warning');
-                alerta.textContent =
-                    `El monto calculado por el sistema es ${calculadoSistema.toFixed(2)} CRC. El monto ingresado coincide con el monto reportado (${efectivoReportado.toFixed(2)} CRC). Verifica si es correcto.`;
+                alerta.innerHTML = 'El monto calculado por el sistema es ' + calculadoSistema.toFixed(2) + ' CRC.<br>El monto ingresado por el usuario es ' + efectivoReportado.toFixed(2) + ' CRC.<br>El monto registrado por el sistema coincide con el monto reportado.<br> Verifica si es correcto.';
             }
         }
     </script>

@@ -155,7 +155,8 @@ class CajaController extends Controller
 
         $ordenSinPagar = DB::table('orden')
             ->where('cierre_caja', '=', $idCaja)
-            ->where('pagado', '=', 0) // Suponiendo que 'pagado' es 0 para no pagado y 1 para pagado
+            ->where('pagado', '=', 0)
+            ->where('estado', '<>', SisEstadoController::getIdEstadoByCodGeneral('ORD_ANULADA'))
             ->exists();
 
         if ($ordenSinPagar) {
@@ -168,7 +169,7 @@ class CajaController extends Controller
         $descripcion = "Cierre de caja " . "realizado por " . session('usuario')['usuario'] . ". Fecha : " . $fecha_actual;
         $efectivoReportado = $request->input('efectivoReportado');
 
-        if (!is_numeric($efectivoReportado) || $efectivoReportado < 0) {
+        if ( $efectivoReportado < 0) {
             return $this->responseAjaxServerError("El campo efectivo reportado debe ser un número mayor o igual a 0.", []);
         }
 
