@@ -1153,11 +1153,16 @@ function verificarAbrirModalPago() {
         let montoTotal = totalSeleccionado + parseFloat(ordenGestion.envio);
         let cambio = calcularCambio(pago_efectivo, montoTotal, parseFloat(pago_tarjeta), parseFloat(pago_sinpe));
         let montoFaltante = montoTotal - parseFloat(pago_tarjeta) - parseFloat(pago_sinpe);
-        pago_efectivo = montoFaltante;
+        
         if (parseFloat(cambio) > 0) {
             swal({
                 title: 'Cambio a entregar',
-                text: `El cambio a entregar es: ${parseFloat(cambio).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`,
+                text: ` Total a pagar: ${parseFloat(montoTotal).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}  
+                        
+                        Pago en tarjeta: ${parseFloat(pago_tarjeta).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })} 
+                        Pago en sinpe: ${parseFloat(pago_sinpe).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })} 
+                        Monto en efectivo: ${parseFloat(pago_efectivo).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}   
+                        El cambio en efectivo a entregar es: ${parseFloat(cambio).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`,
                 icon: 'info',
                 buttons: {
                     cancel: "Cancelar",
@@ -1167,6 +1172,7 @@ function verificarAbrirModalPago() {
             })
             .then((willProceed) => {
                 if (willProceed) {
+                    pago_efectivo = montoFaltante;
                     procesarPago();
                 }
             });
