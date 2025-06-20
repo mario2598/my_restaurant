@@ -2429,7 +2429,7 @@ class FacturacionController extends Controller
         }
 
         // Verificar si la orden ya está pagada
-        if ($ordenExistente->pagada == 1) {
+        if ($ordenExistente->pagado == 1) {
             return $this->responseAjaxServerError('La orden ya ha sido pagada y no puede ser modificada.', $orden['id']);
         }
         if ($ordenExistente->estado == SisEstadoController::getIdEstadoByCodGeneral("ORD_ANULADA")) {
@@ -2667,7 +2667,7 @@ class FacturacionController extends Controller
             }
         }
 
-        if ($ordenExistente->pagada == 1) {
+        if ($ordenExistente->pagado == 1) {
             return $this->responseAjaxServerError('La orden ya ha sido pagada y no puede ser modificada.', []);
         }
 
