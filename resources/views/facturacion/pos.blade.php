@@ -770,5 +770,6 @@
     <script src="{{ asset('assets/bundles/datatables/datatables.min.js') }}"></script>
     <script src="{{ asset('assets/js/page/datatables.js') }}"></script>
 
+    <script src="{{ asset('assets/js/tablet-compatibility.js') }}"></script>
     <script src="{{ asset('assets/js/facturacion/pos.js') }}"></script>
 @endsection

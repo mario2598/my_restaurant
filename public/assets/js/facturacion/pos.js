@@ -1840,10 +1840,12 @@ function iniciarOrden() {
     }
 
     $('#loader').fadeIn();
+    
     $.ajax({
         url: `${base_path}/facturacion/pos/iniciarOrden`,
         type: 'post',
         dataType: "json",
+        timeout: getAjaxTimeout(),
         data: {
             _token: CSRF_TOKEN,
             orden: ordenGestion,
@@ -1858,7 +1860,7 @@ function iniciarOrden() {
             cargarOrdenGestion(id);
         }
     }).fail(function (jqXHR, textStatus, errorThrown) {
-        showError("Algo salió mal");
+        handleAjaxError(jqXHR, textStatus, errorThrown, 'iniciar orden');
     }).always(function () {
         $('#loader').fadeOut();
     });

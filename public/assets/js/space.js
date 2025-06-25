@@ -247,3 +247,68 @@ function showSuccess(msj){
         position: 'topRight'
     });
 }
+
+/**
+ * Función para detectar si el dispositivo es móvil/tablet
+ */
+function isMobileDevice() {
+    return /iPad|Android|Tablet|Mobile|iPhone|iPod/i.test(navigator.userAgent);
+}
+
+/**
+ * Función para obtener timeout apropiado según el dispositivo
+ */
+function getAjaxTimeout() {
+    return isMobileDevice() ? 30000 : 15000;
+}
+
+/**
+ * Función para manejar errores AJAX con mensajes específicos
+ */
+function handleAjaxError(jqXHR, textStatus, errorThrown, operation = 'operación') {
+    // Log detallado del error para debugging
+    console.error(`Error en ${operation}:`, {
+        status: jqXHR.status,
+        statusText: jqXHR.statusText,
+        responseText: jqXHR.responseText,
+        textStatus: textStatus,
+        errorThrown: errorThrown,
+        isMobile: isMobileDevice(),
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString()
+    });
+    
+    // Mensajes de error más específicos
+    if (textStatus === 'timeout') {
+        showError(`La ${operation} tardó demasiado. Verifique su conexión a internet.`);
+    } else if (jqXHR.status === 0) {
+        showError(`Error de conexión en ${operation}. Verifique su conexión a internet.`);
+    } else if (jqXHR.status === 401) {
+        showError("Sesión expirada. Por favor, inicie sesión nuevamente.");
+    } else if (jqXHR.status === 403) {
+        showError("No tiene permisos para realizar esta operación.");
+    } else if (jqXHR.status === 404) {
+        showError("Recurso no encontrado. Contacte al administrador.");
+    } else if (jqXHR.status === 500) {
+        showError("Error interno del servidor. Contacte al administrador.");
+    } else if (jqXHR.status === 503) {
+        showError("Servicio temporalmente no disponible. Intente más tarde.");
+    } else {
+        showError(`Error en ${operation}: ${jqXHR.status} - ${textStatus}`);
+    }
+}
+
+/**
+ * Función para configurar AJAX con opciones optimizadas para móviles
+ */
+function configureAjaxForDevice(options = {}) {
+    const defaultOptions = {
+        timeout: getAjaxTimeout(),
+        cache: false,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    };
+    
+    return { ...defaultOptions, ...options };
+}
