@@ -256,10 +256,63 @@ function isMobileDevice() {
 }
 
 /**
+ * Función para detectar específicamente si es un iPad
+ */
+function isIPad() {
+    // Detectar iPad específicamente (incluye iPad Pro, iPad Air, etc.)
+    return /iPad|Macintosh.*Safari.*Mobile/i.test(navigator.userAgent) || 
+           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+/**
+ * Función para detectar si es un dispositivo iOS (iPhone, iPad, iPod)
+ */
+function isIOSDevice() {
+    return /iPad|iPhone|iPod/i.test(navigator.userAgent) || 
+           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+/**
  * Función para obtener timeout apropiado según el dispositivo
  */
 function getAjaxTimeout() {
-    return isMobileDevice() ? 30000 : 15000;
+    if (isIPad()) {
+        return 45000; // Timeout más largo para iPads
+    } else if (isMobileDevice()) {
+        return 30000; // Timeout para otros dispositivos móviles
+    } else {
+        return 15000; // Timeout para PC
+    }
+}
+
+/**
+ * Función para obtener headers específicos según el dispositivo
+ */
+function getDeviceSpecificHeaders() {
+    const headers = {
+        'X-Requested-With': 'XMLHttpRequest'
+    };
+    
+    if (isIPad()) {
+        headers['X-Device-Type'] = 'ipad';
+        headers['X-Platform'] = 'ios';
+        headers['X-Touch-Support'] = 'true';
+        headers['X-Viewport-Width'] = window.innerWidth;
+        headers['X-Viewport-Height'] = window.innerHeight;
+        headers['X-Pixel-Ratio'] = window.devicePixelRatio || 1;
+    } else if (isIOSDevice()) {
+        headers['X-Device-Type'] = 'ios';
+        headers['X-Platform'] = 'ios';
+        headers['X-Touch-Support'] = 'true';
+    } else if (isMobileDevice()) {
+        headers['X-Device-Type'] = 'mobile';
+        headers['X-Platform'] = 'android';
+    } else {
+        headers['X-Device-Type'] = 'desktop';
+        headers['X-Platform'] = 'web';
+    }
+    
+    return headers;
 }
 
 /**
@@ -274,15 +327,27 @@ function handleAjaxError(jqXHR, textStatus, errorThrown, operation = 'operación
         textStatus: textStatus,
         errorThrown: errorThrown,
         isMobile: isMobileDevice(),
+        isIPad: isIPad(),
+        isIOS: isIOSDevice(),
         userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        maxTouchPoints: navigator.maxTouchPoints,
         timestamp: new Date().toISOString()
     });
     
     // Mensajes de error más específicos
     if (textStatus === 'timeout') {
-        showError(`La ${operation} tardó demasiado. Verifique su conexión a internet.`);
+        if (isIPad()) {
+            showError(`La ${operation} tardó demasiado en el iPad. Verifique su conexión WiFi.`);
+        } else {
+            showError(`La ${operation} tardó demasiado. Verifique su conexión a internet.`);
+        }
     } else if (jqXHR.status === 0) {
-        showError(`Error de conexión en ${operation}. Verifique su conexión a internet.`);
+        if (isIPad()) {
+            showError(`Error de conexión en iPad. Verifique su conexión WiFi y reinicie Safari si es necesario.`);
+        } else {
+            showError(`Error de conexión en ${operation}. Verifique su conexión a internet.`);
+        }
     } else if (jqXHR.status === 401) {
         showError("Sesión expirada. Por favor, inicie sesión nuevamente.");
     } else if (jqXHR.status === 403) {
@@ -305,9 +370,7 @@ function configureAjaxForDevice(options = {}) {
     const defaultOptions = {
         timeout: getAjaxTimeout(),
         cache: false,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
+        headers: getDeviceSpecificHeaders()
     };
     
     return { ...defaultOptions, ...options };
