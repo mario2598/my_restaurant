@@ -74,6 +74,7 @@
     <script src="{{ asset('assets/js/custom.js') }}"></script>
     <script src="{{ asset('assets/bundles/izitoast/js/iziToast.min.js') }}"></script>
     <script src="{{ asset('assets/js/space.js') }}"></script>
+    <script src="{{ asset('assets/js/tablet-compatibility.js') }}"></script>
     <script src="{{ asset('assets/js/page/ion-icons.js') }}"></script>
     @yield('script')
 
