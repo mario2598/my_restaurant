@@ -1,5 +1,11 @@
-window.addEventListener("load", initialice, false);
-var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
+// Variables globales
+var CSRF_TOKEN = '';
+var currencyFormat, currencyCRFormat, amountFormat;
+
+// Inicializar CSRF_TOKEN cuando jQuery esté disponible
+$(document).ready(function() {
+    CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
+});
 
 var currencyFormat = amount => {
     return dollarUSLocale.format(parseFloat(amount));
@@ -14,8 +20,7 @@ var amountFormat = amount => {
 };
 
 function initialice() {
-
-
+    // Función de inicialización
 }
 
 function editarGastoUsuario(id) {
@@ -375,3 +380,6 @@ function configureAjaxForDevice(options = {}) {
     
     return { ...defaultOptions, ...options };
 }
+
+// Inicializar cuando la ventana se cargue completamente
+window.addEventListener("load", initialice, false);
