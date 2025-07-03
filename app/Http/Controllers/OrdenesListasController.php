@@ -58,7 +58,8 @@ class OrdenesListasController extends Controller
 
         $ordenes = DB::table('orden')
             ->leftjoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
-            ->select('orden.*', 'sis_estado.nombre as descEstado')
+            ->leftjoin('mesa', 'mesa.id', '=', 'orden.mesa')
+            ->select('orden.*', 'sis_estado.nombre as descEstado', 'mesa.numero_mesa as mesaDsc')
             ->whereIn('orden.estado', array(SisEstadoController::getIdEstadoByCodGeneral('ORD_EN_PREPARACION'), SisEstadoController::getIdEstadoByCodGeneral('ORD_PARA_ENTREGA')))
             ->where('orden.sucursal', '=', $sucursal)
             ->where('orden.cierre_caja', '=', CajaController::getIdCaja(session('usuario')['id'], $sucursal))

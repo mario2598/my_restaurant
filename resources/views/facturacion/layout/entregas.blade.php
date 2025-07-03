@@ -4,8 +4,7 @@
         <div class="card">
             <div class="card-header" style="padding: 5px !important;">
                 <h4>
-                    {{ $p->numero_orden }} : {{ $p->nombre_cliente }} 
-
+                    {{ $p->numero_orden }} : {{ $p->nombre_cliente }}
                 </h4>
                 <div class="card-header-action">
                     <a class="btn btn-icon btn-success" style="cursor: pointer"
@@ -19,9 +18,8 @@
                 <div class="card-body" style="padding: 5px !important;">
                     <div class="row">
                         <div class="col-12">
-                           
-                                <h6 style="cursor: pointer">
-                                    Estado : {{ $p->descEstado ?? '' }} </h6>
+                            <h6 style="cursor: pointer"> Estado : {{ $p->descEstado ?? '' }} </h6>
+                            <h6 style="cursor: pointer"> Mesa : {{ $p->mesaDsc ?? 'PARA LLEVAR' }} </h6>
                         </div>
                     </div>
                 </div>

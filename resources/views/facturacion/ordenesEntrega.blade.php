@@ -34,6 +34,7 @@
                                            
                                                 <h6 style="cursor: pointer">
                                                     Estado : {{ $p->descEstado ?? '' }} </h6>
+                                                    <h6 style="cursor: pointer"> Mesa : {{ $p->mesaDsc ?? 'PARA LLEVAR' }} </h6>
                                         </div>
                                     </div>
                                 </div>
