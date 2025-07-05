@@ -1102,9 +1102,9 @@ function abrirModalPago() {
     }
 
 
-    $('#monto_sinpe_mdl').val(""); // Supongo que txt-sinpe es el campo para el pago con SINPE
-    $('#monto_tarjeta_mdl').val(""); // Supongo que txt-tarjeta es el campo para el pago con tarjeta
-    $('#monto_efectivo_mdl').val("");
+    $('#monto_sinpe').val(""); // Supongo que txt-sinpe es el campo para el pago con SINPE
+    $('#monto_tarjeta').val(""); // Supongo que txt-tarjeta es el campo para el pago con tarjeta
+    $('#monto_efectivo').val("");
     $('#nombreCliente').val(ordenGestion.cliente ?? "");
     cargarDetallesDividirCuentas(detalles);
     $('#mdl-pago').modal("show");
@@ -1276,8 +1276,10 @@ function procesarPagoInmediato(mto_sinpe, mto_efectivo, mto_tarjeta) {
             $('#mdl-loader-pago').modal("hide");
         });
 
+        $('#mdl-loader-pago').modal("hide");
     } else {
         showError("La suma de los pagos no coincide con el total de la orden.");
+        $('#mdl-loader-pago').modal("hide");
         return;
     }
 }
@@ -1641,7 +1643,6 @@ function cerrarCaja() {
     }).always(function () {
         $('#loader').fadeOut();
     });
-    $('#loader').fadeOut();
 
 }
 
@@ -1666,6 +1667,8 @@ function abrirCaja() {
     }).fail(function (jqXHR, textStatus, errorThrown) {
         cajaAbierta = false;
         showError("Algo salió mal");
+    }).always(function () {
+        $('#loader').fadeOut();
     });
 }
 
@@ -1699,6 +1702,8 @@ function cargarOrdenGestion(idOrden) {
         cajaAbierta = false;
         showError("Algo salió mal");
 
+    }).always(function () {
+        $('#loader').fadeOut();
     });
 }
 
