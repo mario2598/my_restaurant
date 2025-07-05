@@ -1850,7 +1850,7 @@ function iniciarOrden() {
         url: `${base_path}/facturacion/pos/iniciarOrden`,
         type: 'post',
         dataType: "json",
-        timeout: getAjaxTimeout(),
+        timeout: 60000,
         data: {
             _token: CSRF_TOKEN,
             orden: ordenGestion,
@@ -1865,7 +1865,7 @@ function iniciarOrden() {
             cargarOrdenGestion(id);
         }
     }).fail(function (jqXHR, textStatus, errorThrown) {
-        handleAjaxError(jqXHR, textStatus, errorThrown, 'iniciar orden');
+        showError("Algo salió mal");
     }).always(function () {
         $('#loader').fadeOut();
     });
