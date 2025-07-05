@@ -67,7 +67,7 @@ class TicketesImpresosController extends Controller
             $correo_empresa_fe = $sucursalFactura->correo_factura ?? '';
         }
 
-        $tamPdf = 110;
+        $tamPdf = 120;
 
         $aumento = (count($detalles) + count($detallesAdicionales)) * 10;
         $aumento2 = 0;
@@ -296,6 +296,14 @@ class TicketesImpresosController extends Controller
             $aumento2 = $aumento2 + count($d->extras) * 5;
         }
         $tamPdf = $tamPdf  + $aumento + $aumento2;
+       
+        if ($orden->mto_impuesto_servicio > 0) {
+            $tamPdf = $tamPdf  + 10;
+        }
+
+        if ($sucursalFactura->factura_iva == 1) {
+            $tamPdf = $tamPdf  + 10;
+        }
         /**
          * Header
          */
