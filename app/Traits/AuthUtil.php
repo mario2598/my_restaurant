@@ -28,7 +28,8 @@ trait AuthUtil
       $usuario = DB::table('usuario')
         ->join('rol', 'rol.id', '=', 'usuario.rol')
         ->select('usuario.*', 'rol.id as rol_id', 'rol.rol as rol_rol')
-        ->where('usuario.token_auth', '=', $usuarioSession['token'] ?? '')
+       // ->where('usuario.token_auth', '=', $usuarioSession['token'] ?? '')
+        ->where('usuario.id', '=', $usuarioSession['id'] ?? '')
         ->get()->first();
 
       if ($usuario == null) {
@@ -68,7 +69,8 @@ trait AuthUtil
       $usuario = DB::table('usuario')
         ->join('rol', 'rol.id', '=', 'usuario.rol')
         ->select('usuario.*', 'rol.id as rol_id', 'rol.rol as rol_rol')
-        ->where('usuario.token_auth', '=', $usuarioSession['token'] ?? '')
+        //->where('usuario.token_auth', '=', $usuarioSession['token'] ?? '')
+        ->where('usuario.id', '=', $usuarioSession['id'] ?? '')
         ->where('rol.estado', '=', 'A')
         ->get()->first();
 
