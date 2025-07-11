@@ -1347,13 +1347,37 @@ function generarHTMLOrdenes(ordenes) {
             `${base_path}/tracking/orden/${orden.idOrdenEnc ?? ''}`);
 
         lineas.slice(0, -1);
+        
+        // Determinar el estilo y icono según el estado de la orden
+        let estiloFila = "";
+        let iconoEstado = "";
+        let colorEstado = "";
+        
+        if (orden.cod_general == "ORD_ANULADA") {
+            estiloFila = "background-color: #ffebee; border-left: 5px solid #f44336;";
+            iconoEstado = "fas fa-ban";
+            colorEstado = "#f44336";
+        } else if (orden.pagado == 1) {
+            estiloFila = "background-color: #e8f5e8; border-left: 5px solid #4caf50;";
+            iconoEstado = "fas fa-check-circle";
+            colorEstado = "#4caf50";
+        } else {
+            estiloFila = "background-color: #fff3e0; border-left: 5px solid #ff9800;";
+            iconoEstado = "fas fa-clock";
+            colorEstado = "#ff9800";
+        }
+        
         texto = texto +
-            `<tr style="border-bottom: 1px solid grey;">
+            `<tr style="${estiloFila} border-bottom: 1px solid grey;">
                 <td class="text-center"  onclick="cargarOrdenGestion(${orden.id})" style="cursor:pointer; text-decoration : underline; ">
                    <i class="fas fa-cog" aria-hidden="true"> </i> ${orden.numero_orden}
                 </td> 
                  <td class="text-center">
                     ${orden.numero_mesa ?? 'PARA LLEVAR'}
+                </td>
+                 <td class="text-center">
+                <i class="${iconoEstado}" style="color: ${colorEstado}; margin-right: 5px;"></i>
+                ${orden.cod_general == "ORD_ANULADA" ? "Anulada" : (orden.pagado == 1 ? "Pagado" : "Pendiente de Pagar")}
                 </td>
                 <td class="text-center">
                     ${orden.fecha_inicio}
@@ -1364,9 +1388,7 @@ function generarHTMLOrdenes(ordenes) {
                  <td class="text-center">
                 ${orden.estadoOrden ?? ""}
             </td>
-             <td class="text-center">
-                ${orden.cod_general == "ORD_ANULADA" ? "Anulada" : (orden.pagado == 1 ? "Pagado" : "Pendiente de Pagar")}
-            </td>
+            
                 <td class="text-center">
                 ${orden.cod_general == "ORD_ANULADA" ? 0 : (orden.total_con_descuento ?? 0)}
             </td> 
@@ -1382,11 +1404,7 @@ function generarHTMLOrdenes(ordenes) {
                 <i class="fas fa-print" aria-hidden="true"> </i> Imprimir Tiquete
             </td>
            `;
-        /* <td class="text-center"> 
-             <a href="${msjTrackingWhatsp ?? ""}" style="display: block;width: 100%;" target="_blank">
-                 <i class="fas fa-barcode" aria-hidden="true"> </i> Envíar link de rastreo de orden
-             </a>
-         </td>*/
+
 
         texto = texto + `</tr>`;
     });

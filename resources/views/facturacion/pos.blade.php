@@ -509,10 +509,10 @@
                                 <tr>
                                     <th scope="col" style="text-align: center;">No.Orden</th>
                                     <th scope="col" style="text-align: center;">Mesa</th>
+                                    <th scope="col" style="text-align: center;">Estado Pago</th>
                                     <th scope="col" style="text-align: center;">Fecha</th>
                                     <th scope="col" style="text-align: center;">Cliente</th>
                                     <th scope="col" style="text-align: center;">Estado</th>
-                                    <th scope="col" style="text-align: center;">Estado Pago</th>
                                     <th scope="col" style="text-align: center;">Total Pago</th>
                                     <th scope="col" style="text-align: center;">Pagado</th>
                                     <th scope="col" style="text-align: center;">Pendiente</th>
