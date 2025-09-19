@@ -43,6 +43,7 @@ Route::group(['middleware' => 'autorizated:mantUsu'], function () {
     Route::get('mant/usuarios/cargarUsuarios', 'MantenimientoUsuariosController@cargarUsuariosAjax');
     Route::post('mant/usuarios/usuario', 'MantenimientoUsuariosController@goEditarUsuario');
     Route::post('/mant/usuarios/usuario/guardar', 'MantenimientoUsuariosController@guardarUsuarioAjax');
+    Route::post('/mant/usuarios/usuario/seg', 'MantenimientoUsuariosController@cambiarContra');
 });
 
 Route::group(['middleware' => 'autorizated:mantSuc'], function () {
@@ -155,6 +156,7 @@ Route::group(['middleware' => 'autorizated:facFac'], function () {
     Route::post('facturacion/pos/pagarOrden', 'FacturacionController@pagarOrden');
     Route::get('facturacion/pos/cargarPosProductos', 'FacturacionController@cargarPosProductosAjax');
     Route::get('facturacion/pos', 'FacturacionController@goPos');
+    Route::post('facturacion/buscar-clientes', 'FacturacionController@buscarClientes');
 });
 
 Route::group(['middleware' => 'autorizated:prod_ext_inv'], function () {
@@ -190,6 +192,38 @@ Route::group(['middleware' => 'autorizated:mt_inv'], function () {
     Route::post('materiaPrima/inventario/inventarios/crearProducto', 'MateriaPrimaController@crearProductoSucursal');
     Route::post('materiaPrima/inventario/inventarios/aumentar', 'MateriaPrimaController@aumentarProductoSucursal');
     Route::post('materiaPrima/inventario/inventarios/disminuir', 'MateriaPrimaController@disminuirProductoSucursal');
+});
+
+/*
+|--------------------------------------------------------------------------
+|FACTURACION ELECTRONICA
+|--------------------------------------------------------------------------
+*/
+Route::group(['middleware' => 'autorizated:fe_fes'], function () {
+    Route::get('fe/facturas', 'FeController@goFacturasFe');
+    Route::post('fe/filtrarFacturas', 'FeController@filtrarFacturas');
+    Route::post('fe/enviarFe', 'FeController@enviarFe');
+});
+
+/*
+|--------------------------------------------------------------------------
+|MANTENIMIENTO DE CLIENTES
+|--------------------------------------------------------------------------
+*/
+Route::group(['middleware' => 'autorizated:mantClientes'], function () {
+
+    Route::get('mant/clientes', 'MantenimientoClientesController@index');
+    Route::post('mant/clientes/guardar', 'MantenimientoClientesController@guardarCliente');
+    Route::post('mant/clientes/guardar/eliminarcliente', 'MantenimientoClientesController@eliminarCliente');
+    Route::post('mant/clientes/obtener-clientes-ajax', 'MantenimientoClientesController@obtenerClientesAjax');
+    Route::post('mant/clientes/obtener-cliente', 'MantenimientoClientesController@obtenerCliente');
+    Route::post('mant/clientes/obtener-info-fe-cliente', 'MantenimientoClientesController@obtenerInfoFECliente');
+    Route::post('mant/clientes/guardar-info-fe-cliente', 'MantenimientoClientesController@guardarInfoFECliente');
+});
+
+Route::group(['middleware' => 'autorizated:prod_mnu'], function () {
+    Route::post('productos/guardarConfigFE', 'FeController@guardarConfigFE');
+    Route::get('productos/cargarDatosFE', 'FeController@cargarDatosFEProducto');
 });
 
 
@@ -241,10 +275,6 @@ Route::post('guardarrol', 'MantenimientoRolesController@guardarRol');
 Route::post('eliminarrol', 'MantenimientoRolesController@eliminarRol');
 Route::post('cargarPermisosRoles', 'MantenimientoRolesController@cargarPermisosRoles');
 
-/*** Clientes */
-Route::get('mant/clientes', 'MantenimientoClientesController@index');
-Route::post('guardarcliente', 'MantenimientoClientesController@guardarCliente');
-Route::post('eliminarcliente', 'MantenimientoClientesController@eliminarCliente');
 
 /*** Usuarios */
 Route::get('restaurar_pc', 'MantenimientoUsuariosController@restaurarPc');
@@ -511,8 +541,3 @@ Route::post('entregas/entregarOrden', 'EntregasOrdenController@entregarOrden');
 
 /* Tracking orden  */
 Route::get('tracking/orden/{encryptedOrderId}', 'UsuarioExternoController@goTrackingOrden');
-
-/* FE */
-Route::get('fe/facturas', 'FeController@goFacturasFe');
-Route::post('fe/filtrarFacturas', 'FeController@filtrarFacturas');
-Route::post('fe/enviarFe', 'FeController@enviarFe');
