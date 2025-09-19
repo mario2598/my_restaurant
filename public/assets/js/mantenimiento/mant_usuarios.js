@@ -36,6 +36,19 @@ function generarHTMLUsuarios(usuarios) {
     usuarios.forEach(usuario => {
         var lineas = "";
         var tablaDetalles = "";
+        
+        // Determinar el color del badge según el estado
+        var estadoClass = usuario.estado_codigo === 'USU_ACT' ? 'badge-success' : 'badge-danger';
+        var estadoTexto = usuario.estado_codigo === 'USU_ACT' ? 'Activo' : 'Inactivo';
+        
+        // Botones de activar/inactivar según el estado
+        var botonesEstado = '';
+        if (usuario.estado_codigo === 'USU_ACT') {
+            botonesEstado = `<a onclick="inactivarUsuario(${usuario.id})" title="Inactivar" class="btn btn-warning" style="color:white;cursor:pointer;"><i class="fas fa-user-times"></i></a>`;
+        } else {
+            botonesEstado = `<a onclick="activarUsuario(${usuario.id})" title="Activar" class="btn btn-success" style="color:white;cursor:pointer;"><i class="fas fa-user-check"></i></a>`;
+        }
+        
         texto = texto +
             ` <tr>
               <td class="text-center">
@@ -59,8 +72,12 @@ function generarHTMLUsuarios(usuarios) {
               <td class="text-center">
                 ${usuario.rol_nombre} 
               </td>
+              <td class="text-center">
+                <span class="badge ${estadoClass}">${estadoTexto}</span>
+              </td>
               <td class="text-center" >
                 <a onclick="goEditarUsuario(${usuario.id})" title="Editar" class="btn btn-primary" style="color:white;cursor:pointer;"><i class="fas fa-cog"></i></a> 
+                ${botonesEstado}
               </td>
             </tr>`;
 
@@ -124,4 +141,83 @@ function goNuevoUsuario() {
     // Enviamos el formulario
     form.submit();
 
+}
+
+function inactivarUsuario(id) {
+    swal({
+        title: '¿Estás seguro?',
+        text: "¿Deseas inactivar este usuario?",
+        icon: 'warning',
+        buttons: {
+            cancel: 'Cancelar',
+            confirm: 'Sí, inactivar'
+        },
+        dangerMode: true
+    }).then((confirmed) => {
+        if (confirmed) {
+            var form = document.createElement('form');
+            form.setAttribute('method', 'post');
+            form.setAttribute('action', `${base_path}/mant/usuarios/usuario/inactivar`);
+            form.style.display = 'none';
+
+            // Agregamos el token CSRF
+            var csrfField = document.createElement('input');
+            csrfField.setAttribute('type', 'hidden');
+            csrfField.setAttribute('name', '_token');
+            csrfField.setAttribute('value', CSRF_TOKEN);
+            form.appendChild(csrfField);
+
+            // Agregamos el campo idUsuario
+            var idField = document.createElement('input');
+            idField.setAttribute('type', 'hidden');
+            idField.setAttribute('name', 'idUsuario');
+            idField.setAttribute('value', id);
+            form.appendChild(idField);
+
+            // Agregamos el formulario al cuerpo del documento
+            document.body.appendChild(form);
+
+            // Enviamos el formulario
+            form.submit();
+        }
+    });
+}
+
+function activarUsuario(id) {
+    swal({
+        title: '¿Estás seguro?',
+        text: "¿Deseas activar este usuario?",
+        icon: 'success',
+        buttons: {
+            cancel: 'Cancelar',
+            confirm: 'Sí, activar'
+        }
+    }).then((confirmed) => {
+        if (confirmed) {
+            var form = document.createElement('form');
+            form.setAttribute('method', 'post');
+            form.setAttribute('action', `${base_path}/mant/usuarios/usuario/activar`);
+            form.style.display = 'none';
+
+            // Agregamos el token CSRF
+            var csrfField = document.createElement('input');
+            csrfField.setAttribute('type', 'hidden');
+            csrfField.setAttribute('name', '_token');
+            csrfField.setAttribute('value', CSRF_TOKEN);
+            form.appendChild(csrfField);
+
+            // Agregamos el campo idUsuario
+            var idField = document.createElement('input');
+            idField.setAttribute('type', 'hidden');
+            idField.setAttribute('name', 'idUsuario');
+            idField.setAttribute('value', id);
+            form.appendChild(idField);
+
+            // Agregamos el formulario al cuerpo del documento
+            document.body.appendChild(form);
+
+            // Enviamos el formulario
+            form.submit();
+        }
+    });
 }

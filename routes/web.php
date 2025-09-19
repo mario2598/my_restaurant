@@ -44,6 +44,8 @@ Route::group(['middleware' => 'autorizated:mantUsu'], function () {
     Route::post('mant/usuarios/usuario', 'MantenimientoUsuariosController@goEditarUsuario');
     Route::post('/mant/usuarios/usuario/guardar', 'MantenimientoUsuariosController@guardarUsuarioAjax');
     Route::post('/mant/usuarios/usuario/seg', 'MantenimientoUsuariosController@cambiarContra');
+    Route::post('/mant/usuarios/usuario/inactivar', 'MantenimientoUsuariosController@inactivarUsuario');
+    Route::post('/mant/usuarios/usuario/activar', 'MantenimientoUsuariosController@activarUsuario');
 });
 
 Route::group(['middleware' => 'autorizated:mantSuc'], function () {

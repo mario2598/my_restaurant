@@ -21,6 +21,7 @@ class MantenimientoUsuariosController extends Controller
         $usuarios = DB::table('usuario')
             ->join('rol', 'rol.id', '=', 'usuario.rol')
             ->join('sucursal', 'sucursal.id', '=', 'usuario.sucursal')
+            ->join('sis_estado', 'sis_estado.id', '=', 'usuario.estado')
             ->select(
                 'usuario.id',
                 'usuario.nombre',
@@ -30,12 +31,15 @@ class MantenimientoUsuariosController extends Controller
                 'usuario.telefono',
                 'usuario.usuario',
                 'usuario.rol',
+                'usuario.estado',
                 'rol.rol as rol_nombre',
                 'rol.id as rol_id',
                 'sucursal.descripcion as sucursal_nombre',
-                'sucursal.id as sucursal_id'
+                'sucursal.id as sucursal_id',
+                'sis_estado.nombre as estado_nombre',
+                'sis_estado.cod_general as estado_codigo'
             )
-            ->where('usuario.estado', 'like', 'A')->get();
+            ->get();
         $data = [
             'menus' => $this->cargarMenus(),
             'usuarios' => $usuarios,
@@ -242,6 +246,7 @@ class MantenimientoUsuariosController extends Controller
         return DB::table('usuario')
             ->join('rol', 'rol.id', '=', 'usuario.rol')
             ->join('sucursal', 'sucursal.id', '=', 'usuario.sucursal')
+            ->join('sis_estado', 'sis_estado.id', '=', 'usuario.estado')
             ->select(
                 'usuario.id',
                 'usuario.nombre',
@@ -252,10 +257,13 @@ class MantenimientoUsuariosController extends Controller
                 'usuario.telefono',
                 'usuario.usuario',
                 'usuario.rol',
+                'usuario.estado',
                 'rol.rol as rol_nombre',
                 'rol.id as rol_id',
                 'sucursal.descripcion as sucursal_nombre',
-                'sucursal.id as sucursal_id'
+                'sucursal.id as sucursal_id',
+                'sis_estado.nombre as estado_nombre',
+                'sis_estado.cod_general as estado_codigo'
             )
             ->get();
     }
@@ -564,5 +572,72 @@ class MantenimientoUsuariosController extends Controller
             DB::rollBack();
             echo 0;
         }
+    }
+
+    /**
+     * Inactiva un usuario cambiando su estado a USU_INACTIVO
+     */
+    public function inactivarUsuario(Request $request)
+    {
+        $id = $request->input('idUsuario');
+        
+        if ($this->isNull($id) || $this->isEmpty($id)) {
+            $this->setError("Error", "ID de usuario requerido");
+            return redirect()->back();
+        }
+
+        try {
+            DB::beginTransaction();
+            
+            // Verificar que no sea el usuario actual
+            $usuarioActual = $this->getUsuarioAuth();
+            if ($id == $usuarioActual['id']) {
+                $this->setError("Error", "No puedes inactivar tu propio usuario");
+                return redirect()->back();
+            }
+
+            DB::table('usuario')
+                ->where('id', '=', $id)
+                ->update(['estado' => SisEstadoController::getIdEstadoByCodGeneral("USU_INACTIVO")]);
+
+            DB::commit();
+            $this->setSuccess("Éxito", "Usuario inactivado correctamente");
+            
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            $this->setError("Error", "Error al inactivar el usuario: " . $ex->getMessage());
+        }
+        
+        return redirect()->back();
+    }
+
+    /**
+     * Activa un usuario cambiando su estado a USU_ACT
+     */
+    public function activarUsuario(Request $request)
+    {
+        $id = $request->input('idUsuario');
+        
+        if ($this->isNull($id) || $this->isEmpty($id)) {
+            $this->setError("Error", "ID de usuario requerido");
+            return redirect()->back();
+        }
+
+        try {
+            DB::beginTransaction();
+            
+            DB::table('usuario')
+                ->where('id', '=', $id)
+                ->update(['estado' => SisEstadoController::getIdEstadoByCodGeneral("USU_ACT")]);
+
+            DB::commit();
+            $this->setSuccess("Éxito", "Usuario activado correctamente");
+            
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            $this->setError("Error", "Error al activar el usuario: " . $ex->getMessage());
+        }
+        
+        return redirect()->back();
     }
 }

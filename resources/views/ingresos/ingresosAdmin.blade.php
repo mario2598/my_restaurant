@@ -18,11 +18,10 @@
                         <h4>Ingresos</h4>
                         <form class="card-header-form">
                             <div class="input-group">
-                                <input type="text" name="" onkeyup="filtrarGastosAdmin(this.value)"
-                                    id="btn_buscar_gasto" class="form-control" placeholder="Buscar ingreso">
+                                <input type="text" name="" 
+                                    id="btn_buscar_ingreso" class="form-control" placeholder="Buscar ingreso">
                                 <div class="input-group-btn">
-                                    <a class="btn btn-primary btn-icon" style="cursor: pointer;"
-                                        onclick="filtrarGastosAdmin(btn_buscar_gasto.value)"><i
+                                    <a class="btn btn-primary btn-icon" ><i
                                             class="fas fa-search"></i></a>
                                 </div>
                             </div>

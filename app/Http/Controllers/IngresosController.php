@@ -112,16 +112,50 @@ class IngresosController extends Controller
             return redirect('ingresos/administracion');
         }
 
+        
+        $caja = CajaController::getByIdIngreso($id);
+
+        if ($caja == null) {
+            $efectivoReportado = null;
+        }else{
+            $efectivoReportado = $caja->efectivo_reportado ?? 0;
+        }
+
+        $ventas = DB::table('orden')
+            ->leftjoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+            ->select('orden.*', 'sis_estado.nombre as dscEstado', 'sis_estado.cod_general as cod_general')
+            ->where('orden.ingreso', '=', $id)->get();
+
+        $tieneVentas = count($ventas) > 0;
+
+        foreach ($ventas as $v) {
+            $v->fecha_inicio = $this->fechaFormat($v->fecha_inicio);
+            $v->fecha_preparado = $this->fechaFormat($v->fecha_preparado);
+            $v->fecha_entregado = $this->fechaFormat($v->fecha_entregado);
+            $v->detalles =  DB::table('detalle_orden')
+                ->select('detalle_orden.*')
+                ->where('detalle_orden.orden', '=', $v->id)->get();
+        }
+
+        $ingreso->fecha = $this->fechaFormat($ingreso->fecha);
+
         $sinpe = $ingreso->monto_sinpe ?? 0;
         $efectivo = $ingreso->monto_efectivo ?? 0;
         $tarjeta = $ingreso->monto_tarjeta ?? 0;
         $ingreso->subtotal = $sinpe + $efectivo + $tarjeta;
         $ingreso->totalGeneral = $ingreso->subtotal;
+        $ingreso->monto_tarjeta  = preg_replace('/\,/', '.', $ingreso->monto_tarjeta);
+        $ingreso->monto_efectivo  = preg_replace('/\,/', '.', $ingreso->monto_efectivo);
+        $ingreso->monto_sinpe  = preg_replace('/\,/', '.', $ingreso->monto_sinpe);
 
         $data = [
             'menus' => $this->cargarMenus(),
             'ingreso' => $ingreso,
+            'ventas' => $ventas,
+            'tieneVentas' => $tieneVentas,
             'tipos_ingreso' => $this->getTiposIngreso(),
+            'efectivoReportado' => $efectivoReportado,
+            'estados_ingreso' => SisEstadoController::getEstadosByCodClase("INGRESOS_EST"),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
         return view('ingresos.ingreso.ingreso', compact('data'));

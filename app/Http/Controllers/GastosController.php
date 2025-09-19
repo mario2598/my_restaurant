@@ -159,6 +159,7 @@ class GastosController extends Controller
                 'proveedor' => 0,
                 'sucursal' => 'T',
                 'aprobado' => 'T',
+                'select_estado' => 'T',
                 'hasta' => "",
                 'tipo_gasto' => "",
                 'desde' => "",
@@ -194,7 +195,7 @@ class GastosController extends Controller
           
             $filtroProveedor = $filtros['proveedor'];
             $filtroSucursal = $filtros['sucursal'];
-            $select_estado = $filtros['select_estado'];
+            $select_estado = isset($filtros['select_estado']) ? $filtros['select_estado'] : 'T';
             $hasta = $filtros['hasta'];
             $gasto = $filtros['tipo_gasto'];
             $desde = $filtros['desde'];

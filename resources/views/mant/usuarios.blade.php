@@ -57,6 +57,7 @@
                                             <th class="text-center">Teléfono</th>
                                             <th class="text-center">Sucursal</th>
                                             <th class="text-center">Rol</th>
+                                            <th class="text-center">Estado</th>
                                             <th class="text-center">Acciones</th>
                                         </tr>
                                     </thead>
