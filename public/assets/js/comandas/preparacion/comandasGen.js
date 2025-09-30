@@ -75,11 +75,12 @@ function crearHtmlComanda(comandasRes) {
                 let mesaInfo = p.mesa != null ? `Mesa: ${p.numero_mesa}` : 'Para llevar';
                 let fechaInicio = p.fecha_inicio ? new Date(p.fecha_inicio) : null;
                 let tiempoTranscurrido = calcularTiempoTranscurrido(fechaInicio);
+                let headerClass = p.mesa != null ? 'bg-primary' : 'bg-success';
 
                 let cardHtml = `
                 <div class="col-md-6 col-xs-12 col-sm-12 col-xl-4 mb-3">
                     <div class="card shadow-sm">
-                        <div onclick="imprimirTicket(${p.id})" class="card-header bg-primary text-white" style="padding: 10px !important; cursor:pointer;">
+                        <div onclick="imprimirTicket(${p.id})" class="card-header ${headerClass} text-white" style="padding: 10px !important; cursor:pointer;">
                             <h4 class="mb-0 text-white">${p.numero_orden} : ${p.nombre_cliente || ''}</h4>
                             <small class="text-light">Estado: ${p.descEstado || ''}</small>
                         </div>
@@ -115,7 +116,7 @@ function crearHtmlComanda(comandasRes) {
                         onclick="mostrarReceta(\`${d.receta || ''}\`,\`${d.composicion || ''}\`,\`${d.nombre_producto || ''}\`)">
                         <td>${d.nombre_producto || ''}</td>
                         <td>${d.cantidad_comanda || '0'}</td>
-                        <td>${d.observacion || ''}</td>
+                        <td><strong>${d.observacion || ''}</strong></td>
                     </tr>`;
 
                     if (d.tieneExtras) {
