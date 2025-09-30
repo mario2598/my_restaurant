@@ -44,7 +44,7 @@
                                 </div>
 
                                 <div class="mt-5 text-muted text-center">
-                                    © {{ date('Y') }} | {{ env('APP_NAME', 'SPACE SOFTWARE CR') }}
+                                    © {{ date('Y') }} | {{ config('app.name', 'SPACE SOFTWARE CR') }}
                                 </div>
                             </form>
                         </div>
