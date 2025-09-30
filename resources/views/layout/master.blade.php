@@ -6,9 +6,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ env('APP_NAME', 'MI RESTAURANTE') }}</title>
-    <meta name="keywords" content="{{ env('APP_NAME', 'MI RESTAURANTE') }}">
-    <meta name="description" content="@yield('meta_description', config('app.name'))">
+    <title>{{ config('app.name', 'MI RESTAURANTE') }}</title>
+    <meta name="keywords" content="{{ config('app.name', 'MI RESTAURANTE') }}">
+    <meta name="description" content="@yield('meta_description', config('app.slogan'))">
     <meta name="author" content="@yield('meta_author', config('app.name'))">
     <!-- Favicon -->
 
