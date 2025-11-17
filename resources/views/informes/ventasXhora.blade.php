@@ -153,7 +153,6 @@
                                             <th class="text-center">Cantidad</th>
                                             <th class="text-center">Precio unidad</th>
                                             <th class="text-center">Tipo producto</th>
-                                            <th class="text-center">Vendedor</th>
                                             <th class="text-center">Cliente</th>
                                             <th class="text-center">Total venta CRC</th>
 
