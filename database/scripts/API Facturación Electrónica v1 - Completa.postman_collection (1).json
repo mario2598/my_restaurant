@@ -1,0 +1,1442 @@
+{
+	"info": {
+		"_postman_id": "f993c892-e0b3-4f8e-8a8f-b4f5088282df",
+		"name": "API Facturación Electrónica v1 - Completa",
+		"description": "Colección unificada con todas las partes (1, 2 y 3)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "5414404"
+	},
+	"item": [
+		{
+			"name": "Autenticación",
+			"item": [
+				{
+					"name": "Obtener Empresa por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/company/{{id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"company",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Registrar Empresa",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"identificacion\": \"string\",\n  \"nombre\": \"string\",\n  \"correo\": \"string\",\n  \"password\": \"string\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/signup",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Actualizar Estado Empresa",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/update/{{identificacion}}/{{estado}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"update",
+								"{{identificacion}}",
+								"{{estado}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Empresa",
+			"item": [
+				{
+					"name": "Obtener Empresa por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Empresa/empresaId/{{id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Empresa",
+								"empresaId",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Configuración Empresa",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Empresa/empresa/config/{{id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Empresa",
+								"empresa",
+								"config",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Guardar Empresa",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 0,\n  \"nombre\": \"string\",\n  \"identificacion\": \"string\",\n  \"telefono\": \"string\",\n  \"maxUsers\": 0,\n  \"tax\": 0,\n  \"esSimplificado\": true,\n  \"alDia\": true,\n  \"usaIA\": true,\n  \"mensualidad\": 0,\n  \"imgaeBase64\": \"string\",\n  \"impresoraService\": \"string\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/Empresa/empresa",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Empresa",
+								"empresa"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Actualizar Estado Empresa",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Empresa/update/{{identificacion}}/{{estado}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Empresa",
+								"update",
+								"{{identificacion}}",
+								"{{estado}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Facturación",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Empresa/billing",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Empresa",
+								"billing"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Todas las Empresas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Empresa/all",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Empresa",
+								"all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Estado Facturación",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Empresa/billing/{{id}}/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Empresa",
+								"billing",
+								"{{id}}",
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Facturación por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Empresa/billing/{{id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Empresa",
+								"billing",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Emisor",
+			"item": [
+				{
+					"name": "Guardar Emisor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 0,\n  \"nombre\": \"string\",\n  \"nombreComercial\": \"string\",\n  \"tipoIdentificacion\": \"string\",\n  \"numeroIdentificacion\": \"string\",\n  \"codigoProvincia\": \"string\",\n  \"codigoCanton\": \"string\",\n  \"codigoDistrito\": \"string\",\n  \"codigoBarrio\": \"string\",\n  \"otrasSenas\": \"string\",\n  \"paisTelefono\": \"string\",\n  \"telefono\": \"string\",\n  \"paisFax\": \"string\",\n  \"fax\": \"string\",\n  \"correo\": \"string\",\n  \"passCorreo\": \"string\",\n  \"estado\": \"string\",\n  \"terminalDefecto\": \"string\",\n  \"paisDefecto\": \"string\",\n  \"nombreCertificado\": \"string\",\n  \"passCertificado\": \"string\",\n  \"usuarioHacienda\": \"string\",\n  \"passHacienda\": \"string\",\n  \"secuenciaPs\": 0,\n  \"inventarioCompartido\": \"string\",\n  \"registroFiscal8707\": \"string\",\n  \"invNotificaStock\": \"string\",\n  \"invMinStock\": 0,\n  \"empresa\": {\n    \"id\": 0\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/Emisor/emisor",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Emisor",
+								"emisor"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Guardar Emisor con Actividades",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 0,\n  \"nombre\": \"string\",\n  \"nombreComercial\": \"string\",\n  \"tipoIdentificacion\": \"string\",\n  \"numeroIdentificacion\": \"string\",\n  \"codigoProvincia\": \"string\",\n  \"codigoCanton\": \"string\",\n  \"codigoDistrito\": \"string\",\n  \"codigoBarrio\": \"string\",\n  \"otrasSenas\": \"string\",\n  \"paisTelefono\": \"string\",\n  \"telefono\": \"string\",\n  \"paisFax\": \"string\",\n  \"fax\": \"string\",\n  \"correo\": \"string\",\n  \"passCorreo\": \"string\",\n  \"estado\": \"string\",\n  \"terminalDefecto\": \"string\",\n  \"paisDefecto\": \"string\",\n  \"nombreCertificado\": \"string\",\n  \"passCertificado\": \"string\",\n  \"usuarioHacienda\": \"string\",\n  \"passHacienda\": \"string\",\n  \"secuenciaPs\": 0,\n  \"inventarioCompartido\": \"string\",\n  \"registroFiscal8707\": \"string\",\n  \"invNotificaStock\": \"string\",\n  \"invMinStock\": 0,\n  \"empresa\": {\n    \"id\": 0\n  },\n  \"actividadesEconomicas\": [\n    {\n      \"id\": 0,\n      \"codigo\": \"string\",\n      \"estado\": \"string\",\n      \"tipo\": \"string\",\n      \"descripcion\": \"string\",\n      \"principal\": \"string\"\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/Emisor/actividades",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Emisor",
+								"actividades"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Emisores por Empresa",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Emisor/emisores/{{idempresa}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Emisor",
+								"emisores",
+								"{{idempresa}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Seguridad",
+			"item": [
+				{
+					"name": "Obtener Token",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Security/token",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Security",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Autenticación",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Security/authentication",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Security",
+								"authentication"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Credenciales por Usuario",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Security/credentials/{{userId}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Security",
+								"credentials",
+								"{{userId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Usuarios",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Security/usuarios",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Security",
+								"usuarios"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Imprimir",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Security/print/{{id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Security",
+								"print",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Token",
+			"item": [
+				{
+					"name": "Obtener Token por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Token/tokenId",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Token",
+								"tokenId"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Token",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Token/token",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Token",
+								"token"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Usuario",
+			"item": [
+				{
+					"name": "Obtener Usuario por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Usuario/usuarioId/{{id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Usuario",
+								"usuarioId",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Usuarios por Empresa",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Usuario/empresa/{{idEmpresa}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Usuario",
+								"empresa",
+								"{{idEmpresa}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Guardar Usuario",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 0,\n  \"nombre\": \"string\",\n  \"primerApellido\": \"string\",\n  \"correo\": \"string\",\n  \"hash\": \"string\",\n  \"rolDescripcion\": \"string\",\n  \"estado\": \"string\",\n  \"empresa\": {\n    \"id\": 0\n  },\n  \"sucursal\": {\n    \"id\": 0\n  },\n  \"emisor\": {\n    \"id\": 0\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/Usuario/usuario",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Usuario",
+								"usuario"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Sucursal",
+			"item": [
+				{
+					"name": "Guardar Sucursal",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 0,\n  \"nombre\": \"string\",\n  \"codigo\": \"string\",\n  \"estado\": \"string\",\n  \"emisor\": {\n    \"id\": 0\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/Sucursal/sucursal",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Sucursal",
+								"sucursal"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Sucursales por Emisor",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Sucursal/sucursales/{{idemisor}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Sucursal",
+								"sucursales",
+								"{{idemisor}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Receptor",
+			"item": [
+				{
+					"name": "Guardar Receptor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 0,\n  \"nombre\": \"string\",\n  \"tipoIdentificacion\": \"string\",\n  \"numeroIdentificacion\": \"string\",\n  \"correo\": \"string\",\n  \"telefono\": \"string\",\n  \"estado\": \"string\",\n  \"emisor\": {\n    \"id\": 0\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/Receptor/receptor",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Receptor",
+								"receptor"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Receptor por Identificación",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Receptor/receptorIdentificacion/{{idEmisor}}/{{numero}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Receptor",
+								"receptorIdentificacion",
+								"{{idEmisor}}",
+								"{{numero}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Receptor por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Receptor/id/{{id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Receptor",
+								"id",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Receptores por Nombre",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Receptor/receptoresNombre/{{nombre}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Receptor",
+								"receptoresNombre",
+								"{{nombre}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Receptores por Nombre y Emisor",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Receptor/receptoresNombreYEmisor/{{idEmisor}}/{{nombre}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Receptor",
+								"receptoresNombreYEmisor",
+								"{{idEmisor}}",
+								"{{nombre}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Receptores por Emisor",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Receptor/receptores/{{idEmisor}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Receptor",
+								"receptores",
+								"{{idEmisor}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Eliminar Receptor",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Receptor/{{id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Receptor",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Producto/Servicio",
+			"item": [
+				{
+					"name": "Guardar Producto/Servicio",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 0,\n  \"codigo\": \"string\",\n  \"nombre\": \"string\",\n  \"descripcion\": \"string\",\n  \"precio\": 0,\n  \"impuesto\": 0,\n  \"estado\": \"string\",\n  \"tipo\": \"string\",\n  \"emisor\": {\n    \"id\": 0\n  },\n  \"sucursal\": {\n    \"id\": 0\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/ProductoServicio/productoservicio",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ProductoServicio",
+								"productoservicio"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Productos/Servicios por Emisor",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ProductoServicio/productoservicioemi/{{idemisor}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ProductoServicio",
+								"productoservicioemi",
+								"{{idemisor}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Productos/Servicios por Nombre",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ProductoServicio/productoservicionombre/{{idemisor}}/{{nombre}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ProductoServicio",
+								"productoservicionombre",
+								"{{idemisor}}",
+								"{{nombre}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Lista por Tipo",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ProductoServicio/list/{{idemisor}}/{{tipo}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ProductoServicio",
+								"list",
+								"{{idemisor}}",
+								"{{tipo}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener por Nombre y Tipo",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ProductoServicio/psnombrelte/{{idemisor}}/{{nombre}}/{{tipo}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ProductoServicio",
+								"psnombrelte",
+								"{{idemisor}}",
+								"{{nombre}}",
+								"{{tipo}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener por Sucursal y Nombre",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ProductoServicio/productoserviciosucursal/{{idemisor}}/{{idsucursal}}/{{nombre}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ProductoServicio",
+								"productoserviciosucursal",
+								"{{idemisor}}",
+								"{{idsucursal}}",
+								"{{nombre}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener por Sucursal, Nombre y Tipo",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ProductoServicio/pssucursallte/{{idemisor}}/{{idsucursal}}/{{nombre}}/{{tipo}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ProductoServicio",
+								"pssucursallte",
+								"{{idemisor}}",
+								"{{idsucursal}}",
+								"{{nombre}}",
+								"{{tipo}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener por Código",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ProductoServicio/productoserviciocodigo/{{idEmisor}}/{{codigo}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ProductoServicio",
+								"productoserviciocodigo",
+								"{{idEmisor}}",
+								"{{codigo}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ProductoServicio/id/{{id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ProductoServicio",
+								"id",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Eliminar Producto/Servicio",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ProductoServicio/{{id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ProductoServicio",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener por Código y Sucursal",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ProductoServicio/productoserviciocodigosucursal/{{idEmisor}}/{{idSucursal}}/{{codigo}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ProductoServicio",
+								"productoserviciocodigosucursal",
+								"{{idEmisor}}",
+								"{{idSucursal}}",
+								"{{codigo}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Validar Código",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ProductoServicio/codigovalido/{{compartido}}/{{idEmisor}}/{{idSucursal}}/{{codigo}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ProductoServicio",
+								"codigovalido",
+								"{{compartido}}",
+								"{{idEmisor}}",
+								"{{idSucursal}}",
+								"{{codigo}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Comprobantes",
+			"item": [
+				{
+					"name": "Obtener Comprobante por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Comprobante/comprobanteId/{{id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Comprobante",
+								"comprobanteId",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Invoice por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Comprobante/invoice/{{id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Comprobante",
+								"invoice",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Invoice PDF por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Comprobante/invoicepdf/{{id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Comprobante",
+								"invoicepdf",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Invoice PDF Web por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Comprobante/invoicepdfweb/{{id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Comprobante",
+								"invoicepdfweb",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Invoice Web por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Comprobante/invoiceWeb/{{id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Comprobante",
+								"invoiceWeb",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Comprobante por Clave",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Comprobante/comprobanteclave/{{clave}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Comprobante",
+								"comprobanteclave",
+								"{{clave}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Estado Comprobante",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Comprobante/estadocomprobante/{{idEmisor}}/{{idSucursal}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Comprobante",
+								"estadocomprobante",
+								"{{idEmisor}}",
+								"{{idSucursal}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reenviar Comprobante por Correo",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Comprobante/reenviocomprobantecorreo/{{idComprobante}}/{{destino}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Comprobante",
+								"reenviocomprobantecorreo",
+								"{{idComprobante}}",
+								"{{destino}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Comprobantes con Filtro",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Comprobante/comprobantesFiltro/{{idSucursal}}/{{fechaIni}}/{{fechaFin}}/{{tipo}}/{{actividad}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"Comprobante",
+								"comprobantesFiltro",
+								"{{idSucursal}}",
+								"{{fechaIni}}",
+								"{{fechaFin}}",
+								"{{tipo}}",
+								"{{actividad}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Comprobantes Hacienda",
+			"item": [
+				{
+					"name": "Guardar Comprobante Hacienda",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 0,\n  \"emisor\": {},\n  \"receptor\": {},\n  \"detalles\": []\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/ComprobanteHacienda/comprobanteHacienda",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ComprobanteHacienda",
+								"comprobanteHacienda"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener por Sucursal y Fecha",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ComprobanteHacienda/comprobanteHaciendaIdSucursal/{{id}}/{{tipo}}/{{fecha}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ComprobanteHacienda",
+								"comprobanteHaciendaIdSucursal",
+								"{{id}}",
+								"{{tipo}}",
+								"{{fecha}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener por Rango de Fechas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ComprobanteHacienda/comprobanteHaciendaFechas/{{id}}/{{tipo}}/{{fechaIni}}/{{fechaFin}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ComprobanteHacienda",
+								"comprobanteHaciendaFechas",
+								"{{id}}",
+								"{{tipo}}",
+								"{{fechaIni}}",
+								"{{fechaFin}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Lite por Rango de Fechas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ComprobanteHacienda/comprobanteHaciendaFechasLite/{{id}}/{{tipo}}/{{fechaIni}}/{{fechaFin}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ComprobanteHacienda",
+								"comprobanteHaciendaFechasLite",
+								"{{id}}",
+								"{{tipo}}",
+								"{{fechaIni}}",
+								"{{fechaFin}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Respuesta",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ComprobanteHacienda/respuesta/{{id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ComprobanteHacienda",
+								"respuesta",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Recepción por Fecha",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ComprobanteHacienda/comprobanteHaciendaRecepcion/{{id}}/{{fecha}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ComprobanteHacienda",
+								"comprobanteHaciendaRecepcion",
+								"{{id}}",
+								"{{fecha}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener Recepción por Rango de Fechas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ComprobanteHacienda/comprobanteHaciendaRecepcionFechas/{{id}}/{{fechaIni}}/{{fechaFin}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ComprobanteHacienda",
+								"comprobanteHaciendaRecepcionFechas",
+								"{{id}}",
+								"{{fechaIni}}",
+								"{{fechaFin}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://www.stage.spacesoftwarecr.com/ElectricPosWs/wsPos"
+		},
+		{
+			"key": "id",
+			"value": "1"
+		},
+		{
+			"key": "idempresa",
+			"value": "1"
+		},
+		{
+			"key": "identificacion",
+			"value": "123456789"
+		},
+		{
+			"key": "estado",
+			"value": "A"
+		},
+		{
+			"key": "userId",
+			"value": "1"
+		},
+		{
+			"key": "idEmpresa",
+			"value": "1"
+		},
+		{
+			"key": "idemisor",
+			"value": "1"
+		},
+		{
+			"key": "numero",
+			"value": "123456789"
+		},
+		{
+			"key": "nombre",
+			"value": "Cliente Ejemplo"
+		},
+		{
+			"key": "tipo",
+			"value": "01"
+		},
+		{
+			"key": "idsucursal",
+			"value": "1"
+		},
+		{
+			"key": "codigo",
+			"value": "PS001"
+		},
+		{
+			"key": "compartido",
+			"value": "S"
+		},
+		{
+			"key": "idSucursal",
+			"value": "1"
+		},
+		{
+			"key": "idEmisor",
+			"value": "1"
+		},
+		{
+			"key": "clave",
+			"value": "506240919000123456789012345678901234567890"
+		},
+		{
+			"key": "idComprobante",
+			"value": "1"
+		},
+		{
+			"key": "destino",
+			"value": "cliente@ejemplo.com"
+		},
+		{
+			"key": "fechaIni",
+			"value": "2024-01-01"
+		},
+		{
+			"key": "fechaFin",
+			"value": "2024-12-31"
+		},
+		{
+			"key": "actividad",
+			"value": "A"
+		},
+		{
+			"key": "fecha",
+			"value": "2024-01-15"
+		}
+	]
+}

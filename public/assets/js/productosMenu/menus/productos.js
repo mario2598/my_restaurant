@@ -34,6 +34,22 @@ function initialice() {
         cargarProducto();
     }
 
+    // Preview de imagen cuando se selecciona un archivo nuevo
+    $('#foto_producto').on('change', function(e) {
+        var file = e.target.files[0];
+        if (file) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                $('#imgProd').attr('src', e.target.result);
+                $('#imgProd').css({
+                    'border': '2px solid #28a745',
+                    'box-shadow': '0 0 5px rgba(40, 167, 69, 0.5)'
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
 }
 
 

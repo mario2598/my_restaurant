@@ -23,10 +23,20 @@ var infoEnvio = {
     "contacto": ""
 };
 var infoFE = {
-    "incluyeFE": false,
-    "info_ced_fe": "",
-    "info_nombre_fe": "",
-    "info_correo_fe": ""
+    incluyeFE: false,
+    estaConfiguradoFE: false,
+    info_ced_fe: "",
+    info_nombre_fe: "",
+    info_correo_fe: "",
+    info_fe: {
+        id: "",
+        codigo_actividad: "",
+        tipo_identificacion: "",
+        identificacion: "",
+        nombre_comercial: "",
+        direccion: "",
+        correo: ""
+    }
 };
 
 var guardandoOrden = false;
@@ -42,6 +52,9 @@ document.addEventListener('DOMContentLoaded', function () {
     inicializarScroller('scrl-categorias');
     inicializarScroller('scrl-productos');
     inicializarScroller('scrl-orden');
+
+    // Inicializar el estado del botón de FE
+    actualizarEstadoBotonFE();
 });
 
 function init() {
@@ -160,7 +173,6 @@ function limpiar() {
     categoriaSeleccionada = 0;
     productoSeleccionado = null;
     clienteSeleccionado = 0;
-
 }
 
 function inicializarMapaContenedores() {
@@ -983,13 +995,18 @@ function limpiarOrden() {
         "numero_orden": "",
         "mto_pagado": 0,
         "pagado": false,
-        "codigo_descuento": null
+        "codigo_descuento": null,
+        "idCliente": -1
     };
     $('#monto_sinpe').val(""); // Supongo que txt-sinpe es el campo para el pago con SINPE
     $('#monto_tarjeta').val(""); // Supongo que txt-tarjeta es el campo para el pago con tarjeta
     $('#monto_efectivo').val("");
     $("#txt-cliente").val("");
     $('#select_mesa').val(-1);
+
+    // Limpiar cliente seleccionado
+    limpiarClienteSeleccionado();
+
     reiniciarCantidadesProductos();
     detalles = [];
     cambiosPendientes = false;
@@ -1079,17 +1096,17 @@ function validarFormularioOrden() {
 }
 
 function abrirModalPago() {
-    
+
     if (ordenGestion.nueva) {
         if (ordenGestion.mesa != -1) {
             showError("Debe iniciar la orden primero en un pedido que no es para llevar.");
             return;
-        } 
+        }
 
     }
 
     if (!ordenGestion.nueva) {
-     
+
         if (cambiosPendientes) {
             showError("Existen modificaciones sin guardar. Por favor, guarde los cambios antes de continuar.");
             return;
@@ -1105,7 +1122,27 @@ function abrirModalPago() {
     $('#monto_sinpe').val(""); // Supongo que txt-sinpe es el campo para el pago con SINPE
     $('#monto_tarjeta').val(""); // Supongo que txt-tarjeta es el campo para el pago con tarjeta
     $('#monto_efectivo').val("");
-    $('#nombreCliente').val(ordenGestion.cliente ?? "");
+
+    // Sincronizar el input del modal con el estado del cliente seleccionado
+    const inputClienteModal = document.getElementById('nombreCliente');
+    const inputClientePrincipal = document.getElementById('txt-cliente');
+
+    if (inputClienteModal) {
+        inputClienteModal.value = ordenGestion.cliente ?? "";
+
+        // Si el cliente principal está deshabilitado, también deshabilitar el del modal
+        if (inputClientePrincipal && inputClientePrincipal.disabled) {
+            inputClienteModal.disabled = true;
+            inputClienteModal.style.backgroundColor = '#f8f9fa';
+            inputClienteModal.style.cursor = 'not-allowed';
+        } else {
+            inputClienteModal.disabled = false;
+            inputClienteModal.style.backgroundColor = '';
+            inputClienteModal.style.cursor = '';
+            inputClienteModal.placeholder = 'Nombre del Cliente';
+        }
+    }
+
     cargarDetallesDividirCuentas(detalles);
     $('#mdl-pago').modal("show");
 }
@@ -1153,7 +1190,7 @@ function verificarAbrirModalPago() {
         let montoTotal = totalSeleccionado + parseFloat(ordenGestion.envio);
         let cambio = calcularCambio(pago_efectivo, montoTotal, parseFloat(pago_tarjeta), parseFloat(pago_sinpe));
         let montoFaltante = montoTotal - parseFloat(pago_tarjeta) - parseFloat(pago_sinpe);
-        
+
         if (parseFloat(cambio) > 0) {
             swal({
                 title: 'Cambio a entregar',
@@ -1170,20 +1207,20 @@ function verificarAbrirModalPago() {
                 },
                 dangerMode: true,
             })
-            .then((willProceed) => {
-                if (willProceed) {
-                    pago_efectivo = montoFaltante;
-                    procesarPago();
-                }
-            });
+                .then((willProceed) => {
+                    if (willProceed) {
+                        pago_efectivo = montoFaltante;
+                        procesarPago();
+                    }
+                });
             return;
-        }else{
+        } else {
             procesarPago();
         }
-    }else{
+    } else {
         procesarPago();
     }
-    
+
 }
 
 function procesarPagoMixto() {
@@ -1207,7 +1244,7 @@ function procesarPago() {
 
 function verificarAbrirModalPagoEfectivo() {
     cargarDetallesSeleccionados();
-    
+
     // Solo establecer el valor si el input está vacío o es 0
     if (!$('#monto_efectivo').val() || $('#monto_efectivo').val() === "0") {
         $('#monto_efectivo').val(totalSeleccionado + parseFloat(ordenGestion.envio));
@@ -1241,8 +1278,15 @@ function procesarPagoInmediato(mto_sinpe, mto_efectivo, mto_tarjeta) {
     var sumaPagos = parseFloat(mto_sinpe) + parseFloat(mto_tarjeta) + parseFloat(mto_efectivo);
     if (sumaPagos == (parseFloat(totalSeleccionado) + parseFloat(ordenGestion.envio))) {
 
+        infoFE.info_ced_fe = (infoFE.info_fe && infoFE.info_fe.identificacion) ? infoFE.info_fe.identificacion : (infoFE.info_ced_fe || '');
+        infoFE.info_nombre_fe = (infoFE.info_fe && infoFE.info_fe.nombre_comercial && infoFE.info_fe.nombre_comercial !== '') ?
+            infoFE.info_fe.nombre_comercial :
+            (infoFE.info_nombre_fe || ordenGestion.cliente || '');
+        infoFE.info_correo_fe = (infoFE.info_fe && infoFE.info_fe.correo) ? infoFE.info_fe.correo : (infoFE.info_correo_fe || '');
+
         $('#mdl-loader-pago').modal("show");
         ordenGestion.cliente = $('#nombreCliente').val();
+        var idCliente = window.clienteSeleccionadoId == null ? -1 : window.clienteSeleccionadoId;
         $.ajax({
             url: `${base_path}/facturacion/pos/crearFactura`,
             type: 'post',
@@ -1255,7 +1299,8 @@ function procesarPagoInmediato(mto_sinpe, mto_efectivo, mto_tarjeta) {
                 detalles: detalles,
                 mto_sinpe: mto_sinpe,
                 mto_efectivo: mto_efectivo,
-                mto_tarjeta: mto_tarjeta
+                mto_tarjeta: mto_tarjeta,
+                idCliente: idCliente
             }
         }).done(function (res) {
             if (!res['estado']) {
@@ -1307,8 +1352,8 @@ function recargarOrdenes() {
 }
 
 function imprimirTicket(id) {
- 
-    
+
+
     $("#btn-pdf").prop('href', `${base_path}/impresora/tiquete/${id}`);
     document.getElementById('btn-pdf').click();
 }
@@ -1347,12 +1392,12 @@ function generarHTMLOrdenes(ordenes) {
             `${base_path}/tracking/orden/${orden.idOrdenEnc ?? ''}`);
 
         lineas.slice(0, -1);
-        
+
         // Determinar el estilo y icono según el estado de la orden
         let estiloFila = "";
         let iconoEstado = "";
         let colorEstado = "";
-        
+
         if (orden.cod_general == "ORD_ANULADA") {
             estiloFila = "background-color: #ffebee; border-left: 5px solid #f44336;";
             iconoEstado = "fas fa-ban";
@@ -1366,7 +1411,7 @@ function generarHTMLOrdenes(ordenes) {
             iconoEstado = "fas fa-clock";
             colorEstado = "#ff9800";
         }
-        
+
         texto = texto +
             `<tr style="${estiloFila} border-bottom: 1px solid grey;">
                 <td class="text-center"  onclick="cargarOrdenGestion(${orden.id})" style="cursor:pointer; text-decoration : underline; ">
@@ -1560,10 +1605,492 @@ function enterCampoPago(event) {
     }
 }
 
-function changeNombreCliente(nombre) {
+function changeNombreCliente(nombre,cambioPend = false) {
     ordenGestion.cliente = nombre;
-    cambiosPendientes = true;
+
+    // Actualizar el estado del botón de FE
+    actualizarEstadoBotonFE();
+
+    // Si el campo está vacío, ocultar el panel de información del cliente y habilitar el input
+    if (!nombre || nombre.trim() === '') {
+        const inputCliente = document.getElementById('txt-cliente');
+        inputCliente.disabled = false;
+        inputCliente.style.backgroundColor = '';
+        inputCliente.style.cursor = '';
+        inputCliente.placeholder = 'Nombre cliente...';
+
+        // Habilitar también el input del modal de pago si existe
+        const inputClienteModal = document.getElementById('nombreCliente');
+        if (inputClienteModal) {
+            inputClienteModal.disabled = false;
+            inputClienteModal.style.backgroundColor = '';
+            inputClienteModal.style.cursor = '';
+            inputClienteModal.placeholder = 'Nombre del Cliente';
+        }
+
+        // Restaurar el botón de búsqueda
+        const btnBuscar = inputCliente.parentElement.querySelector('button');
+        if (btnBuscar) {
+            btnBuscar.innerHTML = '<i class="fas fa-search"></i>';
+            btnBuscar.title = 'Buscar Cliente';
+            btnBuscar.classList.remove('btn-success');
+            btnBuscar.classList.add('btn-outline-primary');
+        }
+
+        ocultarPanelClienteSeleccionado();
+    }
+
+    cambiosPendientes = cambioPend;
     validarVisibilidadBotonesGestion();
+}
+
+// Variables globales para paginación
+var currentPage = 1;
+var currentSearchTerm = "";
+var totalPages = 1;
+var totalRecords = 0;
+var searchTimeout = null;
+
+// Funciones para búsqueda de clientes con lazy loading
+function abrirModalBuscarCliente() {
+    console.log('Función abrirModalBuscarCliente llamada');
+    $("#mdl-buscar-cliente").modal("show");
+    // Resetear variables
+    currentPage = 1;
+    currentSearchTerm = "";
+    document.getElementById('txt-buscar-cliente').value = "";
+    // Cargar primera página de clientes
+    buscarClientes("", 1);
+}
+
+function buscarClientes(termino, page = 1) {
+    // Mostrar loading
+    mostrarLoading(true);
+
+    // Actualizar variables
+    currentPage = page;
+    currentSearchTerm = termino;
+
+    $.ajax({
+        url: '/facturacion/buscar-clientes',
+        method: 'POST',
+        data: {
+            _token: CSRF_TOKEN,
+            search: termino,
+            page: page
+        },
+        success: function (response) {
+            mostrarLoading(false);
+            if (response.estado) {
+                mostrarClientes(response.datos.clientes);
+                actualizarPaginacion(response.datos.pagination);
+            } else {
+                mostrarError('Error al buscar clientes: ' + response.mensaje);
+            }
+        },
+        error: function (xhr, status, error) {
+            mostrarLoading(false);
+            mostrarError('Error de conexión al buscar clientes');
+        }
+    });
+}
+
+// Función con debounce para búsqueda en tiempo real
+function buscarClientesConDebounce(termino) {
+    // Limpiar timeout anterior
+    if (searchTimeout) {
+        clearTimeout(searchTimeout);
+    }
+
+    // Si el término es muy corto, no buscar (excepto si está vacío)
+    if (termino.length < 2 && termino !== "") {
+        return;
+    }
+
+    // Configurar nuevo timeout
+    searchTimeout = setTimeout(function () {
+        buscarClientes(termino, 1); // Siempre buscar desde la página 1
+    }, 300); // 300ms de delay
+}
+
+function mostrarClientes(clientes) {
+    const tbody = document.getElementById('tbody-clientes');
+    const noResultados = document.getElementById('no-resultados');
+    const paginationContainer = document.getElementById('pagination-container');
+
+    tbody.innerHTML = '';
+
+    if (clientes.length === 0) {
+        noResultados.style.display = 'block';
+        paginationContainer.style.display = 'none';
+        return;
+    }
+
+    noResultados.style.display = 'none';
+    paginationContainer.style.display = 'flex';
+
+    clientes.forEach(cliente => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${cliente.nombre} ${cliente.apellidos || ''}</td>
+            <td>${cliente.telefono || '-'}</td>
+            <td>${cliente.correo || '-'}</td>
+            <td>${cliente.ubicacion || '-'}</td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="seleccionarCliente(${cliente.id}, '${cliente.nombre} ${cliente.apellidos || ''}')">
+                    <i class="fas fa-check"></i> Seleccionar
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function actualizarPaginacion(pagination) {
+    totalPages = pagination.total_pages;
+    totalRecords = pagination.total_records;
+
+    // Actualizar información de paginación
+    document.getElementById('pagination-info').textContent =
+        `Mostrando ${pagination.per_page} de ${pagination.total_records} clientes`;
+    document.getElementById('page-info').textContent =
+        `Página ${pagination.current_page} de ${pagination.total_pages}`;
+
+    // Actualizar botones
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
+
+    btnPrev.disabled = pagination.current_page <= 1;
+    btnNext.disabled = !pagination.has_more;
+}
+
+function cambiarPagina(direction) {
+    const newPage = currentPage + direction;
+    if (newPage >= 1 && newPage <= totalPages) {
+        buscarClientes(currentSearchTerm, newPage);
+    }
+}
+
+function mostrarLoading(mostrar) {
+    const loading = document.getElementById('loading-clientes');
+    const tbody = document.getElementById('tbody-clientes');
+    const pagination = document.getElementById('pagination-container');
+
+    if (mostrar) {
+        loading.style.display = 'block';
+        tbody.innerHTML = '';
+        pagination.style.display = 'none';
+    } else {
+        loading.style.display = 'none';
+    }
+}
+
+function seleccionarCliente(id, nombre) {
+    // Cerrar el modal
+    $("#mdl-buscar-cliente").modal("hide");
+    
+    // Cargar la información del cliente en el formulario
+    cargarClienteSeleccionado(id, nombre);
+    cambiosPendientes = true;
+    actualizarOrden();
+}
+
+function cargarClienteSeleccionado(id, nombre) {
+
+    window.clienteSeleccionadoId = id;
+
+    if(id == null || id == undefined || id == -1) {
+        actualizarPanelClienteInfo({
+            nombre: nombre || '',
+            apellidos:  '',
+            telefono: '-',
+            correo: '-',
+            ubicacion: '-'
+        });
+        return;
+    }
+
+    $('#loader').show();
+    $.ajax({
+        url: `${base_path}/facturacion/obtener-cliente`,
+        method: 'POST',
+        data: {
+            _token: CSRF_TOKEN,
+            search: id.toString()
+        },
+        success: function (response) {
+            $('#loader').hide();
+            if (!response.estado) {
+                showError(response.mensaje || 'Error al cargar información del cliente.');
+                return;
+            }
+
+            if (response.datos) {
+                const cliente = response.datos;
+
+                // Actualizar la información en el panel
+                actualizarPanelClienteInfo(cliente);
+
+                // Actualizar la variable infoFE con los datos del cliente
+                infoFE.incluyeFE = false;
+                if (cliente.info_fe) {
+                    infoFE.estaConfiguradoFE = true;
+                    // Actualizar la estructura completa de info_fe
+                    infoFE.info_fe = {
+                        id: cliente.info_fe.id || '',
+                        codigo_actividad: cliente.info_fe.codigo_actividad || '',
+                        tipo_identificacion: cliente.info_fe.tipo_identificacion || '',
+                        identificacion: cliente.info_fe.identificacion || '',
+                        nombre_comercial: cliente.info_fe.nombre_comercial || '',
+                        direccion: cliente.info_fe.direccion || '',
+                        correo: cliente.correo || ''
+                    };
+                    infoFE.info_ced_fe = infoFE.info_fe.identificacion || '';
+                    infoFE.info_nombre_fe = infoFE.info_fe.nombre_comercial || (cliente.nombre ? `${cliente.nombre} ${cliente.apellidos || ''}`.trim() : (ordenGestion?.cliente || ''));
+                    infoFE.info_correo_fe = infoFE.info_fe.correo || cliente.correo || '';
+                } else {
+                    infoFE.estaConfiguradoFE = false;
+                    infoFE.info_fe = {
+                        id: -1,
+                        codigo_actividad: '',
+                        tipo_identificacion: '',
+                        identificacion: '',
+                        nombre_comercial: '',
+                        direccion: '',
+                        correo: cliente.correo || ''
+                    };
+                    infoFE.info_ced_fe = '';
+                    infoFE.info_nombre_fe = cliente.nombre ? `${cliente.nombre} ${cliente.apellidos || ''}`.trim() : (ordenGestion?.cliente || '');
+                    infoFE.info_correo_fe = cliente.correo || '';
+                }
+
+                mostrarInfoFacturacionElectronica(cliente);
+            } else {
+                $('#loader').hide();
+                showError('No se encontraron datos del cliente en la respuesta:' + response);
+                // Mostrar información básica con el nombre que tenemos
+                actualizarPanelClienteInfo({
+                    nombre: nombre || '',
+                    apellidos: '',
+                    telefono: '-',
+                    correo: '-',
+                    ubicacion: '-'
+                });
+            }
+        },
+        error: function (xhr, status, error) {
+            $('#loader').hide();
+            showError('Error al cargar información adicional del cliente');
+            // Mostrar información básica aunque falle la carga adicional
+            actualizarPanelClienteInfo({
+                nombre: nombre|| '',
+                apellidos:  '',
+                telefono: '-',
+                correo: '-',
+                ubicacion: '-'
+            });
+        }
+    });
+
+    const inputCliente = document.getElementById('txt-cliente');
+    if (inputCliente) {
+        inputCliente.value = nombre;
+        console.log('Campo de cliente actualizado:', inputCliente.value);
+
+        // Deshabilitar el input para evitar edición
+        inputCliente.disabled = true;
+        inputCliente.style.backgroundColor = '#f8f9fa';
+        inputCliente.style.cursor = 'not-allowed';
+
+        // Cambiar el botón de búsqueda para indicar que hay cliente seleccionado
+        const btnBuscar = inputCliente.parentElement.querySelector('button');
+        if (btnBuscar) {
+            btnBuscar.innerHTML = '<i class="fas fa-user-check"></i>';
+            btnBuscar.title = 'Cliente seleccionado - Click para cambiar';
+            btnBuscar.classList.remove('btn-outline-primary');
+            btnBuscar.classList.add('btn-success');
+            console.log('Botón de búsqueda actualizado');
+        }
+    }
+
+    // Deshabilitar también el input del modal de pago si existe
+    const inputClienteModal = document.getElementById('nombreCliente');
+    if (inputClienteModal) {
+        inputClienteModal.value = nombre;
+        inputClienteModal.disabled = true;
+        inputClienteModal.style.backgroundColor = '#f8f9fa';
+        inputClienteModal.style.cursor = 'not-allowed';
+    }
+
+    changeNombreCliente(nombre,false);
+
+    // Actualizar el estado del botón de FE
+    actualizarEstadoBotonFE();
+
+    // Mostrar el panel de información del cliente
+    mostrarPanelClienteSeleccionado();
+
+
+}
+
+// Funciones para el panel de información del cliente
+function mostrarPanelClienteSeleccionado() {
+    document.getElementById('cliente-info-panel').style.display = 'block';
+    document.getElementById('cliente-info-panel-2').style.display = 'block';
+}
+
+function ocultarPanelClienteSeleccionado() {
+    document.getElementById('cliente-info-panel').style.display = 'none';
+    document.getElementById('cliente-info-panel-2').style.display = 'none';
+}
+
+function actualizarPanelClienteInfo(cliente) {
+    
+    // Verificar que el panel exist e
+    const panel = document.getElementById('cliente-info-panel');
+    const panel2 = document.getElementById('cliente-info-panel-2');
+    if (!panel) {
+        console.error('Panel de cliente no encontrado');
+        return;
+    }
+    if (!panel2) {
+        console.error('Panel de cliente no encontrado');
+        return;
+    }
+    // Actualizar nombre completo
+    const nombreElement = document.getElementById('cliente-nombre-info');
+    const nombreElement2 = document.getElementById('cliente-nombre-info-2');
+    if (nombreElement) {
+        const nombreCompleto = `${cliente.nombre || ''} ${cliente.apellidos || ''}`.trim();
+        nombreElement.textContent = nombreCompleto || '-';
+    }
+    if (nombreElement2) {
+        const nombreCompleto = `${cliente.nombre || ''} ${cliente.apellidos || ''}`.trim();
+        nombreElement2.textContent = nombreCompleto || '-';
+    }
+
+    // Actualizar teléfono
+    const telefonoElement = document.getElementById('cliente-telefono-info');
+    const telefonoElement2 = document.getElementById('cliente-telefono-info-2');
+    if (telefonoElement) {
+        telefonoElement.textContent = cliente.telefono || '-';
+    }
+    if (telefonoElement2) {
+        telefonoElement2.textContent = cliente.telefono || '-';
+    }
+    // Actualizar correo
+    const correoElement = document.getElementById('cliente-correo-info');
+    if (correoElement) {
+        correoElement.textContent = cliente.correo || '-';
+    } 
+
+
+    // Mostrar detalles extra si hay información adicional
+    const detallesExtra = document.getElementById('cliente-detalles-extra');
+    const detallesExtra2 = document.getElementById('cliente-detalles-extra-2');
+    if (detallesExtra) {
+        if (cliente.correo || cliente.ubicacion) {
+            detallesExtra.style.display = 'block';
+        } else {
+            detallesExtra.style.display = 'none';
+        }
+    } 
+}
+
+function mostrarInfoFacturacionElectronica(cliente) {
+
+    const feInfo = document.getElementById('cliente-fe-info');
+    const feInfo2 = document.getElementById('cliente-fe-info-2');
+
+
+    if (infoFE.estaConfiguradoFE) {
+        feInfo2.innerHTML = '<i class="fas fa-file-invoice mr-1"></i> Factura Electrónica configurada';
+        feInfo2.className = 'btn btn-sm badge-success border-0';
+        feInfo2.title = 'Click para editar configuración de FE';
+    } else {
+        feInfo2.innerHTML = '<i class="fas fa-file-invoice mr-1"></i> Factura Electrónica sin configurar';
+        feInfo2.className = 'btn btn-sm badge-warning border-0';
+        feInfo2.title = 'Click para configurar FE';
+    }
+
+    // Mostrar el panel
+    feInfo.style.display = 'block';
+}
+
+
+function limpiarClienteSeleccionado() {
+    
+    window.clienteSeleccionadoId = null;
+   
+    const inputCliente = document.getElementById('txt-cliente');
+    inputCliente.value = '';
+    inputCliente.disabled = false;
+    inputCliente.style.backgroundColor = '';
+    inputCliente.style.cursor = '';
+    inputCliente.placeholder = 'Nombre cliente...';
+
+    // Habilitar también el input del modal de pago si existe
+    const inputClienteModal = document.getElementById('nombreCliente');
+    if (inputClienteModal) {
+        inputClienteModal.value = '';
+        inputClienteModal.disabled = false;
+        inputClienteModal.style.backgroundColor = '';
+        inputClienteModal.style.cursor = '';
+        inputClienteModal.placeholder = 'Nombre del Cliente';
+    }
+
+    // Restaurar el botón de búsqueda
+    const btnBuscar = inputCliente.parentElement.querySelector('button');
+    if (btnBuscar) {
+        btnBuscar.innerHTML = '<i class="fas fa-search"></i>';
+        btnBuscar.title = 'Buscar Cliente';
+        btnBuscar.classList.remove('btn-success');
+        btnBuscar.classList.add('btn-outline-primary');
+    }
+
+    changeNombreCliente('',false);
+
+    // Ocultar ambos paneles de información
+    ocultarPanelClienteSeleccionado();
+
+    // Limpiar información de facturación electrónica
+    infoFE.incluyeFE = false;
+    infoFE.estaConfiguradoFE = false;
+    infoFE.info_fe = {
+        id: -1,
+        codigo_actividad: '',
+        tipo_identificacion: '',
+        identificacion: '',
+        nombre_comercial: '',
+        direccion: '',
+        correo: ''
+    };
+    infoFE.info_ced_fe = '';
+    infoFE.info_nombre_fe = '';
+    infoFE.info_correo_fe = '';
+
+
+    // Restaurar el botón de FE
+    const btnFE = document.getElementById('btn_fe');
+    if (btnFE) {
+        btnFE.innerHTML = '<i class="fas fa-user"></i> Factura Electrónica: NO';
+        btnFE.classList.remove('btn-warning');
+        btnFE.classList.add('btn-success');
+        console.log('Botón de FE restaurado');
+    } else {
+        console.error('Botón de FE no encontrado');
+    }
+
+    // Limpiar información de envío si es necesario
+    infoEnvio.incluye_envio = false;
+    infoEnvio.contacto = '';
+    infoEnvio.precio = 0;
+    infoEnvio.descripcion_lugar = '';
+    infoEnvio.descripcion_lugar_maps = '';
+    ordenGestion.envio = 0;
+    cambiosPendientes = true;
+    // Actualizar la orden
+    actualizarOrden();
 }
 
 function abrirModalEnvio() {
@@ -1572,8 +2099,120 @@ function abrirModalEnvio() {
 }
 
 function abrirModalFE() {
-    cargarInfoFE();
-    $("#mdl_fe").modal("show");
+    try {
+
+        if (!window.clienteSeleccionadoId) {
+            showError('Debe seleccionar un cliente antes de configurar la facturación electrónica.');
+            return;
+        }
+
+        cargarInfoFE();
+        $("#mdl_fe").modal("show");
+    } catch (error) {
+        console.error('Error al abrir modal de FE:', error);
+        showError('Error al abrir el modal de facturación electrónica.');
+    }
+}
+
+function actualizarEstadoBotonFE() {
+    const inputCliente = document.getElementById('txt-cliente');
+    const btnFE = document.getElementById('btn_fe');
+    const clienteSeleccionado = inputCliente && inputCliente.value.trim() !== '';
+
+    if (btnFE) {
+        if (!clienteSeleccionado) {
+            // Deshabilitar botón cuando no hay cliente
+            btnFE.disabled = true;
+            btnFE.style.opacity = '0.5';
+            btnFE.style.cursor = 'not-allowed';
+            btnFE.title = 'Debe seleccionar un cliente primero';
+        } else {
+            // Habilitar botón cuando hay cliente
+            btnFE.disabled = false;
+            btnFE.style.opacity = '1';
+            btnFE.style.cursor = 'pointer';
+            btnFE.title = 'Configurar Facturación Electrónica';
+        }
+    }
+}
+
+function abrirModalNuevoClienteDesdeBusqueda() {
+    console.log('Abriendo modal de nuevo cliente desde búsqueda...');
+
+    // Cerrar el modal de búsqueda
+    $("#mdl-buscar-cliente").modal("hide");
+
+    // Limpiar el formulario
+    limpiarFormularioNuevoCliente();
+
+    // Abrir el modal de nuevo cliente
+    $("#mdl-nuevo-cliente").modal("show");
+}
+
+function limpiarFormularioNuevoCliente() {
+    document.getElementById('nombre_cliente').value = '';
+    document.getElementById('apellidos_cliente').value = '';
+    document.getElementById('telefono_cliente').value = '';
+    document.getElementById('correo_cliente').value = '';
+    document.getElementById('ubicacion_cliente').value = '';
+}
+
+function guardarNuevoCliente() {
+
+    // Validar campos requeridos
+    const nombre = document.getElementById('nombre_cliente').value.trim();
+    if (!nombre) {
+        showError('El nombre del cliente es obligatorio.');
+        return;
+    }
+
+
+    $('#loader').show();
+
+    // Enviar datos al servidor
+    $.ajax({
+        url: `${base_path}/facturacion/clientes/guardar`,
+        method: 'POST',
+        data: {
+            _token: CSRF_TOKEN,
+            mdl_generico_ipt_id: -1,
+            mdl_generico_ipt_nombre: document.getElementById('nombre_cliente').value.trim(),
+            mdl_generico_ipt_apellidos: document.getElementById('apellidos_cliente').value.trim(),
+            mdl_generico_ipt_tel: document.getElementById('telefono_cliente').value.trim(),
+            mdl_generico_ipt_correo: document.getElementById('correo_cliente').value.trim(),
+            mdl_generico_ipt_ubicacion: document.getElementById('ubicacion_cliente').value.trim()
+        },
+        success: function (response) {
+            $('#loader').hide();
+
+            if (response.estado) {
+                showSuccess('Cliente creado exitosamente.');
+
+                // Cerrar el modal de nuevo cliente
+                $("#mdl-nuevo-cliente").modal("hide");
+
+                // Cargar el cliente recién creado en el POS
+                if (response.datos) {
+                    const nombreCompleto = document.getElementById('nombre_cliente').value.trim() + ' ' + document.getElementById('apellidos_cliente').value.trim();
+                    setTimeout(() => {
+                        // Cargar el cliente recién creado
+                        cargarClienteSeleccionado(response.datos, nombreCompleto);
+
+                        showInfo(`Cliente "${nombreCompleto}" ha sido creado y seleccionado automáticamente.`);
+                    }, 300);
+                } else {
+                    console.error('No se recibió ID del cliente creado:', response);
+                    showError('Cliente creado pero no se pudo seleccionar automáticamente.');
+                }
+            } else {
+                showError(response.mensaje || 'Error al crear el cliente.');
+            }
+        },
+        error: function (xhr, status, error) {
+            $('#loader').hide();
+            showError('Error al conectar con el servidor. Inténtalo de nuevo.');
+        }
+    });
 }
 
 function cargarInfoEnvio() {
@@ -1585,11 +2224,91 @@ function cargarInfoEnvio() {
     $("#mdl_lugar_entrega_maps").val(infoEnvio.descripcion_lugar_maps);
 }
 
+function cargarInfoFEConfigurada() {
+    console.log('Cargando información de FE configurada para cliente ID:', window.clienteSeleccionadoId);
+
+    $('#loader').show();
+    $.ajax({
+        url: `${base_path}/facturacion/clientes/obtener-info-fe-cliente`,
+        method: 'POST',
+        data: {
+            _token: CSRF_TOKEN,
+            cliente_id: window.clienteSeleccionadoId
+        },
+        success: function (response) {
+            $('#loader').hide();
+
+            if (!response.estado) {
+                showError(response.mensaje || 'Error al cargar información de FE');
+                cargarInfoFENoConfigurada();
+                cargarHtmlInfoFE();
+                return;
+            }
+
+            // Llenar el modal con los datos de la base de datos
+            if (response.datos) {
+
+                infoFE.info_fe = {
+                    id: response.datos.id || '',
+                    codigo_actividad: response.datos.codigo_actividad || '',
+                    tipo_identificacion: response.datos.tipo_identificacion || '',
+                    identificacion: response.datos.identificacion || '',
+                    nombre_comercial: response.datos.nombre_comercial || '',
+                    direccion: response.datos.direccion || '',
+                    correo: response.datos.correo || ''
+                };
+                infoFE.info_ced_fe = infoFE.info_fe.identificacion || '';
+                infoFE.info_nombre_fe = infoFE.info_fe.nombre_comercial || (ordenGestion?.cliente || '');
+                infoFE.info_correo_fe = infoFE.info_fe.correo || '';
+            } else {
+                cargarInfoFENoConfigurada();
+            }
+
+            cargarHtmlInfoFE();
+        },
+        error: function (xhr, status, error) {
+            $('#loader').hide();
+            showError('Error al conectar con el servidor para cargar información de FE');
+            cargarInfoFENoConfigurada();
+            cargarHtmlInfoFE();
+        }
+    });
+}
+
+function cargarInfoFENoConfigurada() {
+    infoFE.info_fe = {
+        id: -1,
+        codigo_actividad: '722003',
+        tipo_identificacion: '01',
+        identificacion: '',
+        nombre_comercial: '',
+        direccion: '',
+        correo: infoFE.info_fe.correo || ''
+    };
+    infoFE.info_ced_fe = '';
+    infoFE.info_nombre_fe = ordenGestion?.cliente || '';
+    infoFE.info_correo_fe = infoFE.info_fe.correo || '';
+}
+
+function cargarHtmlInfoFE() {
+    // Llenar los campos del modal
+    $('#codigo_actividad').val(infoFE.info_fe.codigo_actividad || '722003');
+    $('#tipo_identificacion').val(infoFE.info_fe.tipo_identificacion || '01');
+    $('#numero_identificacion').val(infoFE.info_fe.identificacion || '');
+    $('#nombre_comercial').val(infoFE.info_fe.nombre_comercial || '');
+    $('#direccion').val(infoFE.info_fe.direccion || '');
+    $('#correo_electronico').val(infoFE.info_fe.correo || '');
+}
+
 function cargarInfoFE() {
-    $('#info_nombre_fe').val(infoFE.info_nombre_fe);
-    $('#info_ced_fe').val(infoFE.info_ced_fe);
-    $('#info_correo_fe').val(infoFE.info_correo_fe);
-    $('#incluyeFE').prop("checked", infoFE.incluyeFE);
+
+    // Verificar si el cliente ya tiene información de FE
+    if (infoFE.estaConfiguradoFE) {
+        cargarInfoFEConfigurada();
+    } else {
+        cargarInfoFENoConfigurada();
+    }
+    cargarHtmlInfoFE();
 }
 
 function guardarInfoEnvio() {
@@ -1611,18 +2330,94 @@ function guardarInfoEnvio() {
 
 
 function guardarInfoFE() {
-    infoFE.info_nombre_fe = $('#info_nombre_fe').val();
-    infoFE.info_ced_fe = $('#info_ced_fe').val();
-    infoFE.incluyeFE = $('#incluyeFE').prop("checked");
-    infoFE.info_correo_fe = $("#info_correo_fe").val();
+    console.log('Guardando información de FE...');
 
-    cerrarModalFe();
-    actualizarOrden();
-    iziToast.success({
-        title: 'Información de facturación electrónica',
-        message: 'Se actualizo la información de  facturación electrónica',
-        position: 'topRight'
+    // Obtener el ID del cliente seleccionado
+    const inputCliente = document.getElementById('txt-cliente');
+    if (!inputCliente || !inputCliente.value.trim()) {
+        showError('No hay cliente seleccionado.');
+        return;
+    }
+
+    // Obtener el ID del cliente (necesitamos buscarlo)
+    const clienteId = obtenerIdClienteSeleccionado();
+    if (!clienteId) {
+        showError('No se pudo obtener el ID del cliente seleccionado.');
+        return;
+    }
+
+    // Recopilar datos del formulario según la estructura de la base de datos
+    const datosFE = {
+        cliente_id: clienteId,
+        codigo_actividad: $('#codigo_actividad').val(),
+        tipo_identificacion: $('#tipo_identificacion').val(),
+        identificacion: $('#numero_identificacion').val(), // Campo 'identificacion' en la BD
+        nombre_comercial: $('#nombre_comercial').val(),
+        direccion: $('#direccion').val(),
+        correo: $('#correo_electronico').val(),
+        incluye_fe: $('#incluyeFE').prop("checked")
+    };
+
+    console.log('Datos a enviar:', datosFE);
+
+    // Mostrar loader
+    $('#loader').show();
+
+    // Enviar datos al servidor
+    $.ajax({
+        url: `${base_path}/facturacion/clientes/guardar-info-fe-cliente`,
+        method: 'POST',
+        data: {
+            _token: CSRF_TOKEN,
+            ...datosFE
+        },
+        success: function (response) {
+            $('#loader').hide();
+            console.log('Respuesta del servidor:', response);
+
+            if (response.estado) {
+                // Actualizar variables locales
+                infoFE.incluyeFE = datosFE.incluye_fe;
+                infoFE.info_fe = {
+                    id: response.datos?.id || infoFE.info_fe.id || '', // Mantener ID existente o usar el nuevo
+                    codigo_actividad: datosFE.codigo_actividad,
+                    tipo_identificacion: datosFE.tipo_identificacion,
+                    identificacion: datosFE.identificacion, // Usar 'identificacion' como en la BD
+                    nombre_comercial: datosFE.nombre_comercial,
+                    direccion: datosFE.direccion,
+                    correo: datosFE.correo
+                };
+                infoFE.info_ced_fe = infoFE.info_fe.identificacion || '';
+                infoFE.info_nombre_fe = infoFE.info_fe.nombre_comercial || (ordenGestion?.cliente || '');
+                infoFE.info_correo_fe = infoFE.info_fe.correo || '';
+
+                // Actualizar el panel del cliente
+                const cliente = {
+                    info_fe: infoFE.info_fe
+                };
+                mostrarInfoFacturacionElectronica(cliente);
+
+                cerrarModalFe();
+                actualizarOrden();
+
+                showSuccess('Información de facturación electrónica guardada correctamente.');
+            } else {
+                showError(response.mensaje || 'Error al guardar la información de FE.');
+            }
+        },
+        error: function (xhr, status, error) {
+            $('#loader').hide();
+            console.error('Error al guardar FE:', error);
+            showError('Error al conectar con el servidor. Inténtalo de nuevo.');
+        }
     });
+}
+
+// Función auxiliar para obtener el ID del cliente seleccionado
+function obtenerIdClienteSeleccionado() {
+    console.log('Obteniendo ID del cliente seleccionado...');
+    console.log('ID almacenado:', window.clienteSeleccionadoId);
+    return window.clienteSeleccionadoId;
 }
 
 function cerrarModalEnvio() {
@@ -1641,7 +2436,7 @@ function cerrarCaja() {
         type: 'post',
         dataType: "json",
         data: {
-            efectivoReportado : efectivoR,
+            efectivoReportado: efectivoR,
             _token: CSRF_TOKEN
         }
     }).done(function (response) {
@@ -1692,7 +2487,7 @@ function abrirCaja() {
 
 
 function cargarOrdenGestion(idOrden) {
-
+    $('#loader').show();
     $.ajax({
         url: `${base_path}/facturacion/pos/cargarOrdenGestion`,
         type: 'get',
@@ -1702,6 +2497,7 @@ function cargarOrdenGestion(idOrden) {
             idOrden: idOrden
         }
     }).done(function (response) {
+        $('#loader').hide();
         if (!response['estado']) {
             showError(response['mensaje']);
             return;
@@ -1715,6 +2511,7 @@ function cargarOrdenGestion(idOrden) {
         $('#mdl-ordenes').modal('hide');
         $('#infoHeaderOrden').html("Orden : " + ordenGestion.numero_orden);
         actualizarOrden();
+        cargarClienteSeleccionado(ordenGestion.idCliente,ordenGestion.cliente);
 
     }).fail(function (jqXHR, textStatus, errorThrown) {
         cajaAbierta = false;
@@ -1738,7 +2535,8 @@ function transformarEncabezado(phpObject) {
         mesa: phpObject.mesa,
         numero_orden: phpObject.numero_orden,
         mto_pagado: phpObject.mto_pagado,
-        pagado: phpObject.pagado == 1
+        pagado: phpObject.pagado == 1,
+        idCliente: phpObject.cliente 
     };
 }
 
@@ -1836,7 +2634,7 @@ function cambiarMesa() {
     }
 
     $('#loader').fadeIn();
-    
+
     // Asignar la nueva mesa
     ordenGestion.mesa = mesaSeleccionada;
     cambiosPendientes = true;
@@ -1861,9 +2659,9 @@ function iniciarOrden() {
         showError("Debe escribir el nombre del cliente.");
         return false;
     }
-
+    var idCliente = window.clienteSeleccionadoId == null ? -1 : window.clienteSeleccionadoId;
     $('#loader').fadeIn();
-    
+
     $.ajax({
         url: `${base_path}/facturacion/pos/iniciarOrden`,
         type: 'post',
@@ -1872,7 +2670,8 @@ function iniciarOrden() {
         data: {
             _token: CSRF_TOKEN,
             orden: ordenGestion,
-            detalles: detalles
+            detalles: detalles,
+            idCliente: idCliente
         }
     }).done(function (res) {
         if (!res['estado']) {
@@ -1904,6 +2703,8 @@ function actualizarOrdenGestion() {
         return false;
     }
 
+    var idCliente = window.clienteSeleccionadoId == null ? -1 : window.clienteSeleccionadoId;
+
     $('#loader').fadeIn();
     $.ajax({
         url: `${base_path}/facturacion/pos/actualizarOrden`,
@@ -1912,7 +2713,8 @@ function actualizarOrdenGestion() {
         data: {
             _token: CSRF_TOKEN,
             orden: ordenGestion,
-            detalles: detalles
+            detalles: detalles,
+            idCliente: idCliente
         }
     }).done(function (res) {
         id = res['datos'];
@@ -2073,6 +2875,7 @@ function realizarPagoDividido(montoSinpe, montoEfectivo, montoTarjeta) {
             showError('Seleccione al menos un detalle.');
             return;
         }
+        var idCliente = window.clienteSeleccionadoId == null ? -1 : window.clienteSeleccionadoId;
         $('#mdl-loader-pago').modal("show");
         $.ajax({
             url: `${base_path}/facturacion/pos/pagarOrden`,
@@ -2086,7 +2889,8 @@ function realizarPagoDividido(montoSinpe, montoEfectivo, montoTarjeta) {
                 detalles: detallesSeleccionados,
                 mto_sinpe: montoSinpe,
                 mto_efectivo: montoEfectivo,
-                mto_tarjeta: montoTarjeta
+                mto_tarjeta: montoTarjeta,
+                idCliente: idCliente
             }
         }).done(function (res) {
             $('#mdl-loader-pago').modal("hide");
@@ -2237,4 +3041,58 @@ function procesarDatosAjax(tiposAux) {
     // Generar la interfaz y seleccionar el primer tipo
     generarTipos();
     seleccionarTipo(0);
+}
+
+function cerrarModalFE() {
+    $("#mdl_fe").modal("hide");
+}
+
+function changeFacturacionElectronica() {
+    console.log('Cambiando estado de facturación electrónica...');
+    console.log('Estado actual - estaConfiguradoFE:', infoFE.estaConfiguradoFE);
+    console.log('Estado actual - incluyeFE:', infoFE.incluyeFE);
+
+    // Solo cambiar estado si el cliente ya tiene FE configurado
+    if (infoFE.estaConfiguradoFE) {
+        // Cambiar el estado de incluyeFE
+        infoFE.incluyeFE = !infoFE.incluyeFE;
+
+        console.log('Nuevo estado - incluyeFE:', infoFE.incluyeFE);
+
+        // Actualizar el botón btn_fe según el nuevo estado
+        const btnFE = document.getElementById('btn_fe');
+        if (btnFE) {
+            if (infoFE.incluyeFE) {
+                // FE activada
+                btnFE.innerHTML = '<i class="fas fa-user"></i> Factura Electrónica: SÍ';
+                btnFE.classList.remove('btn-success');
+                btnFE.classList.add('btn-warning');
+                btnFE.title = 'Factura Electrónica activada - Click para desactivar';
+                console.log('Botón FE actualizado a: SÍ');
+            } else {
+                // FE desactivada
+                btnFE.innerHTML = '<i class="fas fa-user"></i> Factura Electrónica: NO';
+                btnFE.classList.remove('btn-warning');
+                btnFE.classList.add('btn-success');
+                btnFE.title = 'Factura Electrónica desactivada - Click para activar';
+                console.log('Botón FE actualizado a: NO');
+            }
+        } else {
+            console.error('Botón btn_fe no encontrado');
+        }
+
+        // Actualizar la orden para reflejar los cambios
+        actualizarOrden();
+
+        // Mostrar mensaje informativo
+        const mensaje = infoFE.incluyeFE ?
+            'Facturación electrónica activada para este cliente' :
+            'Facturación electrónica desactivada para este cliente';
+        showInfo(mensaje);
+
+    } else {
+        showInfo('Cliente no tiene FE configurado, abriendo modal para configurar...');
+        // Si no está configurado, abrir el modal para configurar
+        abrirModalFE();
+    }
 }

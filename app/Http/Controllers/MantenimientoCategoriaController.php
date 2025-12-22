@@ -46,37 +46,50 @@ class MantenimientoCategoriaController extends Controller
             $codigo = $request->input('mdl_generico_ipt_codigo');
             $id = $request->input('mdl_generico_ipt_id');
             $posicion_menu = $request->input('posicion_menu');
-            $actImagen = true;
+            
             $image = $request->file('foto_producto');
+            $path = null;
+            
             if ($image != null) {
                 $path = $image->store('categorias', 'public');
-                $actImagen = true;
             } else {
-                $actImagen = false;
+                // Si no hay nueva imagen y estamos editando, mantener la imagen anterior
+                if ($id != '-1' && $id != null && !$this->isEmpty($id)) {
+                    $categoriaActual = DB::table('categoria')->where('id', '=', $id)->first();
+                    if ($categoriaActual && !empty($categoriaActual->url_imagen)) {
+                        $path = $categoriaActual->url_imagen;
+                    }
+                }
             }
 
             try {
                 DB::beginTransaction();
                 if ($id == '-1' || $id == null || $this->isEmpty($id)) {
-                    if ($actImagen) {
-                        $tipo = DB::table('categoria')->insertGetId([
-                            'id' => null, 'categoria' => $categoria, 'codigo' => $codigo,
-                            'estado' => 'A', 'url_imagen' => $path
-                        ]);
-                    } else {
-                        $tipo = DB::table('categoria')->insertGetId(['id' => null, 'categoria' => $categoria, 'codigo' => $codigo, 'estado' => 'A']);
+                    // Nuevo registro
+                    $dataInsert = [
+                        'id' => null,
+                        'categoria' => $categoria,
+                        'codigo' => $codigo,
+                        'estado' => 'A',
+                        'posicion_menu' => $posicion_menu ?? 0
+                    ];
+                    if ($path !== null) {
+                        $dataInsert['url_imagen'] = $path;
                     }
+                    $tipo = DB::table('categoria')->insertGetId($dataInsert);
                 } else {
-                    if ($actImagen) {
-                        DB::table('categoria')
-                            ->where('id', '=', $id)
-                            ->update(['categoria' => $categoria, 'codigo' => $codigo,  'posicion_menu' => $posicion_menu, 
-                            'url_imagen' => $path]);
-                    } else {
-                        DB::table('categoria')
-                            ->where('id', '=', $id)
-                            ->update(['categoria' => $categoria, 'codigo' => $codigo, 'posicion_menu' => $posicion_menu, ]);
+                    // Actualizar registro
+                    $dataUpdate = [
+                        'categoria' => $categoria,
+                        'codigo' => $codigo,
+                        'posicion_menu' => $posicion_menu ?? 0
+                    ];
+                    if ($path !== null) {
+                        $dataUpdate['url_imagen'] = $path;
                     }
+                    DB::table('categoria')
+                        ->where('id', '=', $id)
+                        ->update($dataUpdate);
                 }
                 DB::commit();
                 $this->setSuccess('Guardar Categoría', 'La categoría se guardo correctamente.');

@@ -73,8 +73,13 @@
 
 
                                                 <td class="space-align-center">
-                                                    <a onclick='editarGenerico("{{ $g->id }}","{{ $g->categoria ?? '' }}","{{ $g->codigo ?? '' }}","{{ $g->url_imagen ?? '' }}","{{ $g->posicion_menu ?? '' }}")'
-                                                        title="Editar" class="btn btn-primary" style="color:white"><i
+                                                    <a class="btn btn-primary editar-categoria" 
+                                                        data-id="{{ $g->id }}"
+                                                        data-categoria="{{ $g->categoria ?? '' }}"
+                                                        data-codigo="{{ $g->codigo ?? '' }}"
+                                                        data-url="{{ $g->url_imagen ?? asset('assets/images/default-logo.png') }}"
+                                                        data-posicion="{{ $g->posicion_menu ?? 0 }}"
+                                                        title="Editar" style="color:white"><i
                                                             class="fas fa-cog"></i></a>
                                                     <a onclick="eliminarGenerico({{ $g->id }})" title="Eliminar"
                                                         class="btn btn-danger" style="color:white"> <i
@@ -143,9 +148,10 @@
                             </div>
                             <div class="col-xl-12 col-sm-12">
                                 <div class="form-group ">
-                                    <label>Foto Producto</label>
-                                    <input type="file"id="foto_producto" name="foto_producto"
+                                    <label>Foto Categoría</label>
+                                    <input type="file" id="foto_producto" name="foto_producto"
                                         accept="image/png, image/jpeg, image/jpg">
+                                    <small class="form-text text-muted">Seleccione una nueva imagen para actualizar</small>
                                 </div>
                             </div>
                             <div class="col-xl-12 col-sm-12">
@@ -159,10 +165,11 @@
                                 </div>
                             </div>
 
-                            <div class="ccol-xl-12 col-sm-12">
+                            <div class="col-xl-12 col-sm-12">
                                 <div class="form-group">
                                     <label>Imagen</label>
-                                    <img style="max-width: 100%; height: auto;" id="img_cat" alt="Imagen">
+                                    <img style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px; padding: 5px;"
+                                        id="img_cat" alt="Imagen">
                                 </div>
                             </div>
 

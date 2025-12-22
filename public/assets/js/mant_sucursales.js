@@ -49,6 +49,7 @@ function cargarHtmlSucursal(sucursal) {
   $('#mdl_sucursal_ipt_cedula_factura').val(sucursal.cedula_factura);
   $('#mdl_sucursal_ipt_correo_factura').val(sucursal.correo_factura);
   $('#mdl_sucursal_ipt_id').val(sucursal.id);
+  $('#tipo_identificacion_emisor').val(sucursal.tipo_identificacion_emisor);
 
   // Manejar el estado (A = Activo, I = Inactivo)
   if (sucursal.estado === 'A') {
@@ -74,6 +75,7 @@ function nuevaSucursal() {
   $('#mdl_sucursal_ipt_nombre_factura').val("");
   $('#mdl_sucursal_ipt_cedula_factura').val("");
   $('#mdl_sucursal_ipt_correo_factura').val("");
+  $('#tipo_identificacion_emisor').val("");
   $('#mdl_sucursal_chk_activa').prop('checked', true);
   $('#mdl_sucursal').modal('show');
 }

@@ -1,0 +1,1 @@
+ALTER TABLE `cliente_fe_info` CHANGE `id` `id` INT(11) NOT NULL AUTO_INCREMENT, add PRIMARY KEY (`id`);

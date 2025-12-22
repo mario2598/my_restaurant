@@ -99,8 +99,9 @@
                             <div class="col-sm-12 col-md-6 col-xl-4">
                                 <div class="form-group">
                                     <label>Imagen</label>
-                                    <img src="{{ asset('storage/' . $data['producto']->url_imagen) }}"
-                                        style="max-width: 100%; height: auto;" alt="Imagen">
+                                    <img src="{{ $data['producto']->url_imagen ?? asset('assets/images/default-logo.png') }}"
+                                        style="max-width: 100%; height: auto;" alt="Imagen"
+                                        onerror="this.src='{{ asset('assets/images/default-logo.png') }}'; this.onerror=null;">
                                 </div>
                             </div>
 

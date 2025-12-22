@@ -271,7 +271,12 @@ class FacturacionController extends Controller
         $categorias = DB::table('categoria')->select('id', 'categoria', 'logo', 'url_imagen')->orderBy('posicion_menu', 'asc')->get();
         foreach ($categorias as $categoria) {
 
-            $categoria->url_imagen = asset('storage/' . $categoria->url_imagen);
+            // Validar que url_imagen no sea null o vacío
+            if (!empty($categoria->url_imagen) && $categoria->url_imagen !== '') {
+                $categoria->url_imagen = asset('storage/' . $categoria->url_imagen);
+            } else {
+                $categoria->url_imagen = asset('assets/images/default-logo.png');
+            }
             $categoria->productos = [];
             $prods = [];
             $prods =   DB::table("producto_menu")
@@ -293,7 +298,12 @@ class FacturacionController extends Controller
                 )->orderBy('producto_menu.posicion_menu', 'asc')->get();
 
             foreach ($prods as $p) {
-                $p->url_imagen = asset('storage/' . $p->url_imagen);
+                // Validar que url_imagen no sea null o vacío
+                if (!empty($p->url_imagen) && $p->url_imagen !== '') {
+                    $p->url_imagen = asset('storage/' . $p->url_imagen);
+                } else {
+                    $p->url_imagen = asset('assets/images/default-logo.png');
+                }
                 $p->tipoProducto = 'R';
                 $grupos = DB::table('extra_producto_menu')
                     ->select(
@@ -355,7 +365,12 @@ class FacturacionController extends Controller
                 )->orderBy('producto_externo.posicion_menu', 'asc')->get();
 
             foreach ($prods2 as $p) {
-                $p->url_imagen = asset('storage/' . $p->url_imagen);
+                // Validar que url_imagen no sea null o vacío
+                if (!empty($p->url_imagen) && $p->url_imagen !== '') {
+                    $p->url_imagen = asset('storage/' . $p->url_imagen);
+                } else {
+                    $p->url_imagen = asset('assets/images/default-logo.png');
+                }
                 $p->tipoProducto = 'E';
                 $grupos = DB::table('extra_producto_externo')
                     ->select(
@@ -423,7 +438,12 @@ class FacturacionController extends Controller
         $categorias = DB::table('categoria')->select('id', 'categoria', 'logo', 'url_imagen')->orderBy('posicion_menu', 'asc')->get();
         foreach ($categorias as $categoria) {
 
-            $categoria->url_imagen = asset('storage/' . $categoria->url_imagen);
+            // Validar que url_imagen no sea null o vacío
+            if (!empty($categoria->url_imagen) && $categoria->url_imagen !== '') {
+                $categoria->url_imagen = asset('storage/' . $categoria->url_imagen);
+            } else {
+                $categoria->url_imagen = asset('assets/images/default-logo.png');
+            }
             $categoria->productos = [];
             $prods = [];
             $prods =   DB::table("producto_menu")
@@ -443,7 +463,12 @@ class FacturacionController extends Controller
                 )->orderBy('producto_menu.posicion_menu', 'asc')->get();
 
             foreach ($prods as $p) {
-                $p->url_imagen = asset('storage/' . $p->url_imagen);
+                // Validar que url_imagen no sea null o vacío
+                if (!empty($p->url_imagen) && $p->url_imagen !== '') {
+                    $p->url_imagen = asset('storage/' . $p->url_imagen);
+                } else {
+                    $p->url_imagen = asset('assets/images/default-logo.png');
+                }
                 $p->tipoProducto = 'R';
                 $grupos = DB::table('extra_producto_menu')
                     ->select(
@@ -502,7 +527,12 @@ class FacturacionController extends Controller
                 )->orderBy('producto_externo.posicion_menu', 'asc')->get();
 
             foreach ($prods2 as $p) {
-                $p->url_imagen = asset('storage/' . $p->url_imagen);
+                // Validar que url_imagen no sea null o vacío
+                if (!empty($p->url_imagen) && $p->url_imagen !== '') {
+                    $p->url_imagen = asset('storage/' . $p->url_imagen);
+                } else {
+                    $p->url_imagen = asset('assets/images/default-logo.png');
+                }
                 $p->tipoProducto = 'E';
                 $grupos = DB::table('extra_producto_externo')
                     ->select(
@@ -875,6 +905,103 @@ class FacturacionController extends Controller
             ->get();
     }
 
+    public function buscarClientes(Request $request)
+    {
+        if (!$this->validarSesion("facFac")) {
+            return $this->responseAjaxServerError("No tienes permisos para realizar esta acción.", []);
+        }
+
+        $searchTerm = $request->input('search', '');
+        $page = $request->input('page', 1);
+        $perPage = 15; // Reducido para mejor rendimiento
+        $offset = ($page - 1) * $perPage;
+        
+        $query = DB::table('cliente')
+            ->leftJoin('cliente_fe_info', 'cliente.id', '=', 'cliente_fe_info.cliente_id')
+            ->select(
+                'cliente.id',
+                'cliente.nombre',
+                'cliente.apellidos',
+                'cliente.telefono',
+                'cliente.correo',
+                'cliente.ubicacion',
+                'cliente_fe_info.codigo_actividad',
+                'cliente_fe_info.tipo_identificacion',
+                'cliente_fe_info.nombre_comercial',
+                'cliente_fe_info.direccion',
+                'cliente_fe_info.identificacion'
+            )
+            ->where('cliente.estado', 'A');
+
+        if (!empty($searchTerm)) {
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('cliente.nombre', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('cliente.apellidos', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('cliente.telefono', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('cliente.correo', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('cliente.ubicacion', 'like', '%' . $searchTerm . '%');
+            });
+        }
+
+        // Contar total de registros para paginación
+        $totalRecords = $query->count();
+        $totalPages = ceil($totalRecords / $perPage);
+
+        // Obtener registros paginados
+        $clientes = $query->orderBy('cliente.nombre', 'asc')
+                         ->offset($offset)
+                         ->limit($perPage)
+                         ->get();
+
+        return $this->responseAjaxSuccess('Clientes encontrados.', [
+            'clientes' => $clientes,
+            'pagination' => [
+                'current_page' => $page,
+                'total_pages' => $totalPages,
+                'total_records' => $totalRecords,
+                'per_page' => $perPage,
+                'has_more' => $page < $totalPages
+            ]
+        ]);
+    }
+
+    public function obtenerCliente(Request $request)
+    {
+        if (!$this->validarSesion("facFac")) {
+            return $this->responseAjaxServerError("No tienes permisos para realizar esta acción.", []);
+        }
+
+        $clienteId = $request->input('search', '');
+        
+        if (empty($clienteId) || !is_numeric($clienteId)) {
+            return $this->responseAjaxError("ID de cliente inválido.", []);
+        }
+
+        $cliente = DB::table('cliente')
+            ->select(
+                'id',
+                'nombre',
+                'apellidos',
+                'telefono',
+                'correo',
+                'ubicacion'
+            )
+            ->where('id', $clienteId)
+            ->where('estado', 'A')
+            ->first();
+
+        if (!$cliente) {
+            return $this->responseAjaxError("Cliente no encontrado.", []);
+        }
+
+        // Obtener información de facturación electrónica por separado
+        $cliente->info_fe = DB::table('cliente_fe_info')
+            ->where('cliente_id', $clienteId)
+            ->first();
+
+        return $this->responseAjaxSuccess('Cliente encontrado.', $cliente);
+    }
+
     public static function getOrden($idOrden)
     {
         if ($idOrden < 1 || $idOrden == null) {
@@ -937,21 +1064,8 @@ class FacturacionController extends Controller
 
     private function validarInfoFe($fe)
     {
-
         if ($fe['incluyeFE'] == 'true') {
-            if ($fe['info_ced_fe'] == null || $fe['info_ced_fe'] == "") {
-                return $this->responseAjaxServerError("Información de Facturación Electrónica pendiente : Cédula Cliente.", []);
-            }
-
-            if ($fe['info_nombre_fe'] == null || $fe['info_nombre_fe'] == "") {
-                return $this->responseAjaxServerError("Información de Facturación Electrónica pendiente : Nombre Cliente.", []);
-            }
-
-            if ($fe['info_correo_fe'] == null || $fe['info_correo_fe'] == "") {
-                return $this->responseAjaxServerError("Información de Facturación Electrónica pendiente : Correo Cliente.", []);
-            } else if (!preg_match('/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/', $fe['info_correo_fe'])) {
-                return $this->responseAjaxServerError("Información de Facturación Electrónica pendiente : El formato del correo electrónico no es válido.", []);
-            }
+            
         }
         return  $this->responseAjaxSuccess("", "");
     }
@@ -1159,6 +1273,7 @@ class FacturacionController extends Controller
         $envio = $request->input("envio");
         $infoFE = $request->input("infoFE");
         $detalles = $request->input("detalles");
+        $idCliente = $request->input("idCliente");
 
         $resValidar = $this->validarOrden($orden, $detalles);
         if (!$resValidar['estado']) {
@@ -1203,7 +1318,7 @@ class FacturacionController extends Controller
                 'tipo' => null,
                 'fecha_fin' => $fechaActual,
                 'fecha_inicio' => $fechaActual,
-                'cliente' => null,
+                'cliente' => $idCliente == -1 ? null : $idCliente,
                 'nombre_cliente' => $cliente,
                 'estado' => null,
                 'total' => $asignarMontosDetalles['total'],
@@ -1238,6 +1353,7 @@ class FacturacionController extends Controller
             $pagoOrdenId = DB::table('pago_orden')->insertGetId([
                 'orden' => $id_orden,
                 'nombre_cliente' => $cliente,
+                'cliente' => $idCliente == -1 ? null : $idCliente,
                 'monto_tarjeta' => $mto_tarjeta,
                 'monto_efectivo' => $mto_efectivo,
                 'monto_sinpe' => $mto_sinpe,
@@ -1357,11 +1473,11 @@ class FacturacionController extends Controller
 
             if ($infoFE['incluyeFE'] == 'true') {
                 $resCreaFe = $this->crearInfoFacturaElectronica(
-                    $infoFE["info_ced_fe"],
-                    $infoFE["info_nombre_fe"],
-                    $infoFE["info_correo_fe"],
+                    $infoFE["info_fe"]["identificacion"],
+                    $infoFE["info_fe"]["nombre_comercial"],
+                    $infoFE["info_fe"]["correo"],
                     $id_orden,
-                    null
+                    $pagoOrdenId
                 );
                 if (!$resCreaFe['estado']) {
                     DB::rollBack();
@@ -2221,6 +2337,7 @@ class FacturacionController extends Controller
                 "orden.numero_orden",
                 "orden.mesa",
                 "orden.nombre_cliente",
+                "orden.cliente",
                 DB::raw("'' as codigo_descuento"),
                 DB::raw('0 as envio'),
                 DB::raw('false as nueva')
@@ -2285,7 +2402,7 @@ class FacturacionController extends Controller
 
         $orden = $request->input("orden");
         $detalles = $request->input("detalles");
-
+        $idCliente = $request->input("idCliente");
         $resValidar = $this->validarOrden($orden, $detalles);
         if (!$resValidar['estado']) {
             return $this->responseAjaxServerError($resValidar['mensaje'], []);
@@ -2308,7 +2425,7 @@ class FacturacionController extends Controller
                 'tipo' => null,
                 'fecha_fin' => $fechaActual,
                 'fecha_inicio' => $fechaActual,
-                'cliente' => null,
+                'cliente' => $idCliente == -1 ? null : $idCliente,
                 'nombre_cliente' => $cliente,
                 'estado' => null,
                 'total' => $infoFacturacionFinal['total'],
@@ -2421,7 +2538,7 @@ class FacturacionController extends Controller
     {
         $orden = $request->input("orden");
         $detalles = $request->input("detalles");
-
+        $idCliente = $request->input("idCliente");
         // Validar si la orden existe
         $ordenExistente = DB::table('orden')->where('id', '=', $orden['id'])->first();
         if (!$ordenExistente) {
@@ -2455,6 +2572,7 @@ class FacturacionController extends Controller
             // Actualizar la tabla 'orden'
             DB::table('orden')->where("id", "=", $orden['id'])->update([
                 'nombre_cliente' => $orden['cliente'],
+                'cliente' => $idCliente == -1 ? null : $idCliente,
                 'mesa' => $orden['mesa'] == "-1" ? null : $orden['mesa'],
                 'total' => $infoFacturacionFinal['total'],
                 'total_con_descuento' => $infoFacturacionFinal['total'],
@@ -2648,6 +2766,7 @@ class FacturacionController extends Controller
         $infoFE = $request->input("infoFE");
         $detalles = $request->input("detalles");
         $envio = $request->input("envio");
+        $idCliente = $request->input("idCliente");
 
         $montoSinpe = $request->input("mto_sinpe", 0);
         $montoEfectivo = $request->input("mto_efectivo", 0);
@@ -2760,6 +2879,7 @@ class FacturacionController extends Controller
             $pagoOrdenId = DB::table('pago_orden')->insertGetId([
                 'orden' => $orden['id'],
                 'nombre_cliente' => $cliente,
+                'cliente' => $idCliente == -1 ? null : $idCliente,
                 'monto_tarjeta' => $montoTarjeta,
                 'monto_efectivo' => $montoEfectivo,
                 'monto_sinpe' => $montoSinpe,
@@ -2824,14 +2944,19 @@ class FacturacionController extends Controller
                     'descuento' => ($asignarMontosDetalles['descuento']),
                     'monto_sinpe' => $montoSinpe,
                     'monto_efectivo' => $montoEfectivo,
+                    'cliente' => $idCliente == -1 ? null : $idCliente,
+                    'nombre_cliente' => $cliente,
                     'monto_tarjeta' => $montoTarjeta
                 ]);
                 $cubreMontoCompleto = true;
             } else {
                 DB::table('orden')->where("id", "=", $orden['id'])->update([
                     'pagado' =>  $cubreMontoCompleto ? 1 : 0,
-                    'mto_pagado' => (float)($ordenExistente->mto_pagado + $totalPagos)
+                    'mto_pagado' => (float)($ordenExistente->mto_pagado + $totalPagos),
+                    'cliente' => $idCliente == -1 ? null : $idCliente,
+                    'nombre_cliente' => $cliente,
                 ]);
+                
                 if ($cubreMontoCompleto) {
                     $sumaPagos = DB::table('pago_orden')
                         ->where('orden', '=', $orden['id'])
@@ -2880,9 +3005,9 @@ class FacturacionController extends Controller
             // Crear la factura electrónica si es necesario
             if ($infoFE['incluyeFE'] == 'true') {
                 $resCreaFe = $this->crearInfoFacturaElectronica(
-                    $infoFE["info_ced_fe"],
-                    $infoFE["info_nombre_fe"],
-                    $infoFE["info_correo_fe"],
+                    $infoFE["info_fe"]["identificacion"],
+                    $infoFE["info_fe"]["nombre_comercial"],
+                    $infoFE["info_fe"]["correo"],
                     $ordenExistente->id,
                     $pagoOrdenId
                 );

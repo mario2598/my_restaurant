@@ -37,28 +37,11 @@ class MateriaPrimaController extends Controller
             'productos' => $this->getProductosMatPrima(),
             'categorias' => $this->getCategorias(),
             'impuestos' => $this->getImpuestos(),
+            'proveedores' => $this->getProveedores(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
 
         return view('materiaPrima.productos', compact('data'));
-    }
-
-    public function goNuevoProducto()
-    {
-        if (!$this->validarSesion("mt_product")) {
-            return redirect('/');
-        }
-
-        $datos = [];
-        $data = [
-            'menus' => $this->cargarMenus(),
-            'datos' => $datos,
-            'proveedores' => $this->getProveedores(),
-            'categorias' => $this->getCategorias(),
-            'impuestos' => $this->getImpuestos(),
-            'panel_configuraciones' => $this->getPanelConfiguraciones()
-        ];
-        return view('materiaPrima.producto.nuevoProducto', compact('data'));
     }
 
     public function goEditarProducto(Request $request)
@@ -85,6 +68,67 @@ class MateriaPrimaController extends Controller
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
         return view('materiaPrima.producto.editarProducto', compact('data'));
+    }
+
+    public function cargarProductoAjax(Request $request)
+    {
+        if (!$this->validarSesion("mt_product")) {
+            return $this->responseAjaxServerError("No tienes permisos para realizar esta acción.", []);
+        }
+
+        try {
+            $id = $request->input('id');
+            if ($id < 1 || $this->isEmpty($id)) {
+                return $this->responseAjaxServerError("ID de producto inválido.", []);
+            }
+
+            $producto = DB::table('materia_prima')
+                ->where('materia_prima.id', '=', $id)
+                ->get()->first();
+
+            if ($producto == null) {
+                return $this->responseAjaxServerError("No existe el producto.", []);
+            }
+
+            return $this->responseAjaxSuccess("Producto cargado correctamente.", $producto);
+        } catch (\Exception $ex) {
+            return $this->responseAjaxServerError("Error al cargar el producto: " . $ex->getMessage(), []);
+        }
+    }
+
+    public function eliminarProductoAjax(Request $request)
+    {
+        if (!$this->validarSesion("mt_product")) {
+            return $this->responseAjaxServerError("No tienes permisos para realizar esta acción.", []);
+        }
+
+        try {
+            $id = $request->input('id');
+            if ($id == null || $id == '' || $id < 1) {
+                return $this->responseAjaxServerError("Identificador inválido.", []);
+            }
+
+            DB::beginTransaction();
+            $producto = DB::table('materia_prima')->where('id', '=', $id)->get()->first();
+            
+            if ($producto == null) {
+                DB::rollBack();
+                return $this->responseAjaxServerError("No existe el producto a eliminar.", []);
+            }
+
+            DB::table('materia_prima')
+                ->where('id', '=', $id)
+                ->update(['activo' => 0]);
+
+            DB::commit();
+            return $this->responseAjaxSuccess("El producto se eliminó correctamente.", []);
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            return $this->responseAjaxServerError("Ocurrió un error eliminando el producto.", []);
+        } catch (\Exception $ex) {
+            DB::rollBack();
+            return $this->responseAjaxServerError("Error inesperado al eliminar el producto.", []);
+        }
     }
 
     public function goInventarios()
@@ -304,6 +348,10 @@ class MateriaPrimaController extends Controller
             $unidad_medida = $request->input('unidad_medida');
             $precio = $request->input('precio');
             $proveedor = $request->input('proveedor');
+            // Si el proveedor está vacío o es -1, establecerlo como null
+            if ($this->isNull($proveedor) || $this->isEmpty($proveedor) || $proveedor == '-1' || $proveedor == '') {
+                $proveedor = null;
+            }
             $min_deseado = $request->input('cant_min');
 
 
@@ -343,25 +391,80 @@ class MateriaPrimaController extends Controller
             if ($actualizar) {
                 return $this->returnEditarProductoWithId($id);
             } else {
-                return $this->returnNuevoProductoWithData($request->all());
+                // Si hay error al crear nuevo producto, redirigir a la lista
+                return redirect('materiaPrima/productos');
             }
         }
     }
 
-    public function returnNuevoProductoWithData($datos)
+    public function guardarProductoAjax(Request $request)
     {
-        if (!$this->validarSesion("prod_mnu")) {
-            return redirect('/');
+        if (!$this->validarSesion("mt_product")) {
+            return $this->responseAjaxServerError("No tienes permisos para realizar esta acción.", []);
         }
 
-        $data = [
-            'menus' => $this->cargarMenus(),
-            'datos' => $datos,
-            'proveedores' => $this->getProveedores(),
-            'proveedor' => 0,
-            'panel_configuraciones' => $this->getPanelConfiguraciones()
-        ];
-        return view('materiaPrima.producto.nuevoProducto', compact('data'));
+        try {
+            $id = $request->input('id');
+            $actualizar = ($id >= 1 && !$this->isNull($id));
+
+            if (!$this->validarProducto($request)) {
+                return $this->responseAjaxServerError("Por favor complete todos los campos requeridos.", []);
+            }
+
+            $nombre = $request->input('nombre');
+            $unidad_medida = $request->input('unidad_medida');
+            $precio = $request->input('precio');
+            $proveedor = $request->input('proveedor');
+            // Si el proveedor está vacío o es -1, establecerlo como null
+            if ($this->isNull($proveedor) || $this->isEmpty($proveedor) || $proveedor == '-1' || $proveedor == '') {
+                $proveedor = null;
+            }
+            $min_deseado = $request->input('cant_min') ?? 0;
+
+            DB::beginTransaction();
+
+            if ($actualizar) {
+                DB::table('materia_prima')
+                    ->where('id', '=', $id)
+                    ->update([
+                        'nombre' => $nombre,
+                        'unidad_medida' => $unidad_medida,
+                        'precio' => $precio,
+                        'proveedor' => $proveedor,
+                        'cant_min_deseada' => $min_deseado
+                    ]);
+                $mensaje = 'Se actualizó el producto correctamente.';
+            } else {
+                $id = DB::table('materia_prima')->insertGetId([
+                    'id' => null,
+                    'nombre' => $nombre,
+                    'unidad_medida' => $unidad_medida,
+                    'precio' => $precio,
+                    'proveedor' => $proveedor,
+                    'activo' => 1,
+                    'cant_min_deseada' => $min_deseado
+                ]);
+                $mensaje = 'Producto creado correctamente.';
+            }
+
+            DB::commit();
+
+            // Obtener el producto recién creado/actualizado
+            $producto = DB::table('materia_prima')
+                ->where('id', '=', $id)
+                ->get()->first();
+
+            return $this->responseAjaxSuccess($mensaje, [
+                'producto' => $producto,
+                'id' => $id
+            ]);
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            return $this->responseAjaxServerError("Error al guardar el producto: " . $ex->getMessage(), []);
+        } catch (\Exception $ex) {
+            DB::rollBack();
+            return $this->responseAjaxServerError("Error inesperado al guardar el producto.", []);
+        }
     }
 
     public function returnEditarProductoWithId($id)
@@ -402,11 +505,7 @@ class MateriaPrimaController extends Controller
             $valido = false;
             $esPrimero = false;
         }
-        if ($this->isNull($r->input('proveedor')) || $this->isEmpty($r->input('proveedor'))) {
-            $requeridos .= " Proveedor ";
-            $valido = false;
-            $esPrimero = false;
-        }
+        // Proveedor ya no es requerido
         if ($this->isNull($r->input('unidad_medida')) || $this->isEmpty($r->input('unidad_medida'))) {
             $requeridos .= " Unidad de medida ";
             $valido = false;

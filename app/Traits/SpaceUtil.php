@@ -121,7 +121,12 @@ trait SpaceUtil
       ->get();
 
     foreach ($categorias as $c) {
-      $c->url_imagen = asset('storage/' . $c->url_imagen);
+      // Validar que url_imagen no sea null o vacío
+      if (!empty($c->url_imagen) && $c->url_imagen !== '') {
+        $c->url_imagen = asset('storage/' . $c->url_imagen);
+      } else {
+        $c->url_imagen = asset('assets/images/default-logo.png');
+      }
     }
     return $categorias;
   }

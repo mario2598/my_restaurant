@@ -141,8 +141,9 @@
                                                     <a class="btn btn-primary btn-icon" title="Composición del producto"
                                                         onclick='clickMateriaPrima("{{ $g->id }}")'
                                                         style="cursor: pointer;"><i class="fas fa-cog"></i></a>
-
-
+                                                    <a class="btn btn-info btn-icon ml-1" title="Configuración de Facturación Electrónica"
+                                                        onclick='clickConfigFE("{{ $g->id }}")'
+                                                        style="cursor: pointer;"><i class="fas fa-file-invoice"></i></a>
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -284,6 +285,89 @@
 
         }
     </script>
+
+    <!-- Modal para Configuración de Facturación Electrónica -->
+    <div class="modal fade bs-example-modal-center" id='mdl-config-fe' tabindex="-1" role="dialog"
+        aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="width: 100%">
+                    <div class="row" style="width: 100%">
+                        <div class="col-sm-12 col-md-12 col-xl-12">
+                            <h5 class="modal-title">Configuración de Facturación Electrónica</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <!-- Campo oculto para el ID del producto -->
+                    <input type="hidden" id="id_producto_fe" value="">
+
+                    <div class="row">
+                        <div class="col-sm-12 col-md-12 col-xl-12">
+                            <div class="form-group">
+                                <label>Código CABYS</label>
+                                <input type="text" class="form-control" id="codigo_cabys"
+                                    placeholder="Código de clasificación arancelaria" maxlength="20">
+                                <small class="form-text text-muted">Código según catálogo del MEIC</small>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-12 col-md-6 col-xl-6">
+                            <div class="form-group">
+                                <label>Tarifa de Impuesto (%)</label>
+                                <input type="number" class="form-control" id="tarifa_impuesto"
+                                    placeholder="13.00" step="0.01" min="0" max="100" disabled>
+                                <small class="form-text text-muted">Porcentaje de IVA aplicable</small>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-12 col-md-6 col-xl-6">
+                            <div class="form-group">
+                                <label>Unidad de Medida</label>
+                                <select class="form-control" id="unidad_medida_fe">
+                                    <option value="">Cargando unidades...</option>
+                                </select>
+                                <small class="form-text text-muted">Las unidades se cargan desde FactuX</small>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-12 col-md-6 col-xl-6">
+                            <div class="form-group">
+                                <label>Tipo de Código</label>
+                                <select class="form-control" id="tipo_codigo">
+                                    <option value="">Seleccione tipo</option>
+                                    <option value="01">Producto</option>
+                                    <option value="02">Servicio</option>
+                                    <option value="03">Producto y Servicio</option>
+                                    <option value="04">Otro</option>
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12 col-md-12 col-xl-12">
+                            <div class="form-group">
+                                <label>Descripción para Facturación</label>
+                                <textarea class="form-control" id="descripcion_fe" rows="3"
+                                    placeholder="Descripción detallada para la facturación electrónica" disabled></textarea>
+                                <small class="form-text text-muted">Descripción que aparecerá en la factura</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="row" style="width: 100%">
+                        <div class="col-sm-12 col-md-12 col-xl-12 text-right">
+                            <a class="btn btn-primary btn-icon" title="Guardar" onclick='guardarConfigFE()' style="color:white;cursor: pointer;">Guardar</a>
+                            <a class="btn btn-secondary btn-icon" title="Cerrar" onclick='cerrarConfigFE()'
+                                style="cursor: pointer;">Cerrar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 

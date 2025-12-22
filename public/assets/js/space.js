@@ -253,6 +253,15 @@ function showSuccess(msj){
     });
 }
 
+
+function showInfo(msj){
+    iziToast.info({
+        title: 'Información!',
+        message: msj,
+        position: 'topRight'
+    });
+}
+
 /**
  * Función para detectar si el dispositivo es móvil/tablet
  */

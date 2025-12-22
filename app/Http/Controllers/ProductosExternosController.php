@@ -39,6 +39,14 @@ class ProductosExternosController extends Controller
         return $producto;
     }
 
+    public static function getById($id)
+    {
+        return DB::table('producto_externo')
+            ->select('producto_externo.*')
+            ->where('id', '=', $id)
+            ->get()->first();
+    }
+
     public function index() {}
 
     public function goProductosExternos()
@@ -308,6 +316,13 @@ class ProductosExternosController extends Controller
         if ($producto == null) {
             $this->setError('Editar Producto', 'No existe el producto a editar.');
             return redirect('productoExterno/productos');
+        }
+
+        // Validar que url_imagen no sea null o vacío
+        if (!empty($producto->url_imagen) && $producto->url_imagen !== '') {
+            $producto->url_imagen = asset('storage/' . $producto->url_imagen);
+        } else {
+            $producto->url_imagen = asset('assets/images/default-logo.png');
         }
 
         $data = [

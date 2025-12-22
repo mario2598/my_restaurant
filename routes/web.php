@@ -159,6 +159,10 @@ Route::group(['middleware' => 'autorizated:facFac'], function () {
     Route::get('facturacion/pos/cargarPosProductos', 'FacturacionController@cargarPosProductosAjax');
     Route::get('facturacion/pos', 'FacturacionController@goPos');
     Route::post('facturacion/buscar-clientes', 'FacturacionController@buscarClientes');
+    Route::post('facturacion/obtener-cliente', 'FacturacionController@obtenerCliente');
+    Route::post('facturacion/clientes/guardar', 'MantenimientoClientesController@guardarCliente');
+    Route::post('facturacion/clientes/obtener-info-fe-cliente', 'MantenimientoClientesController@obtenerInfoFECliente');
+    Route::post('facturacion/clientes/guardar-info-fe-cliente', 'MantenimientoClientesController@guardarInfoFECliente');
 });
 
 Route::group(['middleware' => 'autorizated:prod_ext_inv'], function () {
@@ -205,6 +209,15 @@ Route::group(['middleware' => 'autorizated:fe_fes'], function () {
     Route::get('fe/facturas', 'FeController@goFacturasFe');
     Route::post('fe/filtrarFacturas', 'FeController@filtrarFacturas');
     Route::post('fe/enviarFe', 'FeController@enviarFe');
+    Route::post('fe/enviarFacturaHacienda', 'FeController@enviarFacturaHaciendaV2'); // Método V2 - Enviar Factura (con cliente, formato nuevo FactuX)
+    Route::post('fe/enviarComprobanteHacienda', 'FeController@enviarComprobanteHacienda'); // Método V2 sin cliente - Enviar Comprobante (sin datos del cliente)
+    Route::post('fe/obtenerJsonComprobante', 'FeController@obtenerJsonComprobante');
+    Route::post('fe/consultarEstadoHacienda', 'FeController@consultarEstadoHacienda');
+    Route::post('fe/reenviarCorreoFactuX', 'FeController@reenviarCorreoFactuX'); // Reenviar correo del comprobante
+    Route::get('fe/obtenerUnidadesMedida', 'FeController@obtenerUnidadesMedida');
+    Route::post('fe/obtenerPagosSinFE', 'FeController@obtenerPagosSinFE'); // Obtener pagos sin FE asociado
+    Route::post('fe/crearFeDesdePago', 'FeController@crearFeDesdePago'); // Crear FE desde un pago sin FE
+    Route::post('fe/actualizarClienteFeInfo', 'FeController@actualizarClienteFeInfo'); // Actualizar cliente en fe_info
 });
 
 /*
@@ -308,6 +321,7 @@ Route::post('caja/abrirCaja', 'CajaController@abrirCaja');
 
 /******************Informes ********************** */
 Route::post('informes/resumencontable/filtro', 'InformesController@goResumenContableFiltro');
+Route::post('informes/resumencontable/generar-pdf', 'InformesController@generarReporteResumenContablePDF');
 Route::get('informes/resumencontable', 'InformesController@goResumenContable');
 Route::get('informes/ventaXhora', 'InformesController@goVentaXhora');
 Route::post('informes/ventaXhora/filtro', 'InformesController@goVentaXhoraFiltro');
@@ -413,10 +427,12 @@ Route::post('menu/menus/cambiarComanda', 'ProductosMenuController@cambiarComande
 
 /*****************Materia Prima**************************** */
 Route::get('materiaPrima/productos', 'MateriaPrimaController@goProductos');
-Route::get('materiaPrima/productos/nuevo', 'MateriaPrimaController@goNuevoProducto');
 Route::post('materiaPrima/producto/editar', 'MateriaPrimaController@goEditarProducto');
 Route::post('materiaPrima/producto/guardar', 'MateriaPrimaController@guardarProducto');
+Route::post('materiaPrima/producto/guardarAjax', 'MateriaPrimaController@guardarProductoAjax');
+Route::post('materiaPrima/producto/cargarAjax', 'MateriaPrimaController@cargarProductoAjax');
 Route::post('materiaPrima/producto/eliminar', 'MateriaPrimaController@eliminarProducto');
+Route::post('materiaPrima/producto/eliminarAjax', 'MateriaPrimaController@eliminarProductoAjax');
 Route::get('materiaPrima/inventario/inventarios', 'MateriaPrimaController@goInventarios');
 Route::post('materiaPrima/inventario/inventarios/filtro', 'MateriaPrimaController@goInventariosFiltro');
 

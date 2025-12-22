@@ -97,15 +97,16 @@
                             <div class="col-12 col-md-6 col-lg-4">
                                 <div class="form-group ">
                                     <label>Foto Producto</label>
-                                    <input type="file"id="foto_producto" name="foto_producto"
+                                    <input type="file" id="foto_producto" name="foto_producto"
                                         accept="image/png, image/jpeg, image/jpg">
+                                    <small class="form-text text-muted">Seleccione una nueva imagen para actualizar</small>
                                 </div>
                             </div>
 
                             <div class="col-sm-12 col-md-6 col-xl-4">
                                 <div class="form-group">
                                     <label>Imagen</label>
-                                    <img src="" id="imgProd" style="max-width: 100%; height: auto;"
+                                    <img src="" id="imgProd" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px; padding: 5px;"
                                         alt="Imagen">
                                 </div>
                             </div>

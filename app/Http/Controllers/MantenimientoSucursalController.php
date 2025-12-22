@@ -40,6 +40,7 @@ class MantenimientoSucursalController extends Controller
             'mdl_sucursal_ipt_nombre_factura' => 'required|max:500',
             'mdl_sucursal_ipt_cedula_factura' => 'required|max:50',
             'mdl_sucursal_ipt_correo_factura' => 'required|max:500',
+            'tipo_identificacion_emisor' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -52,16 +53,22 @@ class MantenimientoSucursalController extends Controller
         $cedula_factura = $request->input('mdl_sucursal_ipt_cedula_factura');
         $correo_factura = $request->input('mdl_sucursal_ipt_correo_factura');
         $estado = $request->input('mdl_sucursal_chk_activa');
+        $tipo_identificacion_emisor = $request->input('tipo_identificacion_emisor');
         try { 
             DB::beginTransaction();
             if($id == '-1' || $id == null){
                 $idSucursal = DB::table('sucursal')->insertGetId( ['id' => null ,'descripcion'=> $descripcion,
-                'estado' => ($estado == 'on' ? 'A' : 'I') ,'nombre_factura' => $nombre_factura ?? '','cedula_factura' => $cedula_factura?? '','correo_factura' => $correo_factura ?? ''] );
+                'estado' => ($estado == 'on' ? 'A' : 'I') ,'nombre_factura' => $nombre_factura ?? '',
+                'cedula_factura' => $cedula_factura?? '',
+                'correo_factura' => $correo_factura ?? '',
+                'tipo_identificacion_emisor' => $tipo_identificacion_emisor ?? ''] );
             }else{
                 DB::table('sucursal')
                     ->where('id', '=', $id)
                     ->update(['descripcion' => $descripcion,'estado' => ($estado == 'on' ? 'A' : 'I') ,
-                    'nombre_factura' => $nombre_factura ?? '','cedula_factura' => $cedula_factura?? '','correo_factura' => $correo_factura ?? '']);
+                    'nombre_factura' => $nombre_factura ?? '','cedula_factura' => $cedula_factura?? '',
+                    'correo_factura' => $correo_factura ?? '',
+                    'tipo_identificacion_emisor' => $tipo_identificacion_emisor ?? '']);
             }
             DB::commit();
             

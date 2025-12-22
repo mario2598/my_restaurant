@@ -197,19 +197,28 @@ class IngresosController extends Controller
 
     public function goIngresosAdminFiltro(Request $request)
     {
-        if ($request->getRequestUri() == "") {
-            $filtros = session("filtrosIngresos");
-            $filtroSucursal = $filtros['sucursal'];
-            $filtroAprobado = $filtros['aprobado'];
-            $ingreso = $filtros['tipo_ingreso'];
-            $hasta = $filtros['hasta'];
-            $desde = $filtros['desde'];
-        } else {
+        // Verificar si hay parámetros en el request, si no, usar sesión
+        if ($request->has('sucursal') || $request->has('aprobado') || $request->has('tipo_ingreso') || $request->has('desde') || $request->has('hasta')) {
             $filtroSucursal = $request->input('sucursal');
             $filtroAprobado = $request->input('aprobado');
             $ingreso = $request->input('tipo_ingreso');
             $hasta = $request->input('hasta');
             $desde = $request->input('desde');
+        } else {
+            $filtros = session("filtrosIngresos");
+            if ($filtros) {
+                $filtroSucursal = $filtros['sucursal'] ?? null;
+                $filtroAprobado = $filtros['aprobado'] ?? null;
+                $ingreso = $filtros['tipo_ingreso'] ?? null;
+                $hasta = $filtros['hasta'] ?? null;
+                $desde = $filtros['desde'] ?? null;
+            } else {
+                $filtroSucursal = null;
+                $filtroAprobado = null;
+                $ingreso = null;
+                $hasta = null;
+                $desde = null;
+            }
         }
 
 
@@ -220,24 +229,23 @@ class IngresosController extends Controller
             ->leftjoin('sis_estado', 'sis_estado.id', '=', 'ingreso.estado')
             ->select('ingreso.*', 'sucursal.descripcion as nombreSucursal', 'tipo_ingreso.tipo as nombre_tipo_ingreso', 'usuario.usuario as nombreUsuario', 'sis_estado.nombre as dscEstado', 'sis_estado.cod_general as cod_general');
 
-        if ($ingreso >= 1  && !$this->isNull($ingreso)) {
+        if (!$this->isNull($ingreso) && $ingreso != '' && $ingreso != 'T' && is_numeric($ingreso) && $ingreso >= 1) {
             $ingresos = $ingresos->where('ingreso.tipo', '=', $ingreso);
         }
 
-        if (!$this->isNull($filtroSucursal) && $filtroSucursal != 'T') {
-            $ingresos = $ingresos->where('ingreso.sucursal', 'like', '%' . $filtroSucursal . '%');
+        if (!$this->isNull($filtroSucursal) && $filtroSucursal != 'T' && $filtroSucursal != '') {
+            $ingresos = $ingresos->where('ingreso.sucursal', '=', $filtroSucursal);
         }
 
-        if (!$this->isNull($filtroAprobado) && $filtroAprobado != 'T') {
-
+        if (!$this->isNull($filtroAprobado) && $filtroAprobado != 'T' && $filtroAprobado != '') {
             $ingresos = $ingresos->where('ingreso.estado', '=', $filtroAprobado);
         }
 
-        if (!$this->isNull($desde)) {
+        if (!$this->isNull($desde) && $desde != '') {
             $ingresos = $ingresos->where('ingreso.fecha', '>=', $desde);
         }
 
-        if (!$this->isNull($hasta)) {
+        if (!$this->isNull($hasta) && $hasta != '') {
             $mod_date = strtotime($hasta . "+ 1 days");
             $mod_date = date("Y-m-d", $mod_date);
             $ingresos = $ingresos->where('ingreso.fecha', '<', $mod_date);

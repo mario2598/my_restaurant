@@ -115,16 +115,19 @@
                             <div class="col-12 col-md-6 col-lg-4">
                                 <div class="form-group ">
                                     <label>Foto Producto</label>
-                                    <input type="file"id="foto_producto" name="foto_producto"
+                                    <input type="file" id="foto_producto" name="foto_producto"
                                         accept="image/png, image/jpeg, image/jpg">
+                                    <small class="form-text text-muted">Seleccione una nueva imagen para actualizar</small>
                                 </div>
                             </div>
 
                             <div class="col-sm-12 col-md-6 col-xl-4">
                                 <div class="form-group">
                                     <label>Imagen</label>
-                                    <img src="{{ asset('storage/' . $data['producto']->url_imagen) }}"
-                                        style="max-width: 100%; height: auto;" alt="Imagen">
+                                    <img src="{{ $data['producto']->url_imagen ?? asset('assets/images/default-logo.png') }}"
+                                        id="imgProdExterno" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px; padding: 5px;"
+                                        alt="Imagen"
+                                        onerror="this.src='{{ asset('assets/images/default-logo.png') }}'; this.onerror=null;">
                                 </div>
                             </div>
 
@@ -161,4 +164,23 @@
 @section('script')
     <script src="{{ asset('assets/bundles/jquery-ui/jquery-ui.min.js') }}"></script>
     <script src="{{ asset('assets/js/bodega/productos.js') }}"></script>
+    <script>
+        // Preview de imagen cuando se selecciona un archivo nuevo
+        $(document).ready(function() {
+            $('#foto_producto').on('change', function(e) {
+                var file = e.target.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        $('#imgProdExterno').attr('src', e.target.result);
+                        $('#imgProdExterno').css({
+                            'border': '2px solid #28a745',
+                            'box-shadow': '0 0 5px rgba(40, 167, 69, 0.5)'
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+    </script>
 @endsection

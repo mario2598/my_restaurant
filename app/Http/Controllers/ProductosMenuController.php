@@ -30,6 +30,14 @@ class ProductosMenuController extends Controller
             ->get()->first()->comanda;
     }
 
+    public static function getById($id)
+    {
+        return DB::table('producto_menu')
+            ->select('producto_menu.*')
+            ->where('id', '=', $id)
+            ->get()->first();
+    }
+
     public static function getIdByCodigo($codigo)
     {
         $producto = DB::table('producto_menu')
@@ -414,7 +422,12 @@ class ProductosMenuController extends Controller
             return $this->responseAjaxServerError('No existe el producto.', "");
         }
 
-        $producto->url_imagen =  asset('storage/' . $producto->url_imagen);
+        // Validar que url_imagen no sea null o vacío
+        if (!empty($producto->url_imagen) && $producto->url_imagen !== '') {
+            $producto->url_imagen = asset('storage/' . $producto->url_imagen);
+        } else {
+            $producto->url_imagen = asset('assets/images/default-logo.png');
+        }
 
         return $this->responseAjaxSuccess("", $producto);
     }

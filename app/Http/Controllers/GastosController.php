@@ -188,25 +188,33 @@ class GastosController extends Controller
 
     public function goGastosAdminFiltro(Request $request)
     {
-       
-        if ($request->getRequestUri() == "") {
-           
-            $filtros = session("filtrosGastos");
-          
-            $filtroProveedor = $filtros['proveedor'];
-            $filtroSucursal = $filtros['sucursal'];
-            $select_estado = isset($filtros['select_estado']) ? $filtros['select_estado'] : 'T';
-            $hasta = $filtros['hasta'];
-            $gasto = $filtros['tipo_gasto'];
-            $desde = $filtros['desde'];
-        } else {
+        // Verificar si hay parámetros en el request, si no, usar sesión
+        if ($request->has('proveedor') || $request->has('sucursal') || $request->has('select_estado') || $request->has('tipo_gasto') || $request->has('desde') || $request->has('hasta')) {
             $filtroProveedor = $request->input('proveedor');
             $filtroSucursal = $request->input('sucursal');
             $select_estado = $request->input('select_estado');
             $gasto = $request->input('tipo_gasto');
             $hasta = $request->input('hasta');
             $desde = $request->input('desde');
+        } else {
+            $filtros = session("filtrosGastos");
+            if ($filtros) {
+                $filtroProveedor = $filtros['proveedor'] ?? null;
+                $filtroSucursal = $filtros['sucursal'] ?? null;
+                $select_estado = isset($filtros['select_estado']) ? $filtros['select_estado'] : 'T';
+                $hasta = $filtros['hasta'] ?? null;
+                $gasto = $filtros['tipo_gasto'] ?? null;
+                $desde = $filtros['desde'] ?? null;
+            } else {
+                $filtroProveedor = null;
+                $filtroSucursal = null;
+                $select_estado = 'T';
+                $hasta = null;
+                $gasto = null;
+                $desde = null;
+            }
         }
+        
         $gastos =  DB::table('gasto')
             ->leftjoin('proveedor', 'proveedor.id', '=', 'gasto.proveedor')
             ->join('tipo_gasto', 'tipo_gasto.id', '=', 'gasto.tipo_gasto')
@@ -216,27 +224,27 @@ class GastosController extends Controller
             ->select('gasto.*', 'tipo_gasto.tipo as nombre_tipo_gasto', 'proveedor.nombre', 'usuario.usuario as nombreUsuario'
             ,'sucursal.descripcion as dscSucursal','sis_estado.nombre as dscEstado');
 
-        if ($filtroProveedor >= 1  && !$this->isNull($filtroProveedor)) {
+        if (!$this->isNull($filtroProveedor) && $filtroProveedor != '' && $filtroProveedor != 'T' && is_numeric($filtroProveedor) && $filtroProveedor >= 1) {
             $gastos = $gastos->where('gasto.proveedor', '=', $filtroProveedor);
         }
 
-        if ($gasto >= 1  && !$this->isNull($gasto)) {
+        if (!$this->isNull($gasto) && $gasto != '' && $gasto != 'T' && is_numeric($gasto) && $gasto >= 1) {
             $gastos = $gastos->where('gasto.tipo_gasto', '=', $gasto);
         }
 
-        if (!$this->isNull($filtroSucursal) && $filtroSucursal != 'T') {
-            $gastos = $gastos->where('gasto.sucursal', '=', session('usuario')['sucursal']);
+        if (!$this->isNull($filtroSucursal) && $filtroSucursal != 'T' && $filtroSucursal != '') {
+            $gastos = $gastos->where('gasto.sucursal', '=', $filtroSucursal);
         }
 
-        if (!$this->isNull($select_estado) && $select_estado != 'T') {
+        if (!$this->isNull($select_estado) && $select_estado != 'T' && $select_estado != '') {
             $gastos = $gastos->where('gasto.estado', '=', $select_estado);
         }
 
-        if (!$this->isNull($desde)) {
+        if (!$this->isNull($desde) && $desde != '') {
             $gastos = $gastos->where('gasto.fecha', '>=', $desde);
         }
 
-        if (!$this->isNull($hasta)) {
+        if (!$this->isNull($hasta) && $hasta != '') {
             $mod_date = strtotime($hasta . "+ 1 days");
             $mod_date = date("Y-m-d", $mod_date);
             $gastos = $gastos->where('gasto.fecha', '<', $mod_date);
