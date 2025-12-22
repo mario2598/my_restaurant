@@ -140,10 +140,29 @@
                                     <tbody id="tbody_generico">
 
                                         @foreach ($data['gastos'] as $g)
-                                            <tr class="space_row_table" style="cursor: pointer;"
+                                            @php
+                                                $esEliminado = ($g->cod_general == 'EST_GASTO_ELIMINADO');
+                                                
+                                                $claseFila = '';
+                                                $estiloFila = '';
+                                                $badgeClass = 'badge-success';
+                                                
+                                                if ($esEliminado) {
+                                                    $claseFila = 'table-secondary';
+                                                    $estiloFila = 'background-color: #6c757d !important; color: white !important; opacity: 0.9;';
+                                                    $badgeClass = 'badge-secondary';
+                                                }
+                                            @endphp
+                                            <tr class="space_row_table {{ $claseFila }}" 
+                                                style="cursor: pointer; {{ $estiloFila }}"
                                                 onclick='clickGasto("{{ $g->id }}")'>
 
-                                                <td class="text-center">{{ $g->nombreUsuario ?? '' }}</td>
+                                                <td class="text-center">
+                                                    @if($esEliminado)
+                                                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                                                    @endif
+                                                    {{ $g->nombreUsuario ?? '' }}
+                                                </td>
                                                 <td class="text-center">
                                                     {{ $g->dscSucursal }}
                                                 </td>
@@ -154,12 +173,23 @@
                                                     {{ $g->fecha ?? '' }}
                                                 </td>
 
-                                                <td class="text-center">
-                                                    CRC {{ number_format($g->monto ?? '0.00', 2, '.', ',') }}
+                                                <td class="text-center" style="font-weight: {{ $esEliminado ? 'bold' : 'normal' }};">
+                                                    @if($esEliminado)
+                                                        <span style="text-decoration: line-through; opacity: 0.7;">
+                                                            CRC {{ number_format($g->monto ?? '0.00', 2, '.', ',') }}
+                                                        </span>
+                                                    @else
+                                                        CRC {{ number_format($g->monto ?? '0.00', 2, '.', ',') }}
+                                                    @endif
                                                 </td>
                                                 <td class="text-center">{{ $g->nombre ?? 'No asignado' }}</td>
                                                 <td class="text-center">
-                                                    {{ $g->dscEstado ?? '' }}
+                                                    <div class="badge {{ $badgeClass }} badge-shadow" style="font-size: 0.9em; padding: 0.5em 0.8em;">
+                                                        @if($esEliminado)
+                                                            <i class="fas fa-trash"></i>
+                                                        @endif
+                                                        {{ $g->dscEstado ?? '' }}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -194,6 +224,35 @@
                                                 </td>
 
                                             </tr>
+                                            @if (($data['totalRechazados'] ?? 0) > 0)
+                                                <tr class="space_row_table" style="background-color: #f8d7da !important; border-top: 2px solid #dc3545;">
+                                                    <td class="text-center" style="background-color: #f8d7da !important;">
+                                                        <strong style="color: #721c24;">
+                                                            <i class="fas fa-exclamation-triangle"></i> Total Eliminados
+                                                        </strong>
+                                                    </td>
+                                                    <td class="text-center" style="background-color: #f8d7da !important;">
+                                                        <span style="color: #721c24;">***</span>
+                                                    </td>
+                                                    <td class="text-center" style="background-color: #f8d7da !important;">
+                                                        <span style="color: #721c24;">***</span>
+                                                    </td>
+                                                    <td class="text-center" style="background-color: #f8d7da !important;">
+                                                        <span style="color: #721c24;"><strong>***</strong></span>
+                                                    </td>
+                                                    <td class="text-center" style="background-color: #f8d7da !important;">
+                                                        <strong style="color: #721c24; font-size: 1.1em;">
+                                                            CRC {{ number_format($data['totalRechazados'] ?? '0.00', 2, '.', ',') }}
+                                                        </strong>
+                                                    </td>
+                                                    <td class="text-center" style="background-color: #f8d7da !important;">
+                                                        <span style="color: #721c24;">***</span>
+                                                    </td>
+                                                    <td class="text-center" style="background-color: #f8d7da !important;">
+                                                        <span style="color: #721c24;">***</span>
+                                                    </td>
+                                                </tr>
+                                            @endif
                                         @endif
                                     </tfoot>
                                 </table>

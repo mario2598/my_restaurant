@@ -120,15 +120,6 @@
                         <strong class="text-success">CRC {{number_format($data['resumen']['totalIngresosTarjetaGeneral'] ?? 0, 2, ".", ",")}}</strong>
                       </td>
                     </tr>
-
-                    <tr class="space_row_table">
-                      <td class="text-left">
-                        <i class="fas fa-minus-circle text-warning"></i> <strong>Rebajo por tarjetas</strong>
-                      </td>
-                      <td class="text-right">
-                        <strong class="text-danger">- CRC {{number_format($data['resumen']['totalPagoTarjetaGeneral'] ?? 0, 2, ".", ",")}}</strong>
-                      </td>
-                    </tr>
                  
                     <tr class="space_row_table">
                       <td class="text-left">

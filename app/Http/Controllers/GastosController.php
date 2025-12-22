@@ -222,7 +222,7 @@ class GastosController extends Controller
             ->join('sis_estado', 'sis_estado.id', '=', 'gasto.estado')
             ->join('sucursal', 'sucursal.id', '=', 'gasto.sucursal')
             ->select('gasto.*', 'tipo_gasto.tipo as nombre_tipo_gasto', 'proveedor.nombre', 'usuario.usuario as nombreUsuario'
-            ,'sucursal.descripcion as dscSucursal','sis_estado.nombre as dscEstado');
+            ,'sucursal.descripcion as dscSucursal','sis_estado.nombre as dscEstado', 'sis_estado.cod_general as cod_general');
 
         if (!$this->isNull($filtroProveedor) && $filtroProveedor != '' && $filtroProveedor != 'T' && is_numeric($filtroProveedor) && $filtroProveedor >= 1) {
             $gastos = $gastos->where('gasto.proveedor', '=', $filtroProveedor);
@@ -252,8 +252,14 @@ class GastosController extends Controller
 
         $gastos = $gastos->get();
         $totalGastos = 0;
+        $totalRechazados = 0;
         foreach ($gastos as $i) {
             $totalGastos = $totalGastos + $i->monto;
+            
+            // Calcular total de rechazados y eliminados
+            if ($i->cod_general == 'EST_GASTO_ELIMINADO') {
+                $totalRechazados = $totalRechazados + $i->monto;
+            }
         }
        
         $filtros1 = [
@@ -270,6 +276,7 @@ class GastosController extends Controller
         $data = [
             'menus' => $this->cargarMenus(),
             'totalGastos' => $totalGastos,
+            'totalRechazados' => $totalRechazados,
             'gastos' => $gastos,
             'filtros' => $filtros1,
             'estados' => SisEstadoController::getEstadosByCodClase("EST_GASTOS_GEN"),

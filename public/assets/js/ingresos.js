@@ -38,10 +38,25 @@ function rechazarIngresoGasto(gasto, ingreso) {
 function eliminarIngresoAdmin(ingreso) {
 
     swal({
-        title: 'Eliminar Ingreso?',
-        text: 'Se eliminaran los gastos relacionados. ',
+        title: '¿Eliminar Ingreso?',
+        text: 'Esta acción cambiará el estado del ingreso a eliminado. Esta acción no se puede deshacer. ¿Está seguro?',
         icon: 'warning',
-        buttons: true,
+        buttons: {
+            cancel: {
+                text: 'Cancelar',
+                value: false,
+                visible: true,
+                className: 'btn-secondary',
+                closeModal: true
+            },
+            confirm: {
+                text: 'Sí, eliminar',
+                value: true,
+                visible: true,
+                className: 'btn-danger',
+                closeModal: true
+            }
+        },
         dangerMode: true,
     })
         .then((willDelete) => {
@@ -49,7 +64,7 @@ function eliminarIngresoAdmin(ingreso) {
                 $('#idIngresoEliminar').val(ingreso);
                 $('#formEliminarIngreso').submit();
             } else {
-                swal('No se elimino el ingreso!');
+                swal('No se eliminó el ingreso!');
             }
         });
 }
@@ -118,10 +133,25 @@ function confirmarIngreso(ingreso) {
 function rechazarIngreso(ingreso) {
 
     swal({
-        title: 'Rechazar Ingreso?',
-        text: 'Se rechazaran los gastos relacionados. ',
+        title: '¿Rechazar Ingreso?',
+        text: 'Esta acción cambiará el estado del ingreso a rechazado. ¿Está seguro?',
         icon: 'warning',
-        buttons: true,
+        buttons: {
+            cancel: {
+                text: 'Cancelar',
+                value: false,
+                visible: true,
+                className: 'btn-secondary',
+                closeModal: true
+            },
+            confirm: {
+                text: 'Sí, rechazar',
+                value: true,
+                visible: true,
+                className: 'btn-danger',
+                closeModal: true
+            }
+        },
         dangerMode: true,
     })
         .then((willDelete) => {
@@ -129,7 +159,7 @@ function rechazarIngreso(ingreso) {
                 $('#idIngresoRechazar').val(ingreso);
                 $('#formRechazarIngreso').submit();
             } else {
-                swal('No se aprobo el ingreso!');
+                swal('No se rechazó el ingreso!');
             }
         });
 }

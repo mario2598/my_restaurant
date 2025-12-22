@@ -811,13 +811,6 @@ class InformesController extends Controller
         $this->pdf->Cell($anchoValor, 7, 'CRC ' . number_format($resumen['totalIngresosTarjetaGeneral'] ?? 0, 2, '.', ','), 'LR', 1, 'R', true);
         
         $this->pdf->SetFont('Arial', '', 10);
-        $this->pdf->Cell($anchoEtiqueta, 7, iconv('UTF-8', 'ISO-8859-1', 'Rebajo por tarjetas:'), 'LR', 0, 'L', true);
-        $this->pdf->SetFont('Arial', 'B', 10);
-        $this->pdf->SetTextColor(200, 0, 0);
-        $this->pdf->Cell($anchoValor, 7, '-CRC ' . number_format($resumen['totalPagoTarjetaGeneral'] ?? 0, 2, '.', ','), 'LR', 1, 'R', true);
-        
-        $this->pdf->SetTextColor(0, 0, 0);
-        $this->pdf->SetFont('Arial', '', 10);
         $this->pdf->Cell($anchoEtiqueta, 7, iconv('UTF-8', 'ISO-8859-1', 'Ingresos Efectivo:'), 'LR', 0, 'L', true);
         $this->pdf->SetFont('Arial', 'B', 10);
         $this->pdf->Cell($anchoValor, 7, 'CRC ' . number_format($resumen['totalIngresosEfectivoGeneral'] ?? 0, 2, '.', ','), 'LR', 1, 'R', true);

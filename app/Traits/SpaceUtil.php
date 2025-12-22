@@ -853,7 +853,6 @@ trait SpaceUtil
     $subTotalFondos = $totalIngresos;
 
     $totalFondos = $subTotalFondos - $gastos;
-    $totalFondos = $totalFondos - $totalPagoTarjeta;
 
     //Totales en conjunto
     $totalIngresosEfectivoGeneral = $totalIngresosEfectivo;
@@ -862,7 +861,6 @@ trait SpaceUtil
     $totalPagoTarjetaGeneral = $totalPagoTarjeta;
 
     $subTotalFondosGeneral = $subTotalFondos;
-    $subTotalFondosGeneral = $subTotalFondosGeneral - $totalPagoTarjeta;;
     $totalFondosGeneral = $totalFondos;
     $gastosGeneral = $gastos;
 

@@ -253,6 +253,7 @@ class IngresosController extends Controller
 
         $ingresos = $ingresos->get();
         $totalIngresos = 0;
+        $totalRechazados = 0;
         foreach ($ingresos as $i) {
 
             $sinpe = $i->monto_sinpe ?? 0;
@@ -260,6 +261,12 @@ class IngresosController extends Controller
             $tarjeta = $i->monto_tarjeta ?? 0;
             $i->total = $sinpe + $efectivo + $tarjeta;
             $totalIngresos = $totalIngresos + $i->total;
+            
+            // Calcular total de rechazados y eliminados
+            if ($i->cod_general == 'ING_EST_RECHAZADO' || $i->cod_general == 'ING_EST_ELIMINADO') {
+                $totalRechazados = $totalRechazados + $i->total;
+            }
+            
             $i->fecha = $this->fechaFormat($i->fecha);
         }
 
@@ -275,6 +282,7 @@ class IngresosController extends Controller
         $data = [
             'menus' => $this->cargarMenus(),
             'totalIngresos' => $totalIngresos,
+            'totalRechazados' => $totalRechazados,
             'ingresos' => $ingresos,
             'filtros' => $filtros1,
             'tipos_ingreso' => $this->getTiposIngreso(),
@@ -593,6 +601,130 @@ class IngresosController extends Controller
         } catch (QueryException $ex) {
             DB::rollBack();
             return $this->responseAjaxServerError("Algo salío mal, reintentalo.", []);
+        }
+    }
+
+    public function rechazarIngreso(Request $request)
+    {
+        if (!$this->validarSesion("ingNue")) {
+            $this->setMsjSeguridad();
+            return redirect('/');
+        }
+
+        $id = $request->input('idIngresoRechazar');
+        
+        if ($id == null || $id < 1) {
+            $this->setError('Rechazar Ingreso', 'Identificador inválido.');
+            return redirect('ingresos/administracion');
+        }
+
+        $ingreso = DB::table('ingreso')
+            ->leftjoin('sis_estado', 'sis_estado.id', '=', 'ingreso.estado')
+            ->select('ingreso.*', 'sis_estado.cod_general as cod_general')
+            ->where('ingreso.id', '=', $id)
+            ->get()->first();
+
+        if ($ingreso == null) {
+            $this->setError('Rechazar Ingreso', 'No existe el ingreso a rechazar.');
+            return redirect('ingresos/administracion');
+        }
+
+        // Verificar que el ingreso esté pendiente de aprobación
+        if ($ingreso->cod_general != 'ING_PEND_APB') {
+            $this->setError('Rechazar Ingreso', 'Solo se pueden rechazar ingresos pendientes de aprobación.');
+            return redirect('ingresos/administracion');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Calcular el total del ingreso
+            $sinpe = $ingreso->monto_sinpe ?? 0;
+            $efectivo = $ingreso->monto_efectivo ?? 0;
+            $tarjeta = $ingreso->monto_tarjeta ?? 0;
+            $total = $sinpe + $efectivo + $tarjeta;
+
+            // Actualizar el estado del ingreso a rechazado
+            DB::table('ingreso')
+                ->where('id', '=', $id)
+                ->update(['estado' => SisEstadoController::getIdEstadoByCodGeneral("ING_EST_RECHAZADO")]);
+
+            // Registrar en bitácora
+            $this->bitacoraMovimientos('ingreso', 'Rechazar', $id, $total);
+
+            DB::commit();
+            $this->setSuccess('Rechazar Ingreso', 'El ingreso se rechazó correctamente.');
+            return redirect('ingresos/administracion');
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            $this->setError('Rechazar Ingreso', 'Ocurrió un error rechazando el ingreso.');
+            return redirect('ingresos/administracion');
+        } catch (\Exception $ex) {
+            DB::rollBack();
+            $this->setError('Rechazar Ingreso', 'Error inesperado al rechazar el ingreso.');
+            return redirect('ingresos/administracion');
+        }
+    }
+
+    public function eliminarIngreso(Request $request)
+    {
+        if (!$this->validarSesion("ingNue")) {
+            $this->setMsjSeguridad();
+            return redirect('/');
+        }
+
+        $id = $request->input('idIngresoEliminar');
+        
+        if ($id == null || $id < 1) {
+            $this->setError('Eliminar Ingreso', 'Identificador inválido.');
+            return redirect('ingresos/administracion');
+        }
+
+        $ingreso = DB::table('ingreso')
+            ->leftjoin('sis_estado', 'sis_estado.id', '=', 'ingreso.estado')
+            ->select('ingreso.*', 'sis_estado.cod_general as cod_general')
+            ->where('ingreso.id', '=', $id)
+            ->get()->first();
+
+        if ($ingreso == null) {
+            $this->setError('Eliminar Ingreso', 'No existe el ingreso a eliminar.');
+            return redirect('ingresos/administracion');
+        }
+
+        // Verificar que el ingreso esté aprobado
+        if ($ingreso->cod_general != 'ING_EST_APROBADO') {
+            $this->setError('Eliminar Ingreso', 'Solo se pueden eliminar ingresos aprobados.');
+            return redirect('ingresos/administracion');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Calcular el total del ingreso
+            $sinpe = $ingreso->monto_sinpe ?? 0;
+            $efectivo = $ingreso->monto_efectivo ?? 0;
+            $tarjeta = $ingreso->monto_tarjeta ?? 0;
+            $total = $sinpe + $efectivo + $tarjeta;
+
+            // Actualizar el estado del ingreso a eliminado
+            DB::table('ingreso')
+                ->where('id', '=', $id)
+                ->update(['estado' => SisEstadoController::getIdEstadoByCodGeneral("ING_EST_ELIMINADO")]);
+
+            // Registrar en bitácora
+            $this->bitacoraMovimientos('ingreso', 'Eliminar', $id, $total);
+
+            DB::commit();
+            $this->setSuccess('Eliminar Ingreso', 'El ingreso se eliminó correctamente.');
+            return redirect('ingresos/administracion');
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            $this->setError('Eliminar Ingreso', 'Ocurrió un error eliminando el ingreso.');
+            return redirect('ingresos/administracion');
+        } catch (\Exception $ex) {
+            DB::rollBack();
+            $this->setError('Eliminar Ingreso', 'Error inesperado al eliminar el ingreso.');
+            return redirect('ingresos/administracion');
         }
     }
 

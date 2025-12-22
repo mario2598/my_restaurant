@@ -131,12 +131,43 @@
                                     </thead>
                                     <tbody id="tbody_generico">
                                         @foreach ($data['ingresos'] as $g)
-                                            <tr class="space_row_table" style="cursor: pointer;"
+                                            @php
+                                                $esRechazado = ($g->cod_general == 'ING_EST_RECHAZADO');
+                                                $esEliminado = ($g->cod_general == 'ING_EST_ELIMINADO');
+                                                $esInactivo = $esRechazado || $esEliminado;
+                                                
+                                                $claseFila = '';
+                                                $estiloFila = '';
+                                                $badgeClass = 'badge-success';
+                                                
+                                                if ($esRechazado) {
+                                                    $claseFila = 'table-danger';
+                                                    $estiloFila = 'background-color: #f8d7da !important; opacity: 0.9;';
+                                                    $badgeClass = 'badge-danger';
+                                                } elseif ($esEliminado) {
+                                                    $claseFila = 'table-secondary';
+                                                    $estiloFila = 'background-color: #6c757d !important; color: white !important; opacity: 0.9;';
+                                                    $badgeClass = 'badge-secondary';
+                                                }
+                                            @endphp
+                                            <tr class="space_row_table {{ $claseFila }}" 
+                                                style="cursor: pointer; {{ $estiloFila }}"
                                                 onclick='clickIngreso("{{ $g->id }}")'>
 
-                                                <td class="text-center">{{ $g->nombre_tipo_ingreso ?? '' }}</td>
                                                 <td class="text-center">
-                                                    CRC {{ number_format($g->total ?? '0.00', 2, '.', ',') }}
+                                                    @if($esInactivo)
+                                                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                                                    @endif
+                                                    {{ $g->nombre_tipo_ingreso ?? '' }}
+                                                </td>
+                                                <td class="text-center" style="font-weight: {{ $esInactivo ? 'bold' : 'normal' }};">
+                                                    @if($esInactivo)
+                                                        <span style="text-decoration: line-through; opacity: 0.7;">
+                                                            CRC {{ number_format($g->total ?? '0.00', 2, '.', ',') }}
+                                                        </span>
+                                                    @else
+                                                        CRC {{ number_format($g->total ?? '0.00', 2, '.', ',') }}
+                                                    @endif
                                                 </td>
                                                 <td class="text-center">
                                                     {{ $g->nombreUsuario ?? '' }}
@@ -148,8 +179,14 @@
 
                                                 <td class="text-center">{{ $g->fecha ?? '' }}</td>
                                                 <td class="text-center">
-                                                    <div class="badge badge-success badge-shadow">
-                                                        {{ $g->dscEstado ?? '' }}</div>
+                                                    <div class="badge {{ $badgeClass }} badge-shadow" style="font-size: 0.9em; padding: 0.5em 0.8em;">
+                                                        @if($esRechazado)
+                                                            <i class="fas fa-times-circle"></i>
+                                                        @elseif($esEliminado)
+                                                            <i class="fas fa-trash"></i>
+                                                        @endif
+                                                        {{ $g->dscEstado ?? '' }}
+                                                    </div>
                                                 </td>
 
                                             </tr>
@@ -182,6 +219,32 @@
 
 
                                             </tr>
+                                            @if (($data['totalRechazados'] ?? 0) > 0)
+                                                <tr class="space_row_table" style="background-color: #f8d7da !important; border-top: 2px solid #dc3545;">
+                                                    <td class="text-center" style="background-color: #f8d7da !important;">
+                                                        <strong style="color: #721c24;">
+                                                            <i class="fas fa-exclamation-triangle"></i> Total Rechazados/Eliminados
+                                                        </strong>
+                                                    </td>
+                                                    <td class="text-center" style="background-color: #f8d7da !important;">
+                                                        <strong style="color: #721c24; font-size: 1.1em;">
+                                                            CRC {{ number_format($data['totalRechazados'] ?? '0.00', 2, '.', ',') }}
+                                                        </strong>
+                                                    </td>
+                                                    <td class="text-center" style="background-color: #f8d7da !important;">
+                                                        <span style="color: #721c24;">***</span>
+                                                    </td>
+                                                    <td class="text-center" style="background-color: #f8d7da !important;">
+                                                        <span style="color: #721c24;"><strong>***</strong></span>
+                                                    </td>
+                                                    <td class="text-center" style="background-color: #f8d7da !important;">
+                                                        <span style="color: #721c24;"><strong>***</strong></span>
+                                                    </td>
+                                                    <td class="text-center" style="background-color: #f8d7da !important;">
+                                                        <span style="color: #721c24;">***</span>
+                                                    </td>
+                                                </tr>
+                                            @endif
                                         @endif
                                     </tfoot>
                                 </table>

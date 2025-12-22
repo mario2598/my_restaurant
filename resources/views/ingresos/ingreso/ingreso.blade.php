@@ -112,11 +112,25 @@
                                 <div class="card-footer text-right">
                                     @if ($data['ingreso']->cod_general == 'ING_PEND_APB')
                                         <a onclick='confirmarIngreso("{{ $data['ingreso']->id }}")'
-                                            style="cursor: pointer; color:white;" class="btn btn-success">Confirmar</a>
+                                            style="cursor: pointer; color:white;" class="btn btn-success">
+                                            <i class="fas fa-check"></i> Confirmar
+                                        </a>
+                                        <a onclick='rechazarIngreso("{{ $data['ingreso']->id }}")'
+                                            style="cursor: pointer; color:white;" class="btn btn-danger">
+                                            <i class="fas fa-times"></i> Rechazar
+                                        </a>
+                                    @endif
+                                    @if ($data['ingreso']->cod_general == 'ING_EST_APROBADO')
+                                        <a onclick='eliminarIngresoAdmin("{{ $data['ingreso']->id }}")'
+                                            style="cursor: pointer; color:white;" class="btn btn-danger">
+                                            <i class="fas fa-trash"></i> Eliminar
+                                        </a>
                                     @endif
                                     <button type="button"
                                         onclick="window.location='{{ URL::to('ingresos/administracion') }}'"
-                                        class="btn btn-primary">Volver a todos los ingresos</button>
+                                        class="btn btn-primary">
+                                        <i class="fas fa-arrow-left"></i> Volver a todos los ingresos
+                                    </button>
                                 </div>
 
 
@@ -185,6 +199,18 @@
     </div>
 
     <a href="" target='_blank' class="btn btn-primary" id='btn-pdf' style="display:none"></a>
+
+    <!-- Formulario oculto para rechazar ingreso -->
+    <form id="formRechazarIngreso" action="{{ URL::to('ingresos/rechazar') }}" method="POST" style="display: none;">
+        {{ csrf_field() }}
+        <input type="hidden" name="idIngresoRechazar" id="idIngresoRechazar" value="">
+    </form>
+
+    <!-- Formulario oculto para eliminar ingreso -->
+    <form id="formEliminarIngreso" action="{{ URL::to('ingresos/eliminar') }}" method="POST" style="display: none;">
+        {{ csrf_field() }}
+        <input type="hidden" name="idIngresoEliminar" id="idIngresoEliminar" value="">
+    </form>
 
 @endsection
 @section('script')
