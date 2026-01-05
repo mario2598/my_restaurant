@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\QueryException;
 use App\Traits\SpaceUtil;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 
 
 class ParametrosGeneralesController extends Controller
@@ -34,14 +36,27 @@ class ParametrosGeneralesController extends Controller
         try {
             $image = $request->file('logo_empresa');
             if ($image != null) {
-                $image->move(public_path('assets/images'), 'default-logo.png');
+                $destinationPath = public_path('assets/images');
+                
+                // Verificar si el directorio existe, si no, crearlo
+                if (!File::exists($destinationPath)) {
+                    File::makeDirectory($destinationPath, 0755, true);
+                }
+                
+                // Verificar permisos de escritura
+                if (!is_writable($destinationPath)) {
+                    $this->setError('Guardar Parámetros Generales', 'No se tienen permisos de escritura en el directorio de imágenes. Por favor, contacte al administrador del sistema.');
+                    return redirect('mant/parametrosgenerales');
+                }
+                
+                // Mover el archivo
+                $image->move($destinationPath, 'default-logo.png');
             }
 
             $this->setSuccess('Guardar Parámetros Generales', 'Los parámetros generales se guardaron correctamente.');
             return redirect('mant/parametrosgenerales');
-        } catch (QueryException $ex) {
-            DB::rollBack();
-            $this->setError('Guardar Parámetros Generales', 'Ocurrio un error guardando los parámetros generales.');
+        } catch (\Exception $ex) {
+            $this->setError('Guardar Parámetros Generales', 'Ocurrió un error guardando los parámetros generales: ' . $ex->getMessage());
             return redirect('mant/parametrosgenerales');
         }
     }
