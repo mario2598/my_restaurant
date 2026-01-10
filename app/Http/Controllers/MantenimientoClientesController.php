@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Database\QueryException;
 use App\Traits\SpaceUtil;
 
@@ -16,24 +17,35 @@ class MantenimientoClientesController extends Controller
     public function __construct() {}
     public function index()
     {
-
-        $clientes = DB::table('cliente')
-            ->leftJoin('cliente_fe_info', 'cliente.id', '=', 'cliente_fe_info.cliente_id')
-            ->where('cliente.estado', 'like', 'A')
-            ->select(
-                'cliente.*',
-                'cliente_fe_info.codigo_actividad',
-                'cliente_fe_info.tipo_identificacion',
-                'cliente_fe_info.nombre_comercial',
-                'cliente_fe_info.direccion'
-            )
-            ->get();
-        $data = [
-            'menus' => $this->cargarMenus(),
-            'clientes' => $clientes,
-            'panel_configuraciones' => $this->getPanelConfiguraciones()
-        ];
-        return view('mant.clientes', compact('data'));
+        try {
+            $clientes = DB::table('cliente')
+                ->leftJoin('cliente_fe_info', 'cliente.id', '=', 'cliente_fe_info.cliente_id')
+                ->where('cliente.estado', 'like', 'A')
+                ->select(
+                    'cliente.*',
+                    'cliente_fe_info.codigo_actividad',
+                    'cliente_fe_info.tipo_identificacion',
+                    'cliente_fe_info.nombre_comercial',
+                    'cliente_fe_info.direccion'
+                )
+                ->get();
+            $data = [
+                'menus' => $this->cargarMenus(),
+                'clientes' => $clientes,
+                'panel_configuraciones' => $this->getPanelConfiguraciones()
+            ];
+            return view('mant.clientes', compact('data'));
+        } catch (QueryException $ex) {
+            Log::error('Error en MantenimientoClientesController@index: ' . $ex->getMessage()); 
+            dd($ex);
+            $this->setError('Error', 'Error al cargar la página de clientes. Por favor, contacte al administrador.');
+            return redirect('/');
+        } catch (\Exception $ex) {
+            Log::error('Error inesperado en MantenimientoClientesController@index: ' . $ex->getMessage());
+            dd($ex);
+            $this->setError('Error', 'Error inesperado al cargar la página de clientes.');
+            return redirect('/');
+        }
     }
 
     /**
@@ -70,6 +82,7 @@ class MantenimientoClientesController extends Controller
             } else {
                 $clienteAux = DB::table('cliente')->where('id', '=', $id)->get()->first();
                 if ($clienteAux == null) {
+                    DB::rollBack();
                     return $this->responseAjaxServerError("El cliente no existe.", []);
                 }
 
@@ -79,7 +92,15 @@ class MantenimientoClientesController extends Controller
             }
             DB::commit();
             return $this->responseAjaxSuccess("El cliente se guardó correctamente.", $id);
- 
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            Log::error('Error en guardarCliente: ' . $ex->getMessage());
+            return $this->responseAjaxServerError("Error al guardar el cliente: " . $ex->getMessage(), []);
+        } catch (\Exception $ex) {
+            DB::rollBack();
+            Log::error('Error inesperado en guardarCliente: ' . $ex->getMessage());
+            return $this->responseAjaxServerError("Error inesperado al guardar el cliente: " . $ex->getMessage(), []);
+        }
     }
 
     /**
