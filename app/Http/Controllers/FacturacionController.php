@@ -27,7 +27,6 @@ class FacturacionController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'sucursales' => $this->getSucursales(),
             'clientes' => $this->getClientes(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
@@ -114,7 +113,6 @@ class FacturacionController extends Controller
 
         $sucursalFactura = MantenimientoSucursalController::getSucursalById($this->getUsuarioSucursal());
         $data = [
-            'menus' => $this->cargarMenus(),
             'tipos' => $this->getPosProductos(),
             'sucursalFacturaIva' => $sucursalFactura->factura_iva == 1,
             'mesas' => MesasController::getBySucursal($this->getUsuarioSucursal()),

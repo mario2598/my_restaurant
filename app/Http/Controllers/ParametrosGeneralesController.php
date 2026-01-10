@@ -20,7 +20,6 @@ class ParametrosGeneralesController extends Controller
     {
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'parametros_generales' => $this->getParametrosGenerales(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];

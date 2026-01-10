@@ -38,7 +38,6 @@ class LogInController extends Controller
     public function goInicio()
     {
         $data = [
-            'menus' => $this->cargarMenus(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
         return view('inicio', compact('data'));

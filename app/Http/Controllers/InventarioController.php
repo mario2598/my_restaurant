@@ -65,7 +65,6 @@ class InventarioController extends Controller
         $data = [
             'panel_configuraciones' => $this->getPanelConfiguraciones(),
             'inventario_por_lote' => $this->getInventarioPorLote($sucursalAuth),
-            'menus' => $this->cargarMenus(),
             'sucursalAuth' => $sucursalAuth,
             'sucursales' => $this->getBodegas(),
             'parametros_generales' => $this->getParametrosGenerales()
@@ -84,7 +83,6 @@ class InventarioController extends Controller
         $data = [
             'panel_configuraciones' => $this->getPanelConfiguraciones(),
             'inventario_por_lote' => $this->getInventarioPorLote($sucursalAuth),
-            'menus' => $this->cargarMenus(),
             'sucursalAuth' => $sucursalAuth,
             'sucursales' => $this->getSucursalesAndBodegas(),
             'parametros_generales' => $this->getParametrosGenerales()
@@ -103,7 +101,6 @@ class InventarioController extends Controller
         $data = [
             'panel_configuraciones' => $this->getPanelConfiguraciones(),
             'movimientos' => [],
-            'menus' => $this->cargarMenus(),
             'parametros_generales' => $this->getParametrosGenerales()
         ];
 
@@ -166,7 +163,6 @@ class InventarioController extends Controller
             ->get();
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'movimiento' => $movimiento,
             'panel_configuraciones' => $this->getPanelConfiguraciones()
 

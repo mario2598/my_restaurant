@@ -27,7 +27,6 @@ class TomaFisicaController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'sucursales' => $this->getSucursalesAll(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];

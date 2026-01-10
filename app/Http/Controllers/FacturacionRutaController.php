@@ -33,7 +33,6 @@ class FacturacionRutaController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'tipos' => $tipos,
             'clientes' => $this->getClientes(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
@@ -190,7 +189,6 @@ class FacturacionRutaController extends Controller
             }
         }
         $data = [
-            'menus' => $this->cargarMenus(),
             'orden' => $orden,
             'tipos' => $tipos,
             'mesa' => $this->getInfoMesa($orden->mobiliario_salon),
@@ -251,7 +249,6 @@ class FacturacionRutaController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'orden' => $orden,
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
@@ -318,7 +315,6 @@ class FacturacionRutaController extends Controller
         }
         $data = [
             'clientes' => $this->getClientes(),
-            'menus' => $this->cargarMenus(),
             'orden' => $orden,
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
@@ -339,7 +335,6 @@ class FacturacionRutaController extends Controller
         ];
         //  dd($filtros);
         $data = [
-            'menus' => $this->cargarMenus(),
             'filtros' => $filtros,
             'ordenes' => [],
             'clientes' => $this->getClientes(),
@@ -419,7 +414,6 @@ class FacturacionRutaController extends Controller
         ];
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'filtros' => $filtros,
             'ordenes' => $ordenes,
             'clientes' => $this->getClientes(),

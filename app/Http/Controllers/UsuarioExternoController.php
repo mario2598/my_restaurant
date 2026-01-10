@@ -29,7 +29,6 @@ class UsuarioExternoController extends Controller
         $categorias =  $contro->getCategoriasTodosProductos($this->getUsuarioSucursal());
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'categorias' => $categorias,
             'impuestos' => $this->getImpuestos(),
             'proveedores' => $this->getProveedores(),

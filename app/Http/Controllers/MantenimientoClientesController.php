@@ -30,7 +30,6 @@ class MantenimientoClientesController extends Controller
                 )
                 ->get();
             $data = [
-                'menus' => $this->cargarMenus(),
                 'clientes' => $clientes,
                 'panel_configuraciones' => $this->getPanelConfiguraciones()
             ];

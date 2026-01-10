@@ -27,7 +27,6 @@ class MantGrupoPromocionesController extends Controller
             ->get();
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'sucursales' => $this->getSucursales(),
             'categorias' => $this->getCategorias(),
             'productos_menu' => $productos_menu,

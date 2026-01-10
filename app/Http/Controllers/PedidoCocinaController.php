@@ -29,7 +29,6 @@ class PedidoCocinaController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'pedidos_pendientes' => PedidoCocinaController::getOrdenesEnPreparacionCocina($this->getRestauranteUsuario()),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];

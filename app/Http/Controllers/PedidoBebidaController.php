@@ -29,7 +29,6 @@ class PedidoBebidaController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'pedidos_pendientes' => PedidoBebidaController::getOrdenesEnPreparacionBebida($this->getRestauranteUsuario()),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];

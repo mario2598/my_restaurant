@@ -45,7 +45,6 @@ class CajaController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'datos' => [],
             'total_gastos_caja' => [],
             'panel_configuraciones' => $this->getPanelConfiguraciones()
@@ -67,7 +66,6 @@ class CajaController extends Controller
             ->sum('monto');
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'datos' => $datos,
             'total_gastos_caja' => $total_gastos_caja,
             'panel_configuraciones' => $this->getPanelConfiguraciones()

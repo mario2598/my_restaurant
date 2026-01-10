@@ -19,7 +19,6 @@ class PerfilUsuarioController extends Controller
     public function goPerfilUsuario()
     {
         $data = [
-            'menus' => $this->cargarMenus(),
             'usuario' => MantenimientoUsuariosController::getUsuarioById(session('usuario')['id']),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];

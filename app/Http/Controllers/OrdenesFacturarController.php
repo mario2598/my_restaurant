@@ -33,7 +33,6 @@ class OrdenesFacturarController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'ordenes' => OrdenesFacturarController::getOrdenesFacturar($this->getRestauranteUsuario()),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
@@ -47,7 +46,6 @@ class OrdenesFacturarController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'ordenes' => OrdenesFacturarController::getOrdenesFacturarTodo($this->getRestauranteUsuario(), "T"),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];

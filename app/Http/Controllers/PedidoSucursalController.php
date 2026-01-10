@@ -63,7 +63,6 @@ class PedidoSucursalController extends Controller
             }
         }
         $data = [
-            'menus' => $this->cargarMenus(),
             'productos' => $productos,
             'pedido' => $pedido,
             'sucursales' => $this->getBodegas(),
@@ -92,7 +91,6 @@ class PedidoSucursalController extends Controller
 
         $productos = $this->getProductos();
         $data = [
-            'menus' => $this->cargarMenus(),
             'productos' => $productos,
             'pedido' => [],
             'sucursales' => $this->getBodegas(),
@@ -120,7 +118,6 @@ class PedidoSucursalController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'pedidos_pendientes' => $pedido_pendientes,
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
@@ -146,7 +143,6 @@ class PedidoSucursalController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'pedidos_pendientes' => $pedido_pendientes,
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
@@ -319,7 +315,6 @@ class PedidoSucursalController extends Controller
         $pedido->fecha = $this->fechaFormat($pedido->fecha);
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'detalles_pedido' => $detalles_pedido,
             'pedido' => $pedido,
             'panel_configuraciones' => $this->getPanelConfiguraciones()

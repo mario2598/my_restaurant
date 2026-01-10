@@ -27,7 +27,6 @@ class DesechosController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'desechos' => [],
             'lotes' => [],
             'sucursales' => $this->getBodegas(),
@@ -76,7 +75,6 @@ class DesechosController extends Controller
         ];
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'filtros' => $filtros,
             'desechos' => [],
             'sucursales' => $this->getBodegas(),
@@ -101,7 +99,6 @@ class DesechosController extends Controller
             'grupo' => $grupo,
         ];
         $data = [
-            'menus' => $this->cargarMenus(),
             'filtros' => $filtros,
             'desechos' => $this->getDesechos($sucursal, $grupo),
             'sucursales' => $this->getBodegas(),

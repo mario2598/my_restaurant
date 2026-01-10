@@ -33,7 +33,6 @@ class FeController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'sucursales' => $this->getSucursales(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];

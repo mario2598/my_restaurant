@@ -21,7 +21,6 @@ class IngresosController extends Controller
     public function index()
     {
         $data = [
-            'menus' => $this->cargarMenus(),
             'datos' => [],
             'tipos_ingreso' => $this->getTiposIngreso(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
@@ -84,7 +83,6 @@ class IngresosController extends Controller
         $ingreso->monto_sinpe  = preg_replace('/\,/', '.', $ingreso->monto_sinpe);
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'ingreso' => $ingreso,
             'ventas' => $ventas,
             'tieneVentas' => $tieneVentas,
@@ -149,7 +147,6 @@ class IngresosController extends Controller
         $ingreso->monto_sinpe  = preg_replace('/\,/', '.', $ingreso->monto_sinpe);
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'ingreso' => $ingreso,
             'ventas' => $ventas,
             'tieneVentas' => $tieneVentas,
@@ -182,7 +179,6 @@ class IngresosController extends Controller
 
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'ingresos' => [],
             'filtros' => $filtros,
             'tipos_ingreso' => $this->getTiposIngreso(),
@@ -280,7 +276,6 @@ class IngresosController extends Controller
 
         session(['filtrosIngresos' =>  $filtros1]);
         $data = [
-            'menus' => $this->cargarMenus(),
             'totalIngresos' => $totalIngresos,
             'totalRechazados' => $totalRechazados,
             'ingresos' => $ingresos,
@@ -327,7 +322,6 @@ class IngresosController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'ingresosSinAprobar' => $ingresosSinAprobar,
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
@@ -341,7 +335,6 @@ class IngresosController extends Controller
     {
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'datos' => $datos,
             'tipos_ingreso' => $this->getTiposIngreso(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()

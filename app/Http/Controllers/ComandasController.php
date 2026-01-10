@@ -15,7 +15,6 @@ class ComandasController extends Controller
     {
         $data = [
             'sucursales' => MantenimientoSucursalController::getSucursalesActivas(),
-            'menus' => $this->cargarMenus(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
         return view('comandas.administrar', compact('data'));
@@ -24,7 +23,6 @@ class ComandasController extends Controller
     public function goComandaPreparacionGen()
     {
         $data = [
-            'menus' => $this->cargarMenus(),
             'idComanda' =>  null,
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
@@ -34,7 +32,6 @@ class ComandasController extends Controller
     public function goComandaPreparacionId($idComanda)
     {
         $data = [
-            'menus' => $this->cargarMenus(),
             'idComanda' =>  $idComanda,
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];

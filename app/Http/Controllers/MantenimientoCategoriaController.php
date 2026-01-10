@@ -24,7 +24,6 @@ class MantenimientoCategoriaController extends Controller
 
         //dd($this->getTiposGasto());
         $data = [
-            'menus' => $this->cargarMenus(),
             'categorias' => $this->getCategorias(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];

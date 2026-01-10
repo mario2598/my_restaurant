@@ -63,7 +63,6 @@ class ProductosExternosController extends Controller
         ];
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'filtros' => $filtros,
             'productos' => [],
             'materia_prima' => MateriaPrimaController::getProductos(),
@@ -250,7 +249,6 @@ class ProductosExternosController extends Controller
         ];
         //  dd($productos);
         $data = [
-            'menus' => $this->cargarMenus(),
             'productos' => $productos,
             'categorias' => $this->getCategorias(),
             'impuestos' => $this->getImpuestos(),
@@ -270,7 +268,6 @@ class ProductosExternosController extends Controller
 
         $datos = [];
         $data = [
-            'menus' => $this->cargarMenus(),
             'datos' => $datos,
             'categorias' => $this->getCategorias(),
             'impuestos' => $this->getImpuestos(),
@@ -289,7 +286,6 @@ class ProductosExternosController extends Controller
 
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'datos' => $datos,
             'categorias' => $this->getCategorias(),
             'impuestos' => $this->getImpuestos(),
@@ -326,7 +322,6 @@ class ProductosExternosController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'producto' => $producto,
             'categorias' => $this->getCategorias(),
             'impuestos' => $this->getImpuestos(),
@@ -353,7 +348,6 @@ class ProductosExternosController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'producto' => $producto,
             'categorias' => $this->getCategorias(),
             'impuestos' => $this->getImpuestos(),
@@ -702,7 +696,6 @@ class ProductosExternosController extends Controller
         ];
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'filtros' => $filtros,
             'inventarios' => [],
             'sucursales' => $this->getSucursalesAndBodegas(),
@@ -732,7 +725,6 @@ class ProductosExternosController extends Controller
             'sucursal' => $filtroSucursal,
         ];
         $data = [
-            'menus' => $this->cargarMenus(),
             'inventarios' => ProductosExternosController::getInventario($filtroSucursal),
             'productos_externos' => ProductosExternosController::getProductosNoMenuSucursal($filtroSucursal),
             'sucursales' => $this->getSucursalesAndBodegas(),

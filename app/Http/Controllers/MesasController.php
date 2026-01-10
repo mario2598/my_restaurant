@@ -15,7 +15,6 @@ class MesasController extends Controller
     {
         $data = [
             'sucursales' => MantenimientoSucursalController::getSucursalesActivas(),
-            'menus' => $this->cargarMenus(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
         return view('mobiliario.mesas.administrar', compact('data'));

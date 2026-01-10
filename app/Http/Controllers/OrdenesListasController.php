@@ -29,7 +29,6 @@ class OrdenesListasController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'ordenes_listas' => OrdenesListasController::getOrdenesListasEntregar($this->getUsuarioSucursal()),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
@@ -43,7 +42,6 @@ class OrdenesListasController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'ordenes' => OrdenesListasController::getOrdenesPreparacion($this->getUsuarioSucursal()),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];

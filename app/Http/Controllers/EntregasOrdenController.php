@@ -133,7 +133,6 @@ class EntregasOrdenController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'estadosOrden' => SisEstadoController::getEstadosByCodClase("EST_ENTREGAS_ORDEN"),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];

@@ -41,7 +41,6 @@ class MantenimientoUsuariosController extends Controller
             )
             ->get();
         $data = [
-            'menus' => $this->cargarMenus(),
             'usuarios' => $usuarios,
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
@@ -453,7 +452,6 @@ class MantenimientoUsuariosController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'roles' => MantenimientoRolesController::getRolesActivos(),
             'usuario' => $usuario,
             'sucursales' => $this->getSucursales(),

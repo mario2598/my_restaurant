@@ -100,7 +100,6 @@ class ProductosMenuController extends Controller
         ];
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'filtros' => $filtros,
             'productos' => [],
             'materia_prima' => MateriaPrimaController::getProductos(),
@@ -161,7 +160,6 @@ class ProductosMenuController extends Controller
         ];
         //  dd($productos);
         $data = [
-            'menus' => $this->cargarMenus(),
             'productos' => $productos,
             'categorias' => $this->getCategorias(),
             'materia_prima' => MateriaPrimaController::getProductos(),
@@ -180,7 +178,6 @@ class ProductosMenuController extends Controller
 
         $datos = [];
         $data = [
-            'menus' => $this->cargarMenus(),
             'idProducto' => 0,
             'categorias' => $this->getCategorias(),
             'impuestos' => $this->getImpuestos(),
@@ -296,7 +293,6 @@ class ProductosMenuController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'datos' => $datos,
             'categorias' => $this->getCategorias(),
             'impuestos' => $this->getImpuestos(),
@@ -325,7 +321,6 @@ class ProductosMenuController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'producto' => $producto,
             'categorias' => $this->getCategorias(),
             'impuestos' => $this->getImpuestos(),
@@ -399,7 +394,6 @@ class ProductosMenuController extends Controller
         $id = $request->input('idProductoEditar');
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'idProducto' => $id,
             'categorias' => $this->getCategorias(),
             'impuestos' => $this->getImpuestos(),
@@ -480,7 +474,6 @@ class ProductosMenuController extends Controller
         ];
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'filtros' => $filtros,
             'restaurantes' => [],
             'sucursales' => $this->getSucursales(),
@@ -509,7 +502,6 @@ class ProductosMenuController extends Controller
         ];
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'sucursales' => $this->getSucursalesAndBodegas(),
             'filtros' => $filtros,
             'panel_configuraciones' => $this->getPanelConfiguraciones()
@@ -559,7 +551,6 @@ class ProductosMenuController extends Controller
         ];
         // dd($productos_menu);
         $data = [
-            'menus' => $this->cargarMenus(),
             'sucursales' => $this->getSucursalesAndBodegas(),
             'productos_menu' => $productos_menu,
             'filtros' => $filtros,
@@ -620,7 +611,6 @@ class ProductosMenuController extends Controller
         ];
         // dd($productos_menu);
         $data = [
-            'menus' => $this->cargarMenus(),
             'sucursales' => $this->getSucursalesAndBodegas(),
             'productos_menu' => $productos_menu,
             'filtros' => $filtros,
@@ -647,7 +637,6 @@ class ProductosMenuController extends Controller
         ];
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'sucursales' => $this->getSucursalesAndBodegas(),
             'productos_menu' => [],
             'filtros' => $filtros,

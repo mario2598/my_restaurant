@@ -9,8 +9,8 @@
       </div>
       <ul class="sidebar-menu">
           <li class="menu-header">Menú</li>
-
-          @foreach ($data['menus'] ?? [] as $m)
+          <?php $menusSide = \App\Traits\SpaceUtil::cargarMenus(); ?>
+          @foreach ($menusSide ?? [] as $m)
               <li class="dropdown">
                   <a href="#" class="menu-toggle nav-link has-dropdown">
                       <i class="{{ $m->icon ?? '' }}" style="font-size:24px; margin-left:-1px;"></i>

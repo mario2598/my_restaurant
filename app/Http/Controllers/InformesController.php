@@ -49,7 +49,6 @@ class InformesController extends Controller
         ];
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'resumen' => $resumen,
             'filtros' => $filtros,
             'sucursales' => $this->getSucursales(),
@@ -85,7 +84,6 @@ class InformesController extends Controller
         $resumen = $this->resumenContable($desde, $hasta, $filtroSucursal);
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'resumen' => $resumen,
             'sucursales' => $this->getSucursales(),
             'filtros' => $filtros,
@@ -113,7 +111,6 @@ class InformesController extends Controller
 
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'datosReporte' => [],
             'filtros' => $filtros,
             'sucursales' => $this->getSucursalesAndBodegas(),
@@ -140,7 +137,6 @@ class InformesController extends Controller
 
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'datosReporte' => [],
             'filtros' => $filtros,
             'sucursales' => $this->getSucursalesAndBodegas(),
@@ -206,7 +202,6 @@ class InformesController extends Controller
             $d->fecha = $this->fechaFormat($d->fecha);
         }
         $data = [
-            'menus' => $this->cargarMenus(),
             'datosReporte' =>  $datos,
             'filtros' => $filtros,
             'sucursales' => $this->getSucursalesAndBodegas(),
@@ -233,7 +228,6 @@ class InformesController extends Controller
 
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'datosReporte' => [],
             'filtros' => $filtros,
             'sucursales' => $this->getSucursalesAndBodegas(),
@@ -298,7 +292,6 @@ class InformesController extends Controller
             $d->fecha = $this->fechaFormat($d->fecha);
         }
         $data = [
-            'menus' => $this->cargarMenus(),
             'datosReporte' =>  $datos,
             'filtros' => $filtros,
             'sucursales' => $this->getSucursalesAndBodegas(),
@@ -324,7 +317,6 @@ class InformesController extends Controller
 
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'datosReporte' => [],
             'filtros' => $filtros,
             'sucursales' => $this->getSucursalesAndBodegas(),
@@ -381,7 +373,6 @@ class InformesController extends Controller
         $datos = DB::select($query);
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'datosReporte' =>  $datos,
             'filtros' => $filtros,
             'sucursales' => $this->getSucursalesAndBodegas(),
@@ -464,7 +455,6 @@ class InformesController extends Controller
         ];
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'datosReporte' => DB::select($query),
             'filtros' => $filtros,
             'sucursales' => $this->getSucursalesAndBodegas(),
@@ -495,7 +485,6 @@ class InformesController extends Controller
 
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'clientes' => $this->getClientes(),
             'datosReporte' => [],
             'filtros' => $filtros,
@@ -589,7 +578,6 @@ class InformesController extends Controller
         ];
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'clientes' => $this->getClientes(),
             'datosReporte' => DB::select($query),
             'filtros' => $filtros,

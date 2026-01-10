@@ -360,27 +360,25 @@ trait SpaceUtil
   }
 
   /**
-   * Obtiene los menus por usuario
+   * Obtiene los menus por usuario (método estático para usar en vistas)
    * @return menus
    */
-  public function cargarMenus()
+  public static function cargarMenus()
   {
     $usuarioSession = session('usuario');
 
     if ($usuarioSession == null) {
       session(['usuario' => null]);
-      return false;
+      return [];
     }
 
     $usuario = DB::table('usuario')
       ->where('usuario.id', '=', $usuarioSession['id'])
       ->get()->first();
 
-
-
     if ($usuario == null) {
       session(['usuario' => null]);
-      return false;
+      return [];
     }
 
     $headers = DB::table('menu')
@@ -392,7 +390,7 @@ trait SpaceUtil
       ->orderBy('vista.peso_general', 'ASC')
       ->orderBy('vista.orden', 'ASC')
       ->get();
-    //dd($usuario->rol);
+
     $menus = DB::table('menu')
       ->leftJoin('vista', 'vista.id', '=', 'menu.vista')
       ->where('menu.rol', '=', $usuario->rol)
@@ -403,8 +401,6 @@ trait SpaceUtil
       ->orderBy('vista.orden', 'ASC')
       ->get();
 
-    //dd($headers);
-
     foreach ($headers as $h) {
       $submenus = [];
       foreach ($menus as $m) {
@@ -414,7 +410,12 @@ trait SpaceUtil
         $h->submenus = $submenus;
       }
       if ($h->codigo_grupo == 'comandasPrep') {
-        $comandas = ComandasController::getBySucursal($this->getUsuarioSucursal());
+        $sucursalId = DB::table('usuario')
+          ->join('sucursal', 'sucursal.id', '=', 'usuario.sucursal')
+          ->select('sucursal.id')
+          ->where('usuario.id', '=', $usuarioSession['id'])
+          ->get()->first();
+        $comandas = ComandasController::getBySucursal($sucursalId->id ?? null);
         foreach ($comandas as $c) {
           $submenu = new \stdClass();
           $submenu->ruta = url("/comandas/preparacion/comanda/{$c->id}");

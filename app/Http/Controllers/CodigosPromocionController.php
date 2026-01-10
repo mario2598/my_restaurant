@@ -24,7 +24,6 @@ class CodigosPromocionController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'promociones' => $this->getAllPromos(),
             'tipos' => SisTipoController::getByCodGeneralGrupo("DESCUENTOS_COD_PROM"),
             'panel_configuraciones' => $this->getPanelConfiguraciones()

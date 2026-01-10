@@ -26,8 +26,6 @@ class GastosController extends Controller
     public function goNuevoGasto()
     {
         $data = [
-            'menus' => $this->cargarMenus(),
-            'menus' => $this->cargarMenus(),
             'datos' => [],
             'proveedores' => MantenimientoProveedorController::getProvedoresActivos(),
             'tipos_gasto' => $this->getTiposGasto(),
@@ -49,7 +47,6 @@ class GastosController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'proveedores' => $this->getProveedores(),
             'gasto' => $gasto,
             'tipos_gasto' => $this->getTiposGasto(),
@@ -73,7 +70,6 @@ class GastosController extends Controller
         $tipo_gasto = $this->getTiposGasto();
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'proveedores' => $this->getProveedores(),
             'gasto' => $gasto,
             'tipos_gasto' => $tipo_gasto,
@@ -108,7 +104,6 @@ class GastosController extends Controller
         $gasto->fecha = $this->fechaFormat($gasto->fecha);
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'proveedores' => $this->getProveedores(),
             'gasto' => $gasto,
             'tipos_pago' => $this->getTiposPago(),
@@ -135,7 +130,6 @@ class GastosController extends Controller
         $gasto->fecha = $this->fechaFormat($gasto->fecha);
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'proveedores' => $this->getProveedores(),
             'gasto' => $gasto,
             'tipos_pago' => $this->getTiposPago(),
@@ -172,7 +166,6 @@ class GastosController extends Controller
 
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'totalGastos', 0,
             'gastos' => [],
             'filtros' => $filtros,
@@ -274,7 +267,6 @@ class GastosController extends Controller
         session(["filtrosGastos" => $filtros1]);
         
         $data = [
-            'menus' => $this->cargarMenus(),
             'totalGastos' => $totalGastos,
             'totalRechazados' => $totalRechazados,
             'gastos' => $gastos,
@@ -421,7 +413,6 @@ class GastosController extends Controller
     {
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'datos' => $datos,
             'tipos_gasto' =>  $this->getTiposGasto(),
             'tipos_pago' => $this->getTiposPago(),

@@ -108,7 +108,6 @@ class RestauranteController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'restaurantes' => $restaurantes,
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
@@ -137,7 +136,6 @@ class RestauranteController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'sucursales' => $this->getSucursales(),
             'restaurante' => $restaurante,
             'panel_configuraciones' => $this->getPanelConfiguraciones()
@@ -154,7 +152,6 @@ class RestauranteController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'sucursales' => $this->getSucursales(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
@@ -227,7 +224,6 @@ class RestauranteController extends Controller
             return redirect('/');
         }
         $data = [
-            'menus' => $this->cargarMenus(),
             'restaurante' => $restaurante,
             'salones' => $this->getSalones($id),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
@@ -557,7 +553,6 @@ class RestauranteController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'mobiliario' => $mobiliario,
             'mobiliario_disponible' => $this->getMobiliarioDisponible(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
@@ -582,7 +577,6 @@ class RestauranteController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'salon' => $idSalon,
             'restaurante' => $idRestaurante,
             'mobiliario_disponible' => $this->getMobiliarioDisponible(),
@@ -665,7 +659,6 @@ class RestauranteController extends Controller
         ];
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'filtros' => $filtros,
             'productos' => [],
             'categorias' => $this->getCategorias(),
@@ -707,7 +700,6 @@ class RestauranteController extends Controller
         ];
         //  dd($productos);
         $data = [
-            'menus' => $this->cargarMenus(),
             'productos' => $productos,
             'categorias' => $this->getCategorias(),
             'impuestos' => $this->getImpuestos(),
@@ -725,7 +717,6 @@ class RestauranteController extends Controller
 
         $datos = [];
         $data = [
-            'menus' => $this->cargarMenus(),
             'datos' => $datos,
             'categorias' => $this->getCategorias(),
             'impuestos' => $this->getImpuestos(),
@@ -824,7 +815,6 @@ class RestauranteController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'datos' => $datos,
             'categorias' => $this->getCategorias(),
             'impuestos' => $this->getImpuestos(),
@@ -853,7 +843,6 @@ class RestauranteController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'producto' => $producto,
             'categorias' => $this->getCategorias(),
             'impuestos' => $this->getImpuestos(),
@@ -938,7 +927,6 @@ class RestauranteController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'producto' => $producto,
             'categorias' => $this->getCategorias(),
             'impuestos' => $this->getImpuestos(),
@@ -999,7 +987,6 @@ class RestauranteController extends Controller
         ];
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'filtros' => $filtros,
             'restaurantes' => [],
             'sucursales' => $this->getSucursales(),
@@ -1032,7 +1019,6 @@ class RestauranteController extends Controller
         ];
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'restaurantes' => $this->getRestaurantesSucursal($filtroSucursal),
             'sucursales' => $this->getSucursalesAndBodegas(),
             'filtros' => $filtros,
@@ -1073,7 +1059,6 @@ class RestauranteController extends Controller
             ->get();
         // dd($productos_menu);
         $data = [
-            'menus' => $this->cargarMenus(),
             'productos_menu' => $productos_menu,
             'restaurante' => $restaurante,
             'menusRestaurante' => $menusRestaurante,

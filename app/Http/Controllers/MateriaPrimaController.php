@@ -32,7 +32,6 @@ class MateriaPrimaController extends Controller
         ];
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'filtros' => $filtros,
             'productos' => $this->getProductosMatPrima(),
             'categorias' => $this->getCategorias(),
@@ -61,7 +60,6 @@ class MateriaPrimaController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'producto' => $materia_prima,
             'proveedores' => $this->getProveedores(),
             'proveedor' => 0,
@@ -143,7 +141,6 @@ class MateriaPrimaController extends Controller
         ];
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'filtros' => $filtros,
             'inventarios' => [],
             'sucursales' => $this->getSucursalesAndBodegas(),
@@ -172,7 +169,6 @@ class MateriaPrimaController extends Controller
             'sucursal' => $filtroSucursal,
         ];
         $data = [
-            'menus' => $this->cargarMenus(),
             'inventarios' => MateriaPrimaController::getInventario($filtroSucursal),
             'productos_externos' => MateriaPrimaController::getProductos(),
             'sucursales' => $this->getSucursalesAndBodegas(),
@@ -228,7 +224,6 @@ class MateriaPrimaController extends Controller
             'sucursal' => $filtroSucursal,
         ];
         $data = [
-            'menus' => $this->cargarMenus(),
             'inventarios' => MateriaPrimaController::getInventario($filtroSucursal),
             'productos_externos' => MateriaPrimaController::getProductos(),
             'sucursales' => $this->getSucursalesAndBodegas(),
@@ -487,7 +482,6 @@ class MateriaPrimaController extends Controller
         }
 
         $data = [
-            'menus' => $this->cargarMenus(),
             'proveedores' => $this->getProveedores(),
             'producto' => $producto,
             'panel_configuraciones' => $this->getPanelConfiguraciones()
