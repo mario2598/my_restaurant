@@ -53,7 +53,6 @@ class MantenimientoClientesController extends Controller
         $id = $request->input('mdl_generico_ipt_id');
         $apellidos = $request->input('mdl_generico_ipt_apellidos');
 
-        try {
             DB::beginTransaction();
             if ($id == '-1' || $id == null || $this->isEmpty($id)) {
                 $id = DB::table('cliente')->insertGetId([
@@ -79,10 +78,7 @@ class MantenimientoClientesController extends Controller
             }
             DB::commit();
             return $this->responseAjaxSuccess("El cliente se guardó correctamente.", $id);
-        } catch (QueryException $ex) {
-            DB::rollBack();
-            return $this->responseAjaxServerError("Ocurrió un error guardando el cliente.", []);
-        }
+ 
     }
 
     /**

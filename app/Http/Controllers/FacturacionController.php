@@ -2779,6 +2779,41 @@ class FacturacionController extends Controller
             return $this->responseAjaxServerError('La orden no existe.', []);
         }
 
+        // Verificar si no trae detalles y todos los detalles ya están completamente pagados
+        if (empty($detalles) || count($detalles) === 0) {
+            $detallesOrden = DB::table('detalle_orden')
+                ->where('orden', '=', $orden['id'])
+                ->get();
+            
+            // Verificar si todos los detalles están completamente pagados
+            $todosCompletamentePagados = true;
+            foreach ($detallesOrden as $detalleAux) {
+                if (($detalleAux->cantidad_pagada ?? 0) < $detalleAux->cantidad) {
+                    $todosCompletamentePagados = false;
+                    break;
+                }
+            }
+            
+         
+            // Si todos están pagados y el monto pagado está completo, solo actualizar pagado = 1
+            if ($todosCompletamentePagados) {
+                try {
+                    DB::table('orden')->where("id", "=", $orden['id'])->update([
+                        'pagado' => 1
+                    ]);
+                    
+                    return $this->responseAjaxSuccess("Orden marcada como pagada correctamente.", [
+                        'variasFacturas' => false,
+                        'pago_completo' => true,
+                        'numFactura' => $ordenExistente->id,
+                        'idOrden' => $ordenExistente->id
+                    ]);
+                } catch (\Exception $ex) {
+                    return $this->responseAjaxServerError("Error al actualizar el estado de la orden: " . $ex->getMessage(), []);
+                }
+            }
+        }
+
         if ($orden['codigo_descuento'] != null) {
             $verificaCodDesc = FacturacionController::verificaCodDescuento($orden['codigo_descuento']['codigo']);
             if (!$verificaCodDesc['estado']) {
