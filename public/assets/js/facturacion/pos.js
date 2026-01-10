@@ -2924,7 +2924,36 @@ function realizarPagoDividido(montoSinpe, montoEfectivo, montoTarjeta) {
             }
         }).fail(function (jqXHR, textStatus, errorThrown) {
             $('#mdl-loader-pago').modal("hide");
-            showError("Algo salió mal");
+            let mensajeError = "Algo salió mal";
+            
+            // Intentar extraer el mensaje del error desde la respuesta del servidor
+            if (jqXHR.responseJSON && jqXHR.responseJSON.mensaje) {
+                mensajeError = jqXHR.responseJSON.mensaje;
+            } else if (jqXHR.responseJSON && jqXHR.responseJSON.message) {
+                mensajeError = jqXHR.responseJSON.message;
+            } else if (jqXHR.responseText) {
+                try {
+                    const respuesta = JSON.parse(jqXHR.responseText);
+                    mensajeError = respuesta.mensaje || respuesta.message || mensajeError;
+                } catch (e) {
+                    // Si no es JSON válido, usar el texto de respuesta si existe
+                    if (jqXHR.status === 0) {
+                        mensajeError = "Error de conexión. Verifique su conexión a internet.";
+                    } else if (jqXHR.status === 404) {
+                        mensajeError = "Recurso no encontrado (404)";
+                    } else if (jqXHR.status === 500) {
+                        mensajeError = "Error interno del servidor (500)";
+                    } else {
+                        mensajeError = `Error ${jqXHR.status}: ${errorThrown || textStatus}`;
+                    }
+                }
+            } else if (jqXHR.status === 0) {
+                mensajeError = "Error de conexión. Verifique su conexión a internet.";
+            } else {
+                mensajeError = `Error ${jqXHR.status}: ${errorThrown || textStatus}`;
+            }
+            
+            showError(mensajeError);
         });
     } else {
         showError("La suma de los pagos no coincide con el total de la orden.");
