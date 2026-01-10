@@ -2872,8 +2872,16 @@ function realizarPagoDividido(montoSinpe, montoEfectivo, montoTarjeta) {
         ordenGestion.cliente = document.getElementById('nombreCliente').value;
 
         if (detallesSeleccionados.length === 0) {
-            showError('Seleccione al menos un detalle.');
-            return;
+            // Verificar si todos los detalles están completamente pagados
+            const todosPagados = detalles.length > 0 && detalles.every(detalle => {
+                const cantidadPagada = detalle.cantidad_pagada ?? 0;
+                return cantidadPagada >= detalle.cantidad;
+            });
+            
+            if (!todosPagados) {
+                showError('Seleccione al menos un detalle.');
+                return;
+            }
         }
         var idCliente = window.clienteSeleccionadoId == null ? -1 : window.clienteSeleccionadoId;
         $('#mdl-loader-pago').modal("show");
