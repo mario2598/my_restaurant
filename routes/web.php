@@ -230,6 +230,7 @@ Route::group(['middleware' => 'autorizated:mantClientes'], function () {
     Route::get('mant/clientes', 'MantenimientoClientesController@index');
     Route::post('mant/clientes/guardar', 'MantenimientoClientesController@guardarCliente');
     Route::post('mant/clientes/eliminarcliente', 'MantenimientoClientesController@eliminarCliente');
+    
     Route::post('mant/clientes/obtener-clientes-ajax', 'MantenimientoClientesController@obtenerClientesAjax');
     Route::post('mant/clientes/obtener-cliente', 'MantenimientoClientesController@obtenerCliente');
     Route::post('mant/clientes/obtener-info-fe-cliente', 'MantenimientoClientesController@obtenerInfoFECliente');
