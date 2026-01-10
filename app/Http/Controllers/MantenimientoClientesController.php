@@ -37,12 +37,12 @@ class MantenimientoClientesController extends Controller
             return view('mant.clientes', compact('data'));
         } catch (QueryException $ex) {
             Log::error('Error en MantenimientoClientesController@index: ' . $ex->getMessage()); 
-            dd($ex);
+
             $this->setError('Error', 'Error al cargar la página de clientes. Por favor, contacte al administrador.');
             return redirect('/');
         } catch (\Exception $ex) {
             Log::error('Error inesperado en MantenimientoClientesController@index: ' . $ex->getMessage());
-            dd($ex);
+      
             $this->setError('Error', 'Error inesperado al cargar la página de clientes.');
             return redirect('/');
         }
