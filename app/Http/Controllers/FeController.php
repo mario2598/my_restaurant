@@ -236,19 +236,24 @@ class FeController extends Controller
         $tipoProducto = $request->input("tipoProducto");
 
         $codigoProducto = null;
+        $producto = null;
        
         if( $tipoProducto == 'MENU'){
             $producto = ProductosMenuController::getById($idProducto);
-            $codigoProducto = $producto->codigo;
         }else if($tipoProducto == 'EXTERNO'){
             $producto = ProductosExternosController::getById($idProducto);
-            $codigoProducto = $producto->codigo_barra;
         }else{
             return $this->responseAjaxServerError("Tipo de producto no válido.", []);
         }
         
         if ($producto == null) {
             return $this->responseAjaxServerError("Producto no encontrado.", []);
+        }
+
+        if( $tipoProducto == 'MENU'){
+            $codigoProducto = $producto->codigo;
+        }else if($tipoProducto == 'EXTERNO'){
+            $codigoProducto = $producto->codigo_barra;
         } 
 
         $impuesto = DB::table('impuesto')
