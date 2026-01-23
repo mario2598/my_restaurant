@@ -341,3 +341,29 @@ function mostrarError(mensaje) {
 function clickProducto(id){
   editarProducto(id);
 }
+
+function aplicarFiltroProveedor() {
+  var proveedor = $('#filtro_proveedor').val();
+  
+  // Crear formulario temporal para enviar el filtro
+  var form = $('<form>', {
+    'method': 'POST',
+    'action': base_path + '/materiaPrima/productos/filtro'
+  });
+  
+  form.append($('<input>', {
+    'type': 'hidden',
+    'name': '_token',
+    'value': CSRF_TOKEN
+  }));
+  
+  form.append($('<input>', {
+    'type': 'hidden',
+    'name': 'proveedor',
+    'value': proveedor
+  }));
+  
+  // Agregar el formulario al body y enviarlo
+  $('body').append(form);
+  form.submit();
+}

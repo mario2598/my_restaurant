@@ -38,6 +38,24 @@
                 </div>
               </div>
               
+              <!-- Filtro por Proveedor -->
+              <div class="col-sm-12 col-md-4">
+                <div class="form-group">
+                  <label>Filtrar por Proveedor</label>
+                  <select class="form-control" id="filtro_proveedor" name="filtro_proveedor" onchange="aplicarFiltroProveedor()">
+                    <option value="T" {{ ($data['filtros']['proveedor'] ?? 'T') == 'T' ? 'selected' : '' }}>Todos los Proveedores</option>
+                    <option value="S" {{ ($data['filtros']['proveedor'] ?? 'T') == 'S' ? 'selected' : '' }}>Sin Proveedor</option>
+                    @if(isset($data['proveedores']))
+                      @foreach ($data['proveedores'] as $proveedor)
+                        <option value="{{ $proveedor->id ?? -1 }}" {{ ($data['filtros']['proveedor'] ?? 'T') == ($proveedor->id ?? -1) ? 'selected' : '' }}>
+                          {{ $proveedor->nombre ?? '' }}
+                        </option>
+                      @endforeach
+                    @endif
+                  </select>
+                </div>
+              </div>
+              
             </div>
          
             <div id="contenedor_productos" class="row">
@@ -53,6 +71,7 @@
                         Unidad Medida 
                       </th>
                       <th class="text-center">Precio</th>
+                      <th class="text-center">Proveedor</th>
                       
                     </tr>
                   </thead>
@@ -70,6 +89,9 @@
                     
                       <td class="text-center">
                         CRC {{number_format($g->precio ?? '0.00',2,".",",")}}
+                      </td>
+                      <td class="text-center">
+                        {{$g->nombre_proveedor ?? 'Sin proveedor'}}
                       </td>
                     </tr>
 
@@ -189,9 +211,11 @@
     function initialice() {
       var categoria= $("#select_categoria option[value='" +"{{$data['filtros']['categoria']}}"+ "']").html();
       var impuesto= $("#select_impuesto option[value='" +"{{$data['filtros']['impuesto']}}"+ "']").html();
+      var proveedor = $("#filtro_proveedor option:selected").text();
+      var filtroProveedor = "{{$data['filtros']['proveedor'] ?? 'T'}}";
 
-      var topMesage = 'Reporte de Productos del Menú';
-      var bottomMesage = 'Reporte de productos del Menú filtrado por';
+      var topMesage = 'Reporte de Productos de Materia Prima';
+      var bottomMesage = 'Reporte de productos de Materia Prima filtrado por';
     
       topMesage += '.'+' Solicitud realizada por '+"{{session('usuario')['usuario']}}"+'.';
 
@@ -204,7 +228,17 @@
       if("{{$data['filtros']['impuesto']}}" != 'T'){
         bottomMesage += ' tipo de impuesto [ '+impuesto+' ],';
       }else{
-        bottomMesage += 'tipo de impuesto [ Todos ].';
+        bottomMesage += ' tipo de impuesto [ Todos ],';
+      }
+
+      if(filtroProveedor != 'T'){
+        if(filtroProveedor == 'S'){
+          bottomMesage += ' proveedor [ Sin Proveedor ].';
+        }else{
+          bottomMesage += ' proveedor [ '+proveedor+' ].';
+        }
+      }else{
+        bottomMesage += ' proveedor [ Todos ].';
       }
 
       bottomMesage += ' {{ env('APP_NAME', 'SPACE SOFTWARE CR') }} ';

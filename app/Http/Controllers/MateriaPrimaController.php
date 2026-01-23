@@ -29,11 +29,39 @@ class MateriaPrimaController extends Controller
         $filtros = [
             'impuesto' => 'T',
             'categoria' => "T",
+            'proveedor' => 'T',
         ];
 
         $data = [
             'filtros' => $filtros,
             'productos' => $this->getProductosMatPrima(),
+            'categorias' => $this->getCategorias(),
+            'impuestos' => $this->getImpuestos(),
+            'proveedores' => $this->getProveedores(),
+            'panel_configuraciones' => $this->getPanelConfiguraciones()
+        ];
+
+        return view('materiaPrima.productos', compact('data'));
+    }
+
+    public function goProductosFiltro(Request $request)
+    {
+        if (!$this->validarSesion("mt_product")) {
+            $this->setMsjSeguridad();
+            return redirect('/');
+        }
+
+        $proveedor = $request->input('proveedor');
+
+        $filtros = [
+            'impuesto' => 'T',
+            'categoria' => "T",
+            'proveedor' => $proveedor ?? 'T',
+        ];
+
+        $data = [
+            'filtros' => $filtros,
+            'productos' => $this->getProductosMatPrima($proveedor),
             'categorias' => $this->getCategorias(),
             'impuestos' => $this->getImpuestos(),
             'proveedores' => $this->getProveedores(),
@@ -281,12 +309,23 @@ class MateriaPrimaController extends Controller
         return $productos;
     }
 
-    public function getProductosMatPrima()
+    public function getProductosMatPrima($proveedor = null)
     {
-        return  DB::table('materia_prima')
-            ->select('materia_prima.*')
-            ->where('materia_prima.activo', '=', 1)
-            ->get();
+        $query = DB::table('materia_prima')
+            ->leftJoin('proveedor', 'proveedor.id', '=', 'materia_prima.proveedor')
+            ->select('materia_prima.*', 'proveedor.nombre as nombre_proveedor')
+            ->where('materia_prima.activo', '=', 1);
+
+        if (!$this->isNull($proveedor) && $proveedor != 'T' && $proveedor != '') {
+            if ($proveedor == 'S') {
+                // Filtrar productos sin proveedor (proveedor es NULL)
+                $query->whereNull('materia_prima.proveedor');
+            } else {
+                $query->where('materia_prima.proveedor', '=', $proveedor);
+            }
+        }
+
+        return $query->get();
     }
 
     public function eliminarProducto(Request $request)

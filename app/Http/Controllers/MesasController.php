@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
 use App\Traits\SpaceUtil;
+use App\Http\Controllers\SisEstadoController;
 
 class MesasController extends Controller
 {
@@ -149,6 +150,81 @@ class MesasController extends Controller
                 'descripcion' => $ex->getMessage()
             ]);
             return $this->responseAjaxServerError("Error al eliminar la mesa", []);
+        }
+    }
+
+    public function cambiarEstadoMesa(Request $request)
+    {
+        try {
+            $idMesa = $request->input('id_mesa');
+            $nuevoEstado = $request->input('estado'); // 'MESA_DISPONIBLE' o 'MESA_OCUPADA'
+
+            if (is_null($idMesa) || $idMesa < 1) {
+                return $this->responseAjaxServerError("El ID de la mesa es obligatorio", []);
+            }
+
+            if (!in_array($nuevoEstado, ['MESA_DISPONIBLE', 'MESA_OCUPADA'])) {
+                return $this->responseAjaxServerError("Estado inválido", []);
+            }
+
+            DB::beginTransaction();
+
+            $mesaEntity = DB::table('mesa')->where('id', '=', $idMesa)->first();
+
+            if ($mesaEntity == null) {
+                DB::rollBack();
+                return $this->responseAjaxServerError("No se encontró la mesa", []);
+            }
+
+            $estadoId = SisEstadoController::getIdEstadoByCodGeneral($nuevoEstado);
+
+            DB::table('mesa')
+                ->where('id', '=', $idMesa)
+                ->update(['estado' => $estadoId]);
+
+            DB::commit();
+
+            $estadoNombre = $nuevoEstado === 'MESA_DISPONIBLE' ? 'Disponible' : 'Ocupada';
+            return $this->responseAjaxSuccess("Estado de la mesa actualizado a: " . $estadoNombre, [
+                'id' => $idMesa,
+                'estado' => $estadoId,
+                'estado_codigo' => $nuevoEstado
+            ]);
+        } catch (\Exception $ex) {
+            DB::rollBack();
+            DB::table('log')->insertGetId([
+                'id' => null,
+                'documento' => 'MesasController',
+                'descripcion' => $ex->getMessage()
+            ]);
+            return $this->responseAjaxServerError("Error al cambiar el estado de la mesa: " . $ex->getMessage(), []);
+        }
+    }
+
+    public function obtenerMesasSucursal(Request $request)
+    {
+        try {
+            $idSucursal = $request->input('id_sucursal');
+            
+            if (empty($idSucursal)) {
+                $idSucursal = $this->getUsuarioSucursal();
+            }
+
+            $mesas = DB::table('mesa')
+                ->join('sis_estado', 'sis_estado.id', '=', 'mesa.estado')
+                ->where('mesa.sucursal', '=', $idSucursal)
+                ->select('mesa.*', 'sis_estado.cod_general as estado_codigo', 'sis_estado.nombre as estado_nombre')
+                ->orderBy('mesa.numero_mesa', 'ASC')
+                ->get();
+
+            return $this->responseAjaxSuccess("Mesas cargadas correctamente", $mesas);
+        } catch (\Exception $ex) {
+            DB::table('log')->insertGetId([
+                'id' => null,
+                'documento' => 'MesasController',
+                'descripcion' => $ex->getMessage()
+            ]);
+            return $this->responseAjaxServerError("Error al cargar las mesas: " . $ex->getMessage(), []);
         }
     }
 }

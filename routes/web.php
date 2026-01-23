@@ -144,6 +144,8 @@ Route::group(['middleware' => 'autorizated:mesasAdmin'], function () {
     Route::get('mobiliario/mesas/cargar', 'MesasController@cargarMesasAdmin');
     Route::post('mobiliario/mesas/guardarMesa', 'MesasController@guardarMesa');
     Route::post('mobiliario/mesas/eliminarMesa', 'MesasController@eliminarMesa');
+    Route::post('mobiliario/mesas/cambiar-estado', 'MesasController@cambiarEstadoMesa');
+    Route::post('mobiliario/mesas/obtener-mesas', 'MesasController@obtenerMesasSucursal');
 });
 
 /*
@@ -158,11 +160,14 @@ Route::group(['middleware' => 'autorizated:facFac'], function () {
     Route::post('facturacion/pos/pagarOrden', 'FacturacionController@pagarOrden');
     Route::get('facturacion/pos/cargarPosProductos', 'FacturacionController@cargarPosProductosAjax');
     Route::get('facturacion/pos', 'FacturacionController@goPos');
+    Route::post('facturacion/mesas/cambiar-estado', 'MesasController@cambiarEstadoMesa');
+    Route::post('facturacion/mesas/obtener-mesas', 'MesasController@obtenerMesasSucursal');
     Route::post('facturacion/buscar-clientes', 'FacturacionController@buscarClientes');
     Route::post('facturacion/obtener-cliente', 'FacturacionController@obtenerCliente');
     Route::post('facturacion/clientes/guardar', 'MantenimientoClientesController@guardarCliente');
     Route::post('facturacion/clientes/obtener-info-fe-cliente', 'MantenimientoClientesController@obtenerInfoFECliente');
     Route::post('facturacion/clientes/guardar-info-fe-cliente', 'MantenimientoClientesController@guardarInfoFECliente');
+ 
 });
 
 Route::group(['middleware' => 'autorizated:prod_ext_inv'], function () {
@@ -428,6 +433,7 @@ Route::post('menu/menus/cambiarComanda', 'ProductosMenuController@cambiarComande
 
 /*****************Materia Prima**************************** */
 Route::get('materiaPrima/productos', 'MateriaPrimaController@goProductos');
+Route::post('materiaPrima/productos/filtro', 'MateriaPrimaController@goProductosFiltro');
 Route::post('materiaPrima/producto/editar', 'MateriaPrimaController@goEditarProducto');
 Route::post('materiaPrima/producto/guardar', 'MateriaPrimaController@guardarProducto');
 Route::post('materiaPrima/producto/guardarAjax', 'MateriaPrimaController@guardarProductoAjax');
@@ -526,9 +532,10 @@ Route::post('mant/grupoPromocion/eliminarDetallePromocion', 'MantGrupoPromocione
 
 
 /*****************Grupos Promociones**************************** */
-Route::get('usuarioExterno/menu', 'UsuarioExternoController@goMenu');
+Route::get('/menu', 'UsuarioExternoController@goMenu');
 Route::post('usuarioExterno/menu/cargarTiposGeneral', 'UsuarioExternoController@cargarTiposGeneral');
 Route::post('usuarioExterno/menuMobile/cargarTiposGeneral', 'UsuarioExternoController@cargarTiposGeneralMobile');
+Route::post('usuarioExterno/menu/mesas-disponibles', 'UsuarioExternoController@obtenerMesasDisponibles');
 
 
 /** PRODUCTOS MENU */

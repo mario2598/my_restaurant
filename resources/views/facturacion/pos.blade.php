@@ -414,6 +414,233 @@
         background-color: #fff3cd !important;
         border-color: #ffc107 !important;
     }
+
+    /* Estilos para el componente flotante de gestión de mesas */
+    #mesas-flotante-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1050;
+        transition: all 0.3s ease;
+    }
+
+    #mesas-flotante-container.colapsado {
+        bottom: 20px;
+        right: 20px;
+    }
+
+    #btn-toggle-mesas {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        font-size: 24px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #btn-toggle-mesas:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+
+    #panel-mesas {
+        position: absolute;
+        bottom: 80px;
+        right: 0;
+        width: 350px;
+        max-height: 500px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        animation: slideUp 0.3s ease;
+    }
+
+    #panel-mesas.mostrar {
+        display: flex;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    #panel-mesas .panel-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 10px 10px 0 0;
+    }
+
+    #panel-mesas .panel-header h5 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    #panel-mesas .panel-body {
+        padding: 15px;
+        overflow-y: auto;
+        max-height: 400px;
+        flex: 1;
+    }
+
+    #panel-mesas .mesa-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        transition: all 0.2s ease;
+        background: #f8f9fa;
+    }
+
+    #panel-mesas .mesa-item:hover {
+        border-color: #667eea;
+        background: #f0f4ff;
+        transform: translateX(-5px);
+    }
+
+    #panel-mesas .mesa-item.disponible {
+        border-left: 4px solid #28a745;
+    }
+
+    #panel-mesas .mesa-item.ocupada {
+        border-left: 4px solid #dc3545;
+    }
+
+    #panel-mesas .mesa-info {
+        flex: 1;
+    }
+
+    #panel-mesas .mesa-info .mesa-numero {
+        font-weight: 600;
+        font-size: 16px;
+        color: #333;
+        margin-bottom: 4px;
+    }
+
+    #panel-mesas .mesa-info .mesa-details {
+        font-size: 12px;
+        color: #6c757d;
+    }
+
+    #panel-mesas .mesa-badge {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    #panel-mesas .mesa-badge.disponible {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    #panel-mesas .mesa-badge.ocupada {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    #panel-mesas .mesa-acciones {
+        display: flex;
+        gap: 8px;
+    }
+
+    #panel-mesas .btn-mesa {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    #panel-mesas .btn-mesa:hover {
+        transform: scale(1.05);
+    }
+
+    #panel-mesas .btn-disponible {
+        background-color: #28a745;
+        color: white;
+    }
+
+    #panel-mesas .btn-disponible:hover {
+        background-color: #218838;
+    }
+
+    #panel-mesas .btn-ocupada {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    #panel-mesas .btn-ocupada:hover {
+        background-color: #c82333;
+    }
+
+    #panel-mesas .btn-recargar {
+        width: 100%;
+        margin-top: 10px;
+        padding: 8px;
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    #panel-mesas .btn-recargar:hover {
+        background-color: #5a6268;
+    }
+
+    #panel-mesas .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+    }
+
+    #panel-mesas .empty-state i {
+        font-size: 48px;
+        margin-bottom: 10px;
+        opacity: 0.5;
+    }
+
+    @media (max-width: 768px) {
+        #panel-mesas {
+            width: calc(100vw - 40px);
+            max-width: 350px;
+            right: -10px;
+        }
+
+        #mesas-flotante-container {
+            bottom: 15px;
+            right: 15px;
+        }
+    }
 </style>
 
 <!-- Main Content -->
@@ -1401,6 +1628,36 @@
         </div>
     </div>
 </div>
+
+<!-- Componente flotante para gestión de mesas -->
+<div id="mesas-flotante-container">
+    <!-- Panel de mesas -->
+    <div id="panel-mesas">
+        <div class="panel-header">
+            <h5><i class="fas fa-table"></i> Gestión de Mesas</h5>
+            <button type="button" class="btn btn-sm text-white" onclick="togglePanelMesas()" style="background: rgba(255,255,255,0.2); border: none;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="panel-body" id="panel-mesas-body">
+            <div class="empty-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Cargando mesas...</p>
+            </div>
+        </div>
+        <div style="padding: 10px 15px; border-top: 1px solid #dee2e6;">
+            <button type="button" class="btn-recargar" onclick="cargarMesas()">
+                <i class="fas fa-sync-alt"></i> Recargar
+            </button>
+        </div>
+    </div>
+    
+    <!-- Botón flotante para abrir/cerrar -->
+    <button id="btn-toggle-mesas" onclick="togglePanelMesas()" title="Gestión de Mesas">
+        <i class="fas fa-table" id="icon-toggle-mesas"></i>
+    </button>
+</div>
+
 @endsection
 @section('script')
 <script src="{{ asset('assets/bundles/datatables/datatables.min.js') }}"></script>
@@ -1493,6 +1750,121 @@
 
         // Ocultar botón de limpiar inicialmente
         $('#btn-limpiar-busqueda').hide();
+    });
+
+    // Funciones para el componente flotante de gestión de mesas
+    function togglePanelMesas() {
+        const panel = document.getElementById('panel-mesas');
+        const icon = document.getElementById('icon-toggle-mesas');
+        
+        if (panel.classList.contains('mostrar')) {
+            panel.classList.remove('mostrar');
+            icon.className = 'fas fa-table';
+        } else {
+            panel.classList.add('mostrar');
+            icon.className = 'fas fa-chevron-down';
+            if (document.getElementById('panel-mesas-body').innerHTML.includes('Cargando mesas')) {
+                cargarMesas();
+            }
+        }
+    }
+
+    function cargarMesas() {
+        const panelBody = document.getElementById('panel-mesas-body');
+        panelBody.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Cargando mesas...</p></div>';
+
+        $.ajax({
+            url: `${base_path}/facturacion/mesas/obtener-mesas`,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                _token: CSRF_TOKEN
+            },
+            success: function(response) {
+                if (response.estado && response.datos) {
+                    mostrarMesas(response.datos);
+                } else {
+                    panelBody.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar las mesas</p></div>';
+                }
+            },
+            error: function() {
+                panelBody.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Error de conexión</p></div>';
+            }
+        });
+    }
+
+    function mostrarMesas(mesas) {
+        const panelBody = document.getElementById('panel-mesas-body');
+        
+        if (!mesas || mesas.length === 0) {
+            panelBody.innerHTML = '<div class="empty-state"><i class="fas fa-table"></i><p>No hay mesas disponibles</p></div>';
+            return;
+        }
+
+        let html = '';
+        mesas.forEach(function(mesa) {
+            const esDisponible = mesa.estado_codigo === 'MESA_DISPONIBLE';
+            const estadoClass = esDisponible ? 'disponible' : 'ocupada';
+            const estadoTexto = esDisponible ? 'Disponible' : 'Ocupada';
+            const btnAccionTexto = esDisponible ? 'Marcar Ocupada' : 'Marcar Disponible';
+            const btnAccionClass = esDisponible ? 'btn-ocupada' : 'btn-disponible';
+            const nuevoEstado = esDisponible ? 'MESA_OCUPADA' : 'MESA_DISPONIBLE';
+
+            html += `
+                <div class="mesa-item ${estadoClass}">
+                    <div class="mesa-info">
+                        <div class="mesa-numero">Mesa ${mesa.numero_mesa}</div>
+                        <div class="mesa-details">Capacidad: ${mesa.capacidad || 'N/A'} personas</div>
+                    </div>
+                    <div class="mesa-badge ${estadoClass}">${estadoTexto}</div>
+                    <div class="mesa-acciones">
+                        <button class="btn-mesa ${btnAccionClass}" onclick="cambiarEstadoMesa(${mesa.id}, '${nuevoEstado}')" title="${btnAccionTexto}">
+                            <i class="fas ${esDisponible ? 'fa-lock' : 'fa-unlock'}"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+
+        panelBody.innerHTML = html;
+    }
+
+    function cambiarEstadoMesa(idMesa, nuevoEstado) {
+        if (!confirm(`¿Está seguro de cambiar el estado de esta mesa?`)) {
+            return;
+        }
+
+        $.ajax({
+            url: `${base_path}/facturacion/mesas/cambiar-estado`,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                _token: CSRF_TOKEN,
+                id_mesa: idMesa,
+                estado: nuevoEstado
+            },
+            success: function(response) {
+                if (response.estado) {
+                    showSuccess(response.mensaje || 'Estado actualizado correctamente');
+                    cargarMesas(); // Recargar las mesas
+                } else {
+                    showError(response.mensaje || 'Error al cambiar el estado');
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                let mensajeError = "Error al cambiar el estado de la mesa";
+                if (jqXHR.responseJSON && jqXHR.responseJSON.mensaje) {
+                    mensajeError = jqXHR.responseJSON.mensaje;
+                }
+                showError(mensajeError);
+            }
+        });
+    }
+
+    // Cargar mesas automáticamente cuando se muestra el panel por primera vez
+    document.addEventListener('DOMContentLoaded', function() {
+        // Opcional: cargar mesas después de 1 segundo de carga la página
+        // setTimeout(cargarMesas, 1000);
     });
 </script>
 @endsection

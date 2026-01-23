@@ -9,6 +9,7 @@ use Illuminate\Database\QueryException;
 use App\Traits\SpaceUtil;
 use Illuminate\Support\Facades\Crypt;
 use App\Http\Controllers\FacturacionController;
+use App\Http\Controllers\SisEstadoController;
 
 class UsuarioExternoController extends Controller
 {
@@ -117,5 +118,35 @@ class UsuarioExternoController extends Controller
             'orden' => $orden
         ];
         return view('usuarioExterno.trackingOrden', compact('data'));
+    }
+
+    public function obtenerMesasDisponibles(Request $request)
+    {
+        try {
+            $idSucursal = $request->input('id_sucursal');
+            
+            if (empty($idSucursal)) {
+                $idSucursal = $this->getUsuarioSucursal();
+            }
+
+            $estadoDisponibleId = SisEstadoController::getIdEstadoByCodGeneral('MESA_DISPONIBLE');
+
+            $mesas = DB::table('mesa')
+                ->join('sis_estado', 'sis_estado.id', '=', 'mesa.estado')
+                ->where('mesa.sucursal', '=', $idSucursal)
+                ->where('mesa.estado', '=', $estadoDisponibleId)
+                ->select('mesa.*', 'sis_estado.cod_general as estado_codigo', 'sis_estado.nombre as estado_nombre')
+                ->orderBy('mesa.numero_mesa', 'ASC')
+                ->get();
+
+            return $this->responseAjaxSuccess("Mesas disponibles cargadas correctamente", $mesas);
+        } catch (\Exception $ex) {
+            DB::table('log')->insertGetId([
+                'id' => null,
+                'documento' => 'UsuarioExternoController',
+                'descripcion' => $ex->getMessage()
+            ]);
+            return $this->responseAjaxServerError("Error al cargar las mesas disponibles: " . $ex->getMessage(), []);
+        }
     }
 }
