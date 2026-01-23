@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Crypt;
 use App\Traits\SpaceUtil;
 use Illuminate\Database\QueryException;
 use App\Services\FactuXService;
-use Illuminate\Support\Facades\Log;
 
 class FeController extends Controller
 {
@@ -233,98 +232,58 @@ class FeController extends Controller
 
     public function cargarDatosFEProducto(Request $request)
     {
-        try {
-            Log::info("=== DEBUG cargarDatosFEProducto ===");
-            $idProducto = $request->input("idProducto");
-            $tipoProducto = $request->input("tipoProducto");
-            Log::info("idProducto: " . $idProducto);
-            Log::info("tipoProducto: " . $tipoProducto);
+        $idProducto = $request->input("idProducto");
+        $tipoProducto = $request->input("tipoProducto");
 
-            $codigoProducto = null;
-            $producto = null;
-           
-            if( $tipoProducto == 'MENU'){
-                $producto = ProductosMenuController::getById($idProducto);
-                if ($producto) {
-                    $codigoProducto = $producto->codigo ?? null;
-                    Log::info("Producto MENU - ID: " . ($producto->id ?? 'null') . ", Código: " . $codigoProducto . ", Nombre: " . ($producto->nombre ?? 'null'));
-                } else {
-                    Log::error("Producto MENU no encontrado para idProducto: " . $idProducto);
-                }
-            }else if($tipoProducto == 'EXTERNO'){
-                $producto = ProductosExternosController::getById($idProducto);
-                if ($producto) {
-                    $codigoProducto = $producto->codigo_barra ?? null;
-                    Log::info("Producto EXTERNO - ID: " . ($producto->id ?? 'null') . ", Código: " . $codigoProducto . ", Nombre: " . ($producto->nombre ?? 'null'));
-                } else {
-                    Log::error("Producto EXTERNO no encontrado para idProducto: " . $idProducto);
-                }
-            }else{
-                Log::error("Tipo de producto no válido: " . $tipoProducto);
-                return $this->responseAjaxServerError("Tipo de producto no válido.", []);
-            }
-            
-            if ($producto == null) {
-                Log::error("Producto no encontrado para idProducto: " . $idProducto);
-                return $this->responseAjaxServerError("Producto no encontrado.", []);
-            } 
+        $codigoProducto = null;
+       
+        if( $tipoProducto == 'MENU'){
+            $producto = ProductosMenuController::getById($idProducto);
+            $codigoProducto = $producto->codigo;
+        }else if($tipoProducto == 'EXTERNO'){
+            $producto = ProductosExternosController::getById($idProducto);
+            $codigoProducto = $producto->codigo_barra;
+        }else{
+            return $this->responseAjaxServerError("Tipo de producto no válido.", []);
+        }
+        
+        if ($producto == null) {
+            return $this->responseAjaxServerError("Producto no encontrado.", []);
+        } 
 
-            $impuestoId = $producto->impuesto ?? null;
-            Log::info("Buscando impuesto con ID: " . $impuestoId);
+        $impuesto = DB::table('impuesto')
+        ->where('id', '=', $producto->impuesto)
+        ->get()->first();
 
-            $impuesto = DB::table('impuesto')
-            ->where('id', '=', $impuestoId)
+        if($impuesto == null){
+            return $this->responseAjaxServerError("Impuesto no encontrado.", []);
+        }
+
+        $info = DB::table('producto_fe_info')
+            ->where('codigo_producto', '=', $codigoProducto)
+            ->where('tipo_producto', '=', $tipoProducto)
             ->get()->first();
 
-            if ($impuesto) {
-                Log::info("Impuesto encontrado - ID: " . $impuesto->id . ", Impuesto: " . ($impuesto->impuesto ?? 'null'));
-            } else {
-                Log::error("Impuesto no encontrado para producto.impuesto: " . $impuestoId);
-            }
-
-            if($impuesto == null){
-                return $this->responseAjaxServerError("Impuesto no encontrado.", []);
-            }
+        if ($info == null) {
+            DB::table('producto_fe_info')->insert([
+                'codigo_producto' => $codigoProducto,
+                'tipo_producto' => $tipoProducto,
+                'codigo_cabys' => "",
+                'tarifa_impuesto' => $impuesto->impuesto,
+                'unidad_medida' => "",
+                'tipo_codigo' => "01",
+                'exento' => "N",
+                'impuesto_incluido' => "S"
+            ]);
 
             $info = DB::table('producto_fe_info')
-                ->where('codigo_producto', '=', $codigoProducto)
-                ->where('tipo_producto', '=', $tipoProducto)
-                ->get()->first();
-
-            if ($info) {
-                Log::info("Info FE encontrada - ID: " . ($info->id ?? 'null') . ", Código: " . $codigoProducto);
-            } else {
-                Log::info("Info FE no encontrada, creando nueva entrada para código: " . $codigoProducto);
-            }
-
-            if ($info == null) {
-                DB::table('producto_fe_info')->insert([
-                    'codigo_producto' => $codigoProducto,
-                    'tipo_producto' => $tipoProducto,
-                    'codigo_cabys' => "",
-                    'tarifa_impuesto' => $impuesto->impuesto,
-                    'unidad_medida' => "",
-                    'tipo_codigo' => "01",
-                    'exento' => "N",
-                    'impuesto_incluido' => "S"
-                ]);
-
-                $info = DB::table('producto_fe_info')
-                ->where('codigo_producto', '=', $codigoProducto)
-                ->where('tipo_producto', '=', $tipoProducto)
-                ->get()->first();
-                Log::info("Nueva info FE creada - ID: " . ($info->id ?? 'null'));
-            }
-            
-            $info->descripcionDetalle = $producto->nombre ?? '';
-            Log::info("Respuesta final - ID: " . ($info->id ?? 'null') . ", Descripción: " . $info->descripcionDetalle);
-     
-            return $this->responseAjaxSuccess("", $info);
-        } catch (\Exception $e) {
-            Log::error("Error en cargarDatosFEProducto: " . $e->getMessage());
-            Log::error("Stack trace: " . $e->getTraceAsString());
-            return $this->responseAjaxServerError("Error al cargar datos FE: " . $e->getMessage(), []);
+            ->where('codigo_producto', '=', $codigoProducto)
+            ->where('tipo_producto', '=', $tipoProducto)
+            ->get()->first();
         }
+        $info->descripcionDetalle = $producto->nombre;
+ 
+        return $this->responseAjaxSuccess("", $info);
     }
 
     private function validarDatosFE(Request $request){

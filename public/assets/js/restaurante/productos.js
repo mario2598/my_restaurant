@@ -390,10 +390,6 @@ function clickConfigFE(idProducto) {
 }
 
 function cargarDatosFE() {
-    console.log("=== DEBUG cargarDatosFE ===");
-    console.log("id_prod_seleccionado:", id_prod_seleccionado);
-    console.log("tipoProducto: MENU");
-    
     $("#loader").fadeIn();
     $.ajax({
         url: '/productos/cargarDatosFE',
@@ -404,14 +400,8 @@ function cargarDatosFE() {
             tipoProducto: 'MENU'
         }
     }).done(function (respuesta) {
-        console.log("=== Respuesta del servidor ===");
-        console.log("Respuesta completa:", respuesta);
-        console.log("respuesta.estado:", respuesta.estado);
-        console.log("respuesta.mensaje:", respuesta.mensaje);
-        console.log("respuesta.datos:", respuesta.datos);
 
         if (!respuesta.estado) {
-            console.error("Error en respuesta:", respuesta.mensaje);
             showError(respuesta.mensaje);
             return;
         }
@@ -428,26 +418,12 @@ function cargarDatosFE() {
         $('#mdl-config-fe').modal('show');
 
     }).fail(function (jqXHR, textStatus, errorThrown) {
-        console.error("=== Error en AJAX ===");
-        console.error("jqXHR:", jqXHR);
-        console.error("textStatus:", textStatus);
-        console.error("errorThrown:", errorThrown);
-        console.error("Response Text:", jqXHR.responseText);
         showError("Ocurrió un error consultando el servidor");
     });
     $("#loader").fadeOut();
 }
 
 function cargarDatosFEHtml(info) {
-    console.log("=== DEBUG cargarDatosFEHtml ===");
-    console.log("info completa:", info);
-    console.log("codigo_cabys:", info.codigo_cabys);
-    console.log("unidad_medida:", info.unidad_medida);
-    console.log("tarifa_impuesto:", info.tarifa_impuesto);
-    console.log("tipo_codigo:", info.tipo_codigo);
-    console.log("descripcionDetalle:", info.descripcionDetalle);
-    console.log("id_producto:", info.id_producto);
-    
     $('#codigo_cabys').val(info.codigo_cabys);
     $('#unidad_medida_fe').val(info.unidad_medida);
     $('#tarifa_impuesto').val(info.tarifa_impuesto + " %");
