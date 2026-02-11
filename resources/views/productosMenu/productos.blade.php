@@ -885,8 +885,8 @@
         
     });
     
-    // Funciones auxiliares para expandir/colapsar secciones (disponibles globalmente)
-    function expandirSeccion(sectionId) {
+    // Asegurar que las funciones estén disponibles globalmente
+    window.expandirSeccion = function(sectionId) {
         var $section = $('#' + sectionId);
         var $card = $section.closest('.collapsible-section');
         var $header = $card.find('.collapsible-header');
@@ -900,7 +900,7 @@
         }
     }
     
-    function colapsarSeccion(sectionId) {
+    window.colapsarSeccion = function(sectionId) {
         var $section = $('#' + sectionId);
         var $card = $section.closest('.collapsible-section');
         var $header = $card.find('.collapsible-header');
@@ -913,10 +913,10 @@
             $header.addClass('collapsed');
             $icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
         }
-    }
+    };
     
     // Función para colapsar/expandir secciones
-    function toggleCollapsible(sectionId) {
+    window.toggleCollapsible = function(sectionId) {
         var $section = $('#' + sectionId);
         
         if ($section.hasClass('collapsed')) {
@@ -924,7 +924,7 @@
         } else {
             colapsarSeccion(sectionId);
         }
-    }
+    };
 </script>
 
 <script src="{{ asset('assets/bundles/datatables/datatables.min.js') }}"></script>

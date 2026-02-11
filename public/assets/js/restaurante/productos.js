@@ -597,7 +597,7 @@ function guardarConfigFE() {
 }
 
 // Funciones para manejar extras genéricos
-function cargarExtrasGenericosDisponibles() {
+window.cargarExtrasGenericosDisponibles = function() {
     $.ajax({
         url: '/materiaPrima/extras-generico/obtener',
         type: 'get',
@@ -716,9 +716,9 @@ function cargarExtrasGenericosDisponibles() {
     }).fail(function(jqXHR, textStatus, errorThrown) {
         showError("Ocurrió un error consultando el servidor");
     });
-}
+};
 
-function agregarExtrasGenericosSeleccionados() {
+window.agregarExtrasGenericosSeleccionados = function() {
     if (!id_prod_seleccionado || id_prod_seleccionado == '-1') {
         showError("Debe seleccionar un producto primero");
         return;
@@ -773,22 +773,22 @@ function agregarExtrasGenericosSeleccionados() {
     } else {
         showError("No se pudieron agregar los extras genéricos");
     }
-}
+};
 
 // Funciones para selección rápida de extras genéricos
-function seleccionarTodosExtrasGenericos() {
+window.seleccionarTodosExtrasGenericos = function() {
     $('.extra-checkbox').prop('checked', true);
     actualizarContadorExtrasSeleccionados();
     showSuccess("Todos los extras han sido seleccionados");
-}
+};
 
-function deseleccionarTodosExtrasGenericos() {
+window.deseleccionarTodosExtrasGenericos = function() {
     $('.extra-checkbox').prop('checked', false);
     actualizarContadorExtrasSeleccionados();
     showSuccess("Todos los extras han sido deseleccionados");
-}
+};
 
-function seleccionarGrupoExtrasGenericos(claveGrupo) {
+window.seleccionarGrupoExtrasGenericos = function(claveGrupo) {
     $('.extra-checkbox[data-grupo-clave="' + claveGrupo + '"]').prop('checked', true);
     actualizarContadorExtrasSeleccionados();
     
@@ -796,9 +796,9 @@ function seleccionarGrupoExtrasGenericos(claveGrupo) {
     var grupoDiv = $('[data-grupo-clave="' + claveGrupo + '"]');
     var nombreGrupo = grupoDiv.find('h6 strong').text();
     showSuccess("Todos los extras del grupo '" + nombreGrupo + "' han sido seleccionados");
-}
+};
 
-function deseleccionarGrupoExtrasGenericos(claveGrupo) {
+window.deseleccionarGrupoExtrasGenericos = function(claveGrupo) {
     $('.extra-checkbox[data-grupo-clave="' + claveGrupo + '"]').prop('checked', false);
     actualizarContadorExtrasSeleccionados();
     
@@ -806,9 +806,9 @@ function deseleccionarGrupoExtrasGenericos(claveGrupo) {
     var grupoDiv = $('[data-grupo-clave="' + claveGrupo + '"]');
     var nombreGrupo = grupoDiv.find('h6 strong').text();
     showSuccess("Todos los extras del grupo '" + nombreGrupo + "' han sido deseleccionados");
-}
+};
 
-function actualizarContadorExtrasSeleccionados() {
+window.actualizarContadorExtrasSeleccionados = function() {
     var cantidad = $('.extra-checkbox:checked').length;
     $('#contador-extras-seleccionados').text(cantidad);
     
@@ -824,7 +824,7 @@ function actualizarContadorExtrasSeleccionados() {
     } else {
         badge.addClass('badge-success');
     }
-}
+};
 
 // Funciones auxiliares para expandir/colapsar secciones
 function expandirSeccion(sectionId) {
