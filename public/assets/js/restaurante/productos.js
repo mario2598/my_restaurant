@@ -306,7 +306,22 @@ function agregarExtraProducto() {
 
         showSuccess("Se guardó correctamente");
         limpiarExtraProd(); // Limpiar el formulario después de guardar
+        
+        // Colapsar el formulario y expandir la lista de extras
+        colapsarSeccion('formulario-extra-section');
+        expandirSeccion('lista-extras-section');
+        
         cargarExtras();
+        
+        // Scroll suave hacia la lista de extras
+        setTimeout(function() {
+            var $lista = $('#lista-extras-section');
+            if ($lista.length) {
+                $('html, body').animate({
+                    scrollTop: $lista.offset().top - 100
+                }, 500);
+            }
+        }, 350);
     }).fail(function (jqXHR, textStatus, errorThrown) {
         showError("Ocurrió un error consultando el servidor");
     });
@@ -377,6 +392,33 @@ function cargarEditarExtrarMdl() {
     $("#multiple").prop('checked', extraGestion.multiple == 1);
     $('#ipt_cantidad_req_extra').val(extraGestion.cant_mp);
     $('#select_prod_mp_extra').val(extraGestion.materia_prima);
+    
+    // Actualizar Select2 si está disponible
+    if (typeof $.fn.select2 !== 'undefined' && $('#select_prod_mp_extra').hasClass('select2-hidden-accessible')) {
+        $('#select_prod_mp_extra').trigger('change');
+    }
+    
+    // Validar cantidad si hay materia prima seleccionada
+    if (extraGestion.materia_prima) {
+        $('#ipt_cantidad_req_extra').prop('required', true);
+        $('#label-cantidad-required').show();
+    } else {
+        $('#ipt_cantidad_req_extra').prop('required', false);
+        $('#label-cantidad-required').hide();
+    }
+    
+    // Expandir la sección del formulario cuando se edita
+    expandirSeccion('formulario-extra-section');
+    
+    // Scroll suave hacia el formulario
+    setTimeout(function() {
+        var $formulario = $('#formulario-extra-section');
+        if ($formulario.length) {
+            $('html, body').animate({
+                scrollTop: $formulario.offset().top - 100
+            }, 500);
+        }
+    }, 350);
 }
 
 
@@ -552,4 +594,270 @@ function guardarConfigFE() {
         showError("Ocurrió un error consultando el servidor");
     });
     $("#loader").fadeOut();
+}
+
+// Funciones para manejar extras genéricos
+function cargarExtrasGenericosDisponibles() {
+    $.ajax({
+        url: '/materiaPrima/extras-generico/obtener',
+        type: 'get',
+        data: {
+            _token: CSRF_TOKEN
+        }
+    }).done(function(respuesta) {
+        if (!respuesta.estado) {
+            showError(respuesta.mensaje);
+            return;
+        }
+
+        var extras = respuesta.datos || [];
+        var contenedor = $('#contenedor-extras-genericos');
+        contenedor.html('');
+
+        if (extras.length === 0) {
+            contenedor.html('<p class="text-muted text-center">No hay extras genéricos disponibles. <a href="/materiaPrima/extras-generico" target="_blank">Crear extras genéricos</a></p>');
+            $('#card-extras-genericos').show();
+            return;
+        }
+
+        // Agrupar por grupo + es_requerido + multiple
+        var grupos = {};
+        extras.forEach(function(extra) {
+            var grupoNombre = extra.dsc_grupo || 'Sin grupo';
+            var claveGrupo = grupoNombre + '_' + (extra.es_requerido || 0) + '_' + (extra.multiple || 0);
+            
+            if (!grupos[claveGrupo]) {
+                grupos[claveGrupo] = {
+                    nombre: grupoNombre,
+                    es_requerido: extra.es_requerido || 0,
+                    multiple: extra.multiple || 0,
+                    extras: [],
+                    clave: claveGrupo
+                };
+            }
+            grupos[claveGrupo].extras.push(extra);
+        });
+
+        // Botones de selección rápida (todos/ninguno)
+        var botonesRapidos = $('<div class="mb-3 text-center" style="border-bottom: 2px solid #dee2e6; padding-bottom: 10px;"></div>');
+        botonesRapidos.append('<button type="button" class="btn btn-sm btn-success mr-2" onclick="seleccionarTodosExtrasGenericos()" title="Seleccionar todos los extras">' +
+            '<i class="fas fa-check-double"></i> Seleccionar Todos</button>');
+        botonesRapidos.append('<button type="button" class="btn btn-sm btn-secondary" onclick="deseleccionarTodosExtrasGenericos()" title="Deseleccionar todos los extras">' +
+            '<i class="fas fa-times"></i> Deseleccionar Todos</button>');
+        contenedor.append(botonesRapidos);
+
+        // Crear HTML para cada grupo (ordenado por nombre de grupo)
+        Object.keys(grupos).sort().forEach(function(claveGrupo) {
+            var grupo = grupos[claveGrupo];
+            var grupoDiv = $('<div class="mb-3 border rounded p-3" style="background-color: #f8f9fa;" data-grupo-clave="' + claveGrupo + '"></div>');
+            
+            // Encabezado del grupo con información de configuración y botones de selección
+            var headerDiv = $('<div class="d-flex justify-content-between align-items-center mb-2"></div>');
+            
+            var headerInfo = $('<div></div>');
+            headerInfo.append('<h6 class="text-primary mb-0" style="display: inline-block;">');
+            headerInfo.append('<i class="fas fa-layer-group"></i> <strong>' + grupo.nombre + '</strong> - ');
+            headerInfo.append('Requerido: ' + (grupo.es_requerido == 1 ? '<span class="badge badge-warning badge-sm">Sí</span>' : '<span class="badge badge-secondary badge-sm">No</span>') + ' - ');
+            headerInfo.append('Múltiple: ' + (grupo.multiple == 1 ? '<span class="badge badge-primary badge-sm">Sí</span>' : '<span class="badge badge-secondary badge-sm">No</span>'));
+            headerInfo.append('</h6>');
+            
+            var botonesGrupo = $('<div></div>');
+            botonesGrupo.append('<button type="button" class="btn btn-xs btn-success mr-1" onclick="seleccionarGrupoExtrasGenericos(\'' + claveGrupo + '\')" title="Seleccionar todo el grupo">' +
+                '<i class="fas fa-check"></i> Todo</button>');
+            botonesGrupo.append('<button type="button" class="btn btn-xs btn-secondary" onclick="deseleccionarGrupoExtrasGenericos(\'' + claveGrupo + '\')" title="Deseleccionar todo el grupo">' +
+                '<i class="fas fa-times"></i> Ninguno</button>');
+            
+            headerDiv.append(headerInfo);
+            headerDiv.append(botonesGrupo);
+            grupoDiv.append(headerDiv);
+            
+            // Contenedor para los checkboxes del grupo
+            var extrasContainer = $('<div class="extras-grupo-container" style="max-height: 200px; overflow-y: auto;"></div>');
+            
+            grupo.extras.forEach(function(extra) {
+                var extraDiv = $('<div class="form-check mb-2" style="padding-left: 2rem;"></div>');
+                var checkbox = $('<input class="form-check-input extra-checkbox" type="checkbox" value="' + extra.id + '" id="extra_gen_' + extra.id + '" data-extra=\'' + JSON.stringify(extra).replace(/'/g, "&#39;") + '\' data-grupo-clave="' + claveGrupo + '">');
+                var label = $('<label class="form-check-label" for="extra_gen_' + extra.id + '" style="cursor: pointer;">' + 
+                    extra.descripcion + ' - <span class="text-success font-weight-bold">' + currencyCRFormat(extra.precio) + '</span>' +
+                    '</label>');
+                
+                // Hacer el label clickeable
+                label.on('click', function(e) {
+                    if (e.target.tagName !== 'INPUT') {
+                        checkbox.prop('checked', !checkbox.prop('checked'));
+                    }
+                });
+                
+                extraDiv.append(checkbox);
+                extraDiv.append(label);
+                extrasContainer.append(extraDiv);
+            });
+            
+            grupoDiv.append(extrasContainer);
+            contenedor.append(grupoDiv);
+        });
+
+        // Agregar botón para agregar seleccionados con contador
+        var botonAgregarDiv = $('<div class="mt-3 text-center" style="border-top: 2px solid #dee2e6; padding-top: 15px;"></div>');
+        botonAgregarDiv.append('<p class="mb-2"><strong>Extras seleccionados: <span id="contador-extras-seleccionados" class="badge badge-info">0</span></strong></p>');
+        botonAgregarDiv.append('<button type="button" class="btn btn-primary btn-lg btn-block" onclick="agregarExtrasGenericosSeleccionados()">' +
+            '<i class="fas fa-plus-circle"></i> Agregar extras seleccionados al producto</button>');
+        contenedor.append(botonAgregarDiv);
+        
+        // Actualizar contador cuando cambien los checkboxes
+        $(document).on('change', '.extra-checkbox', function() {
+            actualizarContadorExtrasSeleccionados();
+        });
+        
+        // Inicializar contador
+        actualizarContadorExtrasSeleccionados();
+
+        $('#card-extras-genericos').show();
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+        showError("Ocurrió un error consultando el servidor");
+    });
+}
+
+function agregarExtrasGenericosSeleccionados() {
+    if (!id_prod_seleccionado || id_prod_seleccionado == '-1') {
+        showError("Debe seleccionar un producto primero");
+        return;
+    }
+
+    var extrasSeleccionados = [];
+    $('#contenedor-extras-genericos input[type="checkbox"]:checked').each(function() {
+        var extraData = $(this).data('extra');
+        if (extraData) {
+            extrasSeleccionados.push(extraData);
+        }
+    });
+
+    if (extrasSeleccionados.length === 0) {
+        showError("Debe seleccionar al menos un extra genérico");
+        return;
+    }
+
+    // Agregar cada extra genérico al producto
+    var agregados = 0;
+    var total = extrasSeleccionados.length;
+
+    extrasSeleccionados.forEach(function(extra) {
+        $.ajax({
+            url: '/menu/productos/guardarExtProd',
+            type: 'post',
+            data: {
+                _token: CSRF_TOKEN,
+                id: '-1',
+                precio: extra.precio,
+                dsc: extra.descripcion,
+                dsc_grupo: extra.dsc_grupo,
+                producto: id_prod_seleccionado,
+                es_Requerido: extra.es_requerido == 1 ? 'true' : 'false',
+                multiple: extra.multiple == 1 ? 'true' : 'false',
+                materia_prima_extra: extra.materia_prima || '',
+                cantidad_mp_extra: extra.cant_mp || ''
+            },
+            async: false
+        }).done(function(respuesta) {
+            if (respuesta.estado) {
+                agregados++;
+            }
+        });
+    });
+
+    if (agregados > 0) {
+        showSuccess("Se agregaron " + agregados + " de " + total + " extras genéricos correctamente");
+        cargarExtras();
+        // Limpiar checkboxes
+        $('#contenedor-extras-genericos input[type="checkbox"]').prop('checked', false);
+    } else {
+        showError("No se pudieron agregar los extras genéricos");
+    }
+}
+
+// Funciones para selección rápida de extras genéricos
+function seleccionarTodosExtrasGenericos() {
+    $('.extra-checkbox').prop('checked', true);
+    actualizarContadorExtrasSeleccionados();
+    showSuccess("Todos los extras han sido seleccionados");
+}
+
+function deseleccionarTodosExtrasGenericos() {
+    $('.extra-checkbox').prop('checked', false);
+    actualizarContadorExtrasSeleccionados();
+    showSuccess("Todos los extras han sido deseleccionados");
+}
+
+function seleccionarGrupoExtrasGenericos(claveGrupo) {
+    $('.extra-checkbox[data-grupo-clave="' + claveGrupo + '"]').prop('checked', true);
+    actualizarContadorExtrasSeleccionados();
+    
+    // Obtener nombre del grupo para el mensaje
+    var grupoDiv = $('[data-grupo-clave="' + claveGrupo + '"]');
+    var nombreGrupo = grupoDiv.find('h6 strong').text();
+    showSuccess("Todos los extras del grupo '" + nombreGrupo + "' han sido seleccionados");
+}
+
+function deseleccionarGrupoExtrasGenericos(claveGrupo) {
+    $('.extra-checkbox[data-grupo-clave="' + claveGrupo + '"]').prop('checked', false);
+    actualizarContadorExtrasSeleccionados();
+    
+    // Obtener nombre del grupo para el mensaje
+    var grupoDiv = $('[data-grupo-clave="' + claveGrupo + '"]');
+    var nombreGrupo = grupoDiv.find('h6 strong').text();
+    showSuccess("Todos los extras del grupo '" + nombreGrupo + "' han sido deseleccionados");
+}
+
+function actualizarContadorExtrasSeleccionados() {
+    var cantidad = $('.extra-checkbox:checked').length;
+    $('#contador-extras-seleccionados').text(cantidad);
+    
+    // Cambiar color del badge según la cantidad
+    var badge = $('#contador-extras-seleccionados');
+    badge.removeClass('badge-info badge-warning badge-success');
+    if (cantidad === 0) {
+        badge.addClass('badge-secondary');
+    } else if (cantidad < 5) {
+        badge.addClass('badge-info');
+    } else if (cantidad < 10) {
+        badge.addClass('badge-warning');
+    } else {
+        badge.addClass('badge-success');
+    }
+}
+
+// Funciones auxiliares para expandir/colapsar secciones
+function expandirSeccion(sectionId) {
+    var $section = $('#' + sectionId);
+    var $card = $section.closest('.collapsible-section');
+    var $header = $card.find('.collapsible-header');
+    var $icon = $header.find('.collapse-icon i');
+    
+    if ($section.hasClass('collapsed')) {
+        $section.removeClass('collapsed').addClass('expanded');
+        $section.slideDown(300);
+        $header.removeClass('collapsed');
+        $icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+    }
+}
+
+function colapsarSeccion(sectionId) {
+    var $section = $('#' + sectionId);
+    var $card = $section.closest('.collapsible-section');
+    var $header = $card.find('.collapsible-header');
+    var $icon = $header.find('.collapse-icon i');
+    
+    if (!$section.hasClass('collapsed')) {
+        $section.slideUp(300, function() {
+            $section.addClass('collapsed').removeClass('expanded');
+        });
+        $header.addClass('collapsed');
+        $icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+    }
+}
+
+// Función para formatear moneda (si no existe)
+function currencyCRFormat(value) {
+    if (value == null || value === '') return '₡0.00';
+    return '₡' + parseFloat(value).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
 }

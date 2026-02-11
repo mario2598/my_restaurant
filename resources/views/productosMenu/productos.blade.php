@@ -116,6 +116,52 @@
             transform: translateY(0);
         }
     }
+    
+    /* Estilos para secciones colapsables */
+    .collapsible-section {
+        transition: all 0.3s ease;
+    }
+    
+    .collapsible-header {
+        cursor: pointer;
+        user-select: none;
+        transition: background-color 0.2s ease;
+    }
+    
+    .collapsible-header:hover {
+        background-color: rgba(0, 123, 255, 0.1) !important;
+    }
+    
+    .collapsible-header.collapsed .collapse-icon {
+        transform: rotate(-90deg);
+    }
+    
+    .collapse-icon {
+        transition: transform 0.3s ease;
+        display: inline-block;
+    }
+    
+    .collapsible-content {
+        overflow: hidden;
+        transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease;
+        max-height: 5000px;
+    }
+    
+    .collapsible-content.collapsed {
+        max-height: 0 !important;
+        opacity: 0;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        display: none !important;
+    }
+    
+    .collapsible-content.expanded {
+        display: block !important;
+    }
+    
+    .collapsible-content.expanded {
+        opacity: 1;
+    }
 </style>
 @endsection
 
@@ -391,12 +437,45 @@
             </div>
             
             <div class="modal-body" style="padding: 20px;">
-                <!-- Formulario de nuevo extra -->
-                <div class="card border-primary mb-3">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0"><i class="fas fa-edit"></i> Agregar nuevo extra</h6>
+                <!-- Sección de extras genéricos -->
+                <div class="card border-success mb-3 collapsible-section">
+                    <div class="card-header bg-light collapsible-header collapsed" onclick="toggleCollapsible('extras-genericos-section')">
+                        <h6 class="mb-0">
+                            <i class="fas fa-layer-group"></i> Cargar extras genéricos
+                            <span class="collapse-icon float-right mr-2" style="font-size: 0.8em;">
+                                <i class="fas fa-chevron-up"></i>
+                            </span>
+                            <button type="button" class="btn btn-sm btn-success float-right mr-2" onclick="event.stopPropagation(); cargarExtrasGenericosDisponibles()">
+                                <i class="fas fa-sync-alt"></i> Cargar
+                            </button>
+                        </h6>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body collapsible-content collapsed" id="extras-genericos-section" style="display: none;">
+                        <div class="form-group">
+                            <label class="font-weight-bold">
+                                <i class="fas fa-mouse-pointer"></i> Seleccione extras genéricos para agregar al producto:
+                            </label>
+                            <small class="form-text text-muted d-block mb-2">
+                                <i class="fas fa-info-circle"></i> Use los botones para seleccionar por grupo, individualmente o todos a la vez
+                            </small>
+                            <div id="contenedor-extras-genericos" style="max-height: 400px; overflow-y: auto; border: 1px solid #dee2e6; padding: 15px; border-radius: 4px; background-color: #ffffff;">
+                                <p class="text-muted text-center">Haga clic en "Cargar" para ver los extras genéricos disponibles</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Formulario de nuevo extra -->
+                <div class="card border-primary mb-3 collapsible-section">
+                    <div class="card-header bg-light collapsible-header collapsed" onclick="toggleCollapsible('formulario-extra-section')">
+                        <h6 class="mb-0">
+                            <i class="fas fa-edit"></i> Agregar nuevo extra
+                            <span class="collapse-icon float-right" style="font-size: 0.8em;">
+                                <i class="fas fa-chevron-up"></i>
+                            </span>
+                        </h6>
+                    </div>
+                    <div class="card-body collapsible-content collapsed" id="formulario-extra-section" style="display: none;">
                         <div class="row">
                             <!-- Información básica -->
                             <div class="col-12 mb-3">
@@ -539,14 +618,17 @@
                 </div>
                 
                 <!-- Lista de extras existentes -->
-                <div class="card border-info">
-                    <div class="card-header bg-light">
+                <div class="card border-info collapsible-section">
+                    <div class="card-header bg-light collapsible-header collapsed" onclick="toggleCollapsible('lista-extras-section')">
                         <h6 class="mb-0">
                             <i class="fas fa-list"></i> Extras registrados 
                             <span class="badge badge-primary" id="badge-count-extras">0</span>
+                            <span class="collapse-icon float-right" style="font-size: 0.8em;">
+                                <i class="fas fa-chevron-up"></i>
+                            </span>
                         </h6>
                     </div>
-                    <div class="card-body" style="padding: 10px;">
+                    <div class="card-body collapsible-content collapsed" id="lista-extras-section" style="padding: 10px; display: none;">
                         <div style="max-height: 50vh; overflow-y: auto;">
                             <table class="table table-hover table-sm" id="tbl-inv">
                                 <thead class="thead-light sticky-top">
@@ -800,7 +882,49 @@
                 width: '100%'
             });
         }
+        
     });
+    
+    // Funciones auxiliares para expandir/colapsar secciones (disponibles globalmente)
+    function expandirSeccion(sectionId) {
+        var $section = $('#' + sectionId);
+        var $card = $section.closest('.collapsible-section');
+        var $header = $card.find('.collapsible-header');
+        var $icon = $header.find('.collapse-icon i');
+        
+        if ($section.hasClass('collapsed')) {
+            $section.removeClass('collapsed').addClass('expanded');
+            $section.slideDown(300);
+            $header.removeClass('collapsed');
+            $icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+        }
+    }
+    
+    function colapsarSeccion(sectionId) {
+        var $section = $('#' + sectionId);
+        var $card = $section.closest('.collapsible-section');
+        var $header = $card.find('.collapsible-header');
+        var $icon = $header.find('.collapse-icon i');
+        
+        if (!$section.hasClass('collapsed')) {
+            $section.slideUp(300, function() {
+                $section.addClass('collapsed').removeClass('expanded');
+            });
+            $header.addClass('collapsed');
+            $icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+        }
+    }
+    
+    // Función para colapsar/expandir secciones
+    function toggleCollapsible(sectionId) {
+        var $section = $('#' + sectionId);
+        
+        if ($section.hasClass('collapsed')) {
+            expandirSeccion(sectionId);
+        } else {
+            colapsarSeccion(sectionId);
+        }
+    }
 </script>
 
 <script src="{{ asset('assets/bundles/datatables/datatables.min.js') }}"></script>

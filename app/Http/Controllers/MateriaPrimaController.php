@@ -828,4 +828,285 @@ class MateriaPrimaController extends Controller
             return $this->responseAjaxServerError("Error disminuyendo el producto en el inventario de Materia Prima", "");
         }
     }
+
+    public function goExtrasGenerico()
+    {
+        if (!$this->validarSesion("mt_extras_generico")) {
+            $this->setMsjSeguridad();
+            return redirect('/');
+        }
+
+        $data = [
+            'materia_prima' => $this->getProductosMatPrima(),
+            'panel_configuraciones' => $this->getPanelConfiguraciones()
+        ];
+
+        return view('materiaPrima.extras-generico', compact('data'));
+    }
+
+    public function cargarExtrasGenericos(Request $request)
+    {
+        if (!$this->validarSesion("mt_extras_generico")) {
+            $this->setMsjSeguridad();
+            return $this->responseAjaxServerError("Error de Seguridad");
+        }
+
+        try {
+            $extras = DB::table('extra_generico')
+                ->leftjoin('materia_prima', 'materia_prima.id', '=', 'extra_generico.materia_prima')
+                ->select(
+                    'extra_generico.*',
+                    'materia_prima.nombre as nombreMp'
+                )
+                ->orderBy('extra_generico.dsc_grupo', 'ASC')
+                ->orderBy('extra_generico.es_requerido', 'DESC')
+                ->orderBy('extra_generico.multiple', 'DESC')
+                ->orderBy('extra_generico.descripcion', 'ASC')
+                ->get();
+            
+            // Normalizar los nombres de grupos para consistencia
+            foreach ($extras as $extra) {
+                if (!empty($extra->dsc_grupo)) {
+                    $extra->dsc_grupo = trim($extra->dsc_grupo);
+                    $extra->dsc_grupo = mb_convert_case($extra->dsc_grupo, MB_CASE_TITLE, "UTF-8");
+                }
+            }
+            
+            return $this->responseAjaxSuccess("", $extras);
+        } catch (QueryException $ex) {
+            DB::table('log')->insertGetId([
+                'id' => null,
+                'documento' => 'MateriaPrimaController',
+                'descripcion' => $ex->getMessage()
+            ]);
+            return $this->responseAjaxServerError("Error al cargar los extras genéricos", []);
+        }
+    }
+
+    public function obtenerExtrasGenericos(Request $request)
+    {
+        // Este método no requiere validación de sesión específica ya que se usa desde el modal de productos
+        try {
+            $extras = DB::table('extra_generico')
+                ->leftjoin('materia_prima', 'materia_prima.id', '=', 'extra_generico.materia_prima')
+                ->select(
+                    'extra_generico.*',
+                    'materia_prima.nombre as nombreMp'
+                )
+                ->orderBy('extra_generico.dsc_grupo', 'ASC')
+                ->orderBy('extra_generico.es_requerido', 'DESC')
+                ->orderBy('extra_generico.multiple', 'DESC')
+                ->orderBy('extra_generico.descripcion', 'ASC')
+                ->get();
+            
+            // Normalizar los nombres de grupos para consistencia
+            foreach ($extras as $extra) {
+                if (!empty($extra->dsc_grupo)) {
+                    $extra->dsc_grupo = trim($extra->dsc_grupo);
+                    $extra->dsc_grupo = mb_convert_case($extra->dsc_grupo, MB_CASE_TITLE, "UTF-8");
+                }
+                if (!empty($extra->descripcion)) {
+                    $extra->descripcion = trim($extra->descripcion);
+                    $extra->descripcion = mb_convert_case($extra->descripcion, MB_CASE_TITLE, "UTF-8");
+                }
+            }
+            
+            return $this->responseAjaxSuccess("", $extras);
+        } catch (QueryException $ex) {
+            DB::table('log')->insertGetId([
+                'id' => null,
+                'documento' => 'MateriaPrimaController',
+                'descripcion' => $ex->getMessage()
+            ]);
+            return $this->responseAjaxServerError("Error al cargar los extras genéricos", []);
+        }
+    }
+
+    public function obtenerGruposExtrasGenericos(Request $request)
+    {
+        try {
+            $grupos = DB::table('extra_generico')
+                ->select('dsc_grupo')
+                ->distinct()
+                ->whereNotNull('dsc_grupo')
+                ->where('dsc_grupo', '!=', '')
+                ->orderBy('dsc_grupo', 'ASC')
+                ->pluck('dsc_grupo')
+                ->map(function($grupo) {
+                    // Normalizar cada grupo
+                    $grupo = trim($grupo);
+                    return mb_convert_case($grupo, MB_CASE_TITLE, "UTF-8");
+                })
+                ->unique()
+                ->values();
+            
+            return $this->responseAjaxSuccess("", $grupos);
+        } catch (QueryException $ex) {
+            DB::table('log')->insertGetId([
+                'id' => null,
+                'documento' => 'MateriaPrimaController',
+                'descripcion' => $ex->getMessage()
+            ]);
+            return $this->responseAjaxServerError("Error al cargar los grupos", []);
+        }
+    }
+
+    public function guardarExtraGenerico(Request $request)
+    {
+        if (!$this->validarSesion("mt_extras_generico")) {
+            $this->setMsjSeguridad();
+            return $this->responseAjaxServerError("Error de Seguridad");
+        }
+
+        $id = $request->input('id');
+        $precio = $request->input('precio');
+        $dsc = $request->input('dsc');
+        $dsc_grupo = $request->input('dsc_grupo');
+        $es_Requerido = $request->input('es_Requerido');
+        $multiple = $request->input('multiple');
+        $cantidad_mp_extra = $request->input('cantidad_mp_extra');
+        $materia_prima_extra = $request->input('materia_prima_extra');
+
+        $nuevo = ($id == '-1' || $id == null);
+
+        if ($this->isNull($precio) || $precio < 0) {
+            return $this->responseAjaxServerError("Precio incorrecto");
+        }
+
+        if ($this->isNull($dsc) || $dsc == '') {
+            return $this->responseAjaxServerError("Debe indicar una descripción para el extra");
+        }
+
+        if ($this->isNull($dsc_grupo) || $dsc_grupo == '') {
+            return $this->responseAjaxServerError("Debe indicar una descripción para el grupo del extra");
+        }
+
+        // Normalizar la descripción: trim y capitalizar primera letra
+        $dsc = trim($dsc);
+        $dsc = mb_convert_case($dsc, MB_CASE_TITLE, "UTF-8");
+        
+        // Normalizar el nombre del grupo: trim, capitalizar primera letra de cada palabra
+        $dsc_grupo = trim($dsc_grupo);
+        $dsc_grupo = mb_convert_case($dsc_grupo, MB_CASE_TITLE, "UTF-8");
+
+        // Validar que si se selecciona materia prima, se debe indicar cantidad
+        if (!empty($materia_prima_extra) && (empty($cantidad_mp_extra) || $cantidad_mp_extra <= 0)) {
+            return $this->responseAjaxServerError("Si selecciona materia prima, debe indicar la cantidad requerida");
+        }
+
+        try {
+            DB::beginTransaction();
+            if ($nuevo) {
+                // Verificar si ya existe un extra genérico con la misma descripción, grupo, es_requerido y multiple (case-insensitive)
+                $es_RequeridoInt = ($es_Requerido == 'true' || $es_Requerido == true ? 1 : 0);
+                $multipleInt = ($multiple == 'true' || $multiple == true ? 1 : 0);
+                
+                $extraExistente = DB::table('extra_generico')
+                    ->whereRaw('LOWER(TRIM(descripcion)) = ?', [strtolower(trim($dsc))])
+                    ->whereRaw('LOWER(TRIM(dsc_grupo)) = ?', [strtolower($dsc_grupo)])
+                    ->where('es_requerido', '=', $es_RequeridoInt)
+                    ->where('multiple', '=', $multipleInt)
+                    ->first();
+
+                if ($extraExistente) {
+                    DB::rollBack();
+                    return $this->responseAjaxServerError("Ya existe un extra genérico con esta descripción, grupo y configuración (requerido/múltiple)");
+                }
+
+                DB::table('extra_generico')
+                    ->insert([
+                        'id' => null,
+                        'descripcion' => $dsc,
+                        'precio' => $precio,
+                        'dsc_grupo' => $dsc_grupo,
+                        'es_requerido' => ($es_Requerido == 'true' || $es_Requerido == true ? 1 : 0),
+                        'multiple' => ($multiple == 'true' || $multiple == true ? 1 : 0),
+                        'materia_prima' => !empty($materia_prima_extra) ? $materia_prima_extra : null,
+                        'cant_mp' => !empty($cantidad_mp_extra) ? $cantidad_mp_extra : null
+                    ]);
+            } else {
+                // Verificar si ya existe otro extra genérico con la misma descripción, grupo, es_requerido y multiple (excluyendo el actual, case-insensitive)
+                $es_RequeridoInt = ($es_Requerido == 'true' || $es_Requerido == true ? 1 : 0);
+                $multipleInt = ($multiple == 'true' || $multiple == true ? 1 : 0);
+                
+                $extraExistente = DB::table('extra_generico')
+                    ->whereRaw('LOWER(TRIM(descripcion)) = ?', [strtolower(trim($dsc))])
+                    ->whereRaw('LOWER(TRIM(dsc_grupo)) = ?', [strtolower($dsc_grupo)])
+                    ->where('es_requerido', '=', $es_RequeridoInt)
+                    ->where('multiple', '=', $multipleInt)
+                    ->where('id', '!=', $id)
+                    ->first();
+
+                if ($extraExistente) {
+                    DB::rollBack();
+                    return $this->responseAjaxServerError("Ya existe otro extra genérico con esta descripción, grupo y configuración (requerido/múltiple)");
+                }
+
+                DB::table('extra_generico')
+                    ->where('id', '=', $id)
+                    ->update([
+                        'precio' => $precio,
+                        'descripcion' => $dsc,
+                        'dsc_grupo' => $dsc_grupo,
+                        'es_requerido' => ($es_Requerido == 'true' || $es_Requerido == true ? 1 : 0),
+                        'multiple' => ($multiple == 'true' || $multiple == true ? 1 : 0),
+                        'materia_prima' => !empty($materia_prima_extra) ? $materia_prima_extra : null,
+                        'cant_mp' => !empty($cantidad_mp_extra) ? $cantidad_mp_extra : null
+                    ]);
+            }
+
+            DB::commit();
+            return $this->responseAjaxSuccess("Extra genérico guardado correctamente", []);
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            DB::table('log')->insertGetId([
+                'id' => null,
+                'documento' => 'MateriaPrimaController',
+                'descripcion' => $ex->getMessage()
+            ]);
+            return $this->responseAjaxServerError("Error al guardar el extra genérico: " . $ex->getMessage(), []);
+        }
+    }
+
+    public function eliminarExtraGenerico(Request $request)
+    {
+        if (!$this->validarSesion("mt_extras_generico")) {
+            $this->setMsjSeguridad();
+            return $this->responseAjaxServerError("Error de Seguridad");
+        }
+
+        $id = $request->input('id');
+
+        if ($this->isNull($id) || $id == '-1' || $id < 1) {
+            return $this->responseAjaxServerError("ID de extra genérico inválido");
+        }
+
+        try {
+            DB::beginTransaction();
+            
+            $extra = DB::table('extra_generico')
+                ->where('id', '=', $id)
+                ->first();
+
+            if ($this->isNull($extra)) {
+                DB::rollBack();
+                return $this->responseAjaxServerError("El extra genérico no existe");
+            }
+
+            DB::table('extra_generico')
+                ->where('id', '=', $id)
+                ->delete();
+
+            DB::commit();
+            return $this->responseAjaxSuccess("Extra genérico eliminado correctamente", []);
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            DB::table('log')->insertGetId([
+                'id' => null,
+                'documento' => 'MateriaPrimaController',
+                'descripcion' => $ex->getMessage()
+            ]);
+            return $this->responseAjaxServerError("Error al eliminar el extra genérico: " . $ex->getMessage(), []);
+        }
+    }
 }

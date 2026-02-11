@@ -205,6 +205,18 @@ Route::group(['middleware' => 'autorizated:mt_inv'], function () {
     Route::post('materiaPrima/inventario/inventarios/disminuir', 'MateriaPrimaController@disminuirProductoSucursal');
 });
 
+Route::group(['middleware' => 'autorizated:mt_extras_generico'], function () {
+    Route::get('materiaPrima/extras-generico', 'MateriaPrimaController@goExtrasGenerico');
+    Route::get('materiaPrima/extras-generico/cargar', 'MateriaPrimaController@cargarExtrasGenericos');
+    Route::post('materiaPrima/extras-generico/guardar', 'MateriaPrimaController@guardarExtraGenerico');
+    Route::post('materiaPrima/extras-generico/eliminar', 'MateriaPrimaController@eliminarExtraGenerico');
+});
+
+// Ruta para obtener extras genéricos (usada desde el modal de productos)
+Route::get('materiaPrima/extras-generico/obtener', 'MateriaPrimaController@obtenerExtrasGenericos');
+Route::get('materiaPrima/extras-generico/grupos', 'MateriaPrimaController@obtenerGruposExtrasGenericos');
+
+
 /*
 |--------------------------------------------------------------------------
 |FACTURACION ELECTRONICA
