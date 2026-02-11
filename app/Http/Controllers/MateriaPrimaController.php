@@ -966,6 +966,18 @@ class MateriaPrimaController extends Controller
         $multiple = $request->input('multiple');
         $cantidad_mp_extra = $request->input('cantidad_mp_extra');
         $materia_prima_extra = $request->input('materia_prima_extra');
+        
+        // Convertir valores a enteros (0 o 1)
+        // Acepta: 'true', 'false', true, false, '1', '0', 1, 0
+        $es_RequeridoInt = 0;
+        if ($es_Requerido === 'true' || $es_Requerido === true || $es_Requerido === '1' || $es_Requerido === 1) {
+            $es_RequeridoInt = 1;
+        }
+        
+        $multipleInt = 0;
+        if ($multiple === 'true' || $multiple === true || $multiple === '1' || $multiple === 1) {
+            $multipleInt = 1;
+        }
 
         $nuevo = ($id == '-1' || $id == null);
 
@@ -998,9 +1010,6 @@ class MateriaPrimaController extends Controller
             DB::beginTransaction();
             if ($nuevo) {
                 // Verificar si ya existe un extra genérico con la misma descripción, grupo, es_requerido y multiple (case-insensitive)
-                $es_RequeridoInt = ($es_Requerido == 'true' || $es_Requerido == true ? 1 : 0);
-                $multipleInt = ($multiple == 'true' || $multiple == true ? 1 : 0);
-                
                 $extraExistente = DB::table('extra_generico')
                     ->whereRaw('LOWER(TRIM(descripcion)) = ?', [strtolower(trim($dsc))])
                     ->whereRaw('LOWER(TRIM(dsc_grupo)) = ?', [strtolower($dsc_grupo)])
@@ -1019,16 +1028,13 @@ class MateriaPrimaController extends Controller
                         'descripcion' => $dsc,
                         'precio' => $precio,
                         'dsc_grupo' => $dsc_grupo,
-                        'es_requerido' => ($es_Requerido == 'true' || $es_Requerido == true ? 1 : 0),
-                        'multiple' => ($multiple == 'true' || $multiple == true ? 1 : 0),
+                        'es_requerido' => $es_RequeridoInt,
+                        'multiple' => $multipleInt,
                         'materia_prima' => !empty($materia_prima_extra) ? $materia_prima_extra : null,
                         'cant_mp' => !empty($cantidad_mp_extra) ? $cantidad_mp_extra : null
                     ]);
             } else {
                 // Verificar si ya existe otro extra genérico con la misma descripción, grupo, es_requerido y multiple (excluyendo el actual, case-insensitive)
-                $es_RequeridoInt = ($es_Requerido == 'true' || $es_Requerido == true ? 1 : 0);
-                $multipleInt = ($multiple == 'true' || $multiple == true ? 1 : 0);
-                
                 $extraExistente = DB::table('extra_generico')
                     ->whereRaw('LOWER(TRIM(descripcion)) = ?', [strtolower(trim($dsc))])
                     ->whereRaw('LOWER(TRIM(dsc_grupo)) = ?', [strtolower($dsc_grupo)])
@@ -1048,8 +1054,8 @@ class MateriaPrimaController extends Controller
                         'precio' => $precio,
                         'descripcion' => $dsc,
                         'dsc_grupo' => $dsc_grupo,
-                        'es_requerido' => ($es_Requerido == 'true' || $es_Requerido == true ? 1 : 0),
-                        'multiple' => ($multiple == 'true' || $multiple == true ? 1 : 0),
+                        'es_requerido' => $es_RequeridoInt,
+                        'multiple' => $multipleInt,
                         'materia_prima' => !empty($materia_prima_extra) ? $materia_prima_extra : null,
                         'cant_mp' => !empty($cantidad_mp_extra) ? $cantidad_mp_extra : null
                     ]);

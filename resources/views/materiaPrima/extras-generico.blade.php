@@ -50,6 +50,33 @@
     #empty-extras-message {
         padding: 3rem 1rem;
     }
+    
+    /* Estilos para separadores de grupos */
+    .grupo-separador {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .grupo-separador + tr {
+        border-top: 1px solid #dee2e6;
+    }
+    
+    .gap-2 {
+        gap: 0.5rem;
+    }
+    
+    @media (max-width: 768px) {
+        .grupo-separador td div {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+        }
+        
+        .grupo-separador .badge {
+            margin-bottom: 5px;
+        }
+    }
 </style>
 @endsection
 
@@ -407,18 +434,50 @@
                 });
                 
                 // Ordenar grupos y mostrar
-                Object.keys(gruposAgrupados).sort().forEach(function(clave) {
+                // Ordenar primero por nombre de grupo, luego por requerido (DESC), luego por multiple (DESC)
+                var gruposOrdenados = Object.keys(gruposAgrupados).sort(function(a, b) {
+                    var grupoA = gruposAgrupados[a];
+                    var grupoB = gruposAgrupados[b];
+                    
+                    // Primero por nombre de grupo
+                    if (grupoA.grupo !== grupoB.grupo) {
+                        return grupoA.grupo.localeCompare(grupoB.grupo);
+                    }
+                    
+                    // Luego por requerido (1 primero)
+                    if (grupoA.es_requerido !== grupoB.es_requerido) {
+                        return grupoB.es_requerido - grupoA.es_requerido;
+                    }
+                    
+                    // Finalmente por multiple (1 primero)
+                    return grupoB.multiple - grupoA.multiple;
+                });
+                
+                gruposOrdenados.forEach(function(clave, index) {
                     var grupo = gruposAgrupados[clave];
                     
-                    // Agregar encabezado de grupo si hay más de un extra en el grupo
-                    if (grupo.extras.length > 1) {
-                        var textoGrupo = "<tr class='table-info'><td colspan='8' style='font-weight: bold; background-color: #d1ecf1;'>";
-                        textoGrupo += "<i class='fas fa-layer-group'></i> <strong>" + grupo.grupo + "</strong> - ";
-                        textoGrupo += "Requerido: " + (grupo.es_requerido == 1 ? '<span class="badge badge-warning">Sí</span>' : '<span class="badge badge-secondary">No</span>') + " - ";
-                        textoGrupo += "Múltiple: " + (grupo.multiple == 1 ? '<span class="badge badge-primary">Sí</span>' : '<span class="badge badge-secondary">No</span>');
-                        textoGrupo += "</td></tr>";
-                        $("#tbody-extras-genericos").append(textoGrupo);
-                    }
+                    // Siempre mostrar encabezado de grupo para separar visualmente cada combinación única
+                    var colorBorde = index % 2 === 0 ? '#17a2b8' : '#28a745';
+                    var textoGrupo = "<tr class='table-info grupo-separador' style='background-color: #d1ecf1; border-top: 3px solid " + colorBorde + ";'>";
+                    textoGrupo += "<td colspan='8' style='font-weight: bold; padding: 12px 15px;'>";
+                    textoGrupo += "<div class='d-flex justify-content-between align-items-center flex-wrap'>";
+                    textoGrupo += "<div class='mb-1 mb-md-0'>";
+                    textoGrupo += "<i class='fas fa-layer-group text-primary'></i> <strong class='text-primary' style='font-size: 1.1em;'>" + grupo.grupo + "</strong>";
+                    textoGrupo += "</div>";
+                    textoGrupo += "<div class='d-flex flex-wrap gap-2'>";
+                    textoGrupo += "<span class='badge badge-warning mr-2' style='font-size: 0.9em; padding: 6px 10px; white-space: nowrap;'>";
+                    textoGrupo += "<i class='fas fa-exclamation-circle'></i> Requerido: " + (grupo.es_requerido == 1 ? '<strong>Sí</strong>' : '<span class="text-muted">No</span>');
+                    textoGrupo += "</span>";
+                    textoGrupo += "<span class='badge badge-primary' style='font-size: 0.9em; padding: 6px 10px; white-space: nowrap;'>";
+                    textoGrupo += "<i class='fas fa-check-double'></i> Múltiple: " + (grupo.multiple == 1 ? '<strong>Sí</strong>' : '<span class="text-muted">No</span>');
+                    textoGrupo += "</span>";
+                    textoGrupo += "<span class='badge badge-info' style='font-size: 0.85em; padding: 6px 10px; white-space: nowrap;'>";
+                    textoGrupo += "<i class='fas fa-list'></i> " + grupo.extras.length + " extra(s)";
+                    textoGrupo += "</span>";
+                    textoGrupo += "</div>";
+                    textoGrupo += "</div>";
+                    textoGrupo += "</td></tr>";
+                    $("#tbody-extras-genericos").append(textoGrupo);
                     
                     // Agregar extras del grupo
                     grupo.extras.forEach(function(extra) {
@@ -546,6 +605,10 @@
             return;
         }
         
+        // Convertir booleanos a strings para el backend
+        var esRequeridoStr = esRequerido ? 'true' : 'false';
+        var multipleStr = multiple ? 'true' : 'false';
+        
         $.ajax({
             url: base_path + '/materiaPrima/extras-generico/guardar',
             type: 'post',
@@ -555,8 +618,8 @@
                 precio: ipt_precio_ext,
                 dsc: ipt_dsc_ext,
                 dsc_grupo: ipt_dsc_gru_ext,
-                es_Requerido: esRequerido,
-                multiple: multiple,
+                es_Requerido: esRequeridoStr,
+                multiple: multipleStr,
                 materia_prima_extra: select_prod_mp_extra || '',
                 cantidad_mp_extra: ipt_cantidad_req_extra || ''
             }
@@ -603,8 +666,14 @@
             $('#ipt_dsc_ext').val(extra.descripcion);
             $('#ipt_precio_ext').val(extra.precio);
             $('#ipt_dsc_gru_ext').val(extra.dsc_grupo);
-            $("#requisito").prop('checked', extra.es_requerido == 1);
-            $("#multiple").prop('checked', extra.multiple == 1);
+            
+            // Cargar opciones de requerido y multiple correctamente
+            // Acepta: 1, '1', true, 0, '0', false, null
+            var esRequerido = extra.es_requerido == 1 || extra.es_requerido === 1 || extra.es_requerido === '1' || extra.es_requerido === true;
+            var esMultiple = extra.multiple == 1 || extra.multiple === 1 || extra.multiple === '1' || extra.multiple === true;
+            
+            $("#requisito").prop('checked', esRequerido);
+            $("#multiple").prop('checked', esMultiple);
             $('#ipt_cantidad_req_extra').val(extra.cant_mp || '');
             
             // Seleccionar materia prima si existe
