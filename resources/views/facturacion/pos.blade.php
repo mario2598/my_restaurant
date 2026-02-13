@@ -671,7 +671,7 @@
                                             <input type="text" 
                                                 class="form-control" 
                                                 id="buscador-productos" 
-                                                placeholder="Buscar producto por nombre o código..."
+                                                placeholder="Buscar producto por nombre, código o categoría..."
                                                 style="border-left: none;"
                                                 onkeyup="filtrarProductos(this.value)"
                                                 onfocus="this.select()">
@@ -1697,7 +1697,8 @@
             productosFiltrados = productosGeneral.filter(function(producto) {
                 var nombre = (producto.nombre || '').toLowerCase();
                 var codigo = (producto.codigo || '').toLowerCase();
-                return nombre.includes(termino) || codigo.includes(termino);
+                var categoria = (producto.categoria || '').toLowerCase();
+                return nombre.includes(termino) || codigo.includes(termino) || categoria.includes(termino);
             });
         }
 

@@ -3048,7 +3048,9 @@ function procesarDatosAjax(tiposAux) {
                             cantidad_original: producto.cantidad || -1,
                             tipoProducto: producto.tipoProducto || -1,
                             extras: extrasAux,
-                            es_promocion: producto.es_promocion || 'N'
+                            es_promocion: producto.es_promocion || 'N',
+                            categoria: categoria.categoria || '', // Agregar nombre de categoría
+                            categoria_id: categoria.id || null // Agregar ID de categoría
                         };
                         productos.push(auxProducto);
                         productosGeneral.push(auxProducto); // Agregar el producto a productosGeneral
