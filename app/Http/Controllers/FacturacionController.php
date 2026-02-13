@@ -1594,12 +1594,21 @@ class FacturacionController extends Controller
             return $this->responseAjaxServerError("No tienes permisos para realizar la acción.", []);
         }
 
+        $idsCajas = CajaController::getIdsCajas($this->getUsuarioSucursal());
+        
         $ordenes = DB::table('orden')
             ->leftjoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
             ->leftjoin('mesa', 'mesa.id', '=', 'orden.mesa')
-            ->select('orden.*', 'sis_estado.nombre as estadoOrden', 'sis_estado.cod_general', 'mesa.numero_mesa')
-            ->where('orden.cierre_caja', 'in', CajaController::getIdsCajas($this->getUsuarioSucursal()))
-            ->orderBy('orden.fecha_inicio', 'DESC')->get();
+            ->select('orden.*', 'sis_estado.nombre as estadoOrden', 'sis_estado.cod_general', 'mesa.numero_mesa');
+        
+        if (!empty($idsCajas)) {
+            $ordenes = $ordenes->whereIn('orden.cierre_caja', $idsCajas);
+        } else {
+            // Si no hay cajas abiertas, no devolver ninguna orden
+            $ordenes = $ordenes->whereRaw('1 = 0');
+        }
+        
+        $ordenes = $ordenes->orderBy('orden.fecha_inicio', 'DESC')->get();
 
         foreach ($ordenes as $o) {
             $o->detalles = DB::table('detalle_orden')->where('orden', '=', $o->id)->get();

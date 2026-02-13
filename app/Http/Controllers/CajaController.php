@@ -98,15 +98,16 @@ class CajaController extends Controller
         return $cierre;
     }
 
-    public static function getIdsCajas( $idSucursal)
+    public static function getIdsCajas($idSucursal)
     {
-        $cierre = DB::table('cierre_caja')
+        $cierres = DB::table('cierre_caja')
             ->select('cierre_caja.id')
             ->where('sucursal', '=', $idSucursal)
             ->where('estado', '=', SisEstadoController::getIdEstadoByCodGeneral('CAJA_ABIERTO'))
-            ->get()->first()->id ?? null;
+            ->pluck('id')
+            ->toArray();
 
-        return $cierre;
+        return $cierres;
     }
 
     public function abrirCaja(Request $request)
