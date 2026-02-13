@@ -98,6 +98,17 @@ class CajaController extends Controller
         return $cierre;
     }
 
+    public static function getIdsCajas( $idSucursal)
+    {
+        $cierre = DB::table('cierre_caja')
+            ->select('cierre_caja.id')
+            ->where('sucursal', '=', $idSucursal)
+            ->where('estado', '=', SisEstadoController::getIdEstadoByCodGeneral('CAJA_ABIERTO'))
+            ->get()->first()->id ?? null;
+
+        return $cierre;
+    }
+
     public function abrirCaja(Request $request)
     {
         if (!$this->validarSesion("facFac")) {
