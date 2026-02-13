@@ -215,6 +215,7 @@ class FacturacionController extends Controller
                     'pm_x_sucursal.comanda',
                     'impuesto.impuesto as impuesto',
                     'producto_menu.tipo_comanda',
+                    'producto_menu.descripcion',
                     DB::raw("'N' as es_promocion")
                 )
                 ->orderBy('producto_menu.posicion_menu', 'asc')->get();
@@ -800,6 +801,7 @@ class FacturacionController extends Controller
                     'pe_x_sucursal.comanda',
                     'impuesto.impuesto as impuesto',
                     'pe_x_sucursal.cantidad',
+                    'producto_externo.descripcion',
                     DB::raw("'N' as es_promocion")
                 )
                 ->orderBy('producto_externo.posicion_menu', 'asc')->get();

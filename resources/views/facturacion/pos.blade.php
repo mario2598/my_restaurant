@@ -1721,7 +1721,8 @@
                     producto.codigo, 
                     producto.precio, 
                     producto.cantidad, 
-                    producto.tipoProducto
+                    producto.tipoProducto,
+                    producto.descripcion || ''
                 );
             });
         }
@@ -1752,6 +1753,48 @@
         // Ocultar botón de limpiar inicialmente
         $('#btn-limpiar-busqueda').hide();
     });
+
+    /**
+     * Muestra la descripción del producto en un modal
+     */
+    function mostrarDescripcionProducto(descripcion, nombreProducto) {
+        // Crear o actualizar el modal de descripción
+        var modalHtml = `
+            <div class="modal fade" id="mdl-descripcion-producto" tabindex="-1" role="dialog">
+                <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 500px;">
+                    <div class="modal-content">
+                        <div class="modal-header" style="background-color: #f8f9fa; border-bottom: 1px solid #dee2e6;">
+                            <h5 class="modal-title">
+                                <i class="fas fa-info-circle text-primary"></i> ${nombreProducto}
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body" style="max-height: 400px; overflow-y: auto; padding: 20px;">
+                            <p style="white-space: pre-wrap; word-wrap: break-word; margin: 0; line-height: 1.6;">
+                                ${descripcion}
+                            </p>
+                        </div>
+                        <div class="modal-footer" style="border-top: 1px solid #dee2e6;">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                <i class="fas fa-times"></i> Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Eliminar modal anterior si existe
+        $('#mdl-descripcion-producto').remove();
+        
+        // Agregar el modal al body
+        $('body').append(modalHtml);
+        
+        // Mostrar el modal
+        $('#mdl-descripcion-producto').modal('show');
+    }
 
     // Funciones para el componente flotante de gestión de mesas
     function togglePanelMesas() {

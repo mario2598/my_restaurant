@@ -257,7 +257,7 @@ function generarProductos() {
     $(contenedores.get("productos")).html("");
     //Por cada categoría, genera el HTML correspondiente para el card que será insertado en el scroller
     categoria.productos.forEach(producto => {
-        cards += generarHTMLProducto(producto.nombre, producto.codigo, producto.precio, producto.cantidad, producto.tipoProducto);
+        cards += generarHTMLProducto(producto.nombre, producto.codigo, producto.precio, producto.cantidad, producto.tipoProducto, producto.descripcion || '');
         contador++;
     });
 
@@ -267,9 +267,25 @@ function generarProductos() {
 /**
  * Genera el elemento HTML correspondiente a la categoría
  */
-function generarHTMLProducto(nombre, codigo, precio, cantidad, tipoProd) {
-    var text = `<tr class="filaProductos" onclick="seleccionarProducto('N','${codigo}')">
-    <td width="40%">${nombre}`;
+function generarHTMLProducto(nombre, codigo, precio, cantidad, tipoProd, descripcion = '') {
+    var text = `<tr class="filaProductos">
+    <td width="40%">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span onclick="seleccionarProducto('N','${codigo}')" style="cursor: pointer; flex: 1;">${nombre}</span>`;
+    
+    // Agregar botón para ver descripción solo si existe
+    if (descripcion && descripcion.trim() !== '') {
+        var descripcionEscapada = descripcion.replace(/'/g, "&#39;").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
+        text += `<button type="button" 
+                    class="btn btn-sm btn-link p-0 ml-2" 
+                    style="color: #6c757d; font-size: 0.85em; min-width: auto; padding: 2px 4px !important;"
+                    onclick="event.stopPropagation(); mostrarDescripcionProducto('${descripcionEscapada}', '${nombre.replace(/'/g, "&#39;")}')"
+                    title="Ver descripción">
+                    <i class="fas fa-info-circle"></i>
+                </button>`;
+    }
+    
+    text += `</div>`;
     if (tipoProd == "E") {
         text += `<br> <small `;
         if (cantidad < 15) {
@@ -277,7 +293,7 @@ function generarHTMLProducto(nombre, codigo, precio, cantidad, tipoProd) {
         }
         text += `> Cantidad : <strong> ${cantidad}</strong></small>`;
     }
-    text += `</td><td width="30%" style="text-align: center">${parseFloat(precio).toFixed(2)}</td></tr>`;
+    text += `</td><td width="30%" style="text-align: center" onclick="seleccionarProducto('N','${codigo}')" style="cursor: pointer;">${parseFloat(precio).toFixed(2)}</td></tr>`;
 
     return text;
 }
@@ -3050,7 +3066,8 @@ function procesarDatosAjax(tiposAux) {
                             extras: extrasAux,
                             es_promocion: producto.es_promocion || 'N',
                             categoria: categoria.categoria || '', // Agregar nombre de categoría
-                            categoria_id: categoria.id || null // Agregar ID de categoría
+                            categoria_id: categoria.id || null, // Agregar ID de categoría
+                            descripcion: producto.descripcion || '' // Agregar descripción
                         };
                         productos.push(auxProducto);
                         productosGeneral.push(auxProducto); // Agregar el producto a productosGeneral
