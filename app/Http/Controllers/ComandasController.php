@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
 use App\Traits\SpaceUtil;
+use Carbon\Carbon;
 
 class ComandasController extends Controller
 {
@@ -41,10 +42,23 @@ class ComandasController extends Controller
 
     public function recargarComandas(Request $request)
     {
+        try {
+            $idComanda = $request->input('idComanda');
+            $idSucursal = $this->getUsuarioSucursal();
+            
+            if ($idSucursal == null || $idSucursal < 1) {
+                return $this->responseAjaxServerError("No se pudo obtener la sucursal del usuario", []);
+            }
 
-        $idComanda = $request->input('idComanda');
-
-        return $this->responseAjaxSuccess("", self::getComandasPreparacion($this->getUsuarioSucursal(), $idComanda));
+            return $this->responseAjaxSuccess("", self::getComandasPreparacion($idSucursal, $idComanda));
+        } catch (\Exception $ex) {
+            DB::table('log')->insertGetId([
+                'id' => null,
+                'documento' => 'ComandasController::recargarComandas',
+                'descripcion' => $ex->getMessage() . ' - ' . $ex->getTraceAsString()
+            ]);
+            return $this->responseAjaxServerError("Error al cargar las comandas: " . $ex->getMessage(), []);
+        }
     }
 
     public static function getBySucursal($idSucursal)
@@ -197,12 +211,20 @@ class ComandasController extends Controller
         foreach ($ordenes as $o) {
             $o->fecha_inicio = $o->fecha_inicio_cmd;
             $phpdate = strtotime($o->fecha_inicio_cmd);
-            $date = date("d-m-Y", strtotime($o->fecha_inicio));
-
-            $fechaAux = iconv('ISO-8859-2', 'UTF-8', strftime("%A, %d de %B ", strtotime($date)));
-            $fechaAux .= ' - ' . date("g:i a", $phpdate);
+            
+            // Usar Carbon para formatear la fecha en español (compatible con PHP 8.1+)
+            try {
+                $carbonDate = Carbon::parse($o->fecha_inicio_cmd);
+                $carbonDate->setLocale('es');
+                $fechaAux = ucfirst($carbonDate->isoFormat('dddd, D [de] MMMM'));
+                $fechaAux .= ' - ' . date("g:i a", $phpdate);
+            } catch (\Exception $e) {
+                // Fallback si Carbon falla
+                $fechaAux = date("d-m-Y", $phpdate) . ' - ' . date("g:i a", $phpdate);
+            }
+            
             $o->fecha_inicio_hora_tiempo = date("g:i a", $phpdate);
-            $o->fecha_inicio_texto =  $fechaAux;
+            $o->fecha_inicio_texto = $fechaAux;
 
             $detalles = DB::table('detalle_orden')
                 ->join('detalle_orden_comanda', 'detalle_orden_comanda.detalle_orden', '=', 'detalle_orden.id')
