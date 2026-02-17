@@ -236,12 +236,25 @@ class ComandasController extends Controller
             $o->detalles = [];
 
             foreach ($detalles as $d) {
+                $idComandaAux = null;
                 if ($d->tipo_producto == 'R') {
-                    $idComandaAux = ProductosMenuController::getIdComandaByCodigoSucursal($d->codigo_producto, $sucursal);
-                    $d->idProd = ProductosMenuController::getIdByCodigo($d->codigo_producto)->id;
+                    $productoMenu = ProductosMenuController::getIdByCodigo($d->codigo_producto);
+                    if ($productoMenu != null) {
+                        $d->idProd = $productoMenu->id;
+                        $idComandaAux = ProductosMenuController::getIdComandaByCodigoSucursal($d->codigo_producto, $sucursal);
+                    } else {
+                        // Si no se encuentra el producto, saltar este detalle
+                        continue;
+                    }
                 } else if ($d->tipo_producto == 'E') {
-                    $idComandaAux = ProductosExternosController::getIdComandaByCodigoSucursal($d->codigo_producto, $sucursal);
-                    $d->idProd = ProductosExternosController::getIdByCodigo($d->codigo_producto)->id;
+                    $productoExterno = ProductosExternosController::getIdByCodigo($d->codigo_producto);
+                    if ($productoExterno != null) {
+                        $d->idProd = $productoExterno->id;
+                        $idComandaAux = ProductosExternosController::getIdComandaByCodigoSucursal($d->codigo_producto, $sucursal);
+                    } else {
+                        // Si no se encuentra el producto, saltar este detalle
+                        continue;
+                    }
                 }
 
                 // Filtrar los productos de tipo `PROMO` con sus productos internos
@@ -254,6 +267,9 @@ class ComandasController extends Controller
                         ->get();
 
                     foreach ($productosPromo as $p) {
+                        if ($p->codigo == null) {
+                            continue;
+                        }
                         $idComandaAux  = ProductosMenuController::getIdComandaByCodigoSucursal($p->codigo, $sucursal);
                         $nuevoDetalle = clone $d;
                         $nuevoDetalle->codigo_producto = $p->codigo;
@@ -276,6 +292,9 @@ class ComandasController extends Controller
                         ->get();
 
                     foreach ($productosPromoE as $p) {
+                        if ($p->codigo_barra == null) {
+                            continue;
+                        }
                         $idComandaAux  = ProductosExternosController::getIdComandaByCodigoSucursal($p->codigo_barra, $sucursal);
                         $nuevoDetalle = clone $d;
                         $nuevoDetalle->codigo_producto = $p->codigo_barra;
@@ -290,9 +309,12 @@ class ComandasController extends Controller
                         }
                     }
                 } else {
-                    $d->comanda = $idComandaAux;
-                    if ($idComanda == null || $d->comanda == $idComanda) {
-                        $o->detalles[] = $d;
+                    // Solo asignar comanda si $idComandaAux fue definido
+                    if ($idComandaAux !== null) {
+                        $d->comanda = $idComandaAux;
+                        if ($idComanda == null || $d->comanda == $idComanda) {
+                            $o->detalles[] = $d;
+                        }
                     }
                 }
             }

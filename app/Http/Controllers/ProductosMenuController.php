@@ -22,12 +22,14 @@ class ProductosMenuController extends Controller
 
     public static function getIdComandaByCodigoSucursal($codigo,$idSucursal)
     {
-        return DB::table('pm_x_sucursal')
+        $result = DB::table('pm_x_sucursal')
             ->leftjoin('producto_menu', 'producto_menu.id', '=', 'pm_x_sucursal.producto_menu')
             ->select('pm_x_sucursal.comanda')
             ->where('producto_menu.codigo', '=', $codigo)
             ->where('pm_x_sucursal.sucursal', '=', $idSucursal)
-            ->get()->first()->comanda;
+            ->get()->first();
+        
+        return $result != null ? $result->comanda : null;
     }
 
     public static function getById($id)

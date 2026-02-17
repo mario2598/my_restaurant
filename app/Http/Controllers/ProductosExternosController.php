@@ -20,12 +20,14 @@ class ProductosExternosController extends Controller
 
     public static function getIdComandaByCodigoSucursal($codigo,$idSucursal)
     {
-        return DB::table('pe_x_sucursal')
+        $result = DB::table('pe_x_sucursal')
             ->leftjoin('producto_externo', 'producto_externo.id', '=', 'pe_x_sucursal.producto_externo')
             ->select('pe_x_sucursal.comanda')
             ->where('producto_externo.codigo_barra', '=', $codigo)
             ->where('pe_x_sucursal.sucursal', '=', $idSucursal)
-            ->get()->first()->comanda;
+            ->get()->first();
+        
+        return $result != null ? $result->comanda : null;
     }
 
     public static function getIdByCodigo($codigo){
