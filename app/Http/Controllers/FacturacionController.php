@@ -1598,7 +1598,7 @@ class FacturacionController extends Controller
             ->leftjoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
             ->leftjoin('mesa', 'mesa.id', '=', 'orden.mesa')
             ->select('orden.*', 'sis_estado.nombre as estadoOrden', 'sis_estado.cod_general', 'mesa.numero_mesa')
-            ->where('orden.cierre_caja', 'in', CajaController::getIdsCajas($this->getUsuarioSucursal()))
+            ->where('orden.cierre_caja', '=', CajaController::getIdCaja(session('usuario')['id'], $this->getUsuarioSucursal()))
             ->orderBy('orden.fecha_inicio', 'DESC')->get();
 
         foreach ($ordenes as $o) {
