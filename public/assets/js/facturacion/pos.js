@@ -275,11 +275,14 @@ function generarHTMLProducto(nombre, codigo, precio, cantidad, tipoProd, descrip
     
     // Agregar botón para ver descripción solo si existe
     if (descripcion && descripcion.trim() !== '') {
-        var descripcionEscapada = descripcion.replace(/'/g, "&#39;").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
+        // Escapar correctamente para atributos HTML usando base64
+        var descripcionBase64 = btoa(unescape(encodeURIComponent(descripcion)));
+        var nombreBase64 = btoa(unescape(encodeURIComponent(nombre)));
         text += `<button type="button" 
-                    class="btn btn-sm btn-link p-0 ml-2" 
+                    class="btn btn-sm btn-link p-0 ml-2 btn-ver-descripcion" 
                     style="color: #6c757d; font-size: 0.85em; min-width: auto; padding: 2px 4px !important;"
-                    onclick="event.stopPropagation(); mostrarDescripcionProducto('${descripcionEscapada}', '${nombre.replace(/'/g, "&#39;")}')"
+                    data-descripcion="${descripcionBase64}"
+                    data-nombre="${nombreBase64}"
                     title="Ver descripción">
                     <i class="fas fa-info-circle"></i>
                 </button>`;

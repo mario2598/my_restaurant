@@ -1749,6 +1749,19 @@
                 $(this).blur();
             }
         });
+        
+        // Event listener delegado para los botones de ver descripción
+        $(document).on('click', '.btn-ver-descripcion', function(e) {
+            e.stopPropagation();
+            var descripcionBase64 = $(this).data('descripcion');
+            var nombreBase64 = $(this).data('nombre');
+            
+            // Decodificar desde base64
+            var descripcion = decodeURIComponent(escape(atob(descripcionBase64)));
+            var nombre = decodeURIComponent(escape(atob(nombreBase64)));
+            
+            mostrarDescripcionProducto(descripcion, nombre);
+        });
 
         // Ocultar botón de limpiar inicialmente
         $('#btn-limpiar-busqueda').hide();
@@ -1772,9 +1785,9 @@
                             </button>
                         </div>
                         <div class="modal-body" style="max-height: 400px; overflow-y: auto; padding: 20px;">
-                            <p style="white-space: pre-wrap; word-wrap: break-word; margin: 0; line-height: 1.6;">
-                                ${descripcion}
-                            </p>
+                            <div style="word-wrap: break-word; margin: 0; line-height: 1.6;">
+                                ${descripcion.replace(/\n/g, '<br>')}
+                            </div>
                         </div>
                         <div class="modal-footer" style="border-top: 1px solid #dee2e6;">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">
