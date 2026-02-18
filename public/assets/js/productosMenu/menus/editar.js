@@ -233,11 +233,9 @@ function guardarHorarios() {
     }).done(function (response) {
       if (response['estado']) {
         showSuccess('Horarios actualizados correctamente. El producto se mostrará siempre.');
-        $('#mdl_horarios').modal('hide');
-        // Recargar la página para actualizar la vista
-        setTimeout(function() {
-          $('#form_cargar_menu').submit();
-        }, 1500);
+        // Recargar los horarios desde el servidor para actualizar la vista
+        $('#tbody_horarios').empty();
+        contadorHorarios = 0;
       } else {
         showError(response['mensaje']);
       }
@@ -258,18 +256,27 @@ function guardarHorarios() {
     }
   }).done(function (response) {
     if (response['estado']) {
-      showSuccess('Horarios guardados correctamente.');
-      $('#mdl_horarios').modal('hide');
-      // Recargar la página para actualizar la vista
-      setTimeout(function() {
-        $('#form_cargar_menu').submit();
-      }, 1500);
+      showSuccess('Horarios guardados correctamente. Puede seguir agregando más horarios.');
+      // Recargar los horarios desde el servidor para actualizar los IDs
+      $('#tbody_horarios').empty();
+      contadorHorarios = 0;
+      cargarHorarios(idPmXSucursalGestion);
     } else {
       showError(response['mensaje']);
     }
   }).fail(function () {
     showError('Error al guardar los horarios.');
   });
+}
+
+function guardarHorariosYCerrar() {
+  guardarHorarios();
+  // Esperar un momento para que se guarde y luego cerrar
+  setTimeout(function() {
+    $('#mdl_horarios').modal('hide');
+    // Recargar la página para actualizar la vista principal
+    $('#form_cargar_menu').submit();
+  }, 1000);
 }
 
 

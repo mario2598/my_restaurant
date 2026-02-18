@@ -292,9 +292,12 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <a href="#" onclick="$('#mdl_horarios').modal('hide');" class="btn btn-secondary">Cerrar</a>
-                    <button type="button" onclick="guardarHorarios()" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Guardar Horarios
+                    <a href="#" onclick="$('#mdl_horarios').modal('hide');" class="btn btn-secondary">Cerrar sin guardar</a>
+                    <button type="button" onclick="guardarHorarios()" class="btn btn-success">
+                        <i class="fas fa-save"></i> Guardar y Continuar
+                    </button>
+                    <button type="button" onclick="guardarHorariosYCerrar()" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar y Cerrar
                     </button>
                 </div>
             </div>
