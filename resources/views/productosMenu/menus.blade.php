@@ -116,8 +116,13 @@
                                                     </td>
 
                                                     <td class="text-center">
-                                                        <a style="cursor: pointer; color: white;" class="btn btn-primary"
-                                                            onclick="eliminarProdcutoDeMenu('{{ $g->id }}')">Eliminar
+                                                        <a style="cursor: pointer; color: white;" class="btn btn-info btn-sm mr-1"
+                                                            onclick="event.stopPropagation(); gestionarHorarios('{{ $g->id_pm_x_sucursal ?? $g->id }}', '{{ $g->nombre }}')"
+                                                            title="Gestionar Horarios">
+                                                            <i class="fas fa-clock"></i> Horarios
+                                                        </a>
+                                                        <a style="cursor: pointer; color: white;" class="btn btn-primary btn-sm"
+                                                            onclick="event.stopPropagation(); eliminarProdcutoDeMenu('{{ $g->id }}')">Eliminar
                                                             del menú</a>
                                                     </td>
 
@@ -241,6 +246,60 @@
             </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -- fin modal de agregar sucursal-->
+
+    <!-- Modal de gestión de horarios -->
+    <div class="modal fade bs-example-modal-center" id='mdl_horarios' tabindex="-1" role="dialog"
+        aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="spinner-border" id='modal_spinner_horarios' style='margin-right:3%;display:none;' role="status">
+                    </div>
+                    <h5 class="modal-title mt-0"><i class="fas fa-clock"></i> Gestionar Horarios - <span id="lbl_producto_horario"></span></h5>
+                    <button type="button" class="close" aria-hidden="true" onclick="$('#mdl_horarios').modal('hide');">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <p class="text-muted">
+                                <i class="fas fa-info-circle"></i> Si no se configuran horarios, el producto se mostrará siempre. 
+                                Si se configuran horarios, el producto solo se mostrará en los días y horas especificados.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-12 text-right">
+                            <button type="button" class="btn btn-success btn-sm" onclick="agregarFilaHorario()">
+                                <i class="fas fa-plus"></i> Agregar Horario
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="tabla_horarios">
+                            <thead>
+                                <tr>
+                                    <th>Día</th>
+                                    <th>Hora Inicio</th>
+                                    <th>Hora Fin</th>
+                                    <th>Activo</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody_horarios">
+                                <!-- Las filas se agregarán dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" onclick="$('#mdl_horarios').modal('hide');" class="btn btn-secondary">Cerrar</a>
+                    <button type="button" onclick="guardarHorarios()" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar Horarios
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         window.addEventListener("load", initialice, false);

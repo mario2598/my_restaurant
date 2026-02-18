@@ -530,10 +530,10 @@ class ProductosMenuController extends Controller
 
 
         $menusSucursal = DB::table('pm_x_sucursal')
-            ->leftjoin('producto_menu', 'producto_menu.id', '=', 'pm_x_sucursal.producto_menu')
+            ->join('producto_menu', 'producto_menu.id', '=', 'pm_x_sucursal.producto_menu')
             ->leftjoin('comanda', 'comanda.id', '=', 'pm_x_sucursal.comanda')
             ->leftjoin('categoria', 'categoria.id', '=', 'producto_menu.categoria')
-            ->select('producto_menu.*', 'categoria.categoria as nombre_categoria', DB::raw('COALESCE(comanda.nombre, "Comanda General") as nombreComanda'))
+            ->select('producto_menu.*', 'pm_x_sucursal.id as id_pm_x_sucursal', 'categoria.categoria as nombre_categoria', DB::raw('COALESCE(comanda.nombre, "Comanda General") as nombreComanda'))
             ->where('pm_x_sucursal.sucursal', '=', $sucursal->id)
             ->get();
 
@@ -1134,6 +1134,167 @@ class ProductosMenuController extends Controller
             DB::rollBack();
             $this->setError('Editar menú', "Algo salio mal...");
             return $this->responseAjaxServerError("Algo salio mal...");
+        }
+    }
+
+    public function obtenerHorarios(Request $request)
+    {
+        if (!$this->validarSesion("mnus")) {
+            return $this->responseAjaxServerError("No tienes permisos para realizar la acción.", []);
+        }
+
+        try {
+            $idPmXSucursal = $request->input('idPmXSucursal');
+            
+            if ($this->isNull($idPmXSucursal) || $idPmXSucursal < 1) {
+                return $this->responseAjaxServerError("ID inválido.", []);
+            }
+
+            $horarios = DB::table('pm_x_s_horarios')
+                ->select('pm_x_s_horarios.*')
+                ->where('pm_x_s_horarios.pm_x_sucursal', '=', $idPmXSucursal)
+                ->orderBy('pm_x_s_horarios.dia_semana', 'ASC')
+                ->orderBy('pm_x_s_horarios.hora_inicio', 'ASC')
+                ->get();
+
+            return $this->responseAjaxSuccess("", $horarios);
+        } catch (QueryException $ex) {
+            return $this->responseAjaxServerError("Error al obtener los horarios.", []);
+        }
+    }
+
+    public function guardarHorarios(Request $request)
+    {
+        if (!$this->validarSesion("mnus")) {
+            return $this->responseAjaxServerError("No tienes permisos para realizar la acción.", []);
+        }
+
+        try {
+            $idPmXSucursal = $request->input('idPmXSucursal');
+            $horarios = $request->input('horarios');
+
+            if ($this->isNull($idPmXSucursal) || $idPmXSucursal < 1) {
+                return $this->responseAjaxServerError("ID inválido.", []);
+            }
+
+            // Verificar que existe el pm_x_sucursal
+            $pmXSucursal = DB::table('pm_x_sucursal')
+                ->where('id', '=', $idPmXSucursal)
+                ->first();
+
+            if ($this->isNull($pmXSucursal)) {
+                return $this->responseAjaxServerError("No se encontró la relación producto-sucursal.", []);
+            }
+
+            DB::beginTransaction();
+
+            // Eliminar horarios existentes que no estén en la lista nueva
+            if (is_array($horarios) && count($horarios) > 0) {
+                $idsHorarios = array_filter(array_column($horarios, 'id'));
+                if (count($idsHorarios) > 0) {
+                    DB::table('pm_x_s_horarios')
+                        ->where('pm_x_sucursal', '=', $idPmXSucursal)
+                        ->whereNotIn('id', $idsHorarios)
+                        ->delete();
+                } else {
+                    // Si no hay IDs, eliminar todos
+                    DB::table('pm_x_s_horarios')
+                        ->where('pm_x_sucursal', '=', $idPmXSucursal)
+                        ->delete();
+                }
+            } else {
+                // Si no hay horarios, eliminar todos
+                DB::table('pm_x_s_horarios')
+                    ->where('pm_x_sucursal', '=', $idPmXSucursal)
+                    ->delete();
+            }
+
+            // Insertar o actualizar horarios
+            if (is_array($horarios)) {
+                foreach ($horarios as $horario) {
+                    $diaSemana = $horario['dia_semana'] ?? null;
+                    $horaInicio = $horario['hora_inicio'] ?? null;
+                    $horaFin = $horario['hora_fin'] ?? null;
+                    $activo = isset($horario['activo']) ? (int)$horario['activo'] : 1;
+                    $idHorario = isset($horario['id']) && $horario['id'] > 0 ? $horario['id'] : null;
+
+                    if ($diaSemana && $horaInicio && $horaFin) {
+                        if ($idHorario) {
+                            // Actualizar
+                            DB::table('pm_x_s_horarios')
+                                ->where('id', '=', $idHorario)
+                                ->update([
+                                    'dia_semana' => $diaSemana,
+                                    'hora_inicio' => $horaInicio,
+                                    'hora_fin' => $horaFin,
+                                    'activo' => $activo
+                                ]);
+                        } else {
+                            // Insertar
+                            DB::table('pm_x_s_horarios')->insert([
+                                'id' => null,
+                                'pm_x_sucursal' => $idPmXSucursal,
+                                'dia_semana' => $diaSemana,
+                                'hora_inicio' => $horaInicio,
+                                'hora_fin' => $horaFin,
+                                'activo' => $activo
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            DB::commit();
+            return $this->responseAjaxSuccess("Horarios guardados correctamente.", []);
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            return $this->responseAjaxServerError("Error al guardar los horarios: " . $ex->getMessage(), []);
+        }
+    }
+
+    public function eliminarHorario(Request $request)
+    {
+        if (!$this->validarSesion("mnus")) {
+            return $this->responseAjaxServerError("No tienes permisos para realizar la acción.", []);
+        }
+
+        try {
+            $idHorario = $request->input('idHorario');
+
+            if ($this->isNull($idHorario) || $idHorario < 1) {
+                return $this->responseAjaxServerError("ID inválido.", []);
+            }
+
+            DB::table('pm_x_s_horarios')
+                ->where('id', '=', $idHorario)
+                ->delete();
+
+            return $this->responseAjaxSuccess("Horario eliminado correctamente.", []);
+        } catch (QueryException $ex) {
+            return $this->responseAjaxServerError("Error al eliminar el horario.", []);
+        }
+    }
+
+    public function eliminarTodosHorarios(Request $request)
+    {
+        if (!$this->validarSesion("mnus")) {
+            return $this->responseAjaxServerError("No tienes permisos para realizar la acción.", []);
+        }
+
+        try {
+            $idPmXSucursal = $request->input('idPmXSucursal');
+
+            if ($this->isNull($idPmXSucursal) || $idPmXSucursal < 1) {
+                return $this->responseAjaxServerError("ID inválido.", []);
+            }
+
+            DB::table('pm_x_s_horarios')
+                ->where('pm_x_sucursal', '=', $idPmXSucursal)
+                ->delete();
+
+            return $this->responseAjaxSuccess("Horarios eliminados correctamente.", []);
+        } catch (QueryException $ex) {
+            return $this->responseAjaxServerError("Error al eliminar los horarios.", []);
         }
     }
 }

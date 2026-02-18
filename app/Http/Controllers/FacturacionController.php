@@ -198,20 +198,25 @@ class FacturacionController extends Controller
 
     public function getCategoriasProductosMenu($categorias)
     {
+        // Obtener día de la semana actual (1=Lunes, 7=Domingo)
+        $diaSemanaActual = date('N'); // date('N') devuelve 1-7 (Lunes-Domingo)
+        $horaActual = date('H:i:s');
 
         foreach ($categorias as $categoria) {
-            $categoria->productos = DB::table("producto_menu")
+            $productos = DB::table("producto_menu")
                 ->where('categoria', $categoria->id)
                 ->where('producto_menu.estado', "A")
                 ->where('pm_x_sucursal.sucursal', $this->getUsuarioSucursal()) //TODO, verificar método de obtener restaurante
                 ->join('impuesto', 'producto_menu.impuesto', '=', 'impuesto.id')
                 ->join('pm_x_sucursal', 'producto_menu.id', '=', 'pm_x_sucursal.producto_menu')
+                
                 ->select(
                     'producto_menu.id',
                     'producto_menu.codigo',
                     'producto_menu.nombre',
                     'producto_menu.precio',
                     'producto_menu.posicion_menu',
+                    'pm_x_sucursal.id as id_pm_x_sucursal',
                     'pm_x_sucursal.comanda',
                     'impuesto.impuesto as impuesto',
                     'producto_menu.tipo_comanda',
@@ -219,6 +224,36 @@ class FacturacionController extends Controller
                     DB::raw("'N' as es_promocion")
                 )
                 ->orderBy('producto_menu.posicion_menu', 'asc')->get();
+
+            // Filtrar productos según restricciones de horario
+            $productosFiltrados = $productos->filter(function($producto) use ($diaSemanaActual, $horaActual) {
+                // Verificar si el producto tiene horarios configurados
+                $horarios = DB::table('pm_x_s_horarios')
+                    ->where('pm_x_s_horarios.pm_x_sucursal', '=', $producto->id_pm_x_sucursal)
+                    ->where('pm_x_s_horarios.activo', '=', 1)
+                    ->get();
+
+                // Si no tiene horarios configurados, mostrarlo siempre
+                if ($horarios->isEmpty()) {
+                    return true;
+                }
+
+                // Si tiene horarios, verificar que la hora actual esté dentro de algún horario activo para el día actual
+                foreach ($horarios as $horario) {
+                    if ($horario->dia_semana == $diaSemanaActual) {
+                        // Verificar que la hora actual esté entre hora_inicio y hora_fin
+                        if ($horaActual >= $horario->hora_inicio && $horaActual <= $horario->hora_fin) {
+                            return true; // El producto debe mostrarse
+                        }
+                    }
+                }
+
+                // Si no cumple ninguna condición, no mostrarlo
+                return false;
+            });
+
+            $categoria->productos = $productosFiltrados->values(); // Reindexar la colección
+
             foreach ($categoria->productos as $p) {
                 $p->tipoProducto = 'R';
                 $grupos = DB::table('extra_producto_menu')
@@ -267,6 +302,10 @@ class FacturacionController extends Controller
 
     public function getCategoriasTodosProductos($idSucursal)
     {
+        // Obtener día de la semana actual (1=Lunes, 7=Domingo)
+        $diaSemanaActual = date('N'); // date('N') devuelve 1-7 (Lunes-Domingo)
+        $horaActual = date('H:i:s');
+
         $categorias = DB::table('categoria')->select('id', 'categoria', 'logo', 'url_imagen')->orderBy('posicion_menu', 'asc')->get();
         foreach ($categorias as $categoria) {
 
@@ -293,10 +332,38 @@ class FacturacionController extends Controller
                     'producto_menu.tipo_comanda',
                     'producto_menu.url_imagen',
                     'producto_menu.descripcion',
-                    'producto_menu.posicion_menu'
+                    'producto_menu.posicion_menu',
+                    'pm_x_sucursal.id as id_pm_x_sucursal'
                 )->orderBy('producto_menu.posicion_menu', 'asc')->get();
 
-            foreach ($prods as $p) {
+            // Filtrar productos según restricciones de horario
+            $prodsFiltrados = $prods->filter(function($producto) use ($diaSemanaActual, $horaActual) {
+                // Verificar si el producto tiene horarios configurados
+                $horarios = DB::table('pm_x_s_horarios')
+                    ->where('pm_x_s_horarios.pm_x_sucursal', '=', $producto->id_pm_x_sucursal)
+                    ->where('pm_x_s_horarios.activo', '=', 1)
+                    ->get();
+
+                // Si no tiene horarios configurados, mostrarlo siempre
+                if ($horarios->isEmpty()) {
+                    return true;
+                }
+
+                // Si tiene horarios, verificar que la hora actual esté dentro de algún horario activo para el día actual
+                foreach ($horarios as $horario) {
+                    if ($horario->dia_semana == $diaSemanaActual) {
+                        // Verificar que la hora actual esté entre hora_inicio y hora_fin
+                        if ($horaActual >= $horario->hora_inicio && $horaActual <= $horario->hora_fin) {
+                            return true; // El producto debe mostrarse
+                        }
+                    }
+                }
+
+                // Si no cumple ninguna condición, no mostrarlo
+                return false;
+            });
+
+            foreach ($prodsFiltrados as $p) {
                 // Validar que url_imagen no sea null o vacío
                 if (!empty($p->url_imagen) && $p->url_imagen !== '') {
                     $p->url_imagen = asset('storage/' . $p->url_imagen);

@@ -441,6 +441,10 @@ Route::post('menu/menus/filtro', 'ProductosMenuController@goEditarMenuFiltro');
 Route::get('menu/menus', 'ProductosMenuController@goEditarMenu');
 Route::post('menu/menus/agregar', 'ProductosMenuController@agregarProductoAMenu');
 Route::post('menu/menus/eliminar', 'ProductosMenuController@eliminarProductoAMenu');
+Route::post('menu/menus/obtenerHorarios', 'ProductosMenuController@obtenerHorarios');
+Route::post('menu/menus/guardarHorarios', 'ProductosMenuController@guardarHorarios');
+Route::post('menu/menus/eliminarHorario', 'ProductosMenuController@eliminarHorario');
+Route::post('menu/menus/eliminarTodosHorarios', 'ProductosMenuController@eliminarTodosHorarios');
 Route::post('menu/menus/cambiarComanda', 'ProductosMenuController@cambiarComandera');
 
 /*****************Materia Prima**************************** */
