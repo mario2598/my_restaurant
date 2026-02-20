@@ -304,6 +304,10 @@
                                                 onclick='clickConfigFE("{{ $g->id }}")'
                                                 style="cursor: pointer;"><i class="fas fa-file-invoice"></i></a>
 
+                                            <a class="btn btn-danger btn-icon" title="Inactivar producto"
+                                                onclick='eliminarProducto("{{ $g->id }}")'
+                                                style="cursor: pointer;"><i class="fas fa-trash-alt"></i></a>
+
                                         </td>
                                     </tr>
                                     <script>
@@ -356,6 +360,10 @@
     <form id="formEditarProducto" action="{{ URL::to('menu/producto/editar') }}" style="display: none" method="POST">
         {{ csrf_field() }}
         <input type="hidden" name="idProductoEditar" id="idProductoEditar" value="-1">
+    </form>
+    <form id="formEliminarProducto" action="{{ URL::to('menu/producto/eliminar') }}" style="display: none" method="POST">
+        {{ csrf_field() }}
+        <input type="hidden" name="idProductoEliminar" id="idProductoEliminar" value="-1">
     </form>
 </div>
 

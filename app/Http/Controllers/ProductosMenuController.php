@@ -440,26 +440,35 @@ class ProductosMenuController extends Controller
 
         $id = $request->input('idProductoEliminar');
         if ($id == null || $id == '' || $id < 1) {
-            $this->setError('Eliminar Producto', 'Identificador inválido.');
+            $this->setError('Inactivar Producto', 'Identificador inválido.');
             return redirect('menu/productos');
         }
         try {
             DB::beginTransaction();
             $producto = DB::table('producto_menu')->where('id', '=', $id)->get()->first();
             if ($producto == null) {
-                $this->setError('Eliminar Producto', 'No existe el producto a eliminar.');
+                $this->setError('Inactivar Producto', 'No existe el producto a inactivar.');
                 return redirect('menu/productos');
-            } else {
-                DB::table('producto_menu')
-                    ->where('id', '=', $id)
-                    ->update(['estado' => 'I']);
             }
+            
+            // Verificar si ya está inactivo
+            if ($producto->estado == 'I') {
+                $this->setError('Inactivar Producto', 'El producto ya está inactivo.');
+                DB::rollBack();
+                return redirect('menu/productos');
+            }
+            
+            // Inactivar el producto
+            DB::table('producto_menu')
+                ->where('id', '=', $id)
+                ->update(['estado' => 'I']);
+            
             DB::commit();
-            $this->setSuccess('Eliminar Producto', 'El producto se elimino correctamente.');
+            $this->setSuccess('Inactivar Producto', 'El producto se inactivó correctamente.');
             return redirect('menu/productos');
         } catch (QueryException $ex) {
             DB::rollBack();
-            $this->setError('Eliminar Producto', 'Ocurrio un error eliminando el producto.');
+            $this->setError('Inactivar Producto', 'Ocurrió un error inactivando el producto.');
             return redirect('menu/productos');
         }
     }

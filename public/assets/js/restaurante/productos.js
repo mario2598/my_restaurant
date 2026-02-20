@@ -19,10 +19,25 @@ function clickProducto(id) {
 
 function eliminarProducto(id) {
     swal({
-        title: 'Seguro de inactivar el producto?',
-        text: 'No podra deshacer esta acción!',
+        title: '¿Está seguro de inactivar el producto?',
+        text: 'El producto dejará de mostrarse en los menús. Esta acción se puede revertir editando el producto.',
         icon: 'warning',
-        buttons: true,
+        buttons: {
+            cancel: {
+                text: "Cancelar",
+                value: false,
+                visible: true,
+                className: "",
+                closeModal: true,
+            },
+            confirm: {
+                text: "Sí, inactivar",
+                value: true,
+                visible: true,
+                className: "btn-danger",
+                closeModal: true
+            }
+        },
         dangerMode: true,
     })
         .then((willDelete) => {
@@ -30,13 +45,10 @@ function eliminarProducto(id) {
                 swal.close();
                 $('#idProductoEliminar').val(id);
                 $('#formEliminarProducto').submit();
-
             } else {
                 swal.close();
             }
         });
-
-
 }
 
 function clickMateriaPrima(id) {
