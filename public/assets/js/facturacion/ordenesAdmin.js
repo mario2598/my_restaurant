@@ -61,6 +61,21 @@ function generarHTMLOrdenes(ordenes) {
     var texto = "";
     ordenesGen = ordenes;
     ordenes.forEach(orden => {
+        var incidentes = orden.incidentes || [];
+        var tieneIncidentes = orden.tiene_incidentes || incidentes.length > 0;
+        var celdaIncidentes = "";
+        if (tieneIncidentes) {
+            var n = incidentes.length;
+            var totalRebaja = incidentes.reduce(function (sum, inc) { return sum + (parseFloat(inc.monto_afectado) || 0); }, 0);
+            celdaIncidentes = `<td class="text-center">
+                <i class="fas fa-exclamation-triangle text-warning" title="Orden con incidente(s)"></i>
+                <a href="javascript:void(0)" onclick="verIncidentesOrden(${orden.id}, '${(orden.numero_orden || '').toString().replace(/'/g, "\\'")}')" class="ml-1" title="Ver detalle de incidentes">
+                    Sí (${n})
+                </a>
+            </td>`;
+        } else {
+            celdaIncidentes = `<td class="text-center text-muted">—</td>`;
+        }
         texto = texto +
             `<tr style="border-bottom: 1px solid grey;">
                 <td class="text-center" onclick="imprimirTicket( ${orden.id})" style="cursor:pointer; text-decoration : underline; ">
@@ -79,7 +94,9 @@ function generarHTMLOrdenes(ordenes) {
                 ${orden.total_con_descuento ?? 0}
             </td> <td class="text-center">
             ${orden.estadoOrden ?? ""}
-        </td><td class="text-center">
+        </td>
+        ${celdaIncidentes}
+        <td class="text-center">
          <a href="${base_path}/tracking/orden/${orden.idOrdenEnc ?? ''}" style="display: block;width: 100%;" target="_blank">
                Link Rastreó                      
         </a>
@@ -91,11 +108,35 @@ function generarHTMLOrdenes(ordenes) {
                     <i class="fas fa-trash" aria-hidden="true"></i>
                 </button>
             </td>`;
+        } else {
+            texto = texto + `<td class="text-center"></td>`;
         }
         texto = texto + `</tr>`;
     });
 
     $('#tbody-ordenes').html(texto);
+}
+
+function verIncidentesOrden(idOrden, numeroOrden) {
+    var orden = ordenesGen.find(function (o) { return o.id == idOrden; });
+    if (!orden || !orden.incidentes || orden.incidentes.length === 0) {
+        return;
+    }
+    var incidentes = orden.incidentes;
+    $('#mdl-incidentes-orden-numero').text('Orden #' + (numeroOrden || idOrden));
+    var filas = '';
+    var totalRebaja = 0;
+    incidentes.forEach(function (inc) {
+        var monto = parseFloat(inc.monto_afectado) || 0;
+        totalRebaja += monto;
+        var fecha = (inc.fecha || '').substring(0, 19).replace('T', ' ');
+        var usuario = (inc.usuario_nombre || inc.usuario_login || '—');
+        var desc = (inc.descripcion || '').substring(0, 500);
+        filas += '<tr><td>' + fecha + '</td><td>' + usuario + '</td><td>' + desc + '</td><td class="text-right">' + (monto).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' }) + '</td></tr>';
+    });
+    $('#tbody-incidentes-orden').html(filas);
+    $('#mdl-incidentes-total-rebaja').html('<strong>Total a rebajar:</strong> ' + (totalRebaja).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' }));
+    $('#mdl-incidentes-orden').modal('show');
 }
 
 

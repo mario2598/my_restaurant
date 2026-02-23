@@ -19,7 +19,9 @@
         "numero_orden": "",
         "mto_pagado": 0,
         "pagado": false,
-        "idCliente": -1
+        "idCliente": -1,
+        "incidentes": [],
+        "totalRebajarIncidentes": 0
     };
     var sucursalFacturaIva = "{{ $data['sucursalFacturaIva'] ?? false }}";
     var cajaAbierta = "{{ $data['cajaAbierta'] ?? false }}";
@@ -980,14 +982,19 @@
 
                     <!-- Botones de acciones adicionales -->
                     <div class="row mb-3">
-                        <div class="col-6">
+                        <div class="col-4">
                             <button class="btn btn-success btn-block" onclick="abrirModalEnvio()">
                                 <i class="fas fa-truck"></i> Datos Envío
                             </button>
                         </div>
-                        <div class="col-6">
+                        <div class="col-4">
                             <button class="btn btn-success btn-block" id="btn_fe" onclick="changeFacturacionElectronica()">
                                 <i class="fas fa-user"></i> Factura Electrónica: NO
+                            </button>
+                        </div>
+                        <div class="col-4" id="cont-btn-incidente-pago" style="display: none;">
+                            <button type="button" class="btn btn-success btn-block" onclick="abrirModalIncidentePago()">
+                                <i class="fas fa-exclamation-triangle"></i> Agregar Incidente
                             </button>
                         </div>
                     </div>
@@ -1051,8 +1058,21 @@
                             <h6 id="txt-mto-pagado_mdl" class="text-muted">Monto Pagado: 0,00</h6>
                         </div>
                     </div>
-
-
+                    <div class="row mb-2 text-center" id="row-rebajar-incidentes-mdl" style="display: none;">
+                        <div class="col-12">
+                            <h6 id="txt-rebajar-incidentes-mdl" class="text-warning mb-0">Total a rebajar en incidentes: 0,00</h6>
+                        </div>
+                    </div>
+                    <div id="cont-incidente-orden-mdl" class="row mb-2" style="display: none;">
+                        <div class="col-12">
+                            <div class="alert alert-warning py-2 mb-0 small">
+                                <strong><i class="fas fa-exclamation-triangle"></i> Incidente:</strong>
+                                <span id="incidente-descripcion-mdl"></span>
+                                <span id="incidente-monto-mdl" class="font-weight-bold ml-1"></span>
+                                <button type="button" class="btn btn-danger btn-sm ml-2 py-0" id="btn-eliminar-incidente-mdl" onclick="eliminarIncidenteOrden()" title="Eliminar incidente"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Total seleccionado -->
                     <div class="row mb-3">
@@ -1099,7 +1119,37 @@
     </div>
 </div>
 
-
+<!-- Modal Agregar Incidente (desde modal de pago) -->
+<div class="modal fade" id="mdl-incidente-pago" role="dialog" aria-labelledby="mdlIncidentePagoLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mdlIncidentePagoLabel"><i class="fas fa-exclamation-triangle"></i> Agregar incidente</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="cerrarModalIncidentePago()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Descripción <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="incidente_pago_descripcion" rows="2" maxlength="2500" placeholder="Describa el incidente..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Monto afectado (₡)</label>
+                    <input type="number" class="form-control" id="incidente_pago_monto" step="0.01" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Clave maestra <span class="text-danger">*</span></label>
+                    <input type="password" class="form-control" id="incidente_pago_clave_maestra" placeholder="Ingrese su clave maestra" autocomplete="off">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalIncidentePago()">Cerrar</button>
+                <button type="button" class="btn btn-warning" onclick="guardarIncidenteDesdeModalPago()"><i class="fas fa-save"></i> Registrar incidente</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade bs-example-modal-center" id='mdl-loader-pago' tabindex="-1" role="dialog"
     aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">

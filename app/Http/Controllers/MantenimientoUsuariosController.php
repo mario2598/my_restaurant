@@ -321,8 +321,22 @@ class MantenimientoUsuariosController extends Controller
             $tipoUsuario = $usuarioR['tip_u_co'];
 
             $rol = $usuarioR['rol'];
-            $llave_maestra = $usuarioR['llave_maestra'] ?? null;
+            $llave_maestra = isset($usuarioR['llave_maestra']) ? trim((string) $usuarioR['llave_maestra']) : null;
+            if ($llave_maestra === '') {
+                $llave_maestra = null;
+            }
             $ind_llave_maestra_activa = isset($usuarioR['ind_llave_maestra_activa']) ? (int) $usuarioR['ind_llave_maestra_activa'] : 0;
+
+            if ($llave_maestra !== null) {
+                $query = DB::table('usuario')->where('llave_maestra', '=', $llave_maestra);
+                if ($actualizar) {
+                    $query->where('id', '!=', $id);
+                }
+                if ($query->exists()) {
+                    return $this->responseAjaxServerError("Ya existe otro usuario con la misma llave maestra. Debe usar una llave única.", []);
+                }
+            }
+
             try {
                 DB::beginTransaction();
 

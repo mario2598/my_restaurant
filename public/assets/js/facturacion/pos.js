@@ -44,6 +44,16 @@ var idOrdenAnular = 0;
 var detallesAnular = [];
 var cambiosPendientes = false;
 
+function tieneIncidentes() {
+    return (typeof ordenGestion !== 'undefined' && (ordenGestion.incidentes || []).length > 0);
+}
+function tienePagosFraccionados() {
+    return (typeof ordenGestion !== 'undefined' && !ordenGestion.nueva && (detalles || []).some(function (d) { return (d.cantidad_pagada || 0) > 0; }));
+}
+function bloquearEdicionPorIncidentesOPagos() {
+    return tieneIncidentes() || tienePagosFraccionados();
+}
+
 window.addEventListener("load", init, false);
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -644,6 +654,10 @@ function buscarDetallePrevio(producto) {
 }
 
 function eliminarLineaDetalleOrden(indice) {
+    if (bloquearEdicionPorIncidentesOPagos()) {
+        showError('No se puede eliminar ni modificar líneas cuando hay incidentes o pagos fraccionados en la orden.');
+        return;
+    }
     var detalle = detalles[indice];
     detalles.splice(indice, 1);
 
@@ -660,7 +674,10 @@ function eliminarLineaDetalleOrden(indice) {
 }
 
 function actualizarDetalleOrden(indice, aumenta = true) {
-
+    if (bloquearEdicionPorIncidentesOPagos()) {
+        showError('No se puede modificar la cantidad cuando hay incidentes o pagos fraccionados en la orden.');
+        return;
+    }
     var detalle = detalles[indice];
     if (aumenta) {
         detalle.cantidad = detalle.cantidad + 1;
@@ -703,6 +720,10 @@ function agregarDetalleInpt(indice, codigo, aumenta = true) {
 }
 
 function actualizarDetalleOrdenInput(indice, cantidad) {
+    if (bloquearEdicionPorIncidentesOPagos()) {
+        showError('No se puede modificar la cantidad cuando hay incidentes o pagos fraccionados en la orden.');
+        return;
+    }
     var detalle = detalles[indice];
     if (cantidad < 1) {
         cantidad = detalle.cantidad;
@@ -839,9 +860,10 @@ function actualizarOrden() {
         detalle.montoIva = montoIvaLinea;
         detalle.subTotal = montoLineaSinIva;
 
+        var bloquearEdicionCantidad = bloquearEdicionPorIncidentesOPagos();
         cards += generarHTMLProductoOrden(contador, detalle.producto.nombre, parseFloat(detalle.producto.precio).toFixed(2), detalle.cantidad,
             parseFloat(detalle.total).toFixed(2), detalle.producto.codigo, detalle.impuestoServicio, totalExtrasAux, textoExtras, detalle.cantidad_preparada,
-            detalle.cantidad_pagada);
+            detalle.cantidad_pagada, bloquearEdicionCantidad);
         contador++;
     });
 
@@ -881,17 +903,36 @@ function actualizarOrden() {
     }
 
     ordenGestion.total = total;
+    var totalRebajar = parseFloat(ordenGestion.totalRebajarIncidentes) || 0;
+    var totalConRebaja = Math.max(0, ordenGestion.total - totalRebajar);
 
     // Actualizar los valores en el DOM
     $('#txt-cliente').val(ordenGestion.cliente);
     $('#select_mesa').val(ordenGestion.mesa ?? -1);
 
-
     $('#txt-subtotal-pagar').html(`SubTotal: ${(ordenGestion.subTotal).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
     $('#txt-mto-envio_mdl').html(infoEnvio.incluye_envio ? `Envío: ${(parseFloat(ordenGestion.envio)).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}` : "Envío: No aplica");
     $('#txt-total-pagar').html(`Total Orden: ${(ordenGestion.total).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
     $('#txt-mto-pagado_mdl').html(`Monto Pagado : ${(ordenGestion.mto_pagado).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
-    $('#txt-total-pagar_mdl').html(`Total: ${(ordenGestion.total).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
+    $('#txt-total-pagar_mdl').html(`Total: ${(totalConRebaja).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
+
+    if (totalRebajar > 0) {
+        $('#row-rebajar-incidentes-mdl').show();
+        $('#txt-rebajar-incidentes-mdl').html(`Total a rebajar en incidentes: ${(totalRebajar).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
+    } else {
+        $('#row-rebajar-incidentes-mdl').hide();
+    }
+
+    var incidentes = ordenGestion.incidentes || [];
+    if (incidentes.length > 0) {
+        var inc = incidentes[0];
+        $('#cont-incidente-orden-mdl').show();
+        $('#incidente-descripcion-mdl').text((inc.descripcion || '').substring(0, 80) + ((inc.descripcion || '').length > 80 ? '...' : ''));
+        $('#incidente-monto-mdl').text((parseFloat(inc.monto_afectado) || 0).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' }));
+        $('#btn-eliminar-incidente-mdl').data('incidente-id', inc.id);
+    } else {
+        $('#cont-incidente-orden-mdl').hide();
+    }
 
     $(contenedores.get("orden")).html(cards);
 
@@ -904,12 +945,15 @@ function actualizarOrden() {
 
 
 function generarHTMLProductoOrden(indice, detalle, precio, cantidad, total, codigo, impuestoServicio = "N", totalExtrasAux,
-    textoExtras, cantidad_preparada, cantidad_pagada) {
+    textoExtras, cantidad_preparada, cantidad_pagada, bloquearEdicionCantidad) {
+    bloquearEdicionCantidad = !!bloquearEdicionCantidad;
     const pendiente = cantidad - cantidad_preparada;
     var icono = "fas fa-box text-secondary";
     if (impuestoServicio == "S") {
         icono = "fas fa-utensils text-secondary";
     }
+
+    var deshabilitarCantidad = (cantidad_pagada >= cantidad) || bloquearEdicionCantidad;
 
     let texto = `<tr style="border-bottom: 1px solid grey;">
                     <td> 
@@ -918,8 +962,7 @@ function generarHTMLProductoOrden(indice, detalle, precio, cantidad, total, codi
                         <div class="input-group w-auto justify-content-center align-items-center" 
                         style="padding: 0px !important; display: block!important; margin-top:2px; margin-bottom:2px;">`;
 
-    // Verificar si el botón de disminución debe estar deshabilitado
-    const botonMenosDisabled = cantidad_pagada >= cantidad ? "disabled" : "";
+    const botonMenosDisabled = deshabilitarCantidad ? "disabled" : "";
 
     if (pendiente > 0) {
         texto += `<input type="button" value="-" 
@@ -933,7 +976,7 @@ function generarHTMLProductoOrden(indice, detalle, precio, cantidad, total, codi
 
     if (pendiente > 0) {
         texto += `<input type="button" value="+" class="button-plus border rounded-circle icon-shape icon-sm"
-                            data-field="quantity" onclick="agregarDetalleInpt(${indice},'${codigo}',true)">`;
+                            data-field="quantity" onclick="agregarDetalleInpt(${indice},'${codigo}',true)" ${botonMenosDisabled}>`;
     }
 
     texto += `</div>
@@ -961,13 +1004,13 @@ function generarHTMLProductoOrden(indice, detalle, precio, cantidad, total, codi
             ? `<div class="col-sm-6 col-md-6 col-lg-6 justify-content-center align-items-center">
                                                 <button type="button" class="btn btn-danger px-2" 
                                                     onclick="eliminarLineaDetalleOrden(${indice})" 
-                                                    ${cantidad_pagada > 0 ? "disabled" : ""}>
+                                                    ${deshabilitarCantidad ? "disabled" : ""}>
                                                     <i class="fas fa-trash" aria-hidden="true"></i>
                                                 </button>
                                             </div>
                                             <div class="col-sm-6 col-md-6 col-lg-6 justify-content-center align-items-center">
                                                 <button type="button" class="btn btn-warning px-2" 
-                                                    title="Agregar observación a la orden"  ${cantidad_pagada > 0 ? "disabled" : ""}
+                                                    title="Agregar observación a la orden"  ${deshabilitarCantidad ? "disabled" : ""}
                                                     onclick="agregarDescripcionDetalle(${indice})">
                                                     <i class="fas fa-clipboard" aria-hidden="true"></i>
                                                 </button>
@@ -1015,7 +1058,9 @@ function limpiarOrden() {
         "mto_pagado": 0,
         "pagado": false,
         "codigo_descuento": null,
-        "idCliente": -1
+        "idCliente": -1,
+        "incidentes": [],
+        "totalRebajarIncidentes": 0
     };
     $('#monto_sinpe').val(""); // Supongo que txt-sinpe es el campo para el pago con SINPE
     $('#monto_tarjeta').val(""); // Supongo que txt-tarjeta es el campo para el pago con tarjeta
@@ -1163,7 +1208,104 @@ function abrirModalPago() {
     }
 
     cargarDetallesDividirCuentas(detalles);
+    if (!ordenGestion.nueva && ordenGestion.id && !tieneIncidentes() && !tienePagosFraccionados()) {
+        $('#cont-btn-incidente-pago').show();
+    } else {
+        $('#cont-btn-incidente-pago').hide();
+    }
     $('#mdl-pago').modal("show");
+}
+
+function abrirModalIncidentePago() {
+    if (!ordenGestion.id || ordenGestion.nueva) {
+        showError('Debe tener una orden cargada para agregar un incidente.');
+        return;
+    }
+    if (tieneIncidentes() || tienePagosFraccionados()) {
+        showError('No se pueden agregar incidentes cuando ya existen incidentes o hay pagos fraccionados en la orden.');
+        return;
+    }
+    $('#incidente_pago_descripcion').val('');
+    $('#incidente_pago_monto').val('0');
+    $('#incidente_pago_clave_maestra').val('');
+    $('#mdl-incidente-pago').modal('show');
+}
+
+function cerrarModalIncidentePago() {
+    $('#mdl-incidente-pago').modal('hide');
+}
+
+function guardarIncidenteDesdeModalPago() {
+    var ordenId = ordenGestion.id;
+    if (!ordenId) {
+        showError('No hay orden cargada.');
+        return;
+    }
+    var descripcion = $('#incidente_pago_descripcion').val().trim();
+    var monto = parseFloat($('#incidente_pago_monto').val()) || 0;
+    var claveMaestra = $('#incidente_pago_clave_maestra').val();
+
+    if (!descripcion) {
+        showError('La descripción del incidente es obligatoria.');
+        return;
+    }
+    if (!claveMaestra) {
+        showError('Debe ingresar la clave maestra.');
+        return;
+    }
+    $.ajax({
+        url: `${base_path}/facturacion/pos/incidentes/guardar`,
+        type: 'post',
+        dataType: 'json',
+        data: {
+            _token: CSRF_TOKEN,
+            orden: ordenId,
+            descripcion: descripcion,
+            monto_afectado: monto,
+            clave_maestra_ingresada: claveMaestra
+        }
+    }).done(function (response) {
+        if (!response.estado) {
+            showError(response.mensaje || 'Error al guardar.');
+            return;
+        }
+        showSuccess(response.mensaje || 'Incidente registrado.');
+        $('#incidente_pago_descripcion').val('');
+        $('#incidente_pago_monto').val('0');
+        $('#incidente_pago_clave_maestra').val('');
+        cerrarModalIncidentePago();
+        window._preservarCodigoDescuento = ordenGestion.codigo_descuento;
+        cargarOrdenGestion(ordenGestion.id);
+    }).fail(function () {
+        showError('Error al guardar el incidente.');
+    });
+}
+
+function eliminarIncidenteOrden() {
+    var idIncidente = $('#btn-eliminar-incidente-mdl').data('incidente-id');
+    if (!idIncidente) {
+        showError('No hay incidente para eliminar.');
+        return;
+    }
+    if (!confirm('¿Eliminar este incidente?')) return;
+    $.ajax({
+        url: `${base_path}/facturacion/pos/incidentes/eliminar`,
+        type: 'post',
+        dataType: 'json',
+        data: { _token: CSRF_TOKEN, id: idIncidente }
+    }).done(function (response) {
+        if (!response.estado) {
+            showError(response.mensaje || 'Error al eliminar.');
+            return;
+        }
+        showSuccess(response.mensaje || 'Incidente eliminado.');
+        ordenGestion.incidentes = [];
+        ordenGestion.totalRebajarIncidentes = 0;
+        actualizarOrden();
+        $('#cont-btn-incidente-pago').show();
+    }).fail(function () {
+        showError('Error al eliminar el incidente.');
+    });
 }
 
 function calcularCambio(montoRecibido, montoTotal, montoTarjeta = 0, montoSinpe = 0) {
@@ -1431,10 +1573,13 @@ function generarHTMLOrdenes(ordenes) {
             colorEstado = "#ff9800";
         }
 
+        var iconoIncidente = (orden.tiene_incidentes || (orden.incidentes && orden.incidentes.length > 0))
+            ? ' <i class="fas fa-exclamation-triangle text-warning" title="Orden con incidente(s)"></i>'
+            : '';
         texto = texto +
             `<tr style="${estiloFila} border-bottom: 1px solid grey;">
                 <td class="text-center"  onclick="cargarOrdenGestion(${orden.id})" style="cursor:pointer; text-decoration : underline; ">
-                   <i class="fas fa-cog" aria-hidden="true"> </i> ${orden.numero_orden}
+                   <i class="fas fa-cog" aria-hidden="true"> </i> ${orden.numero_orden}${iconoIncidente}
                 </td> 
                  <td class="text-center">
                     ${orden.numero_mesa ?? 'PARA LLEVAR'}
@@ -2523,6 +2668,10 @@ function cargarOrdenGestion(idOrden) {
         }
 
         ordenGestion = transformarEncabezado(response['datos']);
+        if (window._preservarCodigoDescuento !== undefined && window._preservarCodigoDescuento !== null && window._preservarCodigoDescuento !== '') {
+            ordenGestion.codigo_descuento = window._preservarCodigoDescuento;
+        }
+        window._preservarCodigoDescuento = null;
         detalles = transformarDetalles(response['datos']);
         cambiosPendientes = false;
         $('#btnIniciarOrden').fadeOut();
@@ -2547,6 +2696,7 @@ function transformarEncabezado(phpObject) {
         id: phpObject.id,
         subtotal: phpObject.subtotal,
         total: phpObject.total,
+        total_con_descuento: phpObject.total_con_descuento,
         cliente: phpObject.nombre_cliente,
         codigo_descuento: phpObject.codigo_descuento || '',
         envio: phpObject.envio,
@@ -2555,7 +2705,9 @@ function transformarEncabezado(phpObject) {
         numero_orden: phpObject.numero_orden,
         mto_pagado: phpObject.mto_pagado,
         pagado: phpObject.pagado == 1,
-        idCliente: phpObject.cliente 
+        idCliente: phpObject.cliente,
+        incidentes: phpObject.incidentes || [],
+        totalRebajarIncidentes: parseFloat(phpObject.total_rebajar_incidentes) || 0
     };
 }
 
@@ -2755,10 +2907,17 @@ function cargarDetallesDividirCuentas() {
     const tabla = document.getElementById('tabla-detalles-dividir-cuentas');
     tabla.innerHTML = '';
 
+    var bloqueadoPorIncidente = tieneIncidentes();
+    if (bloqueadoPorIncidente) {
+        tabla.innerHTML = '<tr><td colspan="7" class="alert alert-warning py-2 mb-0"><i class="fas fa-exclamation-triangle"></i> No se permiten pagos fraccionados cuando hay un incidente. Debe pagar el total completo.</td></tr>';
+    }
+
     detalles.forEach((detalle, index) => {
-        // Verificar si los checkboxes deben ser deshabilitados
         const cantPendientePagar = detalle.cantidad - (detalle.cantidad_pagada ?? 0);
-        const checkboxDisabled = (ordenGestion.nueva || cantPendientePagar < 1) ? 'disabled' : '';
+        var checkboxDisabled = (ordenGestion.nueva || cantPendientePagar < 1) ? 'disabled' : '';
+        if (bloqueadoPorIncidente) {
+            checkboxDisabled = 'disabled';
+        }
         const checkboxChecked = (ordenGestion.nueva || cantPendientePagar > 0) ? 'checked' : '';
 
         let totalExtrasAux = 0;
@@ -2769,13 +2928,14 @@ function cargarDetallesDividirCuentas() {
         let precioExtras = parseFloat(detalle.precio_unidad) + parseFloat(totalExtrasAux);
 
         let precioFinal = (detalle.cantidad * parseFloat(precioExtras));
+        const inputDisabled = checkboxDisabled;
         const row = `<tr>
                         <td><input type="checkbox" class="detalle-checkbox" data-id="${detalle.id}" ${checkboxChecked} ${checkboxDisabled} onchange="actualizarOrden()" /></td>
                         <td>${detalle.producto.nombre}</td>
                         <td>${detalle.cantidad}</td>
                         <td>${(detalle.cantidad_pagada ?? 0)}</td>
                         <td>
-                            <input type="number" class="form-control cantidad-a-pagar" min="0" max="${cantPendientePagar}" ${checkboxDisabled}
+                            <input type="number" class="form-control cantidad-a-pagar" min="0" max="${cantPendientePagar}" ${inputDisabled}
                                 value="${cantPendientePagar}" data-precio="${precioExtras}" data-id="${detalle.id}" data-indice="${detalle.indice}"
                                 onchange="actualizarOrden()" />
                         </td>
@@ -2863,6 +3023,7 @@ function cargarDetallesSeleccionados() {
     }
 
     var totalSeleccionadoAux = 0;
+    var totalRebajarIncidentes = parseFloat(ordenGestion.totalRebajarIncidentes) || 0;
 
     detallesSeleccionados.forEach(detalle => {
         detalle.objRowAux.querySelector('.total-parcial').innerText = currencyCRFormat(detalle.total);
@@ -2870,10 +3031,13 @@ function cargarDetallesSeleccionados() {
         totalSeleccionadoAux += detalle.total;
     });
 
+    // Aplicar rebaja por incidente al total (igual que el descuento por código)
+    totalSeleccionadoAux = Math.max(0, totalSeleccionadoAux - totalRebajarIncidentes);
 
     totalSeleccionado = totalSeleccionadoAux;
-    mtoDescuentoGen = descuentoAplicado;
-    $('#txt-descuento-pagar_mdl').html(`Descuento: ${descuentoAplicado.toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
+    mtoDescuentoGen = descuentoAplicado + totalRebajarIncidentes;
+    var descuentoMasIncidente = descuentoAplicado + totalRebajarIncidentes;
+    $('#txt-descuento-pagar_mdl').html(`Descuento: ${descuentoMasIncidente.toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
     document.getElementById('txt-total-seleccionado').innerText = `Total Seleccionado a Pagar : ${currencyCRFormat(totalSeleccionadoAux)}`;
 }
 
@@ -2881,6 +3045,29 @@ function realizarPagoDividido(montoSinpe, montoEfectivo, montoTarjeta) {
     if (!ordenGestion.nueva) {
         if (cambiosPendientes) {
             showError("Existen modificaciones sin guardar. Por favor, guarde los cambios antes de continuar.");
+            return;
+        }
+    }
+
+    if (tieneIncidentes()) {
+        var pagoCompleto = true;
+        detalles.forEach(function (detalle) {
+            var pendiente = detalle.cantidad - (detalle.cantidad_pagada ?? 0);
+            if (pendiente <= 0) return;
+            var cb = document.querySelector('.detalle-checkbox[data-id="' + detalle.id + '"]');
+            if (!cb || !cb.checked) {
+                pagoCompleto = false;
+                return;
+            }
+            var fila = cb.closest('tr');
+            var inputCant = fila ? fila.querySelector('.cantidad-a-pagar') : null;
+            var cantSel = inputCant ? (parseFloat(inputCant.value) || 0) : 0;
+            if (cantSel < pendiente) {
+                pagoCompleto = false;
+            }
+        });
+        if (!pagoCompleto) {
+            showError('No se permiten pagos fraccionados cuando hay un incidente. Debe pagar el total completo.');
             return;
         }
     }

@@ -161,6 +161,7 @@
                                             <th scope="col" style="text-align: center">Efectivo</th>
                                             <th scope="col" style="text-align: center">SINPE</th>
                                             <th scope="col" style="text-align: center">Cliente</th>
+                                            <th scope="col" style="text-align: center">Incidentes</th>
                                             <th scope="col" style="text-align: center">Imprimir</th>
                                         </tr>
                                     </thead>
@@ -181,6 +182,14 @@
                                                     {{ $i->cod_general == "ORD_ANULADA" ? 0 : number_format($i->monto_sinpe ?? '0.00', 2, '.', ',') }}</td>
 
                                                 <td style="text-align: center">{{ $i->nombre_cliente ?? '*' }}</td>
+                                                <td style="text-align: center">
+                                                    @if(!empty($i->tiene_incidentes) && count($i->incidentes ?? []) > 0)
+                                                        <i class="fas fa-exclamation-triangle text-warning" title="Orden con incidente(s)"></i>
+                                                        <a href="javascript:void(0)" onclick="verIncidentesOrdenIngreso({{ $i->id }})" class="ml-1" title="Ver detalle de incidentes">Sí ({{ count($i->incidentes) }})</a>
+                                                    @else
+                                                        —
+                                                    @endif
+                                                </td>
                                                 <td style="text-align: center"><button class="btn btn-primary"
                                                         style="width: 100%"
                                                         onclick='tickete("{{ $i->id }}")'>IMPRIMIR
@@ -200,6 +209,42 @@
 
     <a href="" target='_blank' class="btn btn-primary" id='btn-pdf' style="display:none"></a>
 
+    @if ($data['tieneVentas'])
+    <div class="modal fade" id="mdl-incidentes-orden-ingreso" tabindex="-1" role="dialog" aria-labelledby="mdlIncidentesIngresoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="mdlIncidentesIngresoLabel"><i class="fas fa-exclamation-triangle text-warning"></i> Incidentes de la orden</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-2" id="mdl-incidentes-ingreso-orden-numero"></p>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Usuario</th>
+                                    <th>Descripción</th>
+                                    <th class="text-right">Monto afectado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-incidentes-orden-ingreso">
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="mb-0 mt-2" id="mdl-incidentes-ingreso-total-rebaja"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Formulario oculto para rechazar ingreso -->
     <form id="formRechazarIngreso" action="{{ URL::to('ingresos/rechazar') }}" method="POST" style="display: none;">
         {{ csrf_field() }}
@@ -214,6 +259,30 @@
 
 @endsection
 @section('script')
+    @if ($data['tieneVentas'])
+    <script>
+        window.ventasIngreso = @json($data['ventas']);
+        function verIncidentesOrdenIngreso(idOrden) {
+            var orden = window.ventasIngreso.find(function(o) { return o.id == idOrden; });
+            if (!orden || !orden.incidentes || orden.incidentes.length === 0) return;
+            var incidentes = orden.incidentes;
+            document.getElementById('mdl-incidentes-ingreso-orden-numero').textContent = 'Orden #' + (orden.numero_orden || idOrden);
+            var filas = '';
+            var totalRebaja = 0;
+            incidentes.forEach(function(inc) {
+                var monto = parseFloat(inc.monto_afectado) || 0;
+                totalRebaja += monto;
+                var fecha = (inc.fecha || '').substring(0, 19).replace('T', ' ');
+                var usuario = (inc.usuario_nombre || inc.usuario_login || '—');
+                var desc = (inc.descripcion || '').substring(0, 500);
+                filas += '<tr><td>' + fecha + '</td><td>' + usuario + '</td><td>' + desc + '</td><td class="text-right">' + (monto).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' }) + '</td></tr>';
+            });
+            document.getElementById('tbody-incidentes-orden-ingreso').innerHTML = filas;
+            document.getElementById('mdl-incidentes-ingreso-total-rebaja').innerHTML = '<strong>Total a rebajar:</strong> ' + (totalRebaja).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' });
+            $('#mdl-incidentes-orden-ingreso').modal('show');
+        }
+    </script>
+    @endif
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const montoEfectivoInput = document.getElementById('monto_efectivo');

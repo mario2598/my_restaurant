@@ -88,6 +88,7 @@
                                             <th scope="col" style="text-align: center">Cliente</th>
                                             <th scope="col" style="text-align: center">Total pagado</th>
                                             <th scope="col" style="text-align: center">Estado</th>
+                                            <th scope="col" style="text-align: center">Incidentes</th>
                                             <th scope="col" style="text-align: center"></th>
                                             <th scope="col" style="text-align: center"></th>
                                         </tr>
@@ -103,6 +104,40 @@
             </div>
         </section>
         <a href="" target='_blank' class="btn btn-primary" id='btn-pdf' style="display:none"></a>
+    </div>
+
+    <div class="modal fade" id="mdl-incidentes-orden" tabindex="-1" role="dialog" aria-labelledby="mdlIncidentesLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="mdlIncidentesLabel"><i class="fas fa-exclamation-triangle text-warning"></i> Incidentes de la orden</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-2" id="mdl-incidentes-orden-numero"></p>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Usuario</th>
+                                    <th>Descripción</th>
+                                    <th class="text-right">Monto afectado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-incidentes-orden">
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="mb-0 mt-2" id="mdl-incidentes-total-rebaja"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="modal fade bd-example-modal-lg" id='mdl-detallesAnular' tabindex="-1" role="dialog"

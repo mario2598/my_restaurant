@@ -69,6 +69,13 @@ class IngresosController extends Controller
             $v->detalles =  DB::table('detalle_orden')
                 ->select('detalle_orden.*')
                 ->where('detalle_orden.orden', '=', $v->id)->get();
+            $v->incidentes = DB::table('det_incidente_orden')
+                ->leftJoin('usuario', 'usuario.id', '=', 'det_incidente_orden.usuario')
+                ->where('det_incidente_orden.orden', '=', $v->id)
+                ->orderBy('det_incidente_orden.fecha', 'DESC')
+                ->select('det_incidente_orden.*', 'usuario.nombre as usuario_nombre', 'usuario.usuario as usuario_login')
+                ->get();
+            $v->tiene_incidentes = $v->incidentes->count() > 0;
         }
 
         $ingreso->fecha = $this->fechaFormat($ingreso->fecha);
@@ -133,6 +140,13 @@ class IngresosController extends Controller
             $v->detalles =  DB::table('detalle_orden')
                 ->select('detalle_orden.*')
                 ->where('detalle_orden.orden', '=', $v->id)->get();
+            $v->incidentes = DB::table('det_incidente_orden')
+                ->leftJoin('usuario', 'usuario.id', '=', 'det_incidente_orden.usuario')
+                ->where('det_incidente_orden.orden', '=', $v->id)
+                ->orderBy('det_incidente_orden.fecha', 'DESC')
+                ->select('det_incidente_orden.*', 'usuario.nombre as usuario_nombre', 'usuario.usuario as usuario_login')
+                ->get();
+            $v->tiene_incidentes = $v->incidentes->count() > 0;
         }
 
         $ingreso->fecha = $this->fechaFormat($ingreso->fecha);

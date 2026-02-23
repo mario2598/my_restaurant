@@ -9,17 +9,15 @@ CREATE TABLE `det_incidente_orden` (
   `fecha` datetime NOT NULL DEFAULT current_timestamp(),
   `usuario` int(11) NOT NULL,
   `descripcion` varchar(2500) NOT NULL,
-  `codigo_descuento` int(11) NOT NULL,
-  `codigo` varchar(100) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `det_incidente_orden_fk01` (`orden`),
-  KEY `det_incidente_orden_fk02` (`codigo_descuento`),
-  KEY `det_incidente_orden_fk03` (`usuario`),
-  KEY `det_incidente_orden_fk04` (`codigo`)
+  KEY `det_incidente_orden_fk02` (`usuario`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 ALTER TABLE `det_incidente_orden`
   ADD CONSTRAINT `det_incidente_orden_fk01` FOREIGN KEY (`orden`) REFERENCES `orden` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  ADD CONSTRAINT `det_incidente_orden_fk02` FOREIGN KEY (`codigo_descuento`) REFERENCES `codigo_descuento` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  ADD CONSTRAINT `det_incidente_orden_fk03` FOREIGN KEY (`usuario`) REFERENCES `usuario` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  ADD CONSTRAINT `det_incidente_orden_fk04` FOREIGN KEY (`codigo`) REFERENCES `codigo_descuento` (`codigo`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+  ADD CONSTRAINT `det_incidente_orden_fk02` FOREIGN KEY (`usuario`) REFERENCES `usuario` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+-- Si la tabla det_incidente_orden ya existía con codigo_descuento y codigo, ejecutar antes:
+-- ALTER TABLE `det_incidente_orden` DROP FOREIGN KEY `det_incidente_orden_fk02`, DROP FOREIGN KEY `det_incidente_orden_fk04`;
+-- ALTER TABLE `det_incidente_orden` DROP COLUMN `codigo_descuento`, DROP COLUMN `codigo`;

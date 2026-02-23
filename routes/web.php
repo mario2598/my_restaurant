@@ -167,7 +167,8 @@ Route::group(['middleware' => 'autorizated:facFac'], function () {
     Route::post('facturacion/clientes/guardar', 'MantenimientoClientesController@guardarCliente');
     Route::post('facturacion/clientes/obtener-info-fe-cliente', 'MantenimientoClientesController@obtenerInfoFECliente');
     Route::post('facturacion/clientes/guardar-info-fe-cliente', 'MantenimientoClientesController@guardarInfoFECliente');
- 
+    Route::post('facturacion/pos/incidentes/guardar', 'FacturacionController@guardarIncidenteOrden');
+    Route::post('facturacion/pos/incidentes/eliminar', 'FacturacionController@eliminarIncidenteOrden');
 });
 
 Route::group(['middleware' => 'autorizated:prod_ext_inv'], function () {

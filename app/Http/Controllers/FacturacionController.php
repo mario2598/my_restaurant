@@ -83,6 +83,13 @@ class FacturacionController extends Controller
         foreach ($ordenes as $o) {
             $o->detalles = DB::table('detalle_orden')->where('orden', '=', $o->id)->get();
             $o->idOrdenEnc = encrypt($o->id);
+            $o->incidentes = DB::table('det_incidente_orden')
+                ->leftJoin('usuario', 'usuario.id', '=', 'det_incidente_orden.usuario')
+                ->where('det_incidente_orden.orden', '=', $o->id)
+                ->orderBy('det_incidente_orden.fecha', 'DESC')
+                ->select('det_incidente_orden.*', 'usuario.nombre as usuario_nombre', 'usuario.usuario as usuario_login')
+                ->get();
+            $o->tiene_incidentes = $o->incidentes->count() > 0;
         }
 
         return  $this->responseAjaxSuccess("", $ordenes);
@@ -1138,9 +1145,10 @@ class FacturacionController extends Controller
         return  $this->responseAjaxSuccess("", "");
     }
 
-    public static function asignarMontosDetalles($detalles, $descuento, $infoEnvio = null)
+    public static function asignarMontosDetalles($detalles, $descuento, $infoEnvio = null, $descuentoIncidente = 0)
     {
         $infoEnvio = $infoEnvio ?? ['incluye_envio' => 'false', 'precio' => 0];
+        $descuentoIncidente = (float) ($descuentoIncidente ?? 0);
 
         $totalGeneral = 0;
         $subtotalGeneral = 0;
@@ -1263,6 +1271,10 @@ class FacturacionController extends Controller
             }
         }
 
+        // Solo repartir el descuento por código sobre subtotales y recalcular IVA.
+        // El descuento por incidente se aplica después como deducción directa del total
+        // para evitar doble efecto del IVA (que generaba diferencia con el frontend).
+
         $montoImpuestos = 0;
         $totalGeneral = 0;
         $subtotalGeneral = 0;
@@ -1297,6 +1309,42 @@ class FacturacionController extends Controller
             $totalGeneral += $detalle['totalGen'];
             $montoImpuestoServicioMesa += $detalle['montoImpuestoServicioMesa'];
         }
+
+        // Aplicar descuento por incidente como deducción directa del total (sin tocar subtotal/IVA),
+        // para que el total baje exactamente en descuentoIncidente y coincida con el frontend.
+        if ($descuentoIncidente > 0 && $totalGeneral > 0) {
+            $totalSinEnvio = 0;
+            foreach ($listaDetallesNueva as &$detalle) {
+                if (!$detalle['linea_envio']) {
+                    $totalSinEnvio += $detalle['totalGen'];
+                }
+            }
+            if ($totalSinEnvio > 0) {
+                foreach ($listaDetallesNueva as &$detalle) {
+                    if (!$detalle['linea_envio']) {
+                        $totalGenLinea = $detalle['totalGen'];
+                        $reduccion = $descuentoIncidente * ($totalGenLinea / $totalSinEnvio);
+                        $nuevoTotalGen = $totalGenLinea - $reduccion;
+                        if ($totalGenLinea > 0) {
+                            $factor = $nuevoTotalGen / $totalGenLinea;
+                            $detalle['subTotal'] = round($detalle['subTotal'] * $factor, 2);
+                            $detalle['montoIva'] = round($detalle['montoIva'] * $factor, 2);
+                            $detalle['totalGen'] = round($detalle['subTotal'] + $detalle['montoIva'], 2);
+                        }
+                    }
+                }
+                $subtotalGeneral = 0;
+                $montoImpuestos = 0;
+                $totalGeneral = 0;
+                foreach ($listaDetallesNueva as $detalle) {
+                    $subtotalGeneral += $detalle['subTotal'];
+                    $montoImpuestos += $detalle['montoIva'];
+                    $totalGeneral += $detalle['totalGen'];
+                }
+            }
+        }
+
+        $totalDescuentoGen += $descuentoIncidente; // para el registro en 'descuento'
 
         return [
             'total' => $totalGeneral,
@@ -1679,6 +1727,13 @@ class FacturacionController extends Controller
                 )
                 ->where('entrega_orden.orden', '=', $o->id)->get()->first();
             $o->idOrdenEnc = encrypt($o->id);
+            $o->incidentes = DB::table('det_incidente_orden')
+                ->leftJoin('usuario', 'usuario.id', '=', 'det_incidente_orden.usuario')
+                ->where('det_incidente_orden.orden', '=', $o->id)
+                ->orderBy('det_incidente_orden.fecha', 'DESC')
+                ->select('det_incidente_orden.*', 'usuario.nombre as usuario_nombre', 'usuario.usuario as usuario_login')
+                ->get();
+            $o->tiene_incidentes = $o->incidentes->count() > 0;
         }
         return $this->responseAjaxSuccess("", $ordenes);
     }
@@ -2399,6 +2454,7 @@ class FacturacionController extends Controller
                 "orden.id",
                 "orden.subtotal",
                 "orden.total",
+                "orden.total_con_descuento",
                 "orden.pagado",
                 "orden.estado",
                 "orden.mto_pagado",
@@ -2462,7 +2518,118 @@ class FacturacionController extends Controller
             array_push($detallesA, $detalleObj);
         }
         $orden->detalles = $detallesA;
+
+        $incidentes = DB::table('det_incidente_orden')
+            ->where('orden', $orden->id)
+            ->orderBy('id', 'desc')
+            ->get();
+        $orden->incidentes = $incidentes;
+        $orden->total_rebajar_incidentes = $incidentes->sum('monto_afectado');
+
         return $this->responseAjaxSuccess("", $orden);
+    }
+
+    /**
+     * Elimina un incidente de orden. Solo si la orden no está pagada.
+     */
+    public function eliminarIncidenteOrden(Request $request)
+    {
+        if (!$this->validarSesion("facFac")) {
+            return $this->responseAjaxServerError("No tienes permisos.", []);
+        }
+        $id = (int) $request->input('id');
+        if ($id < 1) {
+            return $this->responseAjaxServerError("Incidente no válido.", []);
+        }
+        $incidente = DB::table('det_incidente_orden')->where('id', $id)->first();
+        if (!$incidente) {
+            return $this->responseAjaxServerError("El incidente no existe.", []);
+        }
+        $orden = DB::table('orden')->where('id', $incidente->orden)->first();
+        if (!$orden || $orden->pagado == 1) {
+            return $this->responseAjaxServerError("No se puede eliminar el incidente de esta orden.", []);
+        }
+        try {
+            DB::table('det_incidente_orden')->where('id', $id)->delete();
+            return $this->responseAjaxSuccess("Incidente eliminado.", []);
+        } catch (QueryException $ex) {
+            return $this->responseAjaxServerError("Error al eliminar.", []);
+        }
+    }
+
+    /**
+     * Guarda un incidente de orden. Exige usuario con llave maestra activa y que la clave ingresada coincida.
+     */
+    public function guardarIncidenteOrden(Request $request)
+    {
+        if (!$this->validarSesion("facFac")) {
+            return $this->responseAjaxServerError("No tienes permisos.", []);
+        }
+
+        $usuarioId = session('usuario')['id'];
+        $usuario = DB::table('usuario')->where('id', $usuarioId)->first();
+        if (!$usuario) {
+            return $this->responseAjaxServerError("Usuario no encontrado.", []);
+        }
+
+        $indActiva = (int) ($usuario->ind_llave_maestra_activa ?? 0);
+        if ($indActiva !== 1) {
+            return $this->responseAjaxServerError("No tiene llave maestra activa. No puede registrar incidentes.", []);
+        }
+
+        $claveIngresada = $request->input('clave_maestra_ingresada');
+        if ($claveIngresada === null || trim((string) $claveIngresada) === '') {
+            return $this->responseAjaxServerError("Debe ingresar la clave maestra.", []);
+        }
+        if (trim((string) $claveIngresada) !== trim((string) ($usuario->llave_maestra ?? ''))) {
+            return $this->responseAjaxServerError("Clave maestra incorrecta.", []);
+        }
+
+        $orden = (int) $request->input('orden');
+        $descripcion = trim($request->input('descripcion') ?? '');
+        $monto_afectado = (float) ($request->input('monto_afectado') ?? 0);
+
+        if ($orden < 1) {
+            return $this->responseAjaxServerError("Orden no válida.", []);
+        }
+        if ($descripcion === '') {
+            return $this->responseAjaxServerError("La descripción del incidente es obligatoria.", []);
+        }
+        if (strlen($descripcion) > 2500) {
+            return $this->responseAjaxServerError("La descripción no puede superar 2500 caracteres.", []);
+        }
+
+        if ($monto_afectado < 0) {
+            return $this->responseAjaxServerError("El monto afectado no puede ser negativo.", []);
+        }
+
+        $ordenRow = DB::table('orden')->where('id', $orden)->first();
+        if (!$ordenRow) {
+            return $this->responseAjaxServerError("La orden no existe.", []);
+        }
+
+        $totalOrden = (float) ($ordenRow->total_con_descuento ?? $ordenRow->total ?? 0);
+        if ($monto_afectado > $totalOrden) {
+            return $this->responseAjaxServerError("El monto afectado no puede ser mayor al total de la orden (" . number_format($totalOrden, 2) . ").", []);
+        }
+
+        $yaTieneIncidente = DB::table('det_incidente_orden')->where('orden', $orden)->exists();
+        if ($yaTieneIncidente) {
+            return $this->responseAjaxServerError("Solo se permite un incidente por orden. Elimine el existente si desea registrar otro.", []);
+        }
+
+        try {
+            DB::table('det_incidente_orden')->insert([
+                'orden' => $orden,
+                'monto_afectado' => $monto_afectado,
+                'usuario' => $usuarioId,
+                'descripcion' => $descripcion,
+            ]);
+            return $this->responseAjaxSuccess("Incidente registrado correctamente.", []);
+        } catch (QueryException $ex) {
+            Log::error('guardarIncidenteOrden: ' . $ex->getMessage());
+            return $this->responseAjaxServerError("Error al guardar el incidente. " . $ex->getMessage(), []);
+        }
     }
 
     public function iniciarOrden(Request $request)
@@ -2619,6 +2786,13 @@ class FacturacionController extends Controller
         }
         if ($ordenExistente->estado == SisEstadoController::getIdEstadoByCodGeneral("ORD_ANULADA")) {
             return $this->responseAjaxServerError('La orden ya ha sido anulada y no puede ser modificada.', $orden['id']);
+        }
+
+        // No permitir actualizar orden si hay incidentes o pagos fraccionados
+        $tieneIncidentes = DB::table('det_incidente_orden')->where('orden', $orden['id'])->exists();
+        $tienePagosFraccionados = DB::table('detalle_orden')->where('orden', $orden['id'])->where('cantidad_pagada', '>', 0)->exists();
+        if ($tieneIncidentes || $tienePagosFraccionados) {
+            return $this->responseAjaxServerError('No se puede modificar la orden cuando hay incidentes o pagos fraccionados.', $orden['id']);
         }
 
         // Validar la orden y detalles
@@ -2985,7 +3159,12 @@ class FacturacionController extends Controller
             }
         }
 
-        $asignarMontosDetalles = FacturacionController::asignarMontosDetalles($detalles, $orden['codigo_descuento'], $envio);
+        $descuentoPorIncidente = (float) DB::table('det_incidente_orden')->where('orden', $orden['id'])->sum('monto_afectado');
+        if ($descuentoPorIncidente > 0 && !$cubreMontoCompleto) {
+            return $this->responseAjaxServerError('No se permiten pagos fraccionados cuando hay un incidente. Debe pagar el total completo.', []);
+        }
+
+        $asignarMontosDetalles = FacturacionController::asignarMontosDetalles($detalles, $orden['codigo_descuento'], $envio, $descuentoPorIncidente);
         if ($asignarMontosDetalles == null) {
             return $this->responseAjaxServerError("Error calculando el monto de la factura.", []);
         }
