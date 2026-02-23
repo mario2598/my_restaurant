@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\QueryException;
@@ -2829,6 +2830,18 @@ class FacturacionController extends Controller
 
     public function pagarOrden(Request $request)
     {
+        // Debug: imprimir qué variables llegan (revisar storage/logs/laravel.log)
+        Log::info('pagarOrden - Request recibido', [
+            'keys_request' => array_keys($request->all()),
+            'mto_sinpe_raw' => $request->input("mto_sinpe"),
+            'mto_efectivo_raw' => $request->input("mto_efectivo"),
+            'mto_tarjeta_raw' => $request->input("mto_tarjeta"),
+            'orden_keys' => is_array($request->input("orden")) ? array_keys($request->input("orden")) : null,
+            'orden_mto_sinpe' => $request->input("orden.mto_sinpe") ?? (is_array($request->input("orden")) ? ($request->input("orden")['mto_sinpe'] ?? 'no existe') : 'orden no es array'),
+            'orden_mto_efectivo' => $request->input("orden.mto_efectivo") ?? (is_array($request->input("orden")) ? ($request->input("orden")['mto_efectivo'] ?? 'no existe') : 'orden no es array'),
+            'orden_mto_tarjeta' => $request->input("orden.mto_tarjeta") ?? (is_array($request->input("orden")) ? ($request->input("orden")['mto_tarjeta'] ?? 'no existe') : 'orden no es array'),
+        ]);
+
         $orden = $request->input("orden");
         $infoFE = $request->input("infoFE");
         $detalles = $request->input("detalles");
@@ -2847,6 +2860,13 @@ class FacturacionController extends Controller
             $montoTarjeta = (float) ($orden['mto_tarjeta'] ?? 0);
             $totalPagos = $montoSinpe + $montoEfectivo + $montoTarjeta;
         }
+
+        Log::info('pagarOrden - Montos calculados', [
+            'montoSinpe' => $montoSinpe,
+            'montoEfectivo' => $montoEfectivo,
+            'montoTarjeta' => $montoTarjeta,
+            'totalPagos' => $totalPagos,
+        ]);
 
         $ordenExistente = DB::table('orden')->where('id', '=', $orden['id'])->first();
         if (!$ordenExistente) {
