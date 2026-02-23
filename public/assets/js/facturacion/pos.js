@@ -2903,6 +2903,14 @@ function realizarPagoDividido(montoSinpe, montoEfectivo, montoTarjeta) {
             }
         }
         var idCliente = window.clienteSeleccionadoId == null ? -1 : window.clienteSeleccionadoId;
+        // Asegurar montos como número (evita que no se envíen si eran undefined)
+        var mtoSinpe = parseFloat(montoSinpe) || 0;
+        var mtoEfectivo = parseFloat(montoEfectivo) || 0;
+        var mtoTarjeta = parseFloat(montoTarjeta) || 0;
+        // Incluir montos también en orden por si el body se trunca o se pierden en la raíz
+        ordenGestion.mto_sinpe = mtoSinpe;
+        ordenGestion.mto_efectivo = mtoEfectivo;
+        ordenGestion.mto_tarjeta = mtoTarjeta;
         $('#mdl-loader-pago').modal("show");
         $.ajax({
             url: `${base_path}/facturacion/pos/pagarOrden`,
@@ -2910,14 +2918,14 @@ function realizarPagoDividido(montoSinpe, montoEfectivo, montoTarjeta) {
             dataType: "json",
             data: {
                 _token: CSRF_TOKEN,
+                mto_sinpe: mtoSinpe,
+                mto_efectivo: mtoEfectivo,
+                mto_tarjeta: mtoTarjeta,
+                idCliente: idCliente,
                 orden: ordenGestion,
                 infoFE: infoFE,
                 envio: infoEnvio,
-                detalles: detallesSeleccionados,
-                mto_sinpe: montoSinpe,
-                mto_efectivo: montoEfectivo,
-                mto_tarjeta: montoTarjeta,
-                idCliente: idCliente
+                detalles: detallesSeleccionados
             }
         }).done(function (res) {
             $('#mdl-loader-pago').modal("hide");
