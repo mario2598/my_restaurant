@@ -151,6 +151,26 @@
                                 </select>
                             </div>
                         </div>
+
+                        <!-- llave maestra activa -->
+                        <div class="col-sm-12 col-md-6 col-xl-4">
+                            <div class="form-group">
+                                <label>Llave maestra activa</label>
+                                <div class="custom-control custom-switch mt-2">
+                                    <input type="checkbox" class="custom-control-input" id="ind_llave_maestra_activa" name="ind_llave_maestra_activa" value="1">
+                                    <label class="custom-control-label" for="ind_llave_maestra_activa">Activa</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- llave maestra asignada -->
+                        <div class="col-sm-12 col-md-6 col-xl-4">
+                            <div class="form-group">
+                                <label>Llave maestra asignada</label>
+                                <input type="text" class="form-control" id="llave_maestra" name="llave_maestra" maxlength="100" placeholder="Código o identificador">
+                            </div>
+                        </div>
+
                         <input type="hidden" name="id" id="id" value="{{ $data['usuario']->id ?? '' }}">
                         <!-- enviar -->
                         <div class="col-sm-12 col-md-6 col-xl-4">

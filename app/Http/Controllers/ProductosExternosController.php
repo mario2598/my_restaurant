@@ -477,6 +477,54 @@ class ProductosExternosController extends Controller
     }
 
     /**
+     * Inactiva un producto externo. Primero elimina las relaciones en pe_x_sucursal.
+     */
+    public function eliminarProductoExterno(Request $request)
+    {
+        if (!$this->validarSesion("prod_ext_prods")) {
+            $this->setMsjSeguridad();
+            return redirect('/');
+        }
+
+        $id = $request->input('idProductoEliminar');
+        if ($id == null || $id == '' || $id < 1) {
+            $this->setError('Inactivar Producto', 'Identificador inválido.');
+            return redirect('productoExterno/productos');
+        }
+
+        try {
+            DB::beginTransaction();
+            $producto = DB::table('producto_externo')->where('id', '=', $id)->first();
+            if ($producto == null) {
+                $this->setError('Inactivar Producto', 'No existe el producto a inactivar.');
+                return redirect('productoExterno/productos');
+            }
+
+            if ($producto->estado == 'I') {
+                $this->setError('Inactivar Producto', 'El producto ya está inactivo.');
+                DB::rollBack();
+                return redirect('productoExterno/productos');
+            }
+
+            // Eliminar relaciones en pe_x_sucursal antes de inactivar
+            DB::table('pe_x_sucursal')->where('producto_externo', '=', $id)->delete();
+
+            // Inactivar el producto
+            DB::table('producto_externo')
+                ->where('id', '=', $id)
+                ->update(['estado' => 'I']);
+
+            DB::commit();
+            $this->setSuccess('Inactivar Producto', 'El producto se inactivó correctamente.');
+            return redirect('productoExterno/productos');
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            $this->setError('Inactivar Producto', 'Ocurrió un error inactivando el producto.');
+            return redirect('productoExterno/productos');
+        }
+    }
+
+    /**
      * Guarda o actualiza un producto
      */
     public function guardarProductoSucursal(Request $request)

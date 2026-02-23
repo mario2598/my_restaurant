@@ -139,11 +139,14 @@
 
                                                 <td class="text-center">
                                                     <a class="btn btn-primary btn-icon" title="Composición del producto"
-                                                        onclick='clickMateriaPrima("{{ $g->id }}")'
+                                                        onclick='event.stopPropagation(); clickMateriaPrima("{{ $g->id }}")'
                                                         style="cursor: pointer;"><i class="fas fa-cog"></i></a>
                                                     <a class="btn btn-info btn-icon ml-1" title="Configuración de Facturación Electrónica"
-                                                        onclick='clickConfigFE("{{ $g->id }}")'
+                                                        onclick='event.stopPropagation(); clickConfigFE("{{ $g->id }}")'
                                                         style="cursor: pointer;"><i class="fas fa-file-invoice"></i></a>
+                                                    <a class="btn btn-danger btn-icon ml-1" title="Inactivar producto"
+                                                        onclick='event.stopPropagation(); eliminarProducto("{{ $g->id }}")'
+                                                        style="cursor: pointer;"><i class="fas fa-trash-alt"></i></a>
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -162,6 +165,10 @@
             method="POST">
             {{ csrf_field() }}
             <input type="hidden" name="idProductoEditar" id="idProductoEditar" value="-1">
+        </form>
+        <form id="formEliminarProducto" action="{{ URL::to('productoExterno/producto/eliminar') }}" style="display: none" method="POST">
+            {{ csrf_field() }}
+            <input type="hidden" name="idProductoEliminar" id="idProductoEliminar" value="-1">
         </form>
     </div>
 

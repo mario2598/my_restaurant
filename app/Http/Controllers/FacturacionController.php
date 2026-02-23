@@ -2835,11 +2835,18 @@ class FacturacionController extends Controller
         $envio = $request->input("envio");
         $idCliente = $request->input("idCliente");
 
-        $montoSinpe = $request->input("mto_sinpe", 0);
-        $montoEfectivo = $request->input("mto_efectivo", 0);
-        $montoTarjeta = $request->input("mto_tarjeta", 0);
-
+        // Leer montos como numéricos (evita totalPagos=0 cuando vienen como string o en otro formato)
+        $montoSinpe = (float) ($request->input("mto_sinpe") ?? $request->input("orden.mto_sinpe") ?? 0);
+        $montoEfectivo = (float) ($request->input("mto_efectivo") ?? $request->input("orden.mto_efectivo") ?? 0);
+        $montoTarjeta = (float) ($request->input("mto_tarjeta") ?? $request->input("orden.mto_tarjeta") ?? 0);
+        // Respaldo: si el total sigue en 0, intentar desde el array orden
         $totalPagos = $montoSinpe + $montoEfectivo + $montoTarjeta;
+        if ($totalPagos == 0 && is_array($orden)) {
+            $montoSinpe = (float) ($orden['mto_sinpe'] ?? 0);
+            $montoEfectivo = (float) ($orden['mto_efectivo'] ?? 0);
+            $montoTarjeta = (float) ($orden['mto_tarjeta'] ?? 0);
+            $totalPagos = $montoSinpe + $montoEfectivo + $montoTarjeta;
+        }
 
         $ordenExistente = DB::table('orden')->where('id', '=', $orden['id'])->first();
         if (!$ordenExistente) {

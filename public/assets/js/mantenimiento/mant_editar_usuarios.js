@@ -11,6 +11,8 @@ var usuarioGestion = {
     "correo": "",
     "rol": "",
     "sucursal": "",
+    "ind_llave_maestra_activa": 0,
+    "llave_maestra": "",
     "tip_u_co": "U_A_G"
 };
 
@@ -64,6 +66,8 @@ function cargarUsuarioGestion(usuarioAux) {
         "contra": usuarioAux.contra,
         "rol": usuarioAux.rol,
         "sucursal": usuarioAux.sucursal,
+        "ind_llave_maestra_activa": usuarioAux.ind_llave_maestra_activa != null ? usuarioAux.ind_llave_maestra_activa : 0,
+        "llave_maestra": usuarioAux.llave_maestra != null ? usuarioAux.llave_maestra : "",
         "tip_u_co": "U_A_G"
     };
 
@@ -86,6 +90,8 @@ function cargarUsuarioNuevo() {
         "contra": "",
         "rol": "",
         "sucursal": "",
+        "ind_llave_maestra_activa": 0,
+        "llave_maestra": "",
         "tip_u_co": "U_A_G"
     };
 }
@@ -104,6 +110,8 @@ function cargarHtmlUsuario() {
     $('#correo').val(usuarioGestion.correo != null ? usuarioGestion.correo : "");
     $('#rol').val(usuarioGestion.rol != null ? usuarioGestion.rol : "");
     $('#sucursal').val(usuarioGestion.sucursal != null ? usuarioGestion.sucursal : "");
+    $('#ind_llave_maestra_activa').prop('checked', usuarioGestion.ind_llave_maestra_activa == 1);
+    $('#llave_maestra').val(usuarioGestion.llave_maestra != null ? usuarioGestion.llave_maestra : "");
     $('#contra').prop('readonly', usuarioGestion.id != null);
     if (usuarioGestion.id != 0) {
         $('#lblCambiarPss').fadeIn();
@@ -125,6 +133,8 @@ function cargarUsuarioHtml() {
     usuarioGestion.correo = $('#correo').val();
     usuarioGestion.rol = $('#rol').val();
     usuarioGestion.sucursal = $('#sucursal').val();
+    usuarioGestion.ind_llave_maestra_activa = $('#ind_llave_maestra_activa').prop('checked') ? 1 : 0;
+    usuarioGestion.llave_maestra = $('#llave_maestra').val() || "";
     usuarioGestion.tip_u_co = "U_A_G";
 }
 

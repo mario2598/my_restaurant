@@ -321,6 +321,8 @@ class MantenimientoUsuariosController extends Controller
             $tipoUsuario = $usuarioR['tip_u_co'];
 
             $rol = $usuarioR['rol'];
+            $llave_maestra = $usuarioR['llave_maestra'] ?? null;
+            $ind_llave_maestra_activa = isset($usuarioR['ind_llave_maestra_activa']) ? (int) $usuarioR['ind_llave_maestra_activa'] : 0;
             try {
                 DB::beginTransaction();
 
@@ -337,7 +339,9 @@ class MantenimientoUsuariosController extends Controller
                             'telefono' => $telefono,
                             'usuario' => $nombreUsuario,
                             'sucursal' => $sucursal,
-                            'rol' => $rol
+                            'rol' => $rol,
+                            'llave_maestra' => $llave_maestra,
+                            'ind_llave_maestra_activa' => $ind_llave_maestra_activa
                         ]);
                 } else { // Nuevo usuario
                     $id = DB::table('usuario')->insertGetId([
@@ -354,6 +358,8 @@ class MantenimientoUsuariosController extends Controller
                         'contra' => md5($contra),
                         'sucursal' => $sucursal,
                         'rol' => $rol,
+                        'llave_maestra' => $llave_maestra,
+                        'ind_llave_maestra_activa' => $ind_llave_maestra_activa,
                         'estado' => SisEstadoController::getIdEstadoByCodGeneral("USU_ACT")
                     ]);
 
