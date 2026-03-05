@@ -13,10 +13,38 @@ class TicketesImpresosController extends Controller
     use SpaceUtil;
     private $admin;
     private $pdf;
+    /** Tamaño máximo del logo en bytes para no agotar memoria en FPDF (~1 MB). */
+    private const LOGO_MAX_BYTES = 1048576;
+
     public function __construct()
     {
         $this->pdf = new Fpdf();
         setlocale(LC_ALL, "es_ES");
+    }
+
+    /**
+     * Devuelve 'PNG' o 'JPEG' si el archivo es imagen válida y no excede LOGO_MAX_BYTES; null en caso contrario.
+     * Evita "Not a PNG file" y "Allowed memory size exhausted" al no cargar logos enormes.
+     */
+    private function getLogoImageType($path)
+    {
+        if (!is_file($path) || !is_readable($path)) {
+            return null;
+        }
+        if (filesize($path) > self::LOGO_MAX_BYTES) {
+            return null;
+        }
+        $info = @getimagesize($path);
+        if ($info === false || !isset($info[2])) {
+            return null;
+        }
+        if ($info[2] === IMAGETYPE_PNG) {
+            return 'PNG';
+        }
+        if ($info[2] === IMAGETYPE_JPEG) {
+            return 'JPEG';
+        }
+        return null;
     }
 
     public function index() {}
@@ -99,15 +127,19 @@ class TicketesImpresosController extends Controller
 
         $path = public_path() . '/assets/images/default-logo.png';
 
-
         $this->pdf->__construct('P', 'mm', array(80, $tamPdf));
         $this->pdf->AcceptPageBreak(true);
         $this->pdf->SetAutoPageBreak(false);
         $this->pdf->AddPage();
 
         $this->pdf->SetFont('Arial', 'B', 10);
-        $this->pdf->Image($path, '15', '-5', '50', '50');
-        $this->pdf->Ln(28);
+        $logoType = $this->getLogoImageType($path);
+        if ($logoType !== null) {
+            $this->pdf->Image($path, 15, -5, 50, 50, $logoType);
+            $this->pdf->Ln(28);
+        } else {
+            $this->pdf->Ln(5);
+        }
         $this->pdf->SetFont('Helvetica', '', 7);
         $this->pdf->setX(6);
         $this->pdf->MultiCell(63, 4, $titulo3, 0);
@@ -322,15 +354,19 @@ class TicketesImpresosController extends Controller
 
         $path = public_path() . '/assets/images/default-logo.png';
 
-
         $this->pdf->__construct('P', 'mm', array(80, $tamPdf));
         $this->pdf->AcceptPageBreak(true);
         $this->pdf->SetAutoPageBreak(false);
         $this->pdf->AddPage();
 
         $this->pdf->SetFont('Arial', 'B', 10);
-        $this->pdf->Image($path, '15', '-5', '50', '50');
-        $this->pdf->Ln(28);
+        $logoType = $this->getLogoImageType($path);
+        if ($logoType !== null) {
+            $this->pdf->Image($path, 15, -5, 50, 50, $logoType);
+            $this->pdf->Ln(28);
+        } else {
+            $this->pdf->Ln(5);
+        }
         $this->pdf->SetFont('Helvetica', '', 7);
         $this->pdf->setX(6);
         $this->pdf->MultiCell(63, 4, $titulo3, 0);
@@ -511,18 +547,19 @@ class TicketesImpresosController extends Controller
 
         $path = public_path() . '/logo_blanco_negro.png';
 
-
         $this->pdf->__construct('P', 'mm', array(80, $tamPdf));
         $this->pdf->AcceptPageBreak(true);
         $this->pdf->SetAutoPageBreak(false);
         $this->pdf->AddPage();
 
         $this->pdf->SetFont('Arial', 'B', 10);
-        $this->pdf->Image($path, '23', '0', '30', '30');
-
-        // $this->pdf->SetTextColor(220, 50, 50);
-
-        $this->pdf->Ln(23);
+        $logoType = $this->getLogoImageType($path);
+        if ($logoType !== null) {
+            $this->pdf->Image($path, 23, 0, 30, 30, $logoType);
+            $this->pdf->Ln(23);
+        } else {
+            $this->pdf->Ln(5);
+        }
         $this->pdf->SetFont('Helvetica', '', 7);
         $this->pdf->setX(6);
         $this->pdf->MultiCell(63, 4, $titulo3, 0);

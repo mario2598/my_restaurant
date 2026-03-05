@@ -64,6 +64,30 @@ class ParametrosGeneralesController extends Controller
                     return redirect('mant/parametrosgenerales');
                 }
 
+                // Redimensionar para evitar que FPDF agote memoria (max 600px lado largo)
+                $maxLado = 600;
+                $w = (int) ($info[0] ?? 0);
+                $h = (int) ($info[1] ?? 0);
+                if ($w > $maxLado || $h > $maxLado) {
+                    if ($w >= $h) {
+                        $nw = $maxLado;
+                        $nh = (int) round($h * ($maxLado / $w));
+                    } else {
+                        $nh = $maxLado;
+                        $nw = (int) round($w * ($maxLado / $h));
+                    }
+                    $resized = imagecreatetruecolor($nw, $nh);
+                    if ($resized !== false) {
+                        imagealphablending($resized, false);
+                        imagesavealpha($resized, true);
+                        $transparent = imagecolorallocatealpha($resized, 255, 255, 255, 127);
+                        imagefill($resized, 0, 0, $transparent);
+                        imagecopyresampled($resized, $gd, 0, 0, 0, 0, $nw, $nh, $w, $h);
+                        imagedestroy($gd);
+                        $gd = $resized;
+                    }
+                }
+
                 // Guardar siempre como PNG válido (evita corrupción)
                 imagealphablending($gd, false);
                 imagesavealpha($gd, true);
