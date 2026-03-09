@@ -22,6 +22,8 @@
                 $incidentesSucursal = $dashboard['incidentes_sucursal'] ?? [];
                 $totalIncidentes = $dashboard['total_incidentes'] ?? 0;
                 $totalMontoRebajado = $dashboard['total_monto_rebajado'] ?? 0;
+                $promediosPorComanda = $dashboard['promedios_por_comanda'] ?? [];
+                $comandasMayorDuracion = $dashboard['comandas_mayor_duracion'] ?? [];
             @endphp
 
             <!-- Filtros de fecha -->
@@ -281,6 +283,85 @@
                     </div>
                 </div>
             @endif
+
+            <!-- Desempeño por comanda -->
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h5 class="mb-2"><i class="fas fa-chalkboard"></i> Desempeño por comanda</h5>
+                </div>
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header"><h4 class="mb-0">Promedios por tipo de comanda</h4></div>
+                        <div class="card-body p-2">
+                            @if(count($promediosPorComanda) > 0)
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped mb-0">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>Comanda</th>
+                                                <th class="text-center">Ítems terminados</th>
+                                                <th class="text-center">Tiempo promedio (min)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($promediosPorComanda as $pc)
+                                                <tr>
+                                                    <td>{{ $pc->comanda_nombre }}</td>
+                                                    <td class="text-center">{{ $pc->cantidad_terminados }}</td>
+                                                    <td class="text-center">{{ $pc->promedio_minutos !== null ? number_format($pc->promedio_minutos, 1, '.', ',') : '—' }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @else
+                                <p class="text-muted mb-0">No hay datos de comandas en el rango seleccionado.</p>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 mt-3">
+                    <div class="card">
+                        <div class="card-header"><h4 class="mb-0">Comandas de mayor duración</h4></div>
+                        <div class="card-body p-2">
+                            @if(count($comandasMayorDuracion) > 0)
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped mb-0">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th class="text-center">No. Orden</th>
+                                                <th class="text-center">No. Comanda</th>
+                                                <th>Sucursal</th>
+                                                <th class="text-center">Inicio</th>
+                                                <th class="text-center">Fin</th>
+                                                <th class="text-center">Duración (min)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($comandasMayorDuracion as $cmd)
+                                                @php
+                                                    $inicio = $cmd->cmd_fecha_inicio ? date('d/m/Y H:i', strtotime($cmd->cmd_fecha_inicio)) : '—';
+                                                    $fin = $cmd->cmd_fecha_fin ? date('d/m/Y H:i', strtotime($cmd->cmd_fecha_fin)) : '—';
+                                                @endphp
+                                                <tr>
+                                                    <td class="text-center">{{ $cmd->numero_orden ?? $cmd->orden_id }}</td>
+                                                    <td class="text-center">{{ $cmd->num_comanda ?? '—' }}</td>
+                                                    <td>{{ $cmd->sucursal_nombre ?? '—' }}</td>
+                                                    <td class="text-center">{{ $inicio }}</td>
+                                                    <td class="text-center">{{ $fin }}</td>
+                                                    <td class="text-center"><strong>{{ $cmd->duracion_minutos }}</strong></td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @else
+                                <p class="text-muted mb-0">No hay comandas con cierre en el rango seleccionado.</p>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Órdenes en curso -->
             <div class="row mt-3">

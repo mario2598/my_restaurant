@@ -225,6 +225,53 @@ class InformesController extends Controller
         $totalIncidentes = $incidentesSucursal->sum('cantidad_incidentes');
         $totalMontoRebajado = $incidentesSucursal->sum('monto_rebajado');
 
+        // Promedios por tipo de comanda (detalle_orden_comanda -> comanda): ítems terminados y tiempo promedio
+        $promediosPorComanda = DB::table('detalle_orden_comanda')
+            ->join('orden_comanda', 'orden_comanda.id', '=', 'detalle_orden_comanda.orden_comanda')
+            ->join('orden', 'orden.id', '=', 'orden_comanda.orden')
+            ->leftJoin('comanda', 'comanda.id', '=', 'detalle_orden_comanda.comanda')
+            ->whereNotNull('detalle_orden_comanda.fecha_fin')
+            ->where('orden.fecha_inicio', '>=', $desdeDate)
+            ->where('orden.fecha_inicio', '<', $modHasta)
+            ->select(
+                DB::raw('COALESCE(comanda.nombre, "Sin comanda") as comanda_nombre'),
+                DB::raw('COUNT(detalle_orden_comanda.id) as cantidad_terminados'),
+                DB::raw('ROUND(AVG(TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin)), 1) as promedio_minutos')
+            )
+            ->groupBy(DB::raw('COALESCE(comanda.id, 0)'), DB::raw('COALESCE(comanda.nombre, "Sin comanda")'))
+            ->orderBy('comanda_nombre')
+            ->get();
+
+        foreach ($promediosPorComanda as $r) {
+            $r->cantidad_terminados = (int) $r->cantidad_terminados;
+            $r->promedio_minutos = $r->promedio_minutos !== null ? (float) $r->promedio_minutos : null;
+        }
+
+        // Comandas (orden_comanda) de mayor duración en el rango
+        $comandasMayorDuracion = DB::table('orden_comanda')
+            ->join('orden', 'orden.id', '=', 'orden_comanda.orden')
+            ->leftJoin('sucursal', 'sucursal.id', '=', 'orden.sucursal')
+            ->whereNotNull('orden_comanda.fecha_fin')
+            ->where('orden.fecha_inicio', '>=', $desdeDate)
+            ->where('orden.fecha_inicio', '<', $modHasta)
+            ->select(
+                'orden_comanda.id as id_orden_comanda',
+                'orden_comanda.num_comanda',
+                'orden_comanda.fecha_inicio as cmd_fecha_inicio',
+                'orden_comanda.fecha_fin as cmd_fecha_fin',
+                'orden.numero_orden',
+                'orden.id as orden_id',
+                'sucursal.descripcion as sucursal_nombre',
+                DB::raw('TIMESTAMPDIFF(MINUTE, orden_comanda.fecha_inicio, orden_comanda.fecha_fin) as duracion_minutos')
+            )
+            ->orderByDesc('duracion_minutos')
+            ->limit(25)
+            ->get();
+
+        foreach ($comandasMayorDuracion as $c) {
+            $c->duracion_minutos = (int) $c->duracion_minutos;
+        }
+
         $data = [
             'panel_configuraciones' => $this->getPanelConfiguraciones(),
             'dashboard' => [
@@ -239,6 +286,8 @@ class InformesController extends Controller
                 'incidentes_sucursal' => $incidentesSucursal,
                 'total_incidentes' => $totalIncidentes,
                 'total_monto_rebajado' => $totalMontoRebajado,
+                'promedios_por_comanda' => $promediosPorComanda,
+                'comandas_mayor_duracion' => $comandasMayorDuracion,
             ],
         ];
 
