@@ -505,13 +505,13 @@
                 <div class="col-lg-3 col-md-4 col-12">
                     <div class="menu-header d-md-none">
                         <img title="Nombre empresa" alt="Nombre empresa"
-                             src="{{ asset('assets/images/default-logo.png') }}"
+                             src="{{ asset(app(\App\Http\Controllers\LogInController::class)->getLogoSistema()) ) }}"
                              class="img-fluid" />
                     </div>
                     <div class="menu-sidebar">
                         <div class="d-none d-md-block mb-3">
                             <img title="Nombre empresa" alt="Nombre empresa"
-                                 src="{{ asset('assets/images/default-logo.png') }}"
+                                 src="{{ asset(app(\App\Http\Controllers\LogInController::class)->getLogoSistema()) ) }}"
                                  class="img-fluid" style="max-width: 100%; border-radius: 8px;" />
                         </div>
                         <div class="categories">

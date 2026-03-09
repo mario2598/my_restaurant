@@ -43,14 +43,14 @@
     <div id="app">
         <div class="main-wrapper main-wrapper-1">
             @include('layout.topbar')
-
+           
             <!-- ============================================================== -->
             <!-- Start right Content here -->
             <!-- ============================================================== -->
 
             @yield('content')
             <div id="loader" style="display: none;">
-                <img src="{{ asset('assets/images/default-logo.png') }}" alt="Cargando..." />
+                <img id="imgLogoSistema" src="{{ session('usuario')['url_logo_sistema'] }}" alt="Cargando..." />
             </div>
 
             <!-- ============================================================== -->
@@ -63,6 +63,7 @@
     </div>
 
     @include('layout.msjAlerta')
+
     <!-- General JS Scripts -->
     <script src="{{ asset('assets/bundles/sweetalert/sweetalert.min.js') }}"></script>
     <script src="{{ asset('assets/js/app.min.js') }}"></script>

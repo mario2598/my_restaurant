@@ -41,6 +41,7 @@ trait AuthUtil
 
       session(['usuario' => [
         'id' => $usuario->id,
+        'url_logo_sistema' => asset('assets/images/sucursales/' . ($usuario->sucursal ?? 0) . '/logo_sistema.png'),
         'nombre' => $usuario->nombre,
         'usuario' => $usuario->usuario,
         'sucursal' => $usuario->sucursal,
@@ -103,6 +104,7 @@ trait AuthUtil
 
       session(['usuario' => [
         'id' => $usuario->id,
+        'url_logo_sistema' => asset('assets/images/sucursales/' . ($usuario->sucursal ?? 0) . '/logo_sistema.png'),
         'nombre' => $usuario->nombre,
         'usuario' => $usuario->usuario,
         'sucursal' => $usuario->sucursal,

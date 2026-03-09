@@ -9,7 +9,7 @@
             <li style="float: right; margin-top:-7px;">
                 <div class="sidebar-brand">
                    <img title="Nombre empresa" alt="Nombre empresa"
-                            src="{{ asset('assets/images/default-logo.png') }}"
+                            src="{{ session('usuario')['url_logo_sistema'] }}"
                             style="background-color: transparent;border-color: transparent;
                             height: 75px;position: fixed;" class="img-thumbnail" />
                 </div>

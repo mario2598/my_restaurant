@@ -40,7 +40,7 @@
 
                                 <div class="sidebar-brand">
                                     <img title="Nombre empresa" alt="Nombre empresa"
-                                        src="{{ asset('assets/images/default-logo.png') }}"
+                                        src="{{ asset(app(\App\Http\Controllers\LogInController::class)->getLogoSistema()) ) }}"
                                         style="background-color: transparent;border-color: transparent;
                                              height: 150px;"
                                         class="img-thumbnail" />

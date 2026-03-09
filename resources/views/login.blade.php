@@ -9,10 +9,11 @@
                         <div class="card-header" style="display: block;"> 
                             <div class="account-logo" style="text-align: center;">
                                 <a href="#">
-                                    <img src="{{ asset('assets/images/default-logo.png') }}"
+                                <?php $logoSistemaLogin = app(\App\Http\Controllers\LogInController::class)->getLogoSistemaLogin(); ?>
+                                    <img src="{{ asset($logoSistemaLogin) }}"
                                         style="background-color: transparent;border-color: transparent; max-height: 180px;"
                                         class="img-thumbnail" title="{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}"
-                                        alt="{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}">
+                                        alt="{{ env('APP_NAME', 'SPACE SOFTWARE CR') }}" />
                                 </a>
                             </div>
                         </div>

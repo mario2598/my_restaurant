@@ -215,13 +215,13 @@ trait SpaceUtil
    */
   public function getSucursalUsuario()
   {
-    return  DB::table('usuario')
-      ->select('usuario.sucursal')
-      ->where('usuario.id', '=', session('usuario')['id'])
-      ->get()->first()->sucursal ?? 1;
+    return  session('usuario')['sucursal'] ?? 0;
   }
 
-
+  public static function getLogoSistemaUsuario()
+  {
+    return "assets/images/sucursales/" . (session('usuario')['sucursal'] ?? 0) . "/logo_sistema.png";
+  }
 
   public function getTipoIngresoRolUsuario()
   {

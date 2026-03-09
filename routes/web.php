@@ -179,6 +179,10 @@ Route::group(['middleware' => 'autorizated:prod_ext_inv'], function () {
     Route::post('productoExterno/inventario/inventarios/disminuir', 'ProductosExternosController@disminuirProductoSucursal');
 });
 
+Route::group(['middleware' => 'autorizated:panelControl'], function () {
+    Route::get('informes/panelControl', 'InformesController@goPanelControl');
+});
+
 
 /*
 |--------------------------------------------------------------------------

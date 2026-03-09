@@ -18,27 +18,39 @@ class LogInController extends Controller
     {
     }
 
-    public function index()
+    public function index(Request $request)
     {
 
         if (!$this->validarSesion()) {
             return $this->goLogIn();
         } else {
-            return $this->goInicio();
+            return $this->goInicio($request);
         }
     }
+
+    
 
     public function goLogIn()
     {
         $this->clearAuthUser();
         return view('login');
     }
+
+    public function getLogoSistema($idSucursal = null)
+    {
+        return "assets/images/sucursales/" . ($idSucursal) . "/logo_sistema.png";
+    }
     
 
-    public function goInicio()
+    public function getLogoSistemaLogin()
+    {
+        return "assets/images/sucursales/1/logo_sistema.png";
+    }
+
+    public function goInicio(Request $request)
     {
         $data = [
-            'panel_configuraciones' => $this->getPanelConfiguraciones()
+            'panel_configuraciones' => $this->getPanelConfiguraciones(),
         ];
         return view('inicio', compact('data'));
     }
@@ -63,7 +75,7 @@ class LogInController extends Controller
         }
         $requeridos .= "] ";
         if (!$valido) {
-            session(['usuario' => null]);
+           
             $this->setError('Campos Requeridos', $requeridos);
             return redirect('login');
         }
@@ -96,6 +108,7 @@ class LogInController extends Controller
 
             session(['usuario' => [
                 'id' => $usuario->id,
+                'url_logo_sistema' => asset($this->getLogoSistema($usuario->sucursal)),
                 'nombre' => $usuario->nombre,
                 'usuario' => $usuario->usuario,
                 'sucursal' => $usuario->sucursal,

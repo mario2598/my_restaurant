@@ -1,3 +1,8 @@
+@extends('layout.master')
+
+@section('content')
+@include('layout.sidebar')
+
 <!-- Main Content -->
 <div class="main-content">
     <section class="section">
@@ -22,7 +27,7 @@
             <!-- Filtros de fecha -->
             <div class="row mb-3">
                 <div class="col-12">
-                    <form method="GET" action="{{ url('/') }}" class="form-inline">
+                    <form method="GET" action="{{ url('informes/panelControl') }}" class="form-inline">
                         <div class="form-group mr-2">
                             <label for="desde" class="mr-2">Desde</label>
                             <input type="date" id="desde" name="desde" class="form-control"
@@ -339,3 +344,4 @@
         </div>
     </section>
 </div>
+@endsection

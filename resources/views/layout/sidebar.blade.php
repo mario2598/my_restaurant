@@ -2,8 +2,8 @@
   <aside id="sidebar-wrapper">
       <div class="sidebar-brand">
           <a href="{{ url('/') }}">
-              <img title="Nombre empresa" alt="Logo empresa"
-                  src="{{ asset('assets/images/default-logo.png') }}"
+              <img id="imgLogoSidebar" title="Nombre empresa" alt="Logo empresa"
+                  src="{{ session('usuario')['url_logo_sistema'] }}"
                   style="background-color: transparent; border-color: transparent;" class="img-thumbnail" />
           </a>
       </div>

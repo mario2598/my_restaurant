@@ -47,6 +47,18 @@ class TicketesImpresosController extends Controller
         return null;
     }
 
+    private function getLogoFacturaPath($sucursalFactura)
+    {
+        if ($sucursalFactura != null && !empty($sucursalFactura->url_logo_factura)) {
+            $logoSucursal = public_path($sucursalFactura->url_logo_factura);
+            if (is_file($logoSucursal) && is_readable($logoSucursal)) {
+                return $logoSucursal;
+            }
+        }
+
+        return public_path() . '/assets/images/default-logo.png';
+    }
+
     public function index() {}
 
     public function generarFacturacionOrdenPdf($idOrden)
@@ -107,7 +119,7 @@ class TicketesImpresosController extends Controller
             $tamPdf = $tamPdf  + 10;
         }
 
-        if ($sucursalFactura->factura_iva == 1) {
+        if (($sucursalFactura->factura_iva ?? 0) == 1) {
             $tamPdf = $tamPdf  + 10;
         }
 
@@ -125,7 +137,7 @@ class TicketesImpresosController extends Controller
 
         $fecha = iconv('UTF-8', 'ISO-8859-1', 'Fecha : ' . $this->fechaFormat($orden->fecha_fin));
 
-        $path = public_path() . '/assets/images/default-logo.png';
+        $path = $this->getLogoFacturaPath($sucursalFactura);
 
         $this->pdf->__construct('P', 'mm', array(80, $tamPdf));
         $this->pdf->AcceptPageBreak(true);
@@ -235,7 +247,7 @@ class TicketesImpresosController extends Controller
             $this->pdf->Cell(63, 0, '', 'T');
         }
         $this->pdf->SetFont('Arial', '', 8);    //Letra Arial, negrita (Bold), tam. 20
-        if ($sucursalFactura->factura_iva == 1) {
+        if (($sucursalFactura->factura_iva ?? 0) == 1) {
             $this->pdf->Ln(4);
             $this->pdf->setX(6);
             $this->pdf->Cell(63, 4, 'SubTotal', 0);
@@ -265,7 +277,7 @@ class TicketesImpresosController extends Controller
             $this->pdf->Cell(63, 4, number_format($orden->descuento, 2, ".", ","), 0);
         }
 
-        if ($sucursalFactura->factura_iva == 1) {
+        if (($sucursalFactura->factura_iva ?? 0) == 1) {
             $this->pdf->Ln(4);
             $this->pdf->setX(6);
             $this->pdf->Cell(63, 4, 'Impuesto (IVA)', 0);
@@ -333,7 +345,7 @@ class TicketesImpresosController extends Controller
             $tamPdf = $tamPdf  + 10;
         }
 
-        if ($sucursalFactura->factura_iva == 1) {
+        if (($sucursalFactura->factura_iva ?? 0) == 1) {
             $tamPdf = $tamPdf  + 10;
         }
         /**
@@ -352,7 +364,7 @@ class TicketesImpresosController extends Controller
 
         $fecha = iconv('UTF-8', 'ISO-8859-1', 'Fecha : ' . $this->fechaFormat($pago_orden->fecha_pago));
 
-        $path = public_path() . '/assets/images/default-logo.png';
+        $path = $this->getLogoFacturaPath($sucursalFactura);
 
         $this->pdf->__construct('P', 'mm', array(80, $tamPdf));
         $this->pdf->AcceptPageBreak(true);
@@ -445,7 +457,7 @@ class TicketesImpresosController extends Controller
         }
 
         $this->pdf->SetFont('Arial', '', 8);    //Letra Arial, negrita (Bold), tam. 20
-        if ($sucursalFactura->factura_iva == 1) {
+        if (($sucursalFactura->factura_iva ?? 0) == 1) {
             $this->pdf->Ln(4);
             $this->pdf->setX(6);
             $this->pdf->Cell(63, 4, 'SubTotal', 0);
@@ -475,7 +487,7 @@ class TicketesImpresosController extends Controller
             $this->pdf->Cell(63, 4, number_format($pago_orden->descuento, 2, ".", ","), 0);
         }
 
-        if ($sucursalFactura->factura_iva == 1) {
+        if (($sucursalFactura->factura_iva ?? 0) == 1) {
             $this->pdf->Ln(4);
             $this->pdf->setX(6);
             $this->pdf->Cell(63, 4, 'Impuesto (IVA)', 0);

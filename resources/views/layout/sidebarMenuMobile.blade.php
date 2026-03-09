@@ -2,7 +2,7 @@
     <aside id="sidebar-wrapper">
       <div class="sidebar-brand">
         <a  href="#" data-toggle="sidebar" > <img title="Nombre empresa"
-           alt="Nombre empresa" src="{{ asset('assets/images/default-logo.png') }}"
+           alt="Nombre empresa" src="{{ session('usuario')['url_logo_sistema'] }}"
            style="background-color: transparent;border-color: transparent;" class="img-thumbnail"/> 
         </a>
       </div>
