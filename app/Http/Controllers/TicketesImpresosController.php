@@ -49,7 +49,7 @@ class TicketesImpresosController extends Controller
 
     private function getLogoFacturaPath($sucursalFactura)
     {
-        if ($sucursalFactura != null && !empty()) {
+        if ($sucursalFactura != null && !empty($sucursalFactura->url_logo_factura)) {
             $logoSucursal = public_path($sucursalFactura->url_logo_factura);
             if (is_file($logoSucursal) && is_readable($logoSucursal)) {
                 return $logoSucursal;
