@@ -47,16 +47,56 @@ class TicketesImpresosController extends Controller
         return null;
     }
 
+    /**
+     * Ruta absoluta al logo para facturas. Normaliza rutas (evita \ en Ubuntu) y prueba
+     * varios fallbacks: url_logo_factura → url_logo_sistema → default.
+     */
     private function getLogoFacturaPath($sucursalFactura)
     {
-        if ($sucursalFactura != null && !empty($sucursalFactura->url_logo_factura)) {
-            $logoSucursal = public_path($sucursalFactura->url_logo_factura);
-            if (is_file($logoSucursal) && is_readable($logoSucursal)) {
-                return $logoSucursal;
+        $candidatos = [];
+
+        if ($sucursalFactura != null) {
+            if (!empty($sucursalFactura->url_logo_factura)) {
+                $url = trim(str_replace('\\', '/', $sucursalFactura->url_logo_factura));
+                $candidatos[] = public_path($url);
+            }
+            if (!empty($sucursalFactura->url_logo_sistema)) {
+                $url = trim(str_replace('\\', '/', $sucursalFactura->url_logo_sistema));
+                $candidatos[] = public_path($url);
+            }
+            $idSucursal = (int) ($sucursalFactura->id ?? 0);
+            if ($idSucursal > 0) {
+                $candidatos[] = public_path("assets/images/sucursales/{$idSucursal}/logo_factura.png");
+                $candidatos[] = public_path("assets/images/sucursales/{$idSucursal}/logo_factura.jpg");
+                $candidatos[] = public_path("assets/images/sucursales/{$idSucursal}/logo_sistema.png");
+                $candidatos[] = public_path("assets/images/sucursales/{$idSucursal}/logo_sistema.jpg");
             }
         }
 
-        return public_path() . '/assets/images/default-logo.png';
+        $candidatos[] = public_path('assets/images/default-logo.png');
+
+        foreach ($candidatos as $path) {
+            $path = realpath($path) ?: $path;
+            if (is_file($path) && is_readable($path)) {
+                return $path;
+            }
+        }
+
+        return public_path('assets/images/default-logo.png');
+    }
+
+    /**
+     * Convierte texto UTF-8 a ISO-8859-1 para FPDF. Omite caracteres no representables
+     * (emojis, iconos, etc.) para evitar "Detected an illegal character in input string".
+     */
+    private function toLatin1($str)
+    {
+        if ($str === null || $str === '') {
+            return (string) $str;
+        }
+        $str = (string) $str;
+        $result = @iconv('UTF-8', 'ISO-8859-1//IGNORE', $str);
+        return $result !== false ? $result : preg_replace('/[^\x20-\x7E\xA0-\xFF]/u', '', $str);
     }
 
     public function index() {}
@@ -123,19 +163,19 @@ class TicketesImpresosController extends Controller
             $tamPdf = $tamPdf  + 10;
         }
 
-        $titulo3 = iconv('UTF-8', 'ISO-8859-1', $nombre_empresa_fe ?? env('APP_NAME', 'SPACE SOFTWARE CR'));
-        $titulo4 = iconv('UTF-8', 'ISO-8859-1', 'Cédula : ' . $cedula_empresa_fe ?? '---');
-        $titulo5 = iconv('UTF-8', 'ISO-8859-1', 'Correo : ' . $correo_empresa_fe ?? '---');
-        $sucursal = iconv('UTF-8', 'ISO-8859-1', 'Sucursal : ' . $orden->nombre_sucursal);
-        $detalleMesa = iconv('UTF-8', 'ISO-8859-1', $orden->mesa == null ?  'Tipo : PARA LLEVAR' : 'Mesa : ' . $orden->numero_mesa);
-        $numero_orden = iconv('UTF-8', 'ISO-8859-1', 'No.Orden : ' . $orden->numero_orden);
+        $titulo3 = $this->toLatin1( $nombre_empresa_fe ?? env('APP_NAME', 'SPACE SOFTWARE CR'));
+        $titulo4 = $this->toLatin1( 'Cédula : ' . $cedula_empresa_fe ?? '---');
+        $titulo5 = $this->toLatin1( 'Correo : ' . $correo_empresa_fe ?? '---');
+        $sucursal = $this->toLatin1( 'Sucursal : ' . $orden->nombre_sucursal);
+        $detalleMesa = $this->toLatin1( $orden->mesa == null ?  'Tipo : PARA LLEVAR' : 'Mesa : ' . $orden->numero_mesa);
+        $numero_orden = $this->toLatin1( 'No.Orden : ' . $orden->numero_orden);
         if ($orden->nombre_cliente == null || $orden->nombre_cliente == "") {
             $cliente = null;
         } else {
-            $cliente = iconv('UTF-8', 'ISO-8859-1', 'Cliente : ' . $orden->nombre_cliente);
+            $cliente = $this->toLatin1( 'Cliente : ' . $orden->nombre_cliente);
         }
 
-        $fecha = iconv('UTF-8', 'ISO-8859-1', 'Fecha : ' . $this->fechaFormat($orden->fecha_fin));
+        $fecha = $this->toLatin1( 'Fecha : ' . $this->fechaFormat($orden->fecha_fin));
 
         $path = $this->getLogoFacturaPath($sucursalFactura);
 
@@ -179,7 +219,7 @@ class TicketesImpresosController extends Controller
         $this->pdf->Ln(5);
         $this->pdf->SetFont('Helvetica', 'B', 10);
         $this->pdf->setX(21);
-        $this->pdf->Cell(63, 3, iconv('UTF-8', 'ISO-8859-1', 'Detalle de la orden'), 0);
+        $this->pdf->Cell(63, 3, $this->toLatin1( 'Detalle de la orden'), 0);
         $this->pdf->Ln(4);
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 0, '', 'T');
@@ -204,11 +244,11 @@ class TicketesImpresosController extends Controller
                 $producto .= ' ( + 10% )';
             }
             $totalExtra = 0;
-            $this->pdf->MultiCell(63, 4, iconv('UTF-8', 'ISO-8859-1', $producto), 0);
+            $this->pdf->MultiCell(63, 4, $this->toLatin1( $producto), 0);
             foreach ($d->extras as $e) {
                 $this->pdf->Ln(1);
                 $this->pdf->setX(10);
-                $this->pdf->Cell(63, 4,  iconv('UTF-8', 'ISO-8859-1', $e->descripcion_extra), 0);
+                $this->pdf->Cell(63, 4,  $this->toLatin1( $e->descripcion_extra), 0);
                 $this->pdf->setX(32);
                 $this->pdf->Cell(63, 4, "", 0);
                 $this->pdf->setX(56);
@@ -233,7 +273,7 @@ class TicketesImpresosController extends Controller
             $this->pdf->setX(6);
             $producto = $d->dsc_linea;
 
-            $this->pdf->MultiCell(63, 4, iconv('UTF-8', 'ISO-8859-1', $producto), 0);
+            $this->pdf->MultiCell(63, 4, $this->toLatin1( $producto), 0);
 
             $this->pdf->Ln(1);
             $this->pdf->setX(10);
@@ -351,18 +391,18 @@ class TicketesImpresosController extends Controller
         /**
          * Header
          */
-        $titulo3 = iconv('UTF-8', 'ISO-8859-1', $nombre_empresa_fe ?? env('APP_NAME', 'SPACE SOFTWARE CR'));
-        $titulo4 = iconv('UTF-8', 'ISO-8859-1', 'Cédula : ' . $cedula_empresa_fe ?? '---');
-        $titulo5 = iconv('UTF-8', 'ISO-8859-1', 'Correo : ' . $correo_empresa_fe ?? '---');
-        $sucursal = iconv('UTF-8', 'ISO-8859-1', 'Sucursal : ' . $orden->nombre_sucursal);
-        $numero_orden = iconv('UTF-8', 'ISO-8859-1', 'No.Orden : ' . $orden->numero_orden . '-P');
+        $titulo3 = $this->toLatin1( $nombre_empresa_fe ?? env('APP_NAME', 'SPACE SOFTWARE CR'));
+        $titulo4 = $this->toLatin1( 'Cédula : ' . $cedula_empresa_fe ?? '---');
+        $titulo5 = $this->toLatin1( 'Correo : ' . $correo_empresa_fe ?? '---');
+        $sucursal = $this->toLatin1( 'Sucursal : ' . $orden->nombre_sucursal);
+        $numero_orden = $this->toLatin1( 'No.Orden : ' . $orden->numero_orden . '-P');
         if ($pago_orden->nombre_cliente == null || $pago_orden->nombre_cliente == "") {
             $cliente = null;
         } else {
-            $cliente = iconv('UTF-8', 'ISO-8859-1', 'Cliente : ' . $pago_orden->nombre_cliente);
+            $cliente = $this->toLatin1( 'Cliente : ' . $pago_orden->nombre_cliente);
         }
 
-        $fecha = iconv('UTF-8', 'ISO-8859-1', 'Fecha : ' . $this->fechaFormat($pago_orden->fecha_pago));
+        $fecha = $this->toLatin1( 'Fecha : ' . $this->fechaFormat($pago_orden->fecha_pago));
 
         $path = $this->getLogoFacturaPath($sucursalFactura);
 
@@ -406,7 +446,7 @@ class TicketesImpresosController extends Controller
         $this->pdf->Ln(5);
         $this->pdf->SetFont('Helvetica', 'B', 10);
         $this->pdf->setX(21);
-        $this->pdf->Cell(63, 3, iconv('UTF-8', 'ISO-8859-1', 'Detalle de la orden'), 0);
+        $this->pdf->Cell(63, 3, $this->toLatin1( 'Detalle de la orden'), 0);
         $this->pdf->Ln(4);
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 0, '', 'T');
@@ -432,11 +472,11 @@ class TicketesImpresosController extends Controller
                 $producto .= ' ( + 10% )';
             }
             $totalExtra = 0;
-            $this->pdf->MultiCell(63, 4, iconv('UTF-8', 'ISO-8859-1', $producto), 0);
+            $this->pdf->MultiCell(63, 4, $this->toLatin1( $producto), 0);
             foreach ($d->extras as $e) {
                 $this->pdf->Ln(1);
                 $this->pdf->setX(10);
-                $this->pdf->Cell(63, 4,  iconv('UTF-8', 'ISO-8859-1', $e->descripcion_extra), 0);
+                $this->pdf->Cell(63, 4,  $this->toLatin1( $e->descripcion_extra), 0);
                 $this->pdf->setX(32);
                 $this->pdf->Cell(63, 4, "", 0);
                 $this->pdf->setX(56);
@@ -530,9 +570,9 @@ class TicketesImpresosController extends Controller
             return redirect('/');
         }
         $orden = $res['orden'];
-        $titulo3 = iconv('UTF-8', 'ISO-8859-1', 'INVERSIONES FONSECA JIMÉNEZ EL AMANECER SOCIEDAD DE RESPONSABILIDAD LIMITADA');
-        $titulo4 = iconv('UTF-8', 'ISO-8859-1', 'Cédula jurídica : 3-102-862760');
-        $titulo5 = iconv('UTF-8', 'ISO-8859-1', 'Correo : panaderiamanecer@gmail.com');
+        $titulo3 = $this->toLatin1( 'INVERSIONES FONSECA JIMÉNEZ EL AMANECER SOCIEDAD DE RESPONSABILIDAD LIMITADA');
+        $titulo4 = $this->toLatin1( 'Cédula jurídica : 3-102-862760');
+        $titulo5 = $this->toLatin1( 'Correo : panaderiamanecer@gmail.com');
         $detalles = $orden->detalles;
         $tamPdf = 125;
         $aumento = count($detalles) * 10;
@@ -540,22 +580,22 @@ class TicketesImpresosController extends Controller
         /**
          * Header
          */
-        $titulo1 = iconv('UTF-8', 'ISO-8859-1', 'Panadería y Cafetería');
-        $titulo2 = iconv('UTF-8', 'ISO-8859-1', 'El Amanecer');
-        $sucursal = iconv('UTF-8', 'ISO-8859-1', 'Sucursal : ' . $orden->nombre_sucursal);
-        $numero_orden = iconv('UTF-8', 'ISO-8859-1', 'No.Orden : ORD-' . $orden->numero_orden);
+        $titulo1 = $this->toLatin1( 'Panadería y Cafetería');
+        $titulo2 = $this->toLatin1( 'El Amanecer');
+        $sucursal = $this->toLatin1( 'Sucursal : ' . $orden->nombre_sucursal);
+        $numero_orden = $this->toLatin1( 'No.Orden : ORD-' . $orden->numero_orden);
         if ($orden->nombre_cliente == null || $orden->nombre_cliente == "") {
             $cliente = null;
         } else {
-            $cliente = iconv('UTF-8', 'ISO-8859-1', 'Cliente : ' . $orden->nombre_cliente);
+            $cliente = $this->toLatin1( 'Cliente : ' . $orden->nombre_cliente);
         }
 
         if ($orden->numero_mesa == null || $orden->numero_mesa == "") {
             $numero_mesa = null;
         } else {
-            $numero_mesa = iconv('UTF-8', 'ISO-8859-1', 'No.Mesa : #' . $orden->numero_mesa);
+            $numero_mesa = $this->toLatin1( 'No.Mesa : #' . $orden->numero_mesa);
         }
-        $fecha = iconv('UTF-8', 'ISO-8859-1', 'Fecha : ' . $this->fechaFormat($orden->fecha_fin));
+        $fecha = $this->toLatin1( 'Fecha : ' . $this->fechaFormat($orden->fecha_fin));
 
         $path = public_path() . '/logo_blanco_negro.png';
 
@@ -606,7 +646,7 @@ class TicketesImpresosController extends Controller
         $this->pdf->Ln(5);
         $this->pdf->SetFont('Helvetica', 'B', 10);
         $this->pdf->setX(21);
-        $this->pdf->Cell(63, 3, iconv('UTF-8', 'ISO-8859-1', 'Detalle de la orden'), 0);
+        $this->pdf->Cell(63, 3, $this->toLatin1( 'Detalle de la orden'), 0);
         $this->pdf->Ln(4);
         $this->pdf->setX(6);
         $this->pdf->Cell(63, 0, '', 'T');
@@ -630,7 +670,7 @@ class TicketesImpresosController extends Controller
             if ($d->servicio_mesa == 'S') {
                 $producto .= ' (10%)';
             }
-            $this->pdf->MultiCell(63, 4, iconv('UTF-8', 'ISO-8859-1', $producto), 0);
+            $this->pdf->MultiCell(63, 4, $this->toLatin1( $producto), 0);
             $this->pdf->Ln(1);
             $this->pdf->setX(10);
             $this->pdf->Cell(63, 4,  $d->cantidad, 0);
