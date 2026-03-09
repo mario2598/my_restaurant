@@ -10,7 +10,7 @@
         </div>
         <div class="section-body">
             <p class="mb-3">Bienvenido al sistema.</p>
-          
+
         </div>
     </section>
 </div>
