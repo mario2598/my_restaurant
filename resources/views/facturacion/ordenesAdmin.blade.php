@@ -88,8 +88,10 @@
                                             <th scope="col" style="text-align: center">Cliente</th>
                                             <th scope="col" style="text-align: center">Total pagado</th>
                                             <th scope="col" style="text-align: center">Estado</th>
+                                            <th scope="col" style="text-align: center">Caja</th>
                                             <th scope="col" style="text-align: center">Incidentes</th>
                                             <th scope="col" style="text-align: center"></th>
+                                            <th scope="col" style="text-align: center">Cambiar caja</th>
                                             <th scope="col" style="text-align: center"></th>
                                         </tr>
                                     </thead>
@@ -135,6 +137,33 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="mdl-cambiar-caja" tabindex="-1" role="dialog" aria-labelledby="mdlCambiarCajaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="mdlCambiarCajaLabel"><i class="fas fa-cash-register"></i> Cambiar caja de la orden</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-2" id="mdl-cambiar-caja-orden-numero"></p>
+                    <input type="hidden" id="mdl-cambiar-caja-id-orden" value="">
+                    <div class="form-group">
+                        <label for="select-caja-destino">Caja destino</label>
+                        <select class="form-control" id="select-caja-destino" name="idCaja">
+                            <option value="">-- Cargando... --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" id="btn-guardar-cambiar-caja"><i class="fas fa-save"></i> Guardar</button>
                 </div>
             </div>
         </div>

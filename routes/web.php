@@ -469,6 +469,8 @@ Route::post('materiaPrima/inventario/inventarios/filtro', 'MateriaPrimaControlle
 
 Route::get('facturacion/ordenesAdmin', 'FacturacionController@goOrdenesAdmin');
 Route::post('facturacion/filtrarOrdenesAdmin', 'FacturacionController@filtrarOrdenesAdmin');
+Route::post('facturacion/cajasAbiertas', 'FacturacionController@getCajasAbiertas');
+Route::post('facturacion/orden/cambiarCaja', 'FacturacionController@cambiarCajaOrden');
 Route::get('facturacion/ordenesEntrega', 'OrdenesListasController@goOrdenesEntrega');
 Route::get('facturacion/ordenesPreparacion', 'OrdenesListasController@goOrdenesPreparacion');
 Route::post('facturacion/ordenesPreparacion/terminarPreparacionOrden', 'OrdenesListasController@terminarPreparacionOrden');

@@ -50,13 +50,18 @@ class FacturacionController extends Controller
         $desde = $filtro['desde'];
 
         $ordenes = DB::table('orden')
-            ->leftjoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
-            ->leftjoin('sucursal', 'sucursal.id', '=', 'orden.sucursal')
+            ->leftJoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+            ->leftJoin('sucursal', 'sucursal.id', '=', 'orden.sucursal')
+            ->leftJoin('cierre_caja', 'cierre_caja.id', '=', 'orden.cierre_caja')
+            ->leftJoin('usuario as usuario_caja', 'usuario_caja.id', '=', 'cierre_caja.cajero')
+            ->leftJoin('sucursal as sucursal_caja', 'sucursal_caja.id', '=', 'cierre_caja.sucursal')
             ->select(
                 'orden.*',
                 'sis_estado.nombre as estadoOrden',
                 'sis_estado.cod_general',
-                'sucursal.descripcion as nombreSucursal'
+                'sucursal.descripcion as nombreSucursal',
+                'cierre_caja.id as caja_id',
+                DB::raw("CONCAT('Caja #', cierre_caja.id, ' - ', IFNULL(sucursal_caja.descripcion,''), ' - ', IFNULL(usuario_caja.nombre, usuario_caja.usuario)) as caja_etiqueta")
             );
 
 
@@ -93,6 +98,75 @@ class FacturacionController extends Controller
         }
 
         return  $this->responseAjaxSuccess("", $ordenes);
+    }
+
+    /**
+     * Lista cajas abiertas (estado CAJA_ABIERTO). Opcional: filtrar por sucursal.
+     */
+    public function getCajasAbiertas(Request $request)
+    {
+        if (!$this->validarSesion("adm_ord")) {
+            return $this->responseAjaxServerError("No tienes permisos.", []);
+        }
+        $idSucursal = $request->input('sucursal');
+        $idEstadoAbierto = SisEstadoController::getIdEstadoByCodGeneral('CAJA_ABIERTO');
+        $query = DB::table('cierre_caja')
+            ->leftJoin('usuario', 'usuario.id', '=', 'cierre_caja.cajero')
+            ->leftJoin('sucursal', 'sucursal.id', '=', 'cierre_caja.sucursal')
+            ->where('cierre_caja.estado', '=', $idEstadoAbierto)
+            ->select(
+                'cierre_caja.id',
+                'cierre_caja.fecha',
+                'cierre_caja.sucursal',
+                'usuario.nombre as cajero_nombre',
+                'usuario.usuario as cajero_login',
+                'sucursal.descripcion as sucursal_nombre'
+            )
+            ->orderBy('cierre_caja.fecha', 'DESC');
+        if (!$this->isNull($idSucursal) && $idSucursal !== '' && $idSucursal !== 'T') {
+            $query->where('cierre_caja.sucursal', '=', $idSucursal);
+        }
+        $cajas = $query->get();
+        foreach ($cajas as $c) {
+            $c->etiqueta = 'Caja #' . $c->id . ' - ' . ($c->sucursal_nombre ?? '') . ' - ' . ($c->cajero_nombre ?? $c->cajero_login ?? '');
+        }
+        return $this->responseAjaxSuccess("", $cajas);
+    }
+
+    /**
+     * Cambia la caja (cierre_caja) de una orden. Solo órdenes no pagadas y no anuladas.
+     */
+    public function cambiarCajaOrden(Request $request)
+    {
+        if (!$this->validarSesion("adm_ord")) {
+            return $this->responseAjaxServerError("No tienes permisos.", []);
+        }
+        $idOrden = $request->input('idOrden');
+        $idCaja = $request->input('idCaja');
+        if ($this->isNull($idOrden) || $this->isNull($idCaja)) {
+            return $this->responseAjaxServerError("Faltan datos (orden o caja).", []);
+        }
+        $orden = DB::table('orden')->where('id', '=', $idOrden)->first();
+        if (!$orden) {
+            return $this->responseAjaxServerError("Orden no encontrada.", []);
+        }
+        if ((int) $orden->pagado !== 0) {
+            return $this->responseAjaxServerError("Solo se puede cambiar la caja de órdenes no pagadas.", []);
+        }
+        $idAnulada = SisEstadoController::getIdEstadoByCodGeneral('ORD_ANULADA');
+        if ((int) $orden->estado === (int) $idAnulada) {
+            return $this->responseAjaxServerError("No se puede cambiar la caja de una orden anulada.", []);
+        }
+        $idEstadoAbierto = SisEstadoController::getIdEstadoByCodGeneral('CAJA_ABIERTO');
+        $caja = DB::table('cierre_caja')
+            ->where('id', '=', $idCaja)
+            ->where('estado', '=', $idEstadoAbierto)
+            ->first();
+        if (!$caja) {
+            return $this->responseAjaxServerError("La caja seleccionada no existe o no está abierta.", []);
+        }
+        DB::table('orden')->where('id', '=', $idOrden)->update(['cierre_caja' => $idCaja]);
+        return $this->responseAjaxSuccess("Caja de la orden actualizada.", []);
     }
 
     public function getPosProductos()

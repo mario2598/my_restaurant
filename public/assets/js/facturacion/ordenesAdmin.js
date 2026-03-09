@@ -95,12 +95,23 @@ function generarHTMLOrdenes(ordenes) {
             </td> <td class="text-center">
             ${orden.estadoOrden ?? ""}
         </td>
+        <td class="text-center" title="${(orden.caja_etiqueta || '').replace(/"/g, '&quot;')}">${orden.caja_etiqueta ? orden.caja_etiqueta : '—'}</td>
         ${celdaIncidentes}
         <td class="text-center">
          <a href="${base_path}/tracking/orden/${orden.idOrdenEnc ?? ''}" style="display: block;width: 100%;" target="_blank">
                Link Rastreó                      
         </a>
     </td>`;
+        var puedeCambiarCaja = (orden.pagado == 0 || orden.pagado === '0') && orden.cod_general != 'ORD_ANULADA';
+        if (puedeCambiarCaja) {
+            texto = texto + `<td class="text-center">
+                <button type="button" class="btn btn-info btn-sm px-2" onclick="abrirModalCambiarCaja(${orden.id}, '${(orden.numero_orden || orden.id).toString().replace(/'/g, "\\'")}')" title="Cambiar caja">
+                    <i class="fas fa-cash-register"></i>
+                </button>
+            </td>`;
+        } else {
+            texto = texto + `<td class="text-center">—</td>`;
+        }
         if (orden.cod_general != 'ORD_ANULADA') {
             texto = texto + `<td class="text-center">
                 <button type="button" class="btn btn-danger px-2" onclick='abrirModalAnularOrden("${orden.id ?? 0}")' 
@@ -177,6 +188,69 @@ function abrirModalAnularOrden(idOrden) {
 function cerrarMdlAnular() {
     $('#mdl-detallesAnular').modal('hide');
 }
+
+function abrirModalCambiarCaja(idOrden, numeroOrden) {
+    $('#mdl-cambiar-caja-id-orden').val(idOrden);
+    $('#mdl-cambiar-caja-orden-numero').text('Orden #' + (numeroOrden || idOrden));
+    var orden = ordenesGen.find(function (o) { return o.id == idOrden; });
+    var idSucursal = orden && orden.sucursal ? orden.sucursal : '';
+    $('#select-caja-destino').html('<option value="">-- Cargando... --</option>');
+    $('#mdl-cambiar-caja').modal('show');
+
+    $.ajax({
+        url: base_path + '/facturacion/cajasAbiertas',
+        type: 'post',
+        dataType: 'json',
+        data: {
+            _token: CSRF_TOKEN,
+            sucursal: idSucursal
+        }
+    }).done(function (response) {
+        if (!response.estado) {
+            showError(response.mensaje || 'Error al cargar cajas');
+            return;
+        }
+        var opciones = '<option value="">-- Seleccione una caja --</option>';
+        (response.datos || []).forEach(function (c) {
+            opciones += '<option value="' + c.id + '">' + (c.etiqueta || 'Caja #' + c.id) + '</option>';
+        });
+        $('#select-caja-destino').html(opciones);
+    }).fail(function () {
+        showError('No se pudieron cargar las cajas abiertas');
+    });
+}
+
+$(document).on('click', '#btn-guardar-cambiar-caja', function () {
+    var idOrden = $('#mdl-cambiar-caja-id-orden').val();
+    var idCaja = $('#select-caja-destino').val();
+    if (!idOrden || !idCaja) {
+        showError('Seleccione una caja destino');
+        return;
+    }
+    $('#loader').fadeIn();
+    $.ajax({
+        url: base_path + '/facturacion/orden/cambiarCaja',
+        type: 'post',
+        dataType: 'json',
+        data: {
+            _token: CSRF_TOKEN,
+            idOrden: idOrden,
+            idCaja: idCaja
+        }
+    }).done(function (response) {
+        if (!response.estado) {
+            showError(response.mensaje || 'Error al cambiar la caja');
+            return;
+        }
+        $('#mdl-cambiar-caja').modal('hide');
+        showSuccess(response.mensaje || 'Caja actualizada');
+        filtrar();
+    }).fail(function () {
+        showError('Algo salió mal');
+    }).always(function () {
+        $('#loader').fadeOut();
+    });
+});
 
 function anularOrden() {
     if (idOrdenAnular == null || idOrdenAnular == 0) {
