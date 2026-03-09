@@ -47,6 +47,17 @@ class TicketesImpresosController extends Controller
         return null;
     }
 
+    private function getLogoFacturaPath($sucursalFactura)
+    {
+        if ($sucursalFactura != null && !empty()) {
+            $logoSucursal = public_path($sucursalFactura->url_logo_factura);
+            if (is_file($logoSucursal) && is_readable($logoSucursal)) {
+                return $logoSucursal;
+            }
+        }
+
+        return public_path() . '/assets/images/default-logo.png';
+    }
 
     /**
      * Convierte texto UTF-8 a ISO-8859-1 para FPDF. Omite caracteres no representables
@@ -140,8 +151,7 @@ class TicketesImpresosController extends Controller
 
         $fecha = $this->toLatin1( 'Fecha : ' . $this->fechaFormat($orden->fecha_fin));
 
-        $path = $sucursalFactura->url_logo_factura != null ? public_path($sucursalFactura->url_logo_factura) 
-        : null;
+        $path = $this->getLogoFacturaPath($sucursalFactura);
 
         $this->pdf->__construct('P', 'mm', array(80, $tamPdf));
         $this->pdf->AcceptPageBreak(true);
@@ -149,8 +159,9 @@ class TicketesImpresosController extends Controller
         $this->pdf->AddPage();
 
         $this->pdf->SetFont('Arial', 'B', 10);
-        if ($path !== null) {
-            $this->pdf->Image($path, 15, -5, 50, 50, "PNG");
+        $logoType = $this->getLogoImageType($path);
+        if ($logoType !== null) {
+            $this->pdf->Image($path, 15, -5, 50, 50, $logoType);
             $this->pdf->Ln(28);
         } else {
             $this->pdf->Ln(5);
@@ -367,8 +378,7 @@ class TicketesImpresosController extends Controller
 
         $fecha = $this->toLatin1( 'Fecha : ' . $this->fechaFormat($pago_orden->fecha_pago));
 
-        $path = $sucursalFactura->url_logo_factura != null ? public_path($sucursalFactura->url_logo_factura) 
-        : null;
+        $path = $this->getLogoFacturaPath($sucursalFactura);
 
         $this->pdf->__construct('P', 'mm', array(80, $tamPdf));
         $this->pdf->AcceptPageBreak(true);
@@ -376,8 +386,9 @@ class TicketesImpresosController extends Controller
         $this->pdf->AddPage();
 
         $this->pdf->SetFont('Arial', 'B', 10);
-        if ($path !== null) {
-            $this->pdf->Image($path, 15, -5, 50, 50, "PNG");
+        $logoType = $this->getLogoImageType($path);
+        if ($logoType !== null) {
+            $this->pdf->Image($path, 15, -5, 50, 50, $logoType);
             $this->pdf->Ln(28);
         } else {
             $this->pdf->Ln(5);
@@ -521,4 +532,170 @@ class TicketesImpresosController extends Controller
         exit;
     }
 
+    public function generarPreFacturacionOrdenPdf($idOrden)
+    {
+        if (!$this->validarSesion(array("ordList_cmds", "fac_ord"))) {
+            $this->setMsjSeguridad();
+            return redirect('/');
+        }
+        $res = OrdenesController::getOrden($idOrden);
+        if (!$res['estado']) {
+            $this->setError("Imprimir tiquete", "Al parecer no se encontro la orden solicitada.");
+            return redirect('/');
+        }
+        $orden = $res['orden'];
+        $titulo3 = $this->toLatin1( 'INVERSIONES FONSECA JIMÉNEZ EL AMANECER SOCIEDAD DE RESPONSABILIDAD LIMITADA');
+        $titulo4 = $this->toLatin1( 'Cédula jurídica : 3-102-862760');
+        $titulo5 = $this->toLatin1( 'Correo : panaderiamanecer@gmail.com');
+        $detalles = $orden->detalles;
+        $tamPdf = 125;
+        $aumento = count($detalles) * 10;
+        $tamPdf = $tamPdf  + $aumento;
+        /**
+         * Header
+         */
+        $titulo1 = $this->toLatin1( 'Panadería y Cafetería');
+        $titulo2 = $this->toLatin1( 'El Amanecer');
+        $sucursal = $this->toLatin1( 'Sucursal : ' . $orden->nombre_sucursal);
+        $numero_orden = $this->toLatin1( 'No.Orden : ORD-' . $orden->numero_orden);
+        if ($orden->nombre_cliente == null || $orden->nombre_cliente == "") {
+            $cliente = null;
+        } else {
+            $cliente = $this->toLatin1( 'Cliente : ' . $orden->nombre_cliente);
+        }
+
+        if ($orden->numero_mesa == null || $orden->numero_mesa == "") {
+            $numero_mesa = null;
+        } else {
+            $numero_mesa = $this->toLatin1( 'No.Mesa : #' . $orden->numero_mesa);
+        }
+        $fecha = $this->toLatin1( 'Fecha : ' . $this->fechaFormat($orden->fecha_fin));
+
+        $path = public_path() . '/logo_blanco_negro.png';
+
+        $this->pdf->__construct('P', 'mm', array(80, $tamPdf));
+        $this->pdf->AcceptPageBreak(true);
+        $this->pdf->SetAutoPageBreak(false);
+        $this->pdf->AddPage();
+
+        $this->pdf->SetFont('Arial', 'B', 10);
+        $logoType = $this->getLogoImageType($path);
+        if ($logoType !== null) {
+            $this->pdf->Image($path, 23, 0, 30, 30, $logoType);
+            $this->pdf->Ln(23);
+        } else {
+            $this->pdf->Ln(5);
+        }
+        $this->pdf->SetFont('Helvetica', '', 7);
+        $this->pdf->setX(6);
+        $this->pdf->MultiCell(63, 4, $titulo3, 0);
+        $this->pdf->SetFont('Helvetica', '', 9);
+        $this->pdf->setX(6);
+        $this->pdf->MultiCell(63, 4, $titulo4, 0);
+        $this->pdf->setX(6);
+        $this->pdf->MultiCell(63, 4, $titulo5, 0);
+        $this->pdf->setX(6);
+        $this->pdf->MultiCell(63, 4, $sucursal, 0);
+        $this->pdf->Ln(1);
+        if ($numero_mesa != null && $numero_mesa != "") {
+            $this->pdf->setX(6);
+            $this->pdf->MultiCell(63, 4, $numero_mesa, 0);
+            $this->pdf->Ln(1);
+        }
+        $this->pdf->Ln(1);
+        $this->pdf->setX(6);
+        $this->pdf->MultiCell(63, 4, $numero_orden, 0);
+        $this->pdf->Ln(1);
+        if ($cliente != null && $cliente != "") {
+            $this->pdf->setX(6);
+            $this->pdf->MultiCell(63, 4, $cliente, 0);
+            $this->pdf->Ln(1);
+        }
+
+        $this->pdf->setX(6);
+        $this->pdf->MultiCell(63, 4, $fecha, 0);
+
+        /** Fin Header */
+        /**BODY */
+        $this->pdf->Ln(5);
+        $this->pdf->SetFont('Helvetica', 'B', 10);
+        $this->pdf->setX(21);
+        $this->pdf->Cell(63, 3, $this->toLatin1( 'Detalle de la orden'), 0);
+        $this->pdf->Ln(4);
+        $this->pdf->setX(6);
+        $this->pdf->Cell(63, 0, '', 'T');
+        $this->pdf->SetFont('Helvetica', 'B', 9);
+        $this->pdf->setX(6);
+        $this->pdf->SetFont('Arial', 'B', 8);    //Letra Arial, negrita (Bold), tam. 20
+        $this->pdf->Cell(63, 4, 'Cantidad', 0);
+        $this->pdf->setX(32);
+        $this->pdf->Cell(63, 4, 'Precio U', 0);
+        $this->pdf->setX(55);
+        $this->pdf->Cell(63, 4, 'SubTotal', 0);
+        $this->pdf->Ln(4);
+        $this->pdf->setX(6);
+        $this->pdf->Cell(63, 0, '', 'T');
+        $this->pdf->SetFont('Helvetica', '', 9);
+        $this->pdf->Ln(1);
+
+        foreach ($detalles as $d) {
+            $this->pdf->setX(6);
+            $producto = $d->nombre_producto;
+            if ($d->servicio_mesa == 'S') {
+                $producto .= ' (10%)';
+            }
+            $this->pdf->MultiCell(63, 4, $this->toLatin1( $producto), 0);
+            $this->pdf->Ln(1);
+            $this->pdf->setX(10);
+            $this->pdf->Cell(63, 4,  $d->cantidad, 0);
+            $this->pdf->setX(32);
+            $this->pdf->Cell(63, 4, number_format($d->precio_unidad, 2, ".", ","), 0);
+            $this->pdf->setX(53);
+            $this->pdf->Cell(63, 4, number_format($d->precio_unidad * $d->cantidad, 2, ".", ","), 0);
+            $this->pdf->Ln(4);
+            $this->pdf->setX(6);
+            $this->pdf->Cell(63, 0, '', 'T');
+        }
+        $this->pdf->Ln(4);
+        $this->pdf->SetFont('Arial', 'B', 9);    //Letra Arial, negrita (Bold), tam. 20
+        $this->pdf->setX(6);
+        $this->pdf->Cell(63, 4, 'SubTotal', 0);
+        $this->pdf->setX(52);
+        $this->pdf->Cell(63, 4, number_format($orden->subtotal, 2, ".", ","), 0);
+        $this->pdf->Ln(4);
+        $this->pdf->setX(6);
+        $this->pdf->Cell(63, 4, 'Impuesto (IVA)', 0);
+        $this->pdf->setX(52);
+        $this->pdf->Cell(63, 4, number_format($orden->impuesto, 2, ".", ","), 0);
+        $this->pdf->Ln(4);
+        $this->pdf->setX(6);
+        $this->pdf->Cell(63, 4, 'Impuesto Servicio (10%)', 0);
+        $this->pdf->setX(52);
+        $this->pdf->Cell(63, 4, number_format($orden->comision_restaurante, 2, ".", ","), 0);
+        $this->pdf->Ln(4);
+        $this->pdf->setX(6);
+        $this->pdf->Cell(63, 4, 'Descuento', 0);
+        $this->pdf->setX(52);
+        $this->pdf->Cell(63, 4, number_format($orden->descuento, 2, ".", ","), 0);
+        $this->pdf->Ln(4);
+        $this->pdf->setX(6);
+        $this->pdf->Cell(63, 4, 'Total', 0);
+        $this->pdf->setX(52);
+        $this->pdf->Cell(63, 4, number_format($orden->total, 2, ".", ","), 0);
+
+        $this->pdf->Ln(10);
+        $this->pdf->setX(23);
+
+        $this->pdf->MultiCell(63, 4, '**** Pre Tiquete **** ');
+
+        $this->pdf->SetFont('Helvetica', 'B', 6);
+        $this->pdf->setX(23);
+        $this->pdf->Cell(63, 4, 'BY SPACE SOFTWARE CR');
+        $this->pdf->Ln(10);
+        // $this->footer();
+
+        $this->pdf->Output('ordenNo-' . $orden->numero_orden . '.pdf', 'I');
+
+        exit;
+    }
 }
