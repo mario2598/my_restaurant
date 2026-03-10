@@ -30,10 +30,19 @@
 </div>
 
 <style>
-  /* Logo siempre por encima de los dropdowns del menú */
-  .sidebar-brand {
+  /* Logo fijo arriba y menú desplazado: evita que se monten uno sobre otro */
+  .main-sidebar .sidebar-brand {
       position: relative;
-      z-index: 1050;
+      z-index: 1;
+      padding: 10px 15px;
+      margin-bottom: 8px;
+  }
+
+  .main-sidebar .sidebar-menu {
+      max-height: calc(100vh - 90px);
+      overflow-y: auto;
+      margin-top: 4px;
+      padding-bottom: 12px;
   }
 
   .sidebar-menu .menu-item a.truncate-text {
