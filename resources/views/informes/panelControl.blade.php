@@ -632,16 +632,12 @@
                             var extras = p.extras;
                             var trExtras = $('<tr class="extras-row bg-light"><td colspan="8" class="py-2"></td></tr>');
                             var cell = trExtras.find('td');
-                            var tbl = $('<table class="table table-sm table-bordered mb-0 small"><thead><tr><th>Extra</th><th class="text-right">Veces</th><th class="text-right">Total</th><th class="text-center">Prep. prom. (min)</th></tr></thead><tbody></tbody></table>');
+                            var tbl = $('<table class="table table-sm table-bordered mb-0 small"><thead><tr><th>Extra</th><th class="text-right">Veces</th><th class="text-right">Total</th></tr></thead><tbody></tbody></table>');
                             extras.forEach(function (e) {
-                                var durExtra = (e.promedio_min !== null && e.promedio_min !== undefined)
-                                    ? e.promedio_min.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
-                                    : '—';
                                 tbl.find('tbody').append(
                                     $('<tr></tr>').append($('<td>' + (e.descripcion_extra || '-') + '</td>'))
                                         .append($('<td class="text-right">' + (e.cantidad_veces || 0) + '</td>'))
                                         .append($('<td class="text-right">' + fmtNum(e.total_extra) + ' CRC</td>'))
-                                        .append($('<td class="text-center">' + durExtra + '</td>'))
                                 );
                             });
                             cell.append(tbl);

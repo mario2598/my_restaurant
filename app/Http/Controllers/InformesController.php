@@ -443,31 +443,6 @@ class InformesController extends Controller
             ->orderByDesc(DB::raw('COUNT(*)'))
             ->get();
 
-        // Duración promedio de preparación por (producto + extra): líneas que tienen ese extra, desde detalle_orden_comanda
-        $duracionPorProductoExtra = DB::table('detalle_orden_comanda')
-            ->join('detalle_orden', 'detalle_orden.id', '=', 'detalle_orden_comanda.detalle_orden')
-            ->join('orden', 'orden.id', '=', 'detalle_orden.orden')
-            ->join('sis_estado', 'sis_estado.id', '=', 'orden.estado')
-            ->join('extra_detalle_orden', 'extra_detalle_orden.detalle', '=', 'detalle_orden.id')
-            ->where('orden.sucursal', '=', $idSucursal)
-            ->where('orden.pagado', '=', 1)
-            ->where('sis_estado.cod_general', '!=', 'ORD_ANULADA')
-            ->whereNotNull('detalle_orden_comanda.fecha_fin')
-            ->where('orden.fecha_inicio', '>=', $desdeDate)
-            ->where('orden.fecha_inicio', '<', $modHasta)
-            ->select(
-                'detalle_orden.nombre_producto',
-                'detalle_orden.codigo_producto',
-                'extra_detalle_orden.descripcion_extra',
-                DB::raw('SUM(detalle_orden_comanda.cantidad) as total_items'),
-                DB::raw('ROUND(SUM(TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin) * detalle_orden_comanda.cantidad) / NULLIF(SUM(detalle_orden_comanda.cantidad), 0), 1) as promedio_min')
-            )
-            ->groupBy('detalle_orden.nombre_producto', 'detalle_orden.codigo_producto', 'extra_detalle_orden.descripcion_extra')
-            ->get()
-            ->keyBy(function ($row) {
-                return ($row->nombre_producto ?? '') . '|' . ($row->codigo_producto ?? '') . '|' . ($row->descripcion_extra ?? '');
-            });
-
         $totalUnidades = 0;
         $totalVenta = 0.0;
         foreach ($productos as $p) {
@@ -487,16 +462,13 @@ class InformesController extends Controller
         foreach ($extrasPorProducto as $e) {
             $e->cantidad_veces = (int) $e->cantidad_veces;
             $e->total_extra = (float) $e->total_extra;
-            $keyExtra = ($e->nombre_producto ?? '') . '|' . ($e->codigo_producto ?? '') . '|' . ($e->descripcion_extra ?? '');
-            $durExtra = $duracionPorProductoExtra->get($keyExtra);
-            $promedio_min = $durExtra && $durExtra->promedio_min !== null ? (float) $durExtra->promedio_min : null;
+            $key = $e->nombre_producto . '|' . ($e->codigo_producto ?? '');
             foreach ($productos as $p) {
                 if (($p->nombre_producto ?? '') === ($e->nombre_producto ?? '') && ($p->codigo_producto ?? '') === ($e->codigo_producto ?? '')) {
                     $p->extras[] = [
                         'descripcion_extra' => $e->descripcion_extra,
                         'cantidad_veces' => $e->cantidad_veces,
                         'total_extra' => $e->total_extra,
-                        'promedio_min' => $promedio_min,
                     ];
                     break;
                 }
