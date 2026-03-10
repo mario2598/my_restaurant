@@ -30,6 +30,12 @@
 </div>
 
 <style>
+  /* Logo siempre por encima de los dropdowns del menú */
+  .sidebar-brand {
+      position: relative;
+      z-index: 1050;
+  }
+
   .sidebar-menu .menu-item a.truncate-text {
       white-space: nowrap;
       overflow: hidden;
