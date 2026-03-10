@@ -209,19 +209,7 @@ function marcarLineaPreparada(id_detalle_orden_comanda) {
                     recargarOrdenes();
                     var datos = res['datos'] || {};
                     if (datos.orden_completa && datos.id_orden_comanda) {
-                        swal({
-                            type: 'warning',
-                            text: 'No queda ningún detalle pendiente. ¿Desea terminar preparación?',
-                            showCancelButton: true,
-                            confirmButtonText: 'Sí, terminar',
-                            cancelButtonText: 'No',
-                            allowOutsideClick: false,
-                            allowEscapeKey: false
-                        }).then(function (confirmado) {
-                            if (confirmado) {
-                                terminarPreparacion(datos.id_orden_comanda);
-                            }
-                        });
+                        terminarPreparacion(datos.id_orden_comanda);
                     }
                 }
             }).fail(function () {
