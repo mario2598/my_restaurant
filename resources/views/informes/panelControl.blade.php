@@ -533,7 +533,7 @@
                         <div class="col-6 col-md-3"><strong>Venta total:</strong> <span id="pvResumenVenta">0</span> CRC</div>
                         <div class="col-6 col-md-3"><strong>Tickets:</strong> <span id="pvResumenTickets">0</span></div>
                     </div>
-                    <div class="table-responsive">
+                            <div class="table-responsive">
                         <table class="table table-sm table-striped table-hover mb-0">
                             <thead class="thead-light">
                                 <tr>
@@ -543,6 +543,7 @@
                                     <th class="text-right">Total vendido</th>
                                     <th class="text-center">En # tickets</th>
                                     <th class="text-center">% tickets</th>
+                                    <th class="text-center">Prep. prom. (min)</th>
                                     <th></th>
                                 </tr>
                             </thead>
@@ -613,6 +614,10 @@
                     tr.append($('<td></td>').addClass('text-right').text(fmtNum(p.total_vendido) + ' CRC'));
                     tr.append($('<td></td>').addClass('text-center').text(p.num_ordenes || 0));
                     tr.append($('<td></td>').addClass('text-center').text((p.pct_tickets || 0) + '%'));
+                    var dur = (p.duracion_promedio_min !== null && p.duracion_promedio_min !== undefined)
+                        ? p.duracion_promedio_min.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+                        : '—';
+                    tr.append($('<td></td>').addClass('text-center').text(dur));
                     var btnCell = $('<td class="text-center"></td>');
                     if (p.extras && p.extras.length > 0) {
                         var btn = $('<button type="button" class="btn btn-xs btn-outline-secondary py-0 toggle-extras" data-producto="' + (p.nombre_producto || '').replace(/"/g, '&quot;') + '" data-codigo="' + (p.codigo_producto || '').replace(/"/g, '&quot;') + '"><i class="fas fa-plus"></i> Extras</button>');
@@ -625,7 +630,7 @@
                                 return;
                             }
                             var extras = p.extras;
-                            var trExtras = $('<tr class="extras-row bg-light"><td colspan="7" class="py-2"></td></tr>');
+                            var trExtras = $('<tr class="extras-row bg-light"><td colspan="8" class="py-2"></td></tr>');
                             var cell = trExtras.find('td');
                             var tbl = $('<table class="table table-sm table-bordered mb-0 small"><thead><tr><th>Extra</th><th class="text-right">Veces</th><th class="text-right">Total</th></tr></thead><tbody></tbody></table>');
                             extras.forEach(function (e) {

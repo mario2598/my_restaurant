@@ -399,6 +399,30 @@ class InformesController extends Controller
             ->orderByDesc(DB::raw('SUM(detalle_orden.cantidad)'))
             ->get();
 
+        // Duración promedio de preparación por producto (basado en detalle_orden_comanda: fecha_ingreso → fecha_fin)
+        // Se calcula un promedio ponderado por cantidad para tener minutos por ítem.
+        $duracionesPorProducto = DB::table('detalle_orden_comanda')
+            ->join('detalle_orden', 'detalle_orden.id', '=', 'detalle_orden_comanda.detalle_orden')
+            ->join('orden', 'orden.id', '=', 'detalle_orden.orden')
+            ->join('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+            ->where('orden.sucursal', '=', $idSucursal)
+            ->where('orden.pagado', '=', 1)
+            ->where('sis_estado.cod_general', '!=', 'ORD_ANULADA')
+            ->whereNotNull('detalle_orden_comanda.fecha_fin')
+            ->where('orden.fecha_inicio', '>=', $desdeDate)
+            ->where('orden.fecha_inicio', '<', $modHasta)
+            ->select(
+                'detalle_orden.nombre_producto',
+                'detalle_orden.codigo_producto',
+                DB::raw('SUM(detalle_orden_comanda.cantidad) as total_items'),
+                DB::raw('ROUND(SUM(TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin) * detalle_orden_comanda.cantidad) / NULLIF(SUM(detalle_orden_comanda.cantidad), 0), 1) as promedio_min')
+            )
+            ->groupBy('detalle_orden.nombre_producto', 'detalle_orden.codigo_producto')
+            ->get()
+            ->keyBy(function ($row) {
+                return ($row->nombre_producto ?? '') . '|' . ($row->codigo_producto ?? '');
+            });
+
         $extrasPorProducto = DB::table('extra_detalle_orden')
             ->join('detalle_orden', 'detalle_orden.id', '=', 'extra_detalle_orden.detalle')
             ->join('orden', 'orden.id', '=', 'detalle_orden.orden')
@@ -426,6 +450,10 @@ class InformesController extends Controller
             $p->total_vendido = (float) $p->total_vendido;
             $p->num_ordenes = (int) $p->num_ordenes;
             $p->pct_tickets = $totalTickets > 0 ? round(100 * $p->num_ordenes / $totalTickets, 1) : 0;
+            $keyProd = ($p->nombre_producto ?? '') . '|' . ($p->codigo_producto ?? '');
+            $dur = $duracionesPorProducto->get($keyProd);
+            $p->duracion_promedio_min = $dur && $dur->promedio_min !== null ? (float) $dur->promedio_min : null;
+            $p->items_preparados = $dur ? (int) ($dur->total_items ?? 0) : 0;
             $p->extras = [];
             $totalUnidades += $p->cantidad_vendida;
             $totalVenta += $p->total_vendido;
