@@ -1,77 +1,82 @@
 @foreach ($data['ordenes'] as $p)
-    @if (count($p->detalles) > 0)
-    <div class="col-md-6 col-xs-12 col-sm-12 col-xl-4">
+    <div class="col-md-6 col-xs-12 col-sm-12 col-xl-4 mb-3">
         <div class="card">
             <div class="card-header" style="padding: 5px !important;">
-                <h4>
-                    {{ $p->numero_orden }} : {{ $p->nombre_cliente }}
-                </h4>
+                <h4>{{ $p->numero_orden }} : {{ $p->nombre_cliente ?? '' }}</h4>
                 <div class="card-header-action">
                     <a class="btn btn-icon btn-success" style="cursor: pointer"
-                        onclick='terminarEntrega({{ "$p->id" }})' title="Teminar preparación orden"><i
-                            class="fas fa-check"></i></a>
+                        onclick="terminarEntrega({{ $p->id }})" title="Terminar entrega orden">
+                        <i class="fas fa-check"></i>
+                    </a>
                     <a data-collapse="#mycard-collapse{{ $p->id }}" title="Esconder"
                         class="btn btn-icon btn-info" href="#"><i class="fas fa-minus"></i></a>
                 </div>
             </div>
             <div class="collapse show" id="mycard-collapse{{ $p->id }}">
                 <div class="card-body" style="padding: 5px !important;">
-                    <div class="row">
-                        <div class="col-12">
-                            <h6 style="cursor: pointer"> Estado : {{ $p->descEstado ?? '' }} </h6>
-                            <h6 style="cursor: pointer"> Mesa : {{ $p->mesaDsc ?? 'PARA LLEVAR' }} </h6>
-                        </div>
-                    </div>
+                    <h6>Estado: {{ $p->descEstado ?? '' }}</h6>
+                    <h6>Mesa: {{ $p->mesaDsc ?? 'PARA LLEVAR' }}</h6>
                 </div>
                 <div class="card-footer" style="padding: 5px !important;">
-                    <div class="table-responsive">
-                        <h4>Detalle de orden</h4>
-                        <table class="table table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Producto</th>
-                                    <th>Cantidad</th>
-                                    <th>Observación</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($p->detalles as $d)
-                                    <tr style="border-top:1px solid black ">
-                                        <td><i class="fas fa-box text-secondary" aria-hidden="true"></i>
-                                            - {{ $d->nombre_producto ?? '' }}</td>
-                                        <td>{{ $d->cantidad ?? '0' }} </td>
-                                        <td>{{ $d->observacion ?? '' }}</td>
-                                    </tr>
-                                    @if($d->tieneExtras)
+                    @foreach ($p->comandas ?? [] as $comanda)
+                        <div class="table-responsive mb-3">
+                            <h5 class="text-primary">{{ $comanda->nombre_comanda ?? 'Comanda' }}</h5>
+                            <p class="small text-muted mb-1">Productos listos para entregar</p>
+                            <table class="table table-hover table-sm mb-0">
+                                <thead>
                                     <tr>
-                                        <td>
-                                        <table class="table table-hover mb-0" >
-                                            <thead>
-                                                <tr>
-                                                    <th></th>
-                                                    <th>Extras </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach ($d->extras as $e)
-                                                    <tr>
-                                                        <td></td>
-                                                        <td><i class="fas fa-box text-secondary" aria-hidden="true"></i>
-                                                            - {{ $e->descripcion_extra ?? '' }}</td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
-                                        </table></td>
+                                        <th>Producto</th>
+                                        <th>Cant.</th>
+                                        <th>Observación</th>
+                                        <th>Entregado</th>
                                     </tr>
-
-                                    @endif
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    @foreach ($comanda->detalles as $d)
+                                        <tr style="border-top:1px solid #dee2e6">
+                                            <td>
+                                                <i class="fas fa-box text-secondary"></i>
+                                                {{ $d->nombre_producto ?? '' }}
+                                            </td>
+                                            <td>{{ $d->cantidad_comanda ?? $d->cantidad ?? '0' }}</td>
+                                            <td>{{ $d->observacion ?? '' }}</td>
+                                            <td>
+                                                @if (!empty($d->fecha_hora_entrega))
+                                                    <span class="text-success">
+                                                        <i class="fas fa-check-circle"></i> Entregado
+                                                    </span>
+                                                @else
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-outline-primary"
+                                                        onclick="marcarLineaEntregada({{ $d->id_detalle_orden_comanda }})">
+                                                        Entregar
+                                                    </button>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                        @if(!empty($d->tieneExtras) && !empty($d->extras))
+                                            <tr>
+                                                <td colspan="3" class="py-0">
+                                                    <ul class="list-unstyled small mb-0 pl-3">
+                                                        @foreach ($d->extras as $e)
+                                                            <li><i class="fas fa-plus text-muted"></i> {{ $e->descripcion_extra ?? '' }}</li>
+                                                        @endforeach
+                                                    </ul>
+                                                </td>
+                                            </tr>
+                                        @endif
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endforeach
                 </div>
             </div>
         </div>
     </div>
-    @endif
 @endforeach
+@if (empty($data['ordenes']))
+    <div class="col-12">
+        <div class="alert alert-info">No hay órdenes con productos listos para entregar.</div>
+    </div>
+@endif

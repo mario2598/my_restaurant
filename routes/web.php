@@ -195,6 +195,7 @@ Route::group(['middleware' => 'autorizated:comandaPrep'], function () {
     Route::post('comandas/preparacion/recargarComandas', 'ComandasController@recargarComandas');
     Route::get('comandas/preparacion/comanda/{idComanda}', 'ComandasController@goComandaPreparacionId');
     Route::post('comandas/preparacion/comanda/terminarPreparacionComanda', 'ComandasController@terminarPreparacionComanda');
+    Route::post('comandas/preparacion/comanda/marcarLineaPreparada', 'ComandasController@marcarLineaPreparada');
 });
 
 /*
@@ -481,6 +482,7 @@ Route::get('facturacion/pos/cargarOrdenGestion', 'FacturacionController@cargarOr
 Route::post('facturacion/ordenesPreparacion/recargar', 'OrdenesListasController@recargarOrdenesPreparacion');
 Route::post('facturacion/ordenesEntrega/recargar', 'OrdenesListasController@recargarOrdenesEntrega');
 Route::post('facturacion/ordenesPreparacion/terminarEntregaOrden', 'OrdenesListasController@terminarEntregaOrden');
+Route::post('facturacion/ordenesEntrega/marcarLineaEntregada', 'OrdenesListasController@marcarLineaEntregada');
 Route::post('facturacion/pos/recargarOrdenes', 'FacturacionController@recargarOrdenes');
 Route::post('facturacion/pos/validarCodDescuento', 'FacturacionController@validarCodDescuento');
 

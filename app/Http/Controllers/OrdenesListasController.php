@@ -61,34 +61,68 @@ class OrdenesListasController extends Controller
             ->whereIn('orden.estado', array(SisEstadoController::getIdEstadoByCodGeneral('ORD_EN_PREPARACION'), SisEstadoController::getIdEstadoByCodGeneral('ORD_PARA_ENTREGA')))
             ->where('orden.sucursal', '=', $sucursal)
             ->where('orden.cierre_caja', '=', CajaController::getIdCaja(session('usuario')['id'], $sucursal))
-
             ->orderBy('orden.fecha_inicio', 'ASC')->get();
 
+        $result = [];
         foreach ($ordenes as $o) {
             $phpdate = strtotime($o->fecha_inicio);
             $date = date("d-m-Y", strtotime($o->fecha_inicio));
-
             $fechaAux = iconv('ISO-8859-2', 'UTF-8', strftime("%A, %d de %B ", strtotime($date)));
             $fechaAux .= ' - ' . date("g:i a", $phpdate);
             $o->fecha_inicio_hora_tiempo = date("g:i a", $phpdate);
-            $o->fecha_inicio_texto =  $fechaAux;
-            $o->detalles = DB::table('detalle_orden')->select('detalle_orden.*')
-                ->where('detalle_orden.orden', '=', $o->id)
-                ->get();
-
-            foreach ($o->detalles as $d) {
-
-                $d->extras = DB::table('extra_detalle_orden')->select('extra_detalle_orden.*')
-                    ->where('extra_detalle_orden.orden', '=', $o->id)
-                    ->where('extra_detalle_orden.detalle', '=', $d->id)
-
-                    ->get() ?? [];
-                $d->tieneExtras = count($d->extras) > 0;
-            }
+            $o->fecha_inicio_texto = $fechaAux;
             $o->idOrdenEnc = encrypt($o->id);
+
+            // Por cada orden: agrupar por orden_comanda y solo los detalles con fecha_fin no null (listos para entregar)
+            $o->comandas = [];
+            $ordenComandas = DB::table('orden_comanda')->where('orden', '=', $o->id)->get();
+
+            foreach ($ordenComandas as $oc) {
+                $detallesListos = DB::table('detalle_orden')
+                    ->join('detalle_orden_comanda', function ($join) use ($oc) {
+                        $join->on('detalle_orden_comanda.detalle_orden', '=', 'detalle_orden.id')
+                            ->where('detalle_orden_comanda.orden_comanda', '=', $oc->id)
+                            ->whereNotNull('detalle_orden_comanda.fecha_fin');
+                    })
+                    ->leftJoin('comanda', 'comanda.id', '=', 'detalle_orden_comanda.comanda')
+                    ->select(
+                        'detalle_orden.*',
+                        'detalle_orden_comanda.id as id_detalle_orden_comanda',
+                        'detalle_orden_comanda.cantidad as cantidad_comanda',
+                        'detalle_orden_comanda.fecha_hora_entrega as fecha_hora_entrega',
+                        'comanda.nombre as nombre_comanda'
+                    )
+                    ->where('detalle_orden.orden', '=', $o->id)
+                    ->get();
+
+                if ($detallesListos->isEmpty()) {
+                    continue;
+                }
+
+                $nombreComanda = $detallesListos->first()->nombre_comanda ?? $oc->num_comanda ?? 'Comanda';
+                foreach ($detallesListos as $d) {
+                    $d->extras = DB::table('extra_detalle_orden')->select('extra_detalle_orden.*')
+                        ->where('extra_detalle_orden.orden', '=', $o->id)
+                        ->where('extra_detalle_orden.detalle', '=', $d->id)
+                        ->get() ?? [];
+                    $d->tieneExtras = count($d->extras) > 0;
+                }
+
+                $o->comandas[] = (object)[
+                    'id_orden_comanda' => $oc->id,
+                    'nombre_comanda'   => $nombreComanda,
+                    'num_comanda'      => $oc->num_comanda,
+                    'detalles'         => $detallesListos,
+                ];
+            }
+
+            // Solo incluir la orden si tiene al menos una comanda con productos listos
+            if (!empty($o->comandas)) {
+                $result[] = $o;
+            }
         }
 
-        return $ordenes;
+        return $result;
     }
 
     public static function getOrdenesPreparacion($sucursal)
@@ -469,6 +503,74 @@ class OrdenesListasController extends Controller
         } catch (QueryException $ex) {
             DB::rollBack();
             $this->setError('Terminar Preparación Orden', 'Algo salio mal...');
+            return $this->responseAjaxServerError('Algo salio mal...', []);
+        }
+    }
+
+    /**
+     * Marca una línea (detalle_orden_comanda) como entregada individualmente,
+     * asignando fecha_hora_entrega solo si aún es null.
+     */
+    public function marcarLineaEntregada(Request $request)
+    {
+        if (!$this->validarSesion("ordList_cmds")) {
+            return $this->responseAjaxServerError('Error de seguridad.', []);
+        }
+
+        $id_detalle_orden_comanda = $request->input('id_detalle_orden_comanda');
+
+        if ($id_detalle_orden_comanda < 1 || $this->isNull($id_detalle_orden_comanda)) {
+            return $this->responseAjaxServerError('Id de la línea incorrecto.', []);
+        }
+
+        $doc = DB::table('detalle_orden_comanda')
+            ->where('id', '=', $id_detalle_orden_comanda)
+            ->first();
+
+        if ($doc == null) {
+            return $this->responseAjaxServerError('No existe la línea.', []);
+        }
+
+        if ($doc->fecha_hora_entrega !== null) {
+            return $this->responseAjaxServerError('Esta línea ya fue marcada como entregada.', []);
+        }
+
+        $orden_comanda = DB::table('orden_comanda')->where('id', '=', $doc->orden_comanda)->first();
+        if ($orden_comanda == null) {
+            return $this->responseAjaxServerError('No existe la comanda.', []);
+        }
+
+        $orden = DB::table('orden')->where('id', '=', $orden_comanda->orden)->first();
+        if ($orden == null) {
+            return $this->responseAjaxServerError('No existe la orden.', []);
+        }
+
+        // Solo permitir marcar entregado cuando la orden está en preparación o para entrega
+        if ($orden->estado != SisEstadoController::getIdEstadoByCodGeneral('ORD_EN_PREPARACION') &&
+            $orden->estado != SisEstadoController::getIdEstadoByCodGeneral('ORD_PARA_ENTREGA')) {
+            return $this->responseAjaxServerError('La orden no está en un estado válido para entregar líneas.', []);
+        }
+
+        $fechaActual = date("Y-m-d H:i:s");
+
+        try {
+            DB::beginTransaction();
+
+            $updated = DB::table('detalle_orden_comanda')
+                ->where('id', '=', $id_detalle_orden_comanda)
+                ->whereNull('fecha_hora_entrega')
+                ->update(['fecha_hora_entrega' => $fechaActual]);
+
+            if ($updated !== 1) {
+                DB::rollBack();
+                return $this->responseAjaxServerError('No se pudo marcar la línea como entregada.', []);
+            }
+
+            DB::commit();
+
+            return $this->setAjaxResponse(200, "", [], true);
+        } catch (QueryException $ex) {
+            DB::rollBack();
             return $this->responseAjaxServerError('Algo salio mal...', []);
         }
     }

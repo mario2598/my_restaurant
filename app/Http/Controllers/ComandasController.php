@@ -228,7 +228,10 @@ class ComandasController extends Controller
 
             $detalles = DB::table('detalle_orden')
                 ->join('detalle_orden_comanda', 'detalle_orden_comanda.detalle_orden', '=', 'detalle_orden.id')
-                ->select('detalle_orden.*', 'detalle_orden_comanda.cantidad as cantidad_comanda')
+                ->select('detalle_orden.*',
+                 'detalle_orden_comanda.id as id_detalle_orden_comanda',
+                 'detalle_orden_comanda.cantidad as cantidad_comanda', 
+                 'detalle_orden_comanda.fecha_fin as fecha_fin_comanda')
                 ->where('detalle_orden_comanda.orden_comanda', '=', $o->id_orden_comanda)
                 ->where('detalle_orden_comanda.preparado', '=', 0)
                 ->get();
@@ -420,12 +423,14 @@ class ComandasController extends Controller
             DB::beginTransaction();
             $idEstEntrega = SisEstadoController::getIdEstadoByCodGeneral('ORD_PARA_ENTREGA');
             if ($id_comanda  != null) {
-                $detalles = DB::table('detalle_orden')->select('detalle_orden.*', 'detalle_orden_comanda.cantidad as cantidad_prep')
+                $detalles = DB::table('detalle_orden')->select('detalle_orden.*',
+                 'detalle_orden_comanda.cantidad as cantidad_prep', 'detalle_orden_comanda.fecha_fin as fecha_fin_comanda')
                     ->join('detalle_orden_comanda', 'detalle_orden_comanda.detalle_orden', '=', 'detalle_orden.id')
                     ->where('detalle_orden_comanda.orden_comanda', '=', $id_orden_comanda)
                     ->where('detalle_orden.comanda', '=', $id_comanda)->get();
             } else {
-                $detalles = DB::table('detalle_orden')->select('detalle_orden.*', 'detalle_orden_comanda.cantidad as cantidad_prep')
+                $detalles = DB::table('detalle_orden')->select('detalle_orden.*',
+                 'detalle_orden_comanda.cantidad as cantidad_prep', 'detalle_orden_comanda.fecha_fin as fecha_fin_comanda')
                     ->join('detalle_orden_comanda', 'detalle_orden_comanda.detalle_orden', '=', 'detalle_orden.id')
                     ->where('detalle_orden_comanda.orden_comanda', '=', $id_orden_comanda)->get();
             }
@@ -439,10 +444,15 @@ class ComandasController extends Controller
                     ->where('id', '=', $detalle->id)
                     ->update(['cantidad_preparada' => $detalle->cantidad_preparada + $detalle->cantidad_prep]);
 
+                if ($detalle->fecha_fin_comanda == null) {
+                    DB::table('detalle_orden_comanda')
+                    ->where('detalle_orden', '=', $detalle->id)
+                    ->update(['fecha_fin' => $fechaActual]); 
+                }
                 // Actualizar el detalle_orden_comanda si es necesario
                 DB::table('detalle_orden_comanda')
                     ->where('detalle_orden', '=', $detalle->id)
-                    ->update(['fecha_fin' => $fechaActual, 'preparado' => 1]); // o el estado correspondiente
+                    ->update([ 'preparado' => 1]); // o el estado correspondiente
 
                 $facturacion = new FacturacionController();
                 $res =  $facturacion->restarProductoMenuMatPrima($detalle->id, $detalle->cantidad_prep);
@@ -498,6 +508,73 @@ class ComandasController extends Controller
         } catch (QueryException $ex) {
             DB::rollBack();
             return $this->responseAjaxServerError('Algo salio mal...', []);
+        }
+    }
+
+     /**
+     * Marca una línea (detalle_orden_comanda) como preparada individualmente.
+     * Solo se puede ejecutar una vez por línea (cuando fecha_fin es null).
+     */
+    public function marcarLineaPreparada(Request $request)
+    {
+        $id_detalle_orden_comanda = $request->input('id_detalle_orden_comanda');
+
+        if ($id_detalle_orden_comanda < 1 || $this->isNull($id_detalle_orden_comanda)) {
+            return $this->responseAjaxServerError('Id de la línea incorrecto.', []);
+        }
+
+        $doc = DB::table('detalle_orden_comanda')
+            ->where('id', '=', $id_detalle_orden_comanda)
+            ->first();
+
+        if ($doc == null) {
+            return $this->responseAjaxServerError('No existe la línea.', []);
+        }
+
+        if ($doc->fecha_fin !== null) {
+            return $this->responseAjaxServerError('Esta línea ya fue marcada como preparada.', []);
+        }
+
+        $orden_comanda = DB::table('orden_comanda')->where('id', '=', $doc->orden_comanda)->first();
+        if ($orden_comanda == null) {
+            return $this->responseAjaxServerError('No existe la comanda.', []);
+        }
+
+        $orden = DB::table('orden')->where('id', '=', $orden_comanda->orden)->first();
+        if ($orden == null) {
+            return $this->responseAjaxServerError('No existe la orden.', []);
+        }
+
+        if ($orden->estado != SisEstadoController::getIdEstadoByCodGeneral('ORD_EN_PREPARACION')) {
+            return $this->responseAjaxServerError('La orden no está en preparación.', []);
+        }
+
+        $fechaActual = date("Y-m-d H:i:s");
+
+        try {
+            DB::beginTransaction();
+
+            $updated = DB::table('detalle_orden_comanda')
+                ->where('id', '=', $id_detalle_orden_comanda)
+                ->update(['fecha_fin' => $fechaActual]);
+
+            $detalleSinPreparar = DB::table('detalle_orden')
+                ->join('detalle_orden_comanda', 'detalle_orden_comanda.detalle_orden', '=', 'detalle_orden.id')
+                ->where('detalle_orden.orden', '=', $orden->id)
+                ->where('detalle_orden_comanda.fecha_fin', '=', null)
+                ->exists();
+
+            DB::commit();
+
+            $datos = [];
+            if (!$detalleSinPreparar) {
+                $datos['orden_completa'] = true;
+                $datos['id_orden_comanda'] = $orden_comanda->id;
+            }
+            return $this->setAjaxResponse(200, "", $datos, true);
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            return $this->responseAjaxServerError('Algo salió mal.', []);
         }
     }
 }

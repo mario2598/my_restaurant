@@ -57,3 +57,38 @@ function terminarEntrega(orden) {
     });
 
 }
+
+function marcarLineaEntregada(id_detalle_orden_comanda) {
+    if (id_detalle_orden_comanda == null || id_detalle_orden_comanda < 1) return;
+
+    swal({
+        type: 'warning',
+        text: '¿Marcar esta línea como entregada?',
+        showCancelButton: true,
+        confirmButtonText: "Confirmar",
+        cancelButtonText: "Cancelar",
+        allowOutsideClick: false,
+        allowEscapeKey: false
+    }).then(function (result) {
+        if (result) {
+            $.ajax({
+                url: `${base_path}/facturacion/ordenesEntrega/marcarLineaEntregada`,
+                type: 'post',
+                dataType: "json",
+                data: {
+                    _token: CSRF_TOKEN,
+                    id_detalle_orden_comanda: id_detalle_orden_comanda
+                }
+            }).done(function (res) {
+                if (!res['estado']) {
+                    setError('Marcar línea entregada', res['mensaje']);
+                } else {
+                    setSuccess('Línea entregada', 'Se marcó como entregada.');
+                    recargarOrdenes();
+                }
+            }).fail(function () {
+                setError('Marcar línea entregada', 'Algo salió mal..');
+            });
+        }
+    });
+}

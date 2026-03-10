@@ -106,35 +106,42 @@ function crearHtmlComanda(comandasRes) {
                                                     <th>Producto</th>
                                                     <th>Cantidad</th>
                                                     <th>Observación</th>
+                                                    <th></th>
                                                 </tr>
                                             </thead>
                                             <tbody>`;
 
                 p.detalles.forEach(d => {
+                    const idDoc = d.id_detalle_orden_comanda != null ? d.id_detalle_orden_comanda : '';
+                    const yaPreparado =  d.fecha_fin_comanda != null;
+                    const btnLinea = yaPreparado
+                        ? '<span class="text-success"><i class="fas fa-check-circle"></i> Listo</span>'
+                        : `<button type="button" class="btn btn-sm btn-outline-success" onclick="event.stopPropagation(); marcarLineaPreparada(${idDoc});" title="Marcar como preparado"><i class="fas fa-check"></i> Listo</button>`;
                     cardHtml += `
-                    <tr  style="cursor: pointer;"
-                        onclick="mostrarReceta(\`${d.receta || ''}\`,\`${d.composicion || ''}\`,\`${d.nombre_producto || ''}\`)">
-                        <td>${d.nombre_producto || ''}</td>
-                        <td>${d.cantidad_comanda || '0'}</td>
-                        <td><strong>${d.observacion || ''}</strong></td>
-                    </tr>`;
+                                                <tr  style="cursor: pointer;"
+                                                    onclick="mostrarReceta(\`${d.receta || ''}\`,\`${d.composicion || ''}\`,\`${d.nombre_producto || ''}\`)">
+                                                    <td>${d.nombre_producto || ''}</td>
+                                                    <td>${d.cantidad_comanda || '0'}</td>
+                                                    <td><strong>${d.observacion || ''}</strong></td>
+                                                    <td class="text-center">${btnLinea}</td>
+                                                </tr>`;
 
                     if (d.tieneExtras) {
                         cardHtml += `
-                    <tr>
-                        <td colspan="3" class="p-0">
-                            <div class="bg-light p-2">
-                                <strong>Extras:</strong>
-                                <ul class="list-unstyled mb-0">`;
+                                                <tr>
+                                                    <td colspan="4" class="p-0">
+                                                        <div class="bg-light p-2">
+                                                            <strong>Extras:</strong>
+                                                            <ul class="list-unstyled mb-0">`;
                         d.extras.forEach(e => {
                             cardHtml += `
-                                    <li>${e.descripcion_extra || ''}</li>`;
+                                                                <li>${e.descripcion_extra || ''}</li>`;
                         });
                         cardHtml += `
-                                </ul>
-                            </div>
-                        </td>
-                    </tr>`;
+                                                            </ul>
+                                                        </div>
+                                                    </td>
+                                                </tr>`;
                     }
                 });
 
@@ -169,6 +176,60 @@ function crearHtmlComanda(comandasRes) {
         }
     }
     anteriorCantidadDetalle = nuevaCantidadDetalle;
+}
+
+
+function marcarLineaPreparada(id_detalle_orden_comanda) {
+    if (id_detalle_orden_comanda == null || id_detalle_orden_comanda < 1) return;
+    swal({
+        type: 'warning',
+        text: '¿Confirmar que esta línea está preparada?',
+        showCancelButton: true,
+        confirmButtonText: 'Confirmar',
+        cancelButtonText: 'Cancelar',
+        allowOutsideClick: false,
+        allowEscapeKey: false
+    }).then(function (result) {
+        if (result) {
+            $('#loader').fadeIn();
+            $.ajax({
+                url: `${base_path}/comandas/preparacion/comanda/marcarLineaPreparada`,
+                type: 'post',
+                dataType: "json",
+                data: {
+                    _token: CSRF_TOKEN,
+                    id_detalle_orden_comanda: id_detalle_orden_comanda
+                }
+            }).done(function (res) {
+                $('#loader').fadeOut();
+                if (!res['estado']) {
+                    setError('Marcar línea preparada', res['mensaje']);
+                } else {
+                    setSuccess('Línea preparada', 'Se marcó como preparado.');
+                    recargarOrdenes();
+                    var datos = res['datos'] || {};
+                    if (datos.orden_completa && datos.id_orden_comanda) {
+                        swal({
+                            type: 'warning',
+                            text: 'No queda ningún detalle pendiente. ¿Desea terminar preparación?',
+                            showCancelButton: true,
+                            confirmButtonText: 'Sí, terminar',
+                            cancelButtonText: 'No',
+                            allowOutsideClick: false,
+                            allowEscapeKey: false
+                        }).then(function (confirmado) {
+                            if (confirmado) {
+                                terminarPreparacion(datos.id_orden_comanda);
+                            }
+                        });
+                    }
+                }
+            }).fail(function () {
+                $('#loader').fadeOut();
+                setError('Marcar línea preparada', 'Algo salió mal.');
+            });
+        }
+    });
 }
 
 function calcularTiempoTranscurrido(fechaInicio) {
@@ -225,7 +286,7 @@ function terminarPreparacion(id_orden_comanda) {
             }).fail(function (jqXHR, textStatus, errorThrown) {
                 $('#loader').fadeOut();
                 setError('Terminar Preparación Orden', 'Algo salió mal..');
-              
+
             });
         }
     });
