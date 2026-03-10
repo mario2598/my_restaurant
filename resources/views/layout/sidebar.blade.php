@@ -1,6 +1,6 @@
 <div class="main-sidebar sidebar-style-2">
   <aside id="sidebar-wrapper">
-    <div class="sidebar-brand d-flex align-items-center justify-content-center py-2">
+    <div class="sidebar-brand  align-items-center justify-content-center pt-2">
         <a href="{{ url('/') }}" class="d-inline-block text-center">
             <img id="imgLogoSidebar" title="Nombre empresa" alt="Logo empresa"
                 src="{{ session('usuario')['url_logo_sistema'] ?? '' }}"
