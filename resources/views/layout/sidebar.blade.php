@@ -1,13 +1,14 @@
 <div class="main-sidebar sidebar-style-2">
   <aside id="sidebar-wrapper">
-      <div class="sidebar-brand">
-          <a href="{{ url('/') }}">
-              <img id="imgLogoSidebar" title="Nombre empresa" alt="Logo empresa"
-                  src="{{ session('usuario')['url_logo_sistema'] }}"
-                  style="background-color: transparent; border-color: transparent;" class="img-thumbnail" />
-          </a>
-      </div>
-      <ul class="sidebar-menu">
+    <div class="sidebar-brand d-flex align-items-center justify-content-center py-2">
+        <a href="{{ url('/') }}" class="d-inline-block text-center">
+            <img id="imgLogoSidebar" title="Nombre empresa" alt="Logo empresa"
+                src="{{ session('usuario')['url_logo_sistema'] ?? '' }}"
+                class="img-fluid img-thumbnail"
+                style="max-height: 60px; background-color: transparent; border-color: transparent;" />
+        </a>
+    </div>
+    <ul class="sidebar-menu mt-2">
           <li class="menu-header">Menú</li>
           <?php $menusSide = \App\Traits\SpaceUtil::cargarMenus(); ?>
           @foreach ($menusSide ?? [] as $m)
@@ -30,19 +31,12 @@
 </div>
 
 <style>
-  /* Logo fijo arriba y menú desplazado: evita que se monten uno sobre otro */
   .main-sidebar .sidebar-brand {
-      position: relative;
-      z-index: 1;
-      padding: 10px 15px;
-      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   .main-sidebar .sidebar-menu {
-      max-height: calc(100vh - 90px);
-      overflow-y: auto;
-      margin-top: 4px;
-      padding-bottom: 12px;
+      padding-top: 0.25rem;
   }
 
   .sidebar-menu .menu-item a.truncate-text {
