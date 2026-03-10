@@ -33,6 +33,15 @@
 <style>
   .main-sidebar .sidebar-brand {
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+      text-align: center;
+  }
+
+  .main-sidebar .sidebar-brand img#imgLogoSidebar {
+      max-width: 100%;
+      height: auto;
+      display: inline-block;
   }
 
   .main-sidebar .sidebar-menu {
