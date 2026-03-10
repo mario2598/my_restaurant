@@ -1,16 +1,32 @@
 @extends('layout.master')
 
+@section('style')
+<style>
+    .panel-control .card-statistic-1 .card-body { font-size: clamp(0.75rem, 2.5vw, 1rem); }
+    .panel-control .card-header h4 { font-size: clamp(0.85rem, 2.2vw, 1rem); }
+    .panel-control h5.section-title { font-size: clamp(0.9rem, 2vw, 1.1rem); }
+    .panel-control .table { font-size: clamp(0.7rem, 1.8vw, 0.875rem); }
+    .panel-control .table th, .panel-control .table td { padding: 0.35rem 0.5rem; }
+    .panel-control .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    @media (max-width: 575.98px) {
+        .panel-control .card-statistic-1 .card-wrap .card-header h4 { font-size: 0.8rem; }
+        .panel-control .section-header h1 { font-size: 1.25rem; }
+        .panel-control .table th, .panel-control .table td { white-space: nowrap; }
+    }
+</style>
+@endsection
+
 @section('content')
 @include('layout.sidebar')
 
 <!-- Main Content -->
-<div class="main-content">
+<div class="main-content panel-control">
     <section class="section">
         <div class="section-header">
-            <h1>Panel de control</h1>
+            <h1 class="mb-0">Panel de control</h1>
         </div>
 
-        <div class="section-body">
+        <div class="section-body px-0 px-sm-2">
             @php
                 $dashboard = $data['dashboard'] ?? null;
                 $kpisSucursales = $dashboard['kpis_sucursales'] ?? [];
@@ -29,20 +45,24 @@
             <!-- Filtros de fecha -->
             <div class="row mb-3">
                 <div class="col-12">
-                    <form method="GET" action="{{ url('informes/panelControl') }}" class="form-inline">
-                        <div class="form-group mr-2">
-                            <label for="desde" class="mr-2">Desde</label>
-                            <input type="date" id="desde" name="desde" class="form-control"
-                                   value="{{ $dashboard['fecha_desde'] ?? date('Y-m-d') }}">
+                    <form method="GET" action="{{ url('informes/panelControl') }}" class="w-100">
+                        <div class="form-row">
+                            <div class="form-group col-12 col-sm-6 col-md-3 mb-2">
+                                <label for="desde" class="mr-2 d-block">Desde</label>
+                                <input type="date" id="desde" name="desde" class="form-control form-control-sm"
+                                       value="{{ $dashboard['fecha_desde'] ?? date('Y-m-d') }}">
+                            </div>
+                            <div class="form-group col-12 col-sm-6 col-md-3 mb-2">
+                                <label for="hasta" class="mr-2 d-block">Hasta</label>
+                                <input type="date" id="hasta" name="hasta" class="form-control form-control-sm"
+                                       value="{{ $dashboard['fecha_hasta'] ?? date('Y-m-d') }}">
+                            </div>
+                            <div class="form-group col-12 col-sm-6 col-md-3 mb-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary btn-block btn-sm">
+                                    <i class="fas fa-sync-alt"></i> Actualizar
+                                </button>
+                            </div>
                         </div>
-                        <div class="form-group mr-2">
-                            <label for="hasta" class="mr-2">Hasta</label>
-                            <input type="date" id="hasta" name="hasta" class="form-control"
-                                   value="{{ $dashboard['fecha_hasta'] ?? date('Y-m-d') }}">
-                        </div>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-sync-alt"></i> Actualizar
-                        </button>
                     </form>
                 </div>
             </div>
@@ -50,8 +70,8 @@
             <!-- Resumen global -->
             @if($resumenGlobal)
                 <div class="row">
-                    <div class="col-md-3 col-6 mb-3">
-                        <div class="card card-statistic-1">
+                    <div class="col-6 col-md-3 mb-2 mb-md-3">
+                        <div class="card card-statistic-1 h-100">
                             <div class="card-icon bg-primary">
                                 <i class="fas fa-cash-register"></i>
                             </div>
@@ -59,14 +79,14 @@
                                 <div class="card-header">
                                     <h4>Ventas totales</h4>
                                 </div>
-                                <div class="card-body">
+                                <div class="card-body text-truncate" title="{{ number_format($resumenGlobal->total_vendido, 2, '.', ',') }} CRC">
                                     {{ number_format($resumenGlobal->total_vendido, 2, '.', ',') }} CRC
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3 col-6 mb-3">
-                        <div class="card card-statistic-1">
+                    <div class="col-6 col-md-3 mb-2 mb-md-3">
+                        <div class="card card-statistic-1 h-100">
                             <div class="card-icon bg-info">
                                 <i class="fas fa-receipt"></i>
                             </div>
@@ -74,37 +94,35 @@
                                 <div class="card-header">
                                     <h4>Tickets</h4>
                                 </div>
-                                <div class="card-body">
-                                    {{ $resumenGlobal->tickets }}
-                                </div>
+                                <div class="card-body">{{ $resumenGlobal->tickets }}</div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3 col-6 mb-3">
-                        <div class="card card-statistic-1">
+                    <div class="col-6 col-md-3 mb-2 mb-md-3">
+                        <div class="card card-statistic-1 h-100">
                             <div class="card-icon bg-success">
                                 <i class="fas fa-chart-line"></i>
                             </div>
                             <div class="card-wrap">
                                 <div class="card-header">
-                                    <h4>Ticket promedio</h4>
+                                    <h4>Ticket prom.</h4>
                                 </div>
-                                <div class="card-body">
+                                <div class="card-body text-truncate" title="{{ number_format($resumenGlobal->ticket_promedio, 2, '.', ',') }} CRC">
                                     {{ number_format($resumenGlobal->ticket_promedio, 2, '.', ',') }} CRC
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3 col-6 mb-3">
-                        <div class="card card-statistic-1">
+                    <div class="col-6 col-md-3 mb-2 mb-md-3">
+                        <div class="card card-statistic-1 h-100">
                             <div class="card-icon bg-warning">
                                 <i class="fas fa-credit-card"></i>
                             </div>
                             <div class="card-wrap">
                                 <div class="card-header">
-                                    <h4>Medios de pago</h4>
+                                    <h4>Medios pago</h4>
                                 </div>
-                                <div class="card-body" style="font-size: 11px; line-height: 1.4;">
+                                <div class="card-body small" style="line-height: 1.35;">
                                     Efec: {{ number_format($resumenGlobal->efectivo, 0, '.', ',') }}<br>
                                     Tjta: {{ number_format($resumenGlobal->tarjeta, 0, '.', ',') }}<br>
                                     SINPE: {{ number_format($resumenGlobal->sinpe, 0, '.', ',') }}
@@ -118,22 +136,20 @@
             <!-- KPIs por sucursal -->
             <div class="row">
                 @foreach($kpisSucursales as $kpi)
-                    <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
-                        <div class="card">
-                            <div class="card-header pb-1">
-                                <h4 class="mb-0">{{ $kpi->sucursal_nombre }}</h4>
+                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3 mb-2 mb-md-3">
+                        <div class="card h-100">
+                            <div class="card-header py-1 py-sm-2">
+                                <h4 class="mb-0 text-truncate" title="{{ $kpi->sucursal_nombre }}">{{ $kpi->sucursal_nombre }}</h4>
                             </div>
-                            <div class="card-body pt-2 pb-2">
-                                <div style="font-size: 12px;">
-                                    <div><strong>Ventas:</strong> {{ number_format($kpi->total_vendido, 2, '.', ',') }} CRC</div>
-                                    <div><strong>Tickets:</strong> {{ $kpi->tickets }}</div>
-                                    <div><strong>Promedio:</strong> {{ number_format($kpi->ticket_promedio, 2, '.', ',') }} CRC</div>
-                                    <div class="mt-1">
-                                        <strong>Medios pago:</strong><br>
-                                        Efec: {{ number_format($kpi->efectivo, 0, '.', ',') }}<br>
-                                        Tjta: {{ number_format($kpi->tarjeta, 0, '.', ',') }}<br>
-                                        SINPE: {{ number_format($kpi->sinpe, 0, '.', ',') }}
-                                    </div>
+                            <div class="card-body pt-1 pb-1 pt-sm-2 pb-sm-2 small">
+                                <div><strong>Ventas:</strong> {{ number_format($kpi->total_vendido, 2, '.', ',') }} CRC</div>
+                                <div><strong>Tickets:</strong> {{ $kpi->tickets }}</div>
+                                <div><strong>Promedio:</strong> {{ number_format($kpi->ticket_promedio, 2, '.', ',') }} CRC</div>
+                                <div class="mt-1">
+                                    <strong>Medios pago:</strong><br>
+                                    Efec: {{ number_format($kpi->efectivo, 0, '.', ',') }}<br>
+                                    Tjta: {{ number_format($kpi->tarjeta, 0, '.', ',') }}<br>
+                                    SINPE: {{ number_format($kpi->sinpe, 0, '.', ',') }}
                                 </div>
                             </div>
                         </div>
@@ -143,39 +159,39 @@
 
             <!-- Tiempos operativos (preparación y entrega) -->
             @if($resumenTiempos)
-                <div class="row mt-3">
+                <div class="row mt-2 mt-md-3">
                     <div class="col-12">
-                        <h5 class="mb-2"><i class="fas fa-clock"></i> Tiempos operativos</h5>
+                        <h5 class="mb-2 section-title"><i class="fas fa-clock"></i> Tiempos operativos</h5>
                     </div>
-                    <div class="col-md-4 col-6 mb-3">
-                        <div class="card card-statistic-1">
+                    <div class="col-6 col-md-4 mb-2 mb-md-3">
+                        <div class="card card-statistic-1 h-100">
                             <div class="card-icon bg-info">
                                 <i class="fas fa-utensils"></i>
                             </div>
                             <div class="card-wrap">
-                                <div class="card-header"><h4>Prep. promedio</h4></div>
+                                <div class="card-header"><h4>Prep. prom.</h4></div>
                                 <div class="card-body">{{ $resumenTiempos->prep_promedio_min ?? 0 }} min</div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4 col-6 mb-3">
-                        <div class="card card-statistic-1">
+                    <div class="col-6 col-md-4 mb-2 mb-md-3">
+                        <div class="card card-statistic-1 h-100">
                             <div class="card-icon bg-success">
                                 <i class="fas fa-truck"></i>
                             </div>
                             <div class="card-wrap">
-                                <div class="card-header"><h4>Entrega promedio</h4></div>
+                                <div class="card-header"><h4>Entrega prom.</h4></div>
                                 <div class="card-body">{{ $resumenTiempos->entrega_promedio_min ?? 0 }} min</div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4 col-6 mb-3">
-                        <div class="card card-statistic-1">
+                    <div class="col-6 col-md-4 mb-2 mb-md-3">
+                        <div class="card card-statistic-1 h-100">
                             <div class="card-icon {{ ($resumenTiempos->pct_sla_prep ?? 0) >= 80 ? 'bg-success' : (($resumenTiempos->pct_sla_prep ?? 0) >= 60 ? 'bg-warning' : 'bg-danger') }}">
                                 <i class="fas fa-bullseye"></i>
                             </div>
                             <div class="card-wrap">
-                                <div class="card-header"><h4>Dentro SLA ({{ $resumenTiempos->sla_minutos ?? 15 }} min)</h4></div>
+                                <div class="card-header"><h4>SLA ({{ $resumenTiempos->sla_minutos ?? 15 }} min)</h4></div>
                                 <div class="card-body">{{ $resumenTiempos->pct_sla_prep ?? 0 }}%</div>
                             </div>
                         </div>
@@ -185,8 +201,8 @@
                     <div class="row">
                         <div class="col-12">
                             <div class="card">
-                                <div class="card-header"><h4 class="mb-0">Tiempos por sucursal</h4></div>
-                                <div class="card-body p-2">
+                                <div class="card-header py-1 py-sm-2"><h4 class="mb-0">Tiempos por sucursal</h4></div>
+                                <div class="card-body p-1 p-sm-2">
                                     <div class="table-responsive">
                                         <table class="table table-sm table-striped mb-0">
                                             <thead class="thead-light">
@@ -224,9 +240,9 @@
             @endif
 
             <!-- Incidentes / Calidad -->
-            <div class="row mt-3">
-                <div class="col-md-4 col-6 mb-3">
-                    <div class="card card-statistic-1">
+            <div class="row mt-2 mt-md-3">
+                <div class="col-6 col-md-4 mb-2 mb-md-3">
+                    <div class="card card-statistic-1 h-100">
                         <div class="card-icon bg-warning">
                             <i class="fas fa-exclamation-triangle"></i>
                         </div>
@@ -236,14 +252,14 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4 col-6 mb-3">
-                    <div class="card card-statistic-1">
+                <div class="col-6 col-md-4 mb-2 mb-md-3">
+                    <div class="card card-statistic-1 h-100">
                         <div class="card-icon bg-danger">
                             <i class="fas fa-hand-holding-usd"></i>
                         </div>
                         <div class="card-wrap">
                             <div class="card-header"><h4>Monto rebajado</h4></div>
-                            <div class="card-body">{{ number_format($totalMontoRebajado, 2, '.', ',') }} CRC</div>
+                            <div class="card-body text-truncate" title="{{ number_format($totalMontoRebajado, 2, '.', ',') }} CRC">{{ number_format($totalMontoRebajado, 2, '.', ',') }} CRC</div>
                         </div>
                     </div>
                 </div>
@@ -252,8 +268,8 @@
                 <div class="row">
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header"><h4 class="mb-0">Incidentes por sucursal</h4></div>
-                            <div class="card-body p-2">
+                            <div class="card-header py-1 py-sm-2"><h4 class="mb-0">Incidentes por sucursal</h4></div>
+                            <div class="card-body p-1 p-sm-2">
                                 <div class="table-responsive">
                                     <table class="table table-sm table-striped mb-0">
                                         <thead class="thead-light">
@@ -285,14 +301,14 @@
             @endif
 
             <!-- Desempeño por comanda -->
-            <div class="row mt-3">
+            <div class="row mt-2 mt-md-3">
                 <div class="col-12">
-                    <h5 class="mb-2"><i class="fas fa-chalkboard"></i> Desempeño por comanda</h5>
+                    <h5 class="mb-2 section-title"><i class="fas fa-chalkboard"></i> Desempeño por comanda</h5>
                 </div>
-                <div class="col-12">
+                <div class="col-12 mb-2 mb-md-3">
                     <div class="card">
-                        <div class="card-header"><h4 class="mb-0">Promedios por tipo de comanda</h4></div>
-                        <div class="card-body p-2">
+                        <div class="card-header py-1 py-sm-2"><h4 class="mb-0">Promedios por tipo de comanda</h4></div>
+                        <div class="card-body p-1 p-sm-2">
                             @if(count($promediosPorComanda) > 0)
                                 <div class="table-responsive">
                                     <table class="table table-sm table-striped mb-0">
@@ -320,10 +336,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-12 mt-3">
+                <div class="col-12 mt-2 mt-md-3">
                     <div class="card">
-                        <div class="card-header"><h4 class="mb-0">Comandas de mayor duración</h4></div>
-                        <div class="card-body p-2">
+                        <div class="card-header py-1 py-sm-2"><h4 class="mb-0">Comandas de mayor duración</h4></div>
+                        <div class="card-body p-1 p-sm-2">
                             @if(count($comandasMayorDuracion) > 0)
                                 <div class="table-responsive">
                                     <table class="table table-sm table-striped mb-0">
@@ -364,18 +380,18 @@
             </div>
 
             <!-- Órdenes en curso -->
-            <div class="row mt-3">
+            <div class="row mt-2 mt-md-3">
                 <div class="col-12">
                     <div class="card">
-                        <div class="card-header">
-                            <h4>Órdenes en curso (no pagadas)</h4>
+                        <div class="card-header py-1 py-sm-2">
+                            <h4 class="mb-0">Órdenes en curso (no pagadas)</h4>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body p-1 p-sm-2">
                             @if(count($ordenesAbiertas) === 0)
-                                <p class="text-muted mb-0">No hay órdenes pendientes de pago en el rango seleccionado.</p>
+                                <p class="text-muted mb-0 small">No hay órdenes pendientes de pago en el rango seleccionado.</p>
                             @else
                                 <div class="table-responsive">
-                                    <table class="table table-sm table-striped">
+                                    <table class="table table-sm table-striped mb-0">
                                         <thead class="thead-light">
                                             <tr>
                                                 <th class="text-center">Sucursal</th>
