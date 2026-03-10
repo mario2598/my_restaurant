@@ -33,6 +33,7 @@
                 $resumenGlobal = $dashboard['resumen_global'] ?? null;
                 $ordenesAbiertas = $dashboard['ordenes_abiertas'] ?? [];
                 $tiemposPrep = $dashboard['tiempos_prep'] ?? [];
+                $tiemposPrepPorItem = $dashboard['tiempos_prep_por_item'] ?? [];
                 $tiemposEntrega = $dashboard['tiempos_entrega'] ?? [];
                 $resumenTiempos = $dashboard['resumen_tiempos'] ?? null;
                 $incidentesSucursal = $dashboard['incidentes_sucursal'] ?? [];
@@ -130,6 +131,21 @@
                             </div>
                         </div>
                     </div>
+                    <div class="col-12 col-md-3 mb-2 mb-md-3">
+                        <div class="card card-statistic-1 h-100 cursor-pointer" data-toggle="modal" data-target="#mdlProductosVendidos" style="cursor: pointer;">
+                            <div class="card-icon bg-secondary">
+                                <i class="fas fa-box"></i>
+                            </div>
+                            <div class="card-wrap">
+                                <div class="card-header">
+                                    <h4>Productos vendidos</h4>
+                                </div>
+                                <div class="card-body small">
+                                    <i class="fas fa-external-link-alt"></i> Ver detalle
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             @endif
 
@@ -163,18 +179,34 @@
                     <div class="col-12">
                         <h5 class="mb-2 section-title"><i class="fas fa-clock"></i> Tiempos operativos</h5>
                     </div>
-                    <div class="col-12 col-md-4 mb-2 mb-md-3">
+                    <div class="col-12 col-sm-6 col-lg-3 mb-2 mb-md-3">
                         <div class="card card-statistic-1 h-100">
                             <div class="card-icon bg-info">
                                 <i class="fas fa-utensils"></i>
                             </div>
                             <div class="card-wrap">
-                                <div class="card-header"><h4>Prep. prom.</h4></div>
+                                <div class="card-header"><h4>Prep. prom. (orden)</h4></div>
                                 <div class="card-body">{{ $resumenTiempos->prep_promedio_min ?? 0 }} min</div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-12 col-md-4 mb-2 mb-md-3">
+                    <div class="col-12 col-sm-6 col-lg-3 mb-2 mb-md-3">
+                        <div class="card card-statistic-1 h-100">
+                            <div class="card-icon bg-primary">
+                                <i class="fas fa-list-alt"></i>
+                            </div>
+                            <div class="card-wrap">
+                                <div class="card-header"><h4>Prep. por ítem</h4></div>
+                                <div class="card-body">
+                                    {{ $resumenTiempos->prep_por_item_promedio_min ?? 0 }} min
+                                    @if(($resumenTiempos->prep_por_item_cantidad ?? 0) > 0)
+                                        <small class="d-block text-muted">{{ number_format($resumenTiempos->prep_por_item_cantidad) }} ítems</small>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-3 mb-2 mb-md-3">
                         <div class="card card-statistic-1 h-100">
                             <div class="card-icon bg-success">
                                 <i class="fas fa-truck"></i>
@@ -185,18 +217,33 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-12 col-md-4 mb-2 mb-md-3">
+                    <div class="col-12 col-sm-6 col-lg-3 mb-2 mb-md-3">
                         <div class="card card-statistic-1 h-100">
                             <div class="card-icon {{ ($resumenTiempos->pct_sla_prep ?? 0) >= 80 ? 'bg-success' : (($resumenTiempos->pct_sla_prep ?? 0) >= 60 ? 'bg-warning' : 'bg-danger') }}">
                                 <i class="fas fa-bullseye"></i>
                             </div>
                             <div class="card-wrap">
-                                <div class="card-header"><h4>SLA ({{ $resumenTiempos->sla_minutos ?? 15 }} min)</h4></div>
+                                <div class="card-header"><h4>SLA orden ({{ $resumenTiempos->sla_minutos ?? 15 }} min)</h4></div>
                                 <div class="card-body">{{ $resumenTiempos->pct_sla_prep ?? 0 }}%</div>
                             </div>
                         </div>
                     </div>
                 </div>
+                @if(($resumenTiempos->prep_por_item_cantidad ?? 0) > 0)
+                <div class="row">
+                    <div class="col-12 col-md-4 mb-2">
+                        <div class="card card-statistic-1 h-100">
+                            <div class="card-icon {{ ($resumenTiempos->pct_sla_por_item ?? 0) >= 80 ? 'bg-success' : (($resumenTiempos->pct_sla_por_item ?? 0) >= 60 ? 'bg-warning' : 'bg-danger') }}">
+                                <i class="fas fa-check-double"></i>
+                            </div>
+                            <div class="card-wrap">
+                                <div class="card-header"><h4>SLA por ítem ({{ $resumenTiempos->sla_minutos ?? 15 }} min)</h4></div>
+                                <div class="card-body">{{ $resumenTiempos->pct_sla_por_item ?? 0 }}%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
                 @if(count($tiemposPrep) > 0)
                     <div class="row">
                         <div class="col-12">
@@ -209,22 +256,29 @@
                                                 <tr>
                                                     <th>Sucursal</th>
                                                     <th class="text-center">Órdenes con prep.</th>
-                                                    <th class="text-center">Prep. promedio (min)</th>
-                                                    <th class="text-center">% en SLA</th>
+                                                    <th class="text-center">Prep. orden (min)</th>
+                                                    <th class="text-center">% SLA orden</th>
+                                                    <th class="text-center">Ítems prep.</th>
+                                                    <th class="text-center">Prep. ítem (min)</th>
+                                                    <th class="text-center">% SLA ítem</th>
                                                     <th class="text-center">Órdenes entregadas</th>
-                                                    <th class="text-center">Entrega promedio (min)</th>
+                                                    <th class="text-center">Entrega prom. (min)</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @foreach($tiemposPrep as $tp)
                                                     @php
                                                         $te = collect($tiemposEntrega)->firstWhere('sucursal_id', $tp->sucursal_id);
+                                                        $titem = collect($tiemposPrepPorItem)->firstWhere('sucursal_id', $tp->sucursal_id);
                                                     @endphp
                                                     <tr>
                                                         <td>{{ $tp->sucursal_nombre }}</td>
                                                         <td class="text-center">{{ $tp->cantidad }}</td>
                                                         <td class="text-center">{{ $tp->promedio_min !== null ? $tp->promedio_min : '—' }}</td>
                                                         <td class="text-center">{{ $tp->pct_sla }}%</td>
+                                                        <td class="text-center">{{ $titem ? $titem->cantidad_items : '—' }}</td>
+                                                        <td class="text-center">{{ $titem && $titem->promedio_min !== null ? $titem->promedio_min : '—' }}</td>
+                                                        <td class="text-center">{{ $titem ? $titem->pct_sla . '%' : '—' }}</td>
                                                         <td class="text-center">{{ $te ? $te->cantidad : '—' }}</td>
                                                         <td class="text-center">{{ $te && $te->promedio_min !== null ? $te->promedio_min : '—' }}</td>
                                                     </tr>
@@ -438,7 +492,145 @@
                 </div>
             </div>
 
+            <!-- Modal Productos vendidos -->
+            <div class="modal fade" id="mdlProductosVendidos" tabindex="-1" role="dialog" aria-labelledby="mdlProductosVendidosLabel" aria-hidden="true" data-url-productos="{{ url('informes/panelControl/productosVendidos') }}">
+                <div class="modal-dialog modal-xl" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header py-2">
+                            <h5 class="modal-title" id="mdlProductosVendidosLabel">Productos vendidos</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="text-muted small mb-2" id="pvPeriodo">Período: <span id="pvPeriodoTexto">-</span></p>
+                            <div id="pvCargando" class="text-center py-4">
+                                <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                                <p class="mt-2 mb-0">Cargando...</p>
+                            </div>
+                            <div id="pvSinDatos" class="text-center py-4 text-muted" style="display: none;">
+                                No hay datos de productos vendidos en el período seleccionado.
+                            </div>
+                            <div id="pvContenido" style="display: none;">
+                                <div class="row mb-3 small">
+                                    <div class="col-6 col-md-3"><strong>Productos distintos:</strong> <span id="pvResumenProductos">0</span></div>
+                                    <div class="col-6 col-md-3"><strong>Unidades:</strong> <span id="pvResumenUnidades">0</span></div>
+                                    <div class="col-6 col-md-3"><strong>Venta total:</strong> <span id="pvResumenVenta">0</span> CRC</div>
+                                    <div class="col-6 col-md-3"><strong>Tickets:</strong> <span id="pvResumenTickets">0</span></div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped table-hover mb-0">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>Producto</th>
+                                                <th>Código</th>
+                                                <th class="text-right">Unidades</th>
+                                                <th class="text-right">Total vendido</th>
+                                                <th class="text-center">En # tickets</th>
+                                                <th class="text-center">% tickets</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="pvTbody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </section>
 </div>
+@endsection
+
+@section('script')
+<script>
+(function() {
+    var urlProductos = $('#mdlProductosVendidos').attr('data-url-productos') || '';
+    var token = $('meta[name="csrf-token"]').attr('content');
+
+    $('#mdlProductosVendidos').on('show.bs.modal', function () {
+        var desde = $('#desde').val() || '';
+        var hasta = $('#hasta').val() || '';
+        $('#pvPeriodoTexto').text(desde && hasta ? desde + ' — ' + hasta : '-');
+        $('#pvCargando').show();
+        $('#pvSinDatos').hide();
+        $('#pvContenido').hide();
+
+        $.ajax({
+            url: urlProductos,
+            type: 'POST',
+            data: { _token: token, desde: desde, hasta: hasta },
+            dataType: 'json'
+        }).done(function (data) {
+            $('#pvCargando').hide();
+            if (data && data.data) {
+                var resumen = data.data.resumen || {};
+                var productos = data.data.productos || [];
+                if (productos.length === 0) {
+                    $('#pvSinDatos').show();
+                    return;
+                }
+                $('#pvResumenProductos').text(resumen.total_productos_distintos || 0);
+                $('#pvResumenUnidades').text((resumen.total_unidades || 0).toLocaleString());
+                var fmtNum = function (n) { return (n || 0).toLocaleString('es-CR', { minimumFractionDigits: 2 }); };
+                $('#pvResumenVenta').text(fmtNum(resumen.total_venta));
+                $('#pvResumenTickets').text(resumen.total_tickets || 0);
+                var tbody = $('#pvTbody').empty();
+                productos.forEach(function (p) {
+                    var tr = $('<tr></tr>');
+                    var nom = (p.nombre_producto || '').replace(/"/g, '&quot;');
+                    tr.append($('<td class="text-truncate" style="max-width:180px"></td>').attr('title', nom).text(p.nombre_producto || '-'));
+                    tr.append($('<td></td>').addClass('text-nowrap').text(p.codigo_producto || '-'));
+                    tr.append($('<td></td>').addClass('text-right').text((p.cantidad_vendida || 0).toLocaleString()));
+                    tr.append($('<td></td>').addClass('text-right').text(fmtNum(p.total_vendido) + ' CRC'));
+                    tr.append($('<td></td>').addClass('text-center').text(p.num_ordenes || 0));
+                    tr.append($('<td></td>').addClass('text-center').text((p.pct_tickets || 0) + '%'));
+                    var btnCell = $('<td class="text-center"></td>');
+                    if (p.extras && p.extras.length > 0) {
+                        var btn = $('<button type="button" class="btn btn-xs btn-outline-secondary py-0 toggle-extras" data-producto="' + (p.nombre_producto || '').replace(/"/g, '&quot;') + '" data-codigo="' + (p.codigo_producto || '').replace(/"/g, '&quot;') + '"><i class="fas fa-plus"></i> Extras</button>');
+                        btn.on('click', function () {
+                            var row = $(this).closest('tr');
+                            var next = row.next('tr.extras-row');
+                            if (next.length) {
+                                next.toggle();
+                                $(this).find('i').toggleClass('fa-plus fa-minus');
+                                return;
+                            }
+                            var extras = p.extras;
+                            var trExtras = $('<tr class="extras-row bg-light"><td colspan="7" class="py-2"></td></tr>');
+                            var cell = trExtras.find('td');
+                            var tbl = $('<table class="table table-sm table-bordered mb-0 small"><thead><tr><th>Extra</th><th class="text-right">Veces</th><th class="text-right">Total</th></tr></thead><tbody></tbody></table>');
+                            extras.forEach(function (e) {
+                                tbl.find('tbody').append(
+                                    $('<tr></tr>').append($('<td>' + (e.descripcion_extra || '-') + '</td>'))
+                                        .append($('<td class="text-right">' + (e.cantidad_veces || 0) + '</td>'))
+                                        .append($('<td class="text-right">' + fmtNum(e.total_extra) + ' CRC</td>'))
+                                );
+                            });
+                            cell.append(tbl);
+                            row.after(trExtras);
+                            $(this).find('i').toggleClass('fa-plus fa-minus');
+                        });
+                        btnCell.append(btn);
+                    } else {
+                        btnCell.html('<span class="text-muted">-</span>');
+                    }
+                    tr.append(btnCell);
+                    tbody.append(tr);
+                });
+                $('#pvContenido').show();
+            } else {
+                $('#pvSinDatos').show();
+            }
+        }).fail(function () {
+            $('#pvCargando').hide();
+            $('#pvSinDatos').show();
+        });
+    });
+})();
+</script>
 @endsection

@@ -37,6 +37,7 @@ class InformesController extends Controller
 
         $desdeDate = date('Y-m-d', strtotime($desde));
         $modHasta = date('Y-m-d', strtotime($hasta . ' +1 day'));
+        $idSucursal = $this->getUsuarioSucursal();
 
         $kpisSucursales = DB::table('orden')
             ->leftJoin('sucursal', 'sucursal.id', '=', 'orden.sucursal')
@@ -50,7 +51,7 @@ class InformesController extends Controller
                 DB::raw('SUM(orden.monto_tarjeta) as tarjeta'),
                 DB::raw('SUM(orden.monto_sinpe) as sinpe')
             )
-            ->whereNotNull('orden.sucursal')
+            ->where('orden.sucursal', '=', $idSucursal)
             ->where('orden.pagado', '=', 1)
             ->where('sis_estado.cod_general', '!=', 'ORD_ANULADA')
             ->where('orden.fecha_inicio', '>=', $desdeDate)
@@ -97,6 +98,7 @@ class InformesController extends Controller
                 'sis_estado.nombre as estado_nombre',
                 'mesa.numero_mesa'
             )
+            ->where('orden.sucursal', '=', $idSucursal)
             ->where('orden.fecha_inicio', '>=', $desdeDate)
             ->where('orden.fecha_inicio', '<', $modHasta)
             ->where('orden.pagado', '=', 0)
@@ -113,7 +115,7 @@ class InformesController extends Controller
         $tiemposPrep = DB::table('orden')
             ->leftJoin('sucursal', 'sucursal.id', '=', 'orden.sucursal')
             ->leftJoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
-            ->whereNotNull('orden.sucursal')
+            ->where('orden.sucursal', '=', $idSucursal)
             ->whereNotNull('orden.fecha_preparado')
             ->where('sis_estado.cod_general', '!=', 'ORD_ANULADA')
             ->where('orden.fecha_inicio', '>=', $desdeDate)
@@ -131,6 +133,9 @@ class InformesController extends Controller
 
         $resumenTiempos = (object) [
             'prep_promedio_min' => 0.0,
+            'prep_por_item_promedio_min' => 0.0,
+            'prep_por_item_cantidad' => 0,
+            'pct_sla_por_item' => 0,
             'entrega_promedio_min' => 0.0,
             'total_con_prep' => 0,
             'total_con_entrega' => 0,
@@ -150,6 +155,7 @@ class InformesController extends Controller
             $resumenTiempos->pct_sla_prep = round(100 * $resumenTiempos->dentro_sla_prep / $resumenTiempos->total_con_prep, 1);
             $promedioGlobalPrep = DB::table('orden')
                 ->leftJoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+                ->where('orden.sucursal', '=', $idSucursal)
                 ->whereNotNull('orden.fecha_preparado')
                 ->where('sis_estado.cod_general', '!=', 'ORD_ANULADA')
                 ->where('orden.fecha_inicio', '>=', $desdeDate)
@@ -164,7 +170,7 @@ class InformesController extends Controller
         $tiemposEntrega = DB::table('orden')
             ->leftJoin('sucursal', 'sucursal.id', '=', 'orden.sucursal')
             ->leftJoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
-            ->whereNotNull('orden.sucursal')
+            ->where('orden.sucursal', '=', $idSucursal)
             ->whereNotNull('orden.fecha_preparado')
             ->whereNotNull('orden.fecha_entregado')
             ->where('sis_estado.cod_general', '!=', 'ORD_ANULADA')
@@ -180,6 +186,56 @@ class InformesController extends Controller
             ->orderBy('sucursal.descripcion')
             ->get();
 
+        // Tiempos reales de preparación por ítem (detalle_orden_comanda: fecha_ingreso → fecha_fin)
+        $tiemposPrepPorItem = DB::table('detalle_orden_comanda')
+            ->join('orden_comanda', 'orden_comanda.id', '=', 'detalle_orden_comanda.orden_comanda')
+            ->join('orden', 'orden.id', '=', 'orden_comanda.orden')
+            ->leftJoin('sucursal', 'sucursal.id', '=', 'orden.sucursal')
+            ->leftJoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+            ->where('orden.sucursal', '=', $idSucursal)
+            ->whereNotNull('detalle_orden_comanda.fecha_fin')
+            ->where('sis_estado.cod_general', '!=', 'ORD_ANULADA')
+            ->where('orden.fecha_inicio', '>=', $desdeDate)
+            ->where('orden.fecha_inicio', '<', $modHasta)
+            ->select(
+                'orden.sucursal as sucursal_id',
+                'sucursal.descripcion as sucursal_nombre',
+                DB::raw('COUNT(detalle_orden_comanda.id) as cantidad_items'),
+                DB::raw('ROUND(AVG(TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin)), 1) as promedio_min'),
+                DB::raw('SUM(CASE WHEN TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin) <= ' . (int) $slaMinutosPrep . ' THEN 1 ELSE 0 END) as dentro_sla')
+            )
+            ->groupBy('orden.sucursal', 'sucursal.descripcion')
+            ->orderBy('sucursal.descripcion')
+            ->get();
+
+        $prepPorItemGlobal = DB::table('detalle_orden_comanda')
+            ->join('orden_comanda', 'orden_comanda.id', '=', 'detalle_orden_comanda.orden_comanda')
+            ->join('orden', 'orden.id', '=', 'orden_comanda.orden')
+            ->leftJoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+            ->where('orden.sucursal', '=', $idSucursal)
+            ->whereNotNull('detalle_orden_comanda.fecha_fin')
+            ->where('sis_estado.cod_general', '!=', 'ORD_ANULADA')
+            ->where('orden.fecha_inicio', '>=', $desdeDate)
+            ->where('orden.fecha_inicio', '<', $modHasta)
+            ->select(
+                DB::raw('COUNT(detalle_orden_comanda.id) as total_items'),
+                DB::raw('ROUND(AVG(TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin)), 1) as promedio_min'),
+                DB::raw('SUM(CASE WHEN TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin) <= ' . (int) $slaMinutosPrep . ' THEN 1 ELSE 0 END) as dentro_sla')
+            )
+            ->first();
+
+        foreach ($tiemposPrepPorItem as $t) {
+            $t->cantidad_items = (int) ($t->cantidad_items ?? 0);
+            $t->promedio_min = $t->promedio_min !== null ? round((float) $t->promedio_min, 1) : null;
+            $t->dentro_sla = (int) ($t->dentro_sla ?? 0);
+            $t->pct_sla = $t->cantidad_items > 0 ? round(100 * $t->dentro_sla / $t->cantidad_items, 1) : 0;
+        }
+        if ($prepPorItemGlobal && (int) ($prepPorItemGlobal->total_items ?? 0) > 0) {
+            $resumenTiempos->prep_por_item_cantidad = (int) $prepPorItemGlobal->total_items;
+            $resumenTiempos->prep_por_item_promedio_min = $prepPorItemGlobal->promedio_min !== null ? round((float) $prepPorItemGlobal->promedio_min, 1) : 0;
+            $resumenTiempos->pct_sla_por_item = round(100 * (int) ($prepPorItemGlobal->dentro_sla ?? 0) / $resumenTiempos->prep_por_item_cantidad, 1);
+        }
+
         foreach ($tiemposEntrega as $t) {
             $t->promedio_min = $t->promedio_min !== null ? round((float) $t->promedio_min, 1) : null;
             $t->cantidad = (int) ($t->cantidad ?? 0);
@@ -188,6 +244,7 @@ class InformesController extends Controller
         if ($resumenTiempos->total_con_entrega > 0) {
             $promedioGlobalEnt = DB::table('orden')
                 ->leftJoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+                ->where('orden.sucursal', '=', $idSucursal)
                 ->whereNotNull('orden.fecha_preparado')
                 ->whereNotNull('orden.fecha_entregado')
                 ->where('sis_estado.cod_general', '!=', 'ORD_ANULADA')
@@ -201,6 +258,7 @@ class InformesController extends Controller
         $incidentesSucursal = DB::table('det_incidente_orden')
             ->join('orden', 'orden.id', '=', 'det_incidente_orden.orden')
             ->leftJoin('sucursal', 'sucursal.id', '=', 'orden.sucursal')
+            ->where('orden.sucursal', '=', $idSucursal)
             ->where('orden.fecha_inicio', '>=', $desdeDate)
             ->where('orden.fecha_inicio', '<', $modHasta)
             ->select(
@@ -230,6 +288,7 @@ class InformesController extends Controller
             ->join('orden_comanda', 'orden_comanda.id', '=', 'detalle_orden_comanda.orden_comanda')
             ->join('orden', 'orden.id', '=', 'orden_comanda.orden')
             ->leftJoin('comanda', 'comanda.id', '=', 'detalle_orden_comanda.comanda')
+            ->where('orden.sucursal', '=', $idSucursal)
             ->whereNotNull('detalle_orden_comanda.fecha_fin')
             ->where('orden.fecha_inicio', '>=', $desdeDate)
             ->where('orden.fecha_inicio', '<', $modHasta)
@@ -251,6 +310,7 @@ class InformesController extends Controller
         $comandasMayorDuracion = DB::table('orden_comanda')
             ->join('orden', 'orden.id', '=', 'orden_comanda.orden')
             ->leftJoin('sucursal', 'sucursal.id', '=', 'orden.sucursal')
+            ->where('orden.sucursal', '=', $idSucursal)
             ->whereNotNull('orden_comanda.fecha_fin')
             ->where('orden.fecha_inicio', '>=', $desdeDate)
             ->where('orden.fecha_inicio', '<', $modHasta)
@@ -281,6 +341,7 @@ class InformesController extends Controller
                 'resumen_global' => $resumenGlobal,
                 'ordenes_abiertas' => $ordenesAbiertas,
                 'tiempos_prep' => $tiemposPrep,
+                'tiempos_prep_por_item' => $tiemposPrepPorItem,
                 'tiempos_entrega' => $tiemposEntrega,
                 'resumen_tiempos' => $resumenTiempos,
                 'incidentes_sucursal' => $incidentesSucursal,
@@ -292,6 +353,111 @@ class InformesController extends Controller
         ];
 
         return view('informes.panelControl', compact('data'));
+    }
+
+    /**
+     * Productos vendidos en el rango para la sucursal del usuario (para el modal del panel).
+     * Incluye desglose de extras más vendidos por producto.
+     */
+    public function getProductosVendidosPanel(Request $request)
+    {
+        if (!$this->validarSesion("panelControl")) {
+            return $this->responseAjaxServerError("No tiene permisos.", []);
+        }
+        $hoy = date('Y-m-d');
+        $desde = $request->input('desde') ?? $hoy;
+        $hasta = $request->input('hasta') ?? $hoy;
+        $desdeDate = date('Y-m-d', strtotime($desde));
+        $modHasta = date('Y-m-d', strtotime($hasta . ' +1 day'));
+        $idSucursal = $this->getUsuarioSucursal();
+
+        $totalTickets = DB::table('orden')
+            ->join('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+            ->where('orden.sucursal', '=', $idSucursal)
+            ->where('orden.pagado', '=', 1)
+            ->where('sis_estado.cod_general', '!=', 'ORD_ANULADA')
+            ->where('orden.fecha_inicio', '>=', $desdeDate)
+            ->where('orden.fecha_inicio', '<', $modHasta)
+            ->count();
+
+        $productos = DB::table('detalle_orden')
+            ->join('orden', 'orden.id', '=', 'detalle_orden.orden')
+            ->join('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+            ->where('orden.sucursal', '=', $idSucursal)
+            ->where('orden.pagado', '=', 1)
+            ->where('sis_estado.cod_general', '!=', 'ORD_ANULADA')
+            ->where('orden.fecha_inicio', '>=', $desdeDate)
+            ->where('orden.fecha_inicio', '<', $modHasta)
+            ->select(
+                'detalle_orden.nombre_producto',
+                'detalle_orden.codigo_producto',
+                DB::raw('SUM(detalle_orden.cantidad) as cantidad_vendida'),
+                DB::raw('SUM(COALESCE(detalle_orden.total, 0) + COALESCE(detalle_orden.total_extras, 0)) as total_vendido'),
+                DB::raw('COUNT(DISTINCT orden.id) as num_ordenes')
+            )
+            ->groupBy('detalle_orden.nombre_producto', 'detalle_orden.codigo_producto')
+            ->orderByDesc(DB::raw('SUM(detalle_orden.cantidad)'))
+            ->get();
+
+        $extrasPorProducto = DB::table('extra_detalle_orden')
+            ->join('detalle_orden', 'detalle_orden.id', '=', 'extra_detalle_orden.detalle')
+            ->join('orden', 'orden.id', '=', 'detalle_orden.orden')
+            ->join('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+            ->where('orden.sucursal', '=', $idSucursal)
+            ->where('orden.pagado', '=', 1)
+            ->where('sis_estado.cod_general', '!=', 'ORD_ANULADA')
+            ->where('orden.fecha_inicio', '>=', $desdeDate)
+            ->where('orden.fecha_inicio', '<', $modHasta)
+            ->select(
+                'detalle_orden.nombre_producto',
+                'detalle_orden.codigo_producto',
+                'extra_detalle_orden.descripcion_extra',
+                DB::raw('COUNT(*) as cantidad_veces'),
+                DB::raw('SUM(COALESCE(extra_detalle_orden.total, 0)) as total_extra')
+            )
+            ->groupBy('detalle_orden.nombre_producto', 'detalle_orden.codigo_producto', 'extra_detalle_orden.descripcion_extra')
+            ->orderByDesc(DB::raw('COUNT(*)'))
+            ->get();
+
+        $totalUnidades = 0;
+        $totalVenta = 0.0;
+        foreach ($productos as $p) {
+            $p->cantidad_vendida = (int) $p->cantidad_vendida;
+            $p->total_vendido = (float) $p->total_vendido;
+            $p->num_ordenes = (int) $p->num_ordenes;
+            $p->pct_tickets = $totalTickets > 0 ? round(100 * $p->num_ordenes / $totalTickets, 1) : 0;
+            $p->extras = [];
+            $totalUnidades += $p->cantidad_vendida;
+            $totalVenta += $p->total_vendido;
+        }
+
+        foreach ($extrasPorProducto as $e) {
+            $e->cantidad_veces = (int) $e->cantidad_veces;
+            $e->total_extra = (float) $e->total_extra;
+            $key = $e->nombre_producto . '|' . ($e->codigo_producto ?? '');
+            foreach ($productos as $p) {
+                if (($p->nombre_producto ?? '') === ($e->nombre_producto ?? '') && ($p->codigo_producto ?? '') === ($e->codigo_producto ?? '')) {
+                    $p->extras[] = [
+                        'descripcion_extra' => $e->descripcion_extra,
+                        'cantidad_veces' => $e->cantidad_veces,
+                        'total_extra' => $e->total_extra,
+                    ];
+                    break;
+                }
+            }
+        }
+
+        $resumen = [
+            'total_tickets' => $totalTickets,
+            'total_unidades' => $totalUnidades,
+            'total_venta' => round($totalVenta, 2),
+            'total_productos_distintos' => count($productos),
+        ];
+
+        return $this->responseAjaxSuccess("", [
+            'resumen' => $resumen,
+            'productos' => $productos,
+        ]);
     }
 
     public function goResumenContable()

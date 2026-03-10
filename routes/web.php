@@ -181,6 +181,7 @@ Route::group(['middleware' => 'autorizated:prod_ext_inv'], function () {
 
 Route::group(['middleware' => 'autorizated:panelControl'], function () {
     Route::get('informes/panelControl', 'InformesController@goPanelControl');
+    Route::post('informes/panelControl/productosVendidos', 'InformesController@getProductosVendidosPanel');
 });
 
 
