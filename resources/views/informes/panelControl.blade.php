@@ -70,7 +70,7 @@
             <!-- Resumen global -->
             @if($resumenGlobal)
                 <div class="row">
-                    <div class="col-6 col-md-3 mb-2 mb-md-3">
+                    <div class="col-12 col-md-3 mb-2 mb-md-3">
                         <div class="card card-statistic-1 h-100">
                             <div class="card-icon bg-primary">
                                 <i class="fas fa-cash-register"></i>
@@ -85,7 +85,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-6 col-md-3 mb-2 mb-md-3">
+                    <div class="col-12 col-md-3 mb-2 mb-md-3">
                         <div class="card card-statistic-1 h-100">
                             <div class="card-icon bg-info">
                                 <i class="fas fa-receipt"></i>
@@ -98,7 +98,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-6 col-md-3 mb-2 mb-md-3">
+                    <div class="col-12 col-md-3 mb-2 mb-md-3">
                         <div class="card card-statistic-1 h-100">
                             <div class="card-icon bg-success">
                                 <i class="fas fa-chart-line"></i>
@@ -113,7 +113,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-6 col-md-3 mb-2 mb-md-3">
+                    <div class="col-12 col-md-3 mb-2 mb-md-3">
                         <div class="card card-statistic-1 h-100">
                             <div class="card-icon bg-warning">
                                 <i class="fas fa-credit-card"></i>
@@ -163,7 +163,7 @@
                     <div class="col-12">
                         <h5 class="mb-2 section-title"><i class="fas fa-clock"></i> Tiempos operativos</h5>
                     </div>
-                    <div class="col-6 col-md-4 mb-2 mb-md-3">
+                    <div class="col-12 col-md-4 mb-2 mb-md-3">
                         <div class="card card-statistic-1 h-100">
                             <div class="card-icon bg-info">
                                 <i class="fas fa-utensils"></i>
@@ -174,7 +174,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-6 col-md-4 mb-2 mb-md-3">
+                    <div class="col-12 col-md-4 mb-2 mb-md-3">
                         <div class="card card-statistic-1 h-100">
                             <div class="card-icon bg-success">
                                 <i class="fas fa-truck"></i>
@@ -185,7 +185,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-6 col-md-4 mb-2 mb-md-3">
+                    <div class="col-12 col-md-4 mb-2 mb-md-3">
                         <div class="card card-statistic-1 h-100">
                             <div class="card-icon {{ ($resumenTiempos->pct_sla_prep ?? 0) >= 80 ? 'bg-success' : (($resumenTiempos->pct_sla_prep ?? 0) >= 60 ? 'bg-warning' : 'bg-danger') }}">
                                 <i class="fas fa-bullseye"></i>
@@ -241,7 +241,7 @@
 
             <!-- Incidentes / Calidad -->
             <div class="row mt-2 mt-md-3">
-                <div class="col-6 col-md-4 mb-2 mb-md-3">
+                <div class="col-12 col-md-4 mb-2 mb-md-3">
                     <div class="card card-statistic-1 h-100">
                         <div class="card-icon bg-warning">
                             <i class="fas fa-exclamation-triangle"></i>
@@ -252,7 +252,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-6 col-md-4 mb-2 mb-md-3">
+                <div class="col-12 col-md-4 mb-2 mb-md-3">
                     <div class="card card-statistic-1 h-100">
                         <div class="card-icon bg-danger">
                             <i class="fas fa-hand-holding-usd"></i>

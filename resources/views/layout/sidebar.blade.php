@@ -4,8 +4,8 @@
         <a href="{{ url('/') }}" class="d-inline-block text-center">
             <img id="imgLogoSidebar" title="Nombre empresa" alt="Logo empresa"
                 src="{{ session('usuario')['url_logo_sistema'] ?? '' }}"
-                class="img-fluid img-thumbnail"
-                style="max-height: 60px; background-color: transparent; border-color: transparent;" />
+                class="img-thumbnail"
+                style="background-color: transparent; border-color: transparent;" />
         </a>
     </div>
     <ul class="sidebar-menu mt-2">
