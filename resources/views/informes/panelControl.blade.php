@@ -494,9 +494,9 @@
 
             <!-- Modal Productos vendidos -->
             <div class="modal fade" id="mdlProductosVendidos" tabindex="-1" role="dialog" aria-labelledby="mdlProductosVendidosLabel" aria-hidden="true" data-url-productos="{{ url('informes/panelControl/productosVendidos') }}">
-                <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
                     <div class="modal-content">
-                        <div class="modal-header py-2">
+                        <div class="modal-header py-2 bg-light">
                             <h5 class="modal-title" id="mdlProductosVendidosLabel">Productos vendidos</h5>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
                                 <span aria-hidden="true">&times;</span>
@@ -504,12 +504,17 @@
                         </div>
                         <div class="modal-body">
                             <p class="text-muted small mb-2" id="pvPeriodo">Período: <span id="pvPeriodoTexto">-</span></p>
-                            <div id="pvCargando" class="text-center py-4">
+                            <div id="pvCargando" class="text-center py-5">
                                 <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
                                 <p class="mt-2 mb-0">Cargando...</p>
                             </div>
-                            <div id="pvSinDatos" class="text-center py-4 text-muted" style="display: none;">
-                                No hay datos de productos vendidos en el período seleccionado.
+                            <div id="pvError" class="alert alert-warning py-3" style="display: none;" role="alert">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                <span id="pvErrorTexto">Error al cargar. Verifique permisos o conexión.</span>
+                            </div>
+                            <div id="pvSinDatos" class="text-center py-5 text-muted" style="display: none;">
+                                <i class="fas fa-box-open fa-2x mb-2"></i>
+                                <p class="mb-0">No hay productos vendidos en el período seleccionado.</p>
                             </div>
                             <div id="pvContenido" style="display: none;">
                                 <div class="row mb-3 small">
@@ -557,8 +562,16 @@
         var hasta = $('#hasta').val() || '';
         $('#pvPeriodoTexto').text(desde && hasta ? desde + ' — ' + hasta : '-');
         $('#pvCargando').show();
+        $('#pvError').hide();
         $('#pvSinDatos').hide();
         $('#pvContenido').hide();
+
+        if (!urlProductos) {
+            $('#pvCargando').hide();
+            $('#pvErrorTexto').text('Configuración incorrecta. Recargue la página.');
+            $('#pvError').show();
+            return;
+        }
 
         $.ajax({
             url: urlProductos,
@@ -567,9 +580,9 @@
             dataType: 'json'
         }).done(function (data) {
             $('#pvCargando').hide();
-            if (data && data.data) {
-                var resumen = data.data.resumen || {};
-                var productos = data.data.productos || [];
+            if (data && data.estado && data.datos) {
+                var resumen = data.datos.resumen || {};
+                var productos = data.datos.productos || [];
                 if (productos.length === 0) {
                     $('#pvSinDatos').show();
                     return;
@@ -624,11 +637,24 @@
                 });
                 $('#pvContenido').show();
             } else {
-                $('#pvSinDatos').show();
+                var msg = (data && data.mensaje) ? data.mensaje : 'No hay datos de productos vendidos en el período seleccionado.';
+                $('#pvErrorTexto').text(msg);
+                $('#pvError').show();
             }
-        }).fail(function () {
+        }).fail(function (xhr) {
             $('#pvCargando').hide();
-            $('#pvSinDatos').show();
+            var msg = 'Error al cargar. ';
+            if (xhr && xhr.responseJSON && xhr.responseJSON.mensaje) {
+                msg += xhr.responseJSON.mensaje;
+            } else if (xhr && xhr.status === 403) {
+                msg += 'Sin permisos.';
+            } else if (xhr && xhr.status === 500) {
+                msg += 'Error del servidor.';
+            } else {
+                msg += 'Verifique su conexión.';
+            }
+            $('#pvErrorTexto').text(msg);
+            $('#pvError').show();
         });
     });
 })();

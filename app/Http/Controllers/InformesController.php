@@ -362,7 +362,7 @@ class InformesController extends Controller
     public function getProductosVendidosPanel(Request $request)
     {
         if (!$this->validarSesion("panelControl")) {
-            return $this->responseAjaxServerError("No tiene permisos.", []);
+            return response()->json($this->responseAjaxServerError("No tiene permisos.", []));
         }
         $hoy = date('Y-m-d');
         $desde = $request->input('desde') ?? $hoy;
@@ -454,10 +454,10 @@ class InformesController extends Controller
             'total_productos_distintos' => count($productos),
         ];
 
-        return $this->responseAjaxSuccess("", [
+        return response()->json($this->responseAjaxSuccess("", [
             'resumen' => $resumen,
             'productos' => $productos,
-        ]);
+        ]));
     }
 
     public function goResumenContable()
