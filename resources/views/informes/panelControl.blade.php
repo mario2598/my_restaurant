@@ -8,6 +8,10 @@
     .panel-control .table { font-size: clamp(0.7rem, 1.8vw, 0.875rem); }
     .panel-control .table th, .panel-control .table td { padding: 0.35rem 0.5rem; }
     .panel-control .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    /* Modal Productos vendidos: forzar por encima del backdrop y que sea clickeable */
+    #mdlProductosVendidos.modal { z-index: 1060 !important; }
+    #mdlProductosVendidos .modal-dialog { z-index: 1061 !important; position: relative; }
+    body.modal-open .modal-backdrop { z-index: 1050 !important; }
     @media (max-width: 575.98px) {
         .panel-control .card-statistic-1 .card-wrap .card-header h4 { font-size: 0.8rem; }
         .panel-control .section-header h1 { font-size: 1.25rem; }
@@ -492,69 +496,76 @@
                 </div>
             </div>
 
-            <!-- Modal Productos vendidos -->
-            <div class="modal fade" id="mdlProductosVendidos" tabindex="-1" role="dialog" aria-labelledby="mdlProductosVendidosLabel" aria-hidden="true" data-url-productos="{{ url('informes/panelControl/productosVendidos') }}">
-                <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header py-2 bg-light">
-                            <h5 class="modal-title" id="mdlProductosVendidosLabel">Productos vendidos</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <p class="text-muted small mb-2" id="pvPeriodo">Período: <span id="pvPeriodoTexto">-</span></p>
-                            <div id="pvCargando" class="text-center py-5">
-                                <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
-                                <p class="mt-2 mb-0">Cargando...</p>
-                            </div>
-                            <div id="pvError" class="alert alert-warning py-3" style="display: none;" role="alert">
-                                <i class="fas fa-exclamation-triangle mr-1"></i>
-                                <span id="pvErrorTexto">Error al cargar. Verifique permisos o conexión.</span>
-                            </div>
-                            <div id="pvSinDatos" class="text-center py-5 text-muted" style="display: none;">
-                                <i class="fas fa-box-open fa-2x mb-2"></i>
-                                <p class="mb-0">No hay productos vendidos en el período seleccionado.</p>
-                            </div>
-                            <div id="pvContenido" style="display: none;">
-                                <div class="row mb-3 small">
-                                    <div class="col-6 col-md-3"><strong>Productos distintos:</strong> <span id="pvResumenProductos">0</span></div>
-                                    <div class="col-6 col-md-3"><strong>Unidades:</strong> <span id="pvResumenUnidades">0</span></div>
-                                    <div class="col-6 col-md-3"><strong>Venta total:</strong> <span id="pvResumenVenta">0</span> CRC</div>
-                                    <div class="col-6 col-md-3"><strong>Tickets:</strong> <span id="pvResumenTickets">0</span></div>
-                                </div>
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-striped table-hover mb-0">
-                                        <thead class="thead-light">
-                                            <tr>
-                                                <th>Producto</th>
-                                                <th>Código</th>
-                                                <th class="text-right">Unidades</th>
-                                                <th class="text-right">Total vendido</th>
-                                                <th class="text-center">En # tickets</th>
-                                                <th class="text-center">% tickets</th>
-                                                <th></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="pvTbody">
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
+        </div>
+    </section>
+</div>
+@endsection
+
+@section('popup')
+<!-- Modal en popup para que quede por encima del backdrop (mismo nivel que el contenido) -->
+<div class="modal fade" id="mdlProductosVendidos" tabindex="-1" role="dialog" aria-labelledby="mdlProductosVendidosLabel" aria-hidden="true" data-url-productos="{{ url('informes/panelControl/productosVendidos') }}">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header py-2 bg-light">
+                <h5 class="modal-title" id="mdlProductosVendidosLabel">Productos vendidos</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-2" id="pvPeriodo">Período: <span id="pvPeriodoTexto">-</span></p>
+                <div id="pvCargando" class="text-center py-5">
+                    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                    <p class="mt-2 mb-0">Cargando...</p>
+                </div>
+                <div id="pvError" class="alert alert-warning py-3" style="display: none;" role="alert">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    <span id="pvErrorTexto">Error al cargar. Verifique permisos o conexión.</span>
+                </div>
+                <div id="pvSinDatos" class="text-center py-5 text-muted" style="display: none;">
+                    <i class="fas fa-box-open fa-2x mb-2"></i>
+                    <p class="mb-0">No hay productos vendidos en el período seleccionado.</p>
+                </div>
+                <div id="pvContenido" style="display: none;">
+                    <div class="row mb-3 small">
+                        <div class="col-6 col-md-3"><strong>Productos distintos:</strong> <span id="pvResumenProductos">0</span></div>
+                        <div class="col-6 col-md-3"><strong>Unidades:</strong> <span id="pvResumenUnidades">0</span></div>
+                        <div class="col-6 col-md-3"><strong>Venta total:</strong> <span id="pvResumenVenta">0</span> CRC</div>
+                        <div class="col-6 col-md-3"><strong>Tickets:</strong> <span id="pvResumenTickets">0</span></div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped table-hover mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Código</th>
+                                    <th class="text-right">Unidades</th>
+                                    <th class="text-right">Total vendido</th>
+                                    <th class="text-center">En # tickets</th>
+                                    <th class="text-center">% tickets</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="pvTbody">
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-
         </div>
-    </section>
+    </div>
 </div>
 @endsection
 
 @section('script')
 <script>
 (function() {
-    var urlProductos = $('#mdlProductosVendidos').attr('data-url-productos') || '';
+    // Mover el modal al body para que siempre quede por encima del backdrop (evita problemas de z-index)
+    var $modal = $('#mdlProductosVendidos');
+    if ($modal.length && $modal.parent()[0] !== document.body) {
+        $modal.appendTo('body');
+    }
+    var urlProductos = $modal.attr('data-url-productos') || '';
     var token = $('meta[name="csrf-token"]').attr('content');
 
     $('#mdlProductosVendidos').on('show.bs.modal', function () {
