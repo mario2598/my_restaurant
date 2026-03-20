@@ -25,7 +25,6 @@ class ComandasController extends Controller
     {
         $data = [
             'idComanda' =>  null,
-            'comandaFiltroTexto' => 'General (todas las comandas)',
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
         return view('comandas.preparacion.comandasGen', compact('data'));
@@ -33,15 +32,8 @@ class ComandasController extends Controller
 
     public function goComandaPreparacionId($idComanda)
     {
-        $idSucursal = $this->getUsuarioSucursal();
-        $comanda = DB::table('comanda')
-            ->where('id', '=', $idComanda)
-            ->where('sucursal', '=', $idSucursal)
-            ->first();
-
         $data = [
             'idComanda' =>  $idComanda,
-            'comandaFiltroTexto' => $comanda ? ('#' . $comanda->id . ' - ' . $comanda->nombre) : ('#' . $idComanda),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
         return view('comandas.preparacion.comandasGen', compact('data'));
@@ -66,117 +58,6 @@ class ComandasController extends Controller
                 'descripcion' => $ex->getMessage() . ' - ' . $ex->getTraceAsString()
             ]);
             return $this->responseAjaxServerError("Error al cargar las comandas: " . $ex->getMessage(), []);
-        }
-    }
-
-    /**
-     * Estadísticas de preparación por línea (detalle_orden_comanda: ingreso → fin) para la sucursal del usuario.
-     * Opcional: filtrar por id de comanda (tipo de estación).
-     * Solo día actual: filtra por fecha de inicio de la orden (hoy en zona del servidor).
-     */
-    public function estadisticasPreparacion(Request $request)
-    {
-        try {
-            $idSucursal = $this->getUsuarioSucursal();
-            if ($idSucursal == null || $idSucursal < 1) {
-                return response()->json($this->responseAjaxServerError('No se pudo obtener la sucursal del usuario', []));
-            }
-
-            $hoy = date('Y-m-d');
-            $idComandaFiltro = $request->input('idComanda');
-
-            $desdeDate = $hoy;
-            $modHasta = date('Y-m-d', strtotime($hoy . ' +1 day'));
-            $slaMin = 15;
-
-            $baseQuery = function () use ($idSucursal, $desdeDate, $modHasta, $idComandaFiltro) {
-                $q = DB::table('detalle_orden_comanda')
-                    ->join('orden_comanda', 'orden_comanda.id', '=', 'detalle_orden_comanda.orden_comanda')
-                    ->join('orden', 'orden.id', '=', 'orden_comanda.orden')
-                    ->join('sis_estado', 'sis_estado.id', '=', 'orden.estado')
-                    ->where('orden.sucursal', '=', $idSucursal)
-                    ->whereNotNull('detalle_orden_comanda.fecha_fin')
-                    ->whereNotNull('detalle_orden_comanda.fecha_ingreso')
-                    ->where('sis_estado.cod_general', '!=', 'ORD_ANULADA')
-                    ->where('orden.fecha_inicio', '>=', $desdeDate)
-                    ->where('orden.fecha_inicio', '<', $modHasta);
-                if ($idComandaFiltro !== null && $idComandaFiltro !== '' && (int) $idComandaFiltro > 0) {
-                    $q->where('detalle_orden_comanda.comanda', '=', (int) $idComandaFiltro);
-                }
-
-                return $q;
-            };
-
-            $resumenRow = $baseQuery()
-                ->select(
-                    DB::raw('COUNT(detalle_orden_comanda.id) as lineas'),
-                    DB::raw('ROUND(AVG(TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin)), 1) as promedio_min'),
-                    DB::raw('ROUND(100 * SUM(CASE WHEN TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin) <= ' . (int) $slaMin . ' THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0), 1) as pct_sla'),
-                    DB::raw('MAX(TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin)) as max_min')
-                )
-                ->first();
-
-            $productos = $baseQuery()
-                ->join('detalle_orden', 'detalle_orden.id', '=', 'detalle_orden_comanda.detalle_orden')
-                ->select(
-                    'detalle_orden.nombre_producto',
-                    'detalle_orden.codigo_producto',
-                    DB::raw('COUNT(detalle_orden_comanda.id) as veces'),
-                    DB::raw('ROUND(AVG(TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin)), 1) as promedio_min'),
-                    DB::raw('MAX(TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin)) as max_min'),
-                    DB::raw('ROUND(100 * SUM(CASE WHEN TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin) > ' . (int) $slaMin . ' THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0), 1) as pct_sobre_sla')
-                )
-                ->groupBy('detalle_orden.nombre_producto', 'detalle_orden.codigo_producto')
-                ->orderByDesc(DB::raw('AVG(TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin))'))
-                ->limit(25)
-                ->get();
-
-            $lineasMasLargas = $baseQuery()
-                ->join('detalle_orden', 'detalle_orden.id', '=', 'detalle_orden_comanda.detalle_orden')
-                ->select(
-                    'orden.numero_orden',
-                    'detalle_orden.nombre_producto',
-                    DB::raw('TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin) as duracion_min'),
-                    'detalle_orden_comanda.fecha_fin as fecha_fin'
-                )
-                ->orderByDesc('duracion_min')
-                ->limit(25)
-                ->get();
-
-            foreach ($lineasMasLargas as $r) {
-                $r->duracion_min = (int) ($r->duracion_min ?? 0);
-                $r->fecha_fin_legible = $r->fecha_fin ? date('d/m/Y H:i', strtotime($r->fecha_fin)) : null;
-            }
-
-            foreach ($productos as $p) {
-                $p->veces = (int) ($p->veces ?? 0);
-                $p->promedio_min = $p->promedio_min !== null ? (float) $p->promedio_min : null;
-                $p->max_min = $p->max_min !== null ? (int) $p->max_min : null;
-                $p->pct_sobre_sla = $p->pct_sobre_sla !== null ? (float) $p->pct_sobre_sla : null;
-            }
-
-            $datos = [
-                'periodo' => ['desde' => $desdeDate, 'hasta' => $hoy],
-                'sla_minutos' => $slaMin,
-                'resumen' => [
-                    'lineas_terminadas' => (int) ($resumenRow->lineas ?? 0),
-                    'promedio_min' => $resumenRow->promedio_min !== null ? (float) $resumenRow->promedio_min : null,
-                    'pct_sla' => $resumenRow->pct_sla !== null ? (float) $resumenRow->pct_sla : null,
-                    'max_min' => $resumenRow->max_min !== null ? (int) $resumenRow->max_min : null,
-                ],
-                'productos' => $productos,
-                'lineas_mas_largas' => $lineasMasLargas,
-            ];
-
-            return response()->json($this->responseAjaxSuccess('', $datos));
-        } catch (\Exception $ex) {
-            DB::table('log')->insertGetId([
-                'id' => null,
-                'documento' => 'ComandasController::estadisticasPreparacion',
-                'descripcion' => $ex->getMessage() . ' - ' . $ex->getTraceAsString(),
-            ]);
-
-            return response()->json($this->responseAjaxServerError('Error al cargar estadísticas: ' . $ex->getMessage(), []));
         }
     }
 
@@ -350,7 +231,6 @@ class ComandasController extends Controller
                 ->select('detalle_orden.*',
                  'detalle_orden_comanda.id as id_detalle_orden_comanda',
                  'detalle_orden_comanda.cantidad as cantidad_comanda', 
-                 'detalle_orden_comanda.fecha_ingreso as fecha_ingreso_comanda',
                  'detalle_orden_comanda.fecha_fin as fecha_fin_comanda')
                 ->where('detalle_orden_comanda.orden_comanda', '=', $o->id_orden_comanda)
                 ->where('detalle_orden_comanda.preparado', '=', 0)
