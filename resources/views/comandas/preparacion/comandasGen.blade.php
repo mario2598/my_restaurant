@@ -14,10 +14,26 @@
         .table th {
             height: 32px !important;
         }
+        .prep-metricas .card-statistic-1 .card-body { font-size: clamp(0.75rem, 2.2vw, 0.95rem); }
+        .prep-metricas .card-statistic-1 .card-header h4 { font-size: clamp(0.8rem, 2vw, 0.95rem); }
+        .prep-metricas .card-metrica-clic { cursor: pointer; transition: box-shadow .15s ease; }
+        .prep-metricas .card-metrica-clic:hover { box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,.12); }
+        .prep-metricas .card-metrica-clic.card-metrica-sin-datos { cursor: default; opacity: .75; }
+        .prep-metricas .card-metrica-clic.card-metrica-sin-datos:hover { box-shadow: none; }
+        #mdl_peores_lineas_prep .table { font-size: 0.875rem; }
     </style>
 
     <div class="main-content">
         <section class="section">
+            <div class="row prep-metricas mb-3" id="fila_metricas_tiempo">
+                <div class="col-12 mb-2">
+                    <h6 class="mb-0 text-muted">
+                        <i class="fas fa-clock"></i> Tiempos de referencia
+                        <small class="d-block d-sm-inline text-muted font-weight-normal" id="metricas_alcance_txt"></small>
+                    </h6>
+                </div>
+                <div class="col-12" id="contenedor_metricas_tiempo"></div>
+            </div>
             <div class="row" id="contenedor_comandas">
             </div>
         </section>
@@ -61,6 +77,45 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="ocultarReceta()">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="mdl_peores_lineas_prep" tabindex="-1" role="dialog" aria-labelledby="tituloPeoresLineas"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tituloPeoresLineas">Líneas que más tardaron hoy</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-2" id="peores_lineas_leyenda"></p>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Orden</th>
+                                    <th>Nº comanda</th>
+                                    <th>Producto</th>
+                                    <th class="text-center">Cant.</th>
+                                    <th>Inicio prep.</th>
+                                    <th>Fin prep.</th>
+                                    <th class="text-center">Min</th>
+                                    <th>Estación</th>
+                                    <th class="text-center">vs SLA</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody_peores_lineas_prep"></tbody>
+                        </table>
+                    </div>
+                    <p class="text-muted small mt-2 mb-0 d-none" id="peores_lineas_vacio">No hay líneas terminadas en el día para mostrar.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>

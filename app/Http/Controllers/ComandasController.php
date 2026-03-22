@@ -50,7 +50,12 @@ class ComandasController extends Controller
                 return $this->responseAjaxServerError("No se pudo obtener la sucursal del usuario", []);
             }
 
-            return $this->responseAjaxSuccess("", self::getComandasPreparacion($idSucursal, $idComanda));
+            $payload = [
+                'comandas' => self::getComandasPreparacion($idSucursal, $idComanda),
+                'metricas_tiempo' => self::getMetricasPreparacionPorLinea($idSucursal, $idComanda),
+            ];
+
+            return $this->responseAjaxSuccess("", $payload);
         } catch (\Exception $ex) {
             DB::table('log')->insertGetId([
                 'id' => null,
@@ -190,6 +195,144 @@ class ComandasController extends Controller
             ]);
             return $this->responseAjaxServerError("Error al eliminar la comanda", []);
         }
+    }
+
+    /**
+     * Promedios y SLA por línea (detalle_orden_comanda: fecha_ingreso → fecha_fin).
+     * Solo órdenes con fecha_inicio en el día actual (zona horaria de la app).
+     * Sin montos: solo minutos, porcentajes y conteos.
+     *
+     * @param  int|null  $idComanda  Si viene definido, solo líneas de esa comanda (estación); si no, todas de la sucursal.
+     */
+    public static function getMetricasPreparacionPorLinea($idSucursal, $idComanda = null, $slaMinutos = 15)
+    {
+        if ($idSucursal === null || (int) $idSucursal < 1) {
+            return [
+                'sla_minutos' => (int) $slaMinutos,
+                'es_solo_hoy' => true,
+                'fecha_dia' => Carbon::now()->toDateString(),
+                'es_vista_general' => true,
+                'comanda_filtro_id' => null,
+                'comanda_filtro_nombre' => null,
+                'total_lineas_terminadas' => 0,
+                'promedio_min_por_linea' => null,
+                'lineas_dentro_sla' => 0,
+                'pct_dentro_sla' => null,
+                'max_minutos_una_linea' => null,
+                'peores_lineas_detalle' => [],
+            ];
+        }
+
+        $desde = Carbon::now()->startOfDay();
+        $hastaFin = Carbon::now()->endOfDay();
+
+        $idComandaFiltro = null;
+        if ($idComanda !== null && $idComanda !== '' && (int) $idComanda > 0) {
+            $idComandaFiltro = (int) $idComanda;
+        }
+
+        $nombreComandaFiltro = null;
+        if ($idComandaFiltro !== null) {
+            $nombreComandaFiltro = DB::table('comanda')
+                ->where('id', '=', $idComandaFiltro)
+                ->where('sucursal', '=', (int) $idSucursal)
+                ->value('nombre');
+        }
+
+        $sla = (int) $slaMinutos;
+
+        $q = DB::table('detalle_orden_comanda')
+            ->join('orden_comanda', 'orden_comanda.id', '=', 'detalle_orden_comanda.orden_comanda')
+            ->join('orden', 'orden.id', '=', 'orden_comanda.orden')
+            ->leftJoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+            ->where('orden.sucursal', '=', (int) $idSucursal)
+            ->whereNotNull('detalle_orden_comanda.fecha_fin')
+            ->whereNotNull('detalle_orden_comanda.fecha_ingreso')
+            ->where('sis_estado.cod_general', '!=', 'ORD_ANULADA')
+            ->where('orden.fecha_inicio', '>=', $desde)
+            ->where('orden.fecha_inicio', '<=', $hastaFin);
+
+        if ($idComandaFiltro !== null) {
+            $q->where('detalle_orden_comanda.comanda', '=', $idComandaFiltro);
+        }
+
+        $row = $q->select(
+            DB::raw('COUNT(detalle_orden_comanda.id) as total_lineas'),
+            DB::raw('ROUND(AVG(TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin)), 1) as promedio_min'),
+            DB::raw('SUM(CASE WHEN TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin) <= ' . $sla . ' THEN 1 ELSE 0 END) as dentro_sla'),
+            DB::raw('ROUND(MAX(TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin)), 0) as max_min')
+        )->first();
+
+        $total = (int) ($row->total_lineas ?? 0);
+        $dentro = (int) ($row->dentro_sla ?? 0);
+        $pct = $total > 0 ? round(100 * $dentro / $total, 1) : null;
+        $prom = $row->promedio_min !== null ? round((float) $row->promedio_min, 1) : null;
+        $maxMin = $row->max_min !== null ? (int) $row->max_min : null;
+
+        $qDetalle = DB::table('detalle_orden_comanda')
+            ->join('orden_comanda', 'orden_comanda.id', '=', 'detalle_orden_comanda.orden_comanda')
+            ->join('orden', 'orden.id', '=', 'orden_comanda.orden')
+            ->join('detalle_orden', 'detalle_orden.id', '=', 'detalle_orden_comanda.detalle_orden')
+            ->leftJoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+            ->leftJoin('comanda as comanda_linea', 'comanda_linea.id', '=', 'detalle_orden_comanda.comanda')
+            ->where('orden.sucursal', '=', (int) $idSucursal)
+            ->whereNotNull('detalle_orden_comanda.fecha_fin')
+            ->whereNotNull('detalle_orden_comanda.fecha_ingreso')
+            ->where('sis_estado.cod_general', '!=', 'ORD_ANULADA')
+            ->where('orden.fecha_inicio', '>=', $desde)
+            ->where('orden.fecha_inicio', '<=', $hastaFin);
+
+        if ($idComandaFiltro !== null) {
+            $qDetalle->where('detalle_orden_comanda.comanda', '=', $idComandaFiltro);
+        }
+
+        $filasPeores = $qDetalle
+            ->select(
+                'orden.numero_orden',
+                'orden_comanda.num_comanda',
+                'detalle_orden.nombre_producto',
+                'detalle_orden_comanda.cantidad',
+                'detalle_orden.observacion',
+                'detalle_orden_comanda.fecha_ingreso',
+                'detalle_orden_comanda.fecha_fin',
+                DB::raw('TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin) as minutos_prep'),
+                DB::raw('COALESCE(comanda_linea.nombre, \'-\') as estacion_nombre')
+            )
+            ->orderByRaw('TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin) DESC')
+            ->limit(25)
+            ->get();
+
+        $peoresLineasDetalle = [];
+        foreach ($filasPeores as $r) {
+            $min = (int) ($r->minutos_prep ?? 0);
+            $peoresLineasDetalle[] = [
+                'numero_orden' => $r->numero_orden,
+                'num_comanda' => $r->num_comanda,
+                'producto' => $r->nombre_producto,
+                'cantidad' => (int) ($r->cantidad ?? 0),
+                'observacion' => $r->observacion,
+                'minutos' => $min,
+                'fecha_ingreso' => $r->fecha_ingreso,
+                'fecha_fin' => $r->fecha_fin,
+                'estacion' => $r->estacion_nombre,
+                'excede_sla' => $min > $sla,
+            ];
+        }
+
+        return [
+            'sla_minutos' => $sla,
+            'es_solo_hoy' => true,
+            'fecha_dia' => Carbon::now()->toDateString(),
+            'es_vista_general' => $idComandaFiltro === null,
+            'comanda_filtro_id' => $idComandaFiltro,
+            'comanda_filtro_nombre' => $nombreComandaFiltro,
+            'total_lineas_terminadas' => $total,
+            'promedio_min_por_linea' => $prom,
+            'lineas_dentro_sla' => $dentro,
+            'pct_dentro_sla' => $pct,
+            'max_minutos_una_linea' => $maxMin,
+            'peores_lineas_detalle' => $peoresLineasDetalle,
+        ];
     }
 
     public static function getComandasPreparacion($sucursal, $idComanda)

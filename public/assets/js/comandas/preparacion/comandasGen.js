@@ -6,6 +6,8 @@ let anteriorCantidadDetalle = null;
 const intervalo = setInterval(recargarOrdenes, 10000);
 
 let usuarioInteraccion = false; // Variable para indicar si el usuario ya ha interactuado
+/** Últimas métricas recibidas (para el modal de peores líneas). */
+var metricasTiempoActual = null;
 
 // Escuchar el evento de clic en el documento para detectar la primera interacción
 document.addEventListener('click', () => {
@@ -34,6 +36,187 @@ function initialice() {
     recargarOrdenes();
 }
 
+function escapeHtmlMetricas(str) {
+    if (str == null || str === '') return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function formatearDateTimeMetrica(isoStr) {
+    if (!isoStr) return '—';
+    var d = new Date(isoStr.replace(' ', 'T'));
+    if (isNaN(d.getTime())) return escapeHtmlMetricas(String(isoStr));
+    return escapeHtmlMetricas(d.toLocaleString());
+}
+
+function truncarObsMetrica(s, maxLen) {
+    if (s == null || s === '') return '';
+    s = String(s).trim();
+    if (s.length <= maxLen) return escapeHtmlMetricas(s);
+    return escapeHtmlMetricas(s.slice(0, maxLen)) + '…';
+}
+
+function abrirModalPeoresLineasPrep() {
+    var m = metricasTiempoActual;
+    var sla = m && m.sla_minutos != null ? m.sla_minutos : 15;
+    var lista = (m && Array.isArray(m.peores_lineas_detalle)) ? m.peores_lineas_detalle : [];
+    var $tbody = $('#tbody_peores_lineas_prep');
+    var $vacio = $('#peores_lineas_vacio');
+    var $leyenda = $('#peores_lineas_leyenda');
+
+    $tbody.empty();
+    $leyenda.text(
+        'Ordenadas de mayor a menor tiempo de preparación (ingreso → fin). SLA de referencia: ' + sla + ' min. Solo el día actual.'
+    );
+
+    if (!lista.length) {
+        $vacio.removeClass('d-none');
+        $('#mdl_peores_lineas_prep').modal('show');
+        return;
+    }
+    $vacio.addClass('d-none');
+
+    lista.forEach(function (row) {
+        var obs = row.observacion ? '<br><small class="text-muted">' + truncarObsMetrica(row.observacion, 120) + '</small>' : '';
+        var vsSla = row.excede_sla
+            ? '<span class="badge badge-danger">+' + (row.minutos - sla) + ' min</span>'
+            : '<span class="badge badge-success">OK</span>';
+        var trClass = row.excede_sla ? 'table-warning' : '';
+        $tbody.append(
+            '<tr class="' + trClass + '">'
+            + '<td>' + escapeHtmlMetricas(row.numero_orden != null ? String(row.numero_orden) : '—') + '</td>'
+            + '<td>' + escapeHtmlMetricas(row.num_comanda != null ? String(row.num_comanda) : '—') + '</td>'
+            + '<td>' + escapeHtmlMetricas(row.producto != null ? String(row.producto) : '—') + obs + '</td>'
+            + '<td class="text-center">' + escapeHtmlMetricas(String(row.cantidad != null ? row.cantidad : '')) + '</td>'
+            + '<td>' + formatearDateTimeMetrica(row.fecha_ingreso) + '</td>'
+            + '<td>' + formatearDateTimeMetrica(row.fecha_fin) + '</td>'
+            + '<td class="text-center font-weight-bold">' + escapeHtmlMetricas(String(row.minutos != null ? row.minutos : '')) + '</td>'
+            + '<td>' + escapeHtmlMetricas(row.estacion != null ? String(row.estacion) : '—') + '</td>'
+            + '<td class="text-center">' + vsSla + '</td>'
+            + '</tr>'
+        );
+    });
+
+    $('#mdl_peores_lineas_prep').modal('show');
+}
+
+function actualizarMetricasTiempo(m) {
+    var $wrap = $('#fila_metricas_tiempo');
+    var $box = $('#contenedor_metricas_tiempo');
+    var $alcance = $('#metricas_alcance_txt');
+
+    if (!m || typeof m !== 'object') {
+        metricasTiempoActual = null;
+        $box.empty();
+        $alcance.text('');
+        return;
+    }
+
+    metricasTiempoActual = m;
+
+    var sla = m.sla_minutos != null ? m.sla_minutos : 15;
+    var fechaDia = m.fecha_dia != null ? m.fecha_dia : '';
+    $alcance.text(fechaDia ? '(solo el día actual · ' + fechaDia + ')' : '(solo el día actual)');
+
+    var esGeneral = !!m.es_vista_general;
+    var cid = m.comanda_filtro_id;
+    var cnombre = m.comanda_filtro_nombre;
+    var bodyComanda;
+    if (esGeneral) {
+        bodyComanda = '<span class="text-dark font-weight-bold">Vista general</span>'
+            + '<small class="d-block text-muted mt-1">Métricas de todas las comandas de la sucursal</small>';
+    } else {
+        var lineaNombre = cnombre ? escapeHtmlMetricas(cnombre) : 'Sin nombre en catálogo';
+        bodyComanda = '<span class="text-dark font-weight-bold">' + lineaNombre + '</span>' 
+            + '<small class="d-block text-muted mt-1">Solo líneas de esta estación</small>';
+    }
+
+    var total = parseInt(m.total_lineas_terminadas, 10) || 0;
+    var prom = m.promedio_min_por_linea;
+    var pct = m.pct_dentro_sla;
+    var maxM = m.max_minutos_una_linea;
+    var dentro = parseInt(m.lineas_dentro_sla, 10) || 0;
+
+    var pctClass = 'bg-secondary';
+    if (pct != null) {
+        if (pct >= 80) pctClass = 'bg-success';
+        else if (pct >= 60) pctClass = 'bg-warning';
+        else pctClass = 'bg-danger';
+    }
+
+    var bodyProm = total > 0 && prom != null ? prom + ' min' : '—';
+    var bodySlaPct = total > 0 && pct != null ? pct + '%' : '—';
+    var bodyMax = total > 0 && maxM != null ? maxM + ' min' : '—';
+    var puedeVerDetalle = total > 0 && maxM != null;
+    var clasesPeor = 'card card-statistic-1 h-100 card-metrica-clic' + (puedeVerDetalle ? '' : ' card-metrica-sin-datos');
+    var hintPeor = puedeVerDetalle
+        ? '<small class="d-block text-muted mt-1">Toca para ver el detalle</small>'
+        : '<small class="d-block text-muted mt-1">Sin datos hoy</small>';
+
+    var html = ''
+        + '<div class="col-6 col-md-6 col-lg-3 mb-2">'
+        + '  <div class="card card-statistic-1 h-100">'
+        + '    <div class="card-icon bg-info"><i class="fas fa-filter"></i></div>'
+        + '    <div class="card-wrap">'
+        + '      <div class="card-header"><h4>Comanda en pantalla</h4></div>'
+        + '      <div class="card-body">' + bodyComanda + '</div>'
+        + '    </div>'
+        + '  </div>'
+        + '</div>'
+        + '<div class="col-6 col-md-6 col-lg-3 mb-2">'
+        + '  <div class="card card-statistic-1 h-100">'
+        + '    <div class="card-icon bg-primary"><i class="fas fa-list-alt"></i></div>'
+        + '    <div class="card-wrap">'
+        + '      <div class="card-header"><h4>Tiempo prom. por línea</h4></div>'
+        + '      <div class="card-body">' + bodyProm + '</div>'
+        + '    </div>'
+        + '  </div>'
+        + '</div>'
+        + '<div class="col-6 col-md-6 col-lg-3 mb-2">'
+        + '  <div class="card card-statistic-1 h-100">'
+        + '    <div class="card-icon ' + pctClass + '"><i class="fas fa-bullseye"></i></div>'
+        + '    <div class="card-wrap">'
+        + '      <div class="card-header"><h4>% dentro SLA (≤ ' + sla + ' min)</h4></div>'
+        + '      <div class="card-body">' + bodySlaPct
+        + (total > 0 ? '<small class="d-block text-muted">' + dentro + ' de ' + total + '</small>' : '')
+        + '      </div>'
+        + '    </div>'
+        + '  </div>'
+        + '</div>'
+        + '<div class="col-6 col-md-6 col-lg-3 mb-2">'
+        + '  <div class="' + clasesPeor + '" id="card_metrica_peor_linea" role="button" tabindex="0" '
+        + (puedeVerDetalle ? 'aria-label="Ver detalle de las líneas más lentas"' : '') + '>'
+        + '    <div class="card-icon bg-dark"><i class="fas fa-arrow-up"></i></div>'
+        + '    <div class="card-wrap">'
+        + '      <div class="card-header"><h4>Peor línea (máx.)</h4></div>'
+        + '      <div class="card-body">' + bodyMax + hintPeor + '</div>'
+        + '    </div>'
+        + '  </div>'
+        + '</div>';
+
+    $box.html('<div class="row">' + html + '</div>');
+
+    var $peor = $('#card_metrica_peor_linea');
+    $peor.off('click keydown');
+    if (puedeVerDetalle) {
+        $peor.on('click', function (e) {
+            e.preventDefault();
+            abrirModalPeoresLineasPrep();
+        });
+        $peor.on('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                abrirModalPeoresLineasPrep();
+            }
+        });
+    }
+
+    $wrap.show();
+}
+
 function recargarOrdenes() {
     $.ajax({
         url: `${base_path}/comandas/preparacion/recargarComandas`,
@@ -47,7 +230,14 @@ function recargarOrdenes() {
             return;
         }
 
-        crearHtmlComanda(response['datos'])
+        var datos = response['datos'];
+        if (datos && datos.comandas !== undefined) {
+            actualizarMetricasTiempo(datos.metricas_tiempo || {});
+            crearHtmlComanda(datos.comandas);
+        } else {
+            actualizarMetricasTiempo({});
+            crearHtmlComanda(datos);
+        }
     }).fail(function (jqXHR, textStatus, errorThrown) {
         setError('Recargar Comandas', 'Algo salió mal..');
     });
