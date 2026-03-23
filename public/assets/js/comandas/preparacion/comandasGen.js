@@ -150,6 +150,33 @@ function actualizarMetricasTiempo(m) {
     var bodyProm = total > 0 && prom != null ? prom + ' min' : '—';
     var bodySlaPct = total > 0 && pct != null ? pct + '%' : '—';
     var bodyMax = total > 0 && maxM != null ? maxM + ' min' : '—';
+    var motivacionSla = '';
+    if (total > 0 && pct != null) {
+        var iconoMot = '🎯';
+        var txtMot = 'Mantengamos este ritmo.';
+        var claseMot = 'sla-ok';
+        if (pct >= 90) {
+            iconoMot = '🏆';
+            txtMot = 'Excelente trabajo, sigamos asi.';
+            claseMot = 'sla-top';
+        } else if (pct >= 75) {
+            iconoMot = '💪';
+            txtMot = 'Buen avance, vamos por mas.';
+            claseMot = 'sla-ok';
+        } else if (pct >= 60) {
+            iconoMot = '⚡';
+            txtMot = 'Estamos cerca de la meta.';
+            claseMot = 'sla-warning';
+        } else {
+            iconoMot = '🚨';
+            txtMot = 'Enfoque en tiempos para recuperar SLA.';
+            claseMot = 'sla-alert';
+        }
+        motivacionSla = '<small class="sla-indicador ' + claseMot + '">'
+            + '<span class="sla-emoji" aria-hidden="true">' + iconoMot + '</span>'
+            + '<span>' + escapeHtmlMetricas(txtMot) + '</span>'
+            + '</small>';
+    }
     var puedeVerDetalle = total > 0 && maxM != null;
     var clasesPeor = 'card card-statistic-1 h-100 card-metrica-clic' + (puedeVerDetalle ? '' : ' card-metrica-sin-datos');
     var hintPeor = puedeVerDetalle
@@ -182,6 +209,7 @@ function actualizarMetricasTiempo(m) {
         + '      <div class="card-header"><h4>% dentro SLA (≤ ' + sla + ' min)</h4></div>'
         + '      <div class="card-body">' + bodySlaPct
         + (total > 0 ? '<small class="d-block text-muted">' + dentro + ' de ' + total + '</small>' : '')
+        + motivacionSla
         + '      </div>'
         + '    </div>'
         + '  </div>'

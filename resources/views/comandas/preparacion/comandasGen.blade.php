@@ -20,6 +20,25 @@
         .prep-metricas .card-metrica-clic:hover { box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,.12); }
         .prep-metricas .card-metrica-clic.card-metrica-sin-datos { cursor: default; opacity: .75; }
         .prep-metricas .card-metrica-clic.card-metrica-sin-datos:hover { box-shadow: none; }
+        .prep-metricas .sla-indicador {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            font-size: .78rem;
+            margin-top: .2rem;
+            opacity: .92;
+        }
+        .prep-metricas .sla-indicador .sla-emoji {
+            font-size: .95rem;
+            line-height: 1;
+            animation: slaPulse 2.2s ease-in-out infinite;
+        }
+        .prep-metricas .sla-indicador.sla-warning .sla-emoji { animation-duration: 2s; }
+        .prep-metricas .sla-indicador.sla-alert .sla-emoji { animation-duration: 1.6s; }
+        @keyframes slaPulse {
+            0%, 100% { transform: scale(1); opacity: .8; }
+            50% { transform: scale(1.12); opacity: 1; }
+        }
         #mdl_peores_lineas_prep .table { font-size: 0.875rem; }
     </style>
 
