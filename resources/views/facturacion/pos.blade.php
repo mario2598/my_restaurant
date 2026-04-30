@@ -1043,6 +1043,38 @@
                         </div>
                     </div>
 
+                    <!-- Moneda / tipo de cambio (tiquete y pago_orden); TC se toma del último registro en sis_tipo_cambio (base = 1). -->
+                    <div class="row mb-3 border-top pt-3">
+                        <div class="col-12 col-md-6 mb-3">
+                            <label for="pos_moneda_factura_id">Moneda del cobro</label>
+                            <select class="form-control" id="pos_moneda_factura_id" name="pos_moneda_factura_id">
+                                @foreach ($data['monedasFacturaPos'] ?? [] as $mf)
+                                    @php
+                                        $tcAttr = ($mf->es_base ?? '') === 'S' ? '1' : ($mf->tipo_cambio_vigente !== null ? (string) $mf->tipo_cambio_vigente : '');
+                                    @endphp
+                                    <option value="{{ $mf->id }}"
+                                        data-es-base="{{ $mf->es_base ?? 'N' }}"
+                                        data-cod="{{ $mf->cod_general }}"
+                                        data-simbolo="{{ $mf->simbolo }}"
+                                        data-decimales="{{ (int) ($mf->decimales ?? 2) }}"
+                                        data-tc="{{ $tcAttr }}">{{ $mf->simbolo }} {{ $mf->nombre }} ({{ $mf->cod_general }})</option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">El tipo de cambio se carga automáticamente desde la tabla vigente (moneda base: TC = 1).</small>
+                        </div>
+                        <div class="col-12 col-md-6 mb-3">
+                            <label>Tipo de cambio aplicado</label>
+                            <input type="hidden" id="pos_tipo_cambio_snapshot" name="pos_tipo_cambio_snapshot" value="">
+                            <p class="form-control mb-0 bg-light" id="pos_tc_vigente_display" style="min-height: 38px; line-height: 38px;">—</p>
+                            <small class="text-muted">Unidades de moneda base por <strong>1</strong> unidad de la moneda elegida.</small>
+                        </div>
+                    </div>
+                    <div class="col-12 mb-2" id="pos_aviso_solo_efectivo" style="display: none;">
+                        <div class="alert alert-info py-2 mb-0 small">
+                            Moneda distinta de la base: el cobro solo puede hacerse en <strong>efectivo</strong> (tarjeta y SINPE no están disponibles para esta moneda).
+                        </div>
+                    </div>
+
                     <!-- Totales -->
                     <div class="row mb-3 text-center">
                         <div class="col-6 col-md-3">
@@ -1543,7 +1575,18 @@
                             <div class="card-body">
                                 <div class="text-white">
                                     <!-- Efectivo con Input -->
-                                    <div class="row"
+                                    <div class="row" id="fila_efectivo_cierre_monedas" style="display:none; border-bottom: dotted 1px black; margin-top:15px;">
+                                        <div class="col-12 pb-2">
+                                            <p class="font-20 mb-1" style="font-size:14px; color: black;">Efectivo contado (por moneda)</p>
+                                            <small class="text-muted">Indique lo físico en caja. TC = unidades de moneda base por 1 unidad de la moneda.</small>
+                                            <div id="body_inputs_efectivo_cierre" class="mt-2"></div>
+                                            <p class="mt-2 mb-0" style="font-size:13px; color: black;">
+                                                <strong>Equivalente moneda base:</strong>
+                                                <span id="lbl_efectivo_cierre_total_base">0,00</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="row" id="fila_efectivo_cierre_legacy"
                                         style="border-bottom: dotted 1px black; margin-top:15px; align-items: center;">
                                         <div class="col-xs-4 col-md-4 col-lg-4">
                                             <p class="font-20"
@@ -1615,6 +1658,12 @@
         </div>
     </div>
 </div>
+@php
+    $__monCierrePos = isset($data['monedasFacturaPos']) ? $data['monedasFacturaPos'] : collect();
+@endphp
+<script>
+    window.POS_MONEDAS_CIERRE = @json($__monCierrePos->values()->all());
+</script>
 
 <!-- Modal de nuevo cliente (simplificado) -->
 <div class="modal fade" id="mdl-nuevo-cliente" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true"

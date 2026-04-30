@@ -23,6 +23,7 @@ class IngresosController extends Controller
         $data = [
             'datos' => [],
             'tipos_ingreso' => $this->getTiposIngreso(),
+            'monedas' => $this->listarMonedasActivas(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
 
@@ -77,17 +78,29 @@ class IngresosController extends Controller
                 ->get();
             $v->tiene_incidentes = $v->incidentes->count() > 0;
         }
+        $this->adjuntarInfoMonedaEnVentas($ventas);
 
         $ingreso->fecha = $this->fechaFormat($ingreso->fecha);
 
-        $sinpe = $ingreso->monto_sinpe ?? 0;
-        $efectivo = $ingreso->monto_efectivo ?? 0;
-        $tarjeta = $ingreso->monto_tarjeta ?? 0;
-        $ingreso->subtotal = $sinpe + $efectivo + $tarjeta;
-        $ingreso->totalGeneral = $ingreso->subtotal;
-        $ingreso->monto_tarjeta  = preg_replace('/\,/', '.', $ingreso->monto_tarjeta);
-        $ingreso->monto_efectivo  = preg_replace('/\,/', '.', $ingreso->monto_efectivo);
-        $ingreso->monto_sinpe  = preg_replace('/\,/', '.', $ingreso->monto_sinpe);
+        $ingreso->monto_tarjeta = preg_replace('/\,/', '.', $ingreso->monto_tarjeta);
+        $ingreso->monto_efectivo = preg_replace('/\,/', '.', $ingreso->monto_efectivo);
+        $ingreso->monto_sinpe = preg_replace('/\,/', '.', $ingreso->monto_sinpe);
+
+        $mRes = $this->ingresoMontosResumenContable($ingreso->id, $ingreso);
+        $ingreso->subtotal = $mRes['total'];
+        $ingreso->totalGeneral = $mRes['total'];
+
+        $ingresoPagosDetalle = $this->listarIngresoPagosDetalle($ingreso->id);
+        $ingresoPagosJsonPrefill = $ingresoPagosDetalle->isEmpty()
+            ? ''
+            : json_encode($ingresoPagosDetalle->map(function ($p) {
+                return [
+                    'medio_pago' => $p->medio_pago,
+                    'moneda_id' => (int) $p->moneda_id,
+                    'monto_moneda' => (float) $p->monto_moneda,
+                    'tipo_cambio_snapshot' => (float) $p->tipo_cambio_snapshot,
+                ];
+            })->values()->all(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
         $data = [
             'ingreso' => $ingreso,
@@ -96,6 +109,8 @@ class IngresosController extends Controller
             'tipos_ingreso' => $this->getTiposIngreso(),
             'efectivoReportado' => $efectivoReportado,
             'estados_ingreso' => SisEstadoController::getEstadosByCodClase("INGRESOS_EST"),
+            'ingreso_pagos_detalle' => $ingresoPagosDetalle,
+            'ingreso_pagos_json_prefill' => $ingresoPagosJsonPrefill,
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
 
@@ -148,17 +163,29 @@ class IngresosController extends Controller
                 ->get();
             $v->tiene_incidentes = $v->incidentes->count() > 0;
         }
+        $this->adjuntarInfoMonedaEnVentas($ventas);
 
         $ingreso->fecha = $this->fechaFormat($ingreso->fecha);
 
-        $sinpe = $ingreso->monto_sinpe ?? 0;
-        $efectivo = $ingreso->monto_efectivo ?? 0;
-        $tarjeta = $ingreso->monto_tarjeta ?? 0;
-        $ingreso->subtotal = $sinpe + $efectivo + $tarjeta;
-        $ingreso->totalGeneral = $ingreso->subtotal;
-        $ingreso->monto_tarjeta  = preg_replace('/\,/', '.', $ingreso->monto_tarjeta);
-        $ingreso->monto_efectivo  = preg_replace('/\,/', '.', $ingreso->monto_efectivo);
-        $ingreso->monto_sinpe  = preg_replace('/\,/', '.', $ingreso->monto_sinpe);
+        $ingreso->monto_tarjeta = preg_replace('/\,/', '.', $ingreso->monto_tarjeta);
+        $ingreso->monto_efectivo = preg_replace('/\,/', '.', $ingreso->monto_efectivo);
+        $ingreso->monto_sinpe = preg_replace('/\,/', '.', $ingreso->monto_sinpe);
+
+        $mRes = $this->ingresoMontosResumenContable($ingreso->id, $ingreso);
+        $ingreso->subtotal = $mRes['total'];
+        $ingreso->totalGeneral = $mRes['total'];
+
+        $ingresoPagosDetalle = $this->listarIngresoPagosDetalle($ingreso->id);
+        $ingresoPagosJsonPrefill = $ingresoPagosDetalle->isEmpty()
+            ? ''
+            : json_encode($ingresoPagosDetalle->map(function ($p) {
+                return [
+                    'medio_pago' => $p->medio_pago,
+                    'moneda_id' => (int) $p->moneda_id,
+                    'monto_moneda' => (float) $p->monto_moneda,
+                    'tipo_cambio_snapshot' => (float) $p->tipo_cambio_snapshot,
+                ];
+            })->values()->all(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
         $data = [
             'ingreso' => $ingreso,
@@ -167,6 +194,8 @@ class IngresosController extends Controller
             'tipos_ingreso' => $this->getTiposIngreso(),
             'efectivoReportado' => $efectivoReportado,
             'estados_ingreso' => SisEstadoController::getEstadosByCodClase("INGRESOS_EST"),
+            'ingreso_pagos_detalle' => $ingresoPagosDetalle,
+            'ingreso_pagos_json_prefill' => $ingresoPagosJsonPrefill,
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
         return view('ingresos.ingreso.ingreso', compact('data'));
@@ -266,10 +295,8 @@ class IngresosController extends Controller
         $totalRechazados = 0;
         foreach ($ingresos as $i) {
 
-            $sinpe = $i->monto_sinpe ?? 0;
-            $efectivo = $i->monto_efectivo ?? 0;
-            $tarjeta = $i->monto_tarjeta ?? 0;
-            $i->total = $sinpe + $efectivo + $tarjeta;
+            $m = $this->ingresoMontosResumenContable($i->id, $i);
+            $i->total = $m['total'];
             $totalIngresos = $totalIngresos + $i->total;
             
             // Calcular total de rechazados y eliminados
@@ -323,15 +350,28 @@ class IngresosController extends Controller
 
         foreach ($ingresosSinAprobar as $i) {
             $caja = CajaController::getByIdIngreso($i->id);
-            if($caja != null){
+            $m = $this->ingresoMontosResumenContable($i->id, $i);
+            $detallePagos = $this->listarIngresoPagosDetalle($i->id);
+            $i->tiene_detalle_multimoneda = ! $detallePagos->isEmpty();
+            $i->detalle_pagos = $detallePagos;
+            $i->detalle_pagos_resumen = $detallePagos->map(function ($p) {
+                $medio = strtoupper((string) ($p->medio_pago ?? ''));
+                $medioTxt = $medio === 'TARJETA' ? 'Tarjeta' : ($medio === 'SINPE' ? 'SINPE' : 'Efectivo');
+                $mon = trim((string) (($p->moneda_simbolo ?? '') . ' ' . ($p->moneda_cod ?? '')));
+                $mMon = number_format((float) ($p->monto_moneda ?? 0), 2, '.', ',');
+                $mBase = number_format((float) ($p->monto_base ?? 0), 2, '.', ',');
+
+                return $medioTxt . ': ' . $mon . ' ' . $mMon . ' (CRC ' . $mBase . ')';
+            })->values()->all();
+            if ($caja != null) {
                 $efectivo = $caja->efectivo_reportado ?? 0;
-            }else{
-                $efectivo = $i->monto_efectivo ?? 0;
+                $sinpe = $m['sinpe'];
+                $tarjeta = $m['tarjeta'];
+                $i->subTotal = $sinpe + $efectivo + $tarjeta;
+            } else {
+                $i->subTotal = $m['total'];
             }
-            $sinpe = $i->monto_sinpe ?? 0;
-            $tarjeta = $i->monto_tarjeta ?? 0;
-            $i->subTotal = $sinpe + $efectivo + $tarjeta;
-            $i->total = $i->subTotal;
+            $i->total = $m['total'];
             $i->fecha = $this->fechaFormat($i->fecha);
         }
 
@@ -351,6 +391,7 @@ class IngresosController extends Controller
         $data = [
             'datos' => $datos,
             'tipos_ingreso' => $this->getTiposIngreso(),
+            'monedas' => $this->listarMonedasActivas(),
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
 
@@ -404,7 +445,9 @@ class IngresosController extends Controller
                         'monto_sinpe' => $monto_sinpe,
                         'observacion' => $observacion
                     ]);
-                    $this->bitacoraMovimientos('ingreso', 'editar', $id, $total);
+                    $this->aplicarIngresoPagosJson($id, $request->input('ingreso_pagos_json'));
+                    $totalBit = $this->ingresoMontosResumenContable($id, DB::table('ingreso')->where('id', $id)->first())['total'];
+                    $this->bitacoraMovimientos('ingreso', 'editar', $id, $totalBit);
                 } else {
                     $idIngreso = DB::table('ingreso')->insertGetId([
                         'id' => null,
@@ -419,7 +462,9 @@ class IngresosController extends Controller
                         'estado' => $estado,
                         'descripcion' => $descripcion
                     ]);
-                    $this->bitacoraMovimientos('ingreso', 'nuevo', $idIngreso, $total, $fecha_actual);
+                    $this->aplicarIngresoPagosJson($idIngreso, $request->input('ingreso_pagos_json'));
+                    $totalBit = $this->ingresoMontosResumenContable($idIngreso, DB::table('ingreso')->where('id', $idIngreso)->first())['total'];
+                    $this->bitacoraMovimientos('ingreso', 'nuevo', $idIngreso, $totalBit, $fecha_actual);
                 }
 
                 DB::commit();
@@ -428,6 +473,14 @@ class IngresosController extends Controller
                     return $this->goIngresoById($id);
                 } else {
                     return $this->goIngresoById($idIngreso);
+                }
+            } catch (\InvalidArgumentException $ex) {
+                DB::rollBack();
+                $this->setError('Guardar Ingreso', $ex->getMessage());
+                if ($actualizar) {
+                    return $this->goIngresoById($id);
+                } else {
+                    return $this->returnNuevoIngresoWithData($request->all());
                 }
             } catch (QueryException $ex) {
                 DB::rollBack();
@@ -569,8 +622,17 @@ class IngresosController extends Controller
             $this->setError('Tamaño exedido', "La observación debe ser de máximo 150 caracteres.");
             return false;
         }
-        if ($total < 10) {
-            $this->setError('Número incorrecto', "El total debe ser mayor que 10.00 CRC.");
+
+        $jsonPagos = trim((string) ($r->input('ingreso_pagos_json') ?? ''));
+        if ($jsonPagos !== '' && ! $this->ingresoPagosJsonEsValido($jsonPagos)) {
+            $this->setError('Pagos multimoneda', 'El JSON de pagos en otras monedas es inválido. Revise medio_pago (EFECTIVO|TARJETA|SINPE), moneda_id, monto_moneda y tipo_cambio_snapshot.');
+
+            return false;
+        }
+        $totalDesdeJson = $this->totalMontoBaseDesdeIngresoPagosJson($jsonPagos);
+        if ($total < 10 && $totalDesdeJson < 10) {
+            $this->setError('Número incorrecto', 'El total debe ser mayor que 10.00 (CRC en medios clásicos o equivalente en base vía JSON de pagos).');
+
             return false;
         }
 
@@ -735,4 +797,200 @@ class IngresosController extends Controller
         }
     }
 
+    private function listarMonedasActivas()
+    {
+        try {
+            return DB::table('sis_moneda')->where('estado', '=', 'A')->orderBy('orden_visual')->get();
+        } catch (\Throwable $e) {
+            return collect();
+        }
+    }
+
+    /**
+     * Agrega a cada venta:
+     * - es_multimoneda (bool)
+     * - moneda_label (string)
+     * - monedas_lista (array<string>)
+     */
+    private function adjuntarInfoMonedaEnVentas($ventas): void
+    {
+        if (empty($ventas) || count($ventas) === 0) {
+            return;
+        }
+        $baseCod = 'CRC';
+        try {
+            $mBase = DB::table('sis_moneda')
+                ->where('estado', '=', 'A')
+                ->where('es_base', '=', 'S')
+                ->orderBy('id')
+                ->first(['cod_general']);
+            if (! empty($mBase->cod_general)) {
+                $baseCod = (string) $mBase->cod_general;
+            }
+        } catch (\Throwable $e) {
+        }
+
+        $ids = [];
+        foreach ($ventas as $v) {
+            $ids[] = (int) ($v->id ?? 0);
+        }
+        $ids = array_values(array_filter(array_unique($ids), function ($n) {
+            return $n > 0;
+        }));
+        if (count($ids) === 0) {
+            return;
+        }
+
+        $porOrden = [];
+        try {
+            $pagos = DB::table('pago_orden')
+                ->leftJoin('sis_moneda', 'sis_moneda.id', '=', 'pago_orden.moneda_factura_id')
+                ->whereIn('pago_orden.orden', $ids)
+                ->select('pago_orden.orden', 'sis_moneda.cod_general as moneda_cod')
+                ->get();
+
+            foreach ($pagos as $p) {
+                $idOrden = (int) ($p->orden ?? 0);
+                if ($idOrden <= 0) {
+                    continue;
+                }
+                $cod = trim((string) ($p->moneda_cod ?? ''));
+                if ($cod === '') {
+                    $cod = $baseCod;
+                }
+                if (! isset($porOrden[$idOrden])) {
+                    $porOrden[$idOrden] = [];
+                }
+                $porOrden[$idOrden][$cod] = true;
+            }
+        } catch (\Throwable $e) {
+        }
+
+        foreach ($ventas as $v) {
+            $idOrden = (int) ($v->id ?? 0);
+            $cods = isset($porOrden[$idOrden]) ? array_keys($porOrden[$idOrden]) : [$baseCod];
+            sort($cods);
+            $v->monedas_lista = $cods;
+            $v->es_multimoneda = count($cods) > 1;
+            $v->moneda_label = $v->es_multimoneda ? ('Multimoneda (' . implode('/', $cods) . ')') : ($cods[0] ?? $baseCod);
+        }
+    }
+
+    private function listarIngresoPagosDetalle($ingresoId)
+    {
+        try {
+            return DB::table('ingreso_pago')
+                ->join('sis_moneda', 'sis_moneda.id', '=', 'ingreso_pago.moneda_id')
+                ->where('ingreso_pago.ingreso', '=', $ingresoId)
+                ->select(
+                    'ingreso_pago.*',
+                    'sis_moneda.cod_general as moneda_cod',
+                    'sis_moneda.simbolo as moneda_simbolo',
+                    'sis_moneda.nombre as moneda_nombre'
+                )
+                ->orderBy('ingreso_pago.id')
+                ->get();
+        } catch (\Throwable $e) {
+            return collect();
+        }
+    }
+
+    private function totalMontoBaseDesdeIngresoPagosJson(?string $json): float
+    {
+        $json = trim((string) $json);
+        if ($json === '') {
+            return 0;
+        }
+        $rows = json_decode($json, true);
+        if (! is_array($rows)) {
+            return 0;
+        }
+        $sum = 0;
+        foreach ($rows as $r) {
+            $mm = (float) ($r['monto_moneda'] ?? 0);
+            $tc = (float) ($r['tipo_cambio_snapshot'] ?? 0);
+            if ($mm > 0 && $tc > 0) {
+                $sum += $mm * $tc;
+            }
+        }
+
+        return round($sum, 4);
+    }
+
+    private function ingresoPagosJsonEsValido(string $json): bool
+    {
+        $rows = json_decode($json, true);
+        if (! is_array($rows) || count($rows) === 0) {
+            return false;
+        }
+        foreach ($rows as $r) {
+            $medio = strtoupper((string) ($r['medio_pago'] ?? ''));
+            if (! in_array($medio, ['EFECTIVO', 'TARJETA', 'SINPE'], true)) {
+                return false;
+            }
+            $mid = (int) ($r['moneda_id'] ?? 0);
+            $mm = (float) ($r['monto_moneda'] ?? 0);
+            $tc = (float) ($r['tipo_cambio_snapshot'] ?? 0);
+            if ($mid < 1 || $mm <= 0 || $tc <= 0) {
+                return false;
+            }
+            try {
+                $ok = DB::table('sis_moneda')->where('id', '=', $mid)->where('estado', '=', 'A')->exists();
+                if (! $ok) {
+                    return false;
+                }
+            } catch (\Throwable $e) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param  int|string  $ingresoId
+     */
+    private function aplicarIngresoPagosJson($ingresoId, ?string $jsonRaw): void
+    {
+        $jsonRaw = trim((string) ($jsonRaw ?? ''));
+        DB::table('ingreso_pago')->where('ingreso', '=', $ingresoId)->delete();
+        if ($jsonRaw === '') {
+            return;
+        }
+        if (! $this->ingresoPagosJsonEsValido($jsonRaw)) {
+            throw new \InvalidArgumentException('JSON de pagos multimoneda inválido.');
+        }
+        $rows = json_decode($jsonRaw, true);
+        $ef = 0;
+        $tj = 0;
+        $sn = 0;
+        foreach ($rows as $r) {
+            $medio = strtoupper((string) ($r['medio_pago'] ?? ''));
+            $mid = (int) ($r['moneda_id'] ?? 0);
+            $mm = round((float) ($r['monto_moneda'] ?? 0), 4);
+            $tc = round((float) ($r['tipo_cambio_snapshot'] ?? 0), 6);
+            $base = round($mm * $tc, 4);
+            DB::table('ingreso_pago')->insert([
+                'ingreso' => $ingresoId,
+                'medio_pago' => $medio,
+                'moneda_id' => $mid,
+                'monto_moneda' => $mm,
+                'tipo_cambio_snapshot' => $tc,
+                'monto_base' => $base,
+            ]);
+            if ($medio === 'EFECTIVO') {
+                $ef += $base;
+            } elseif ($medio === 'TARJETA') {
+                $tj += $base;
+            } else {
+                $sn += $base;
+            }
+        }
+        DB::table('ingreso')->where('id', '=', $ingresoId)->update([
+            'monto_efectivo' => round($ef, 4),
+            'monto_tarjeta' => round($tj, 4),
+            'monto_sinpe' => round($sn, 4),
+        ]);
+    }
 }
+

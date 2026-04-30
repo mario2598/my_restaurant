@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\QueryException;
 use App\Traits\SpaceUtil;
+use App\Support\PagoOrdenMoneda;
 use Intervention\Image\ImageManagerStatic as Image;
 
 class FacturacionController extends Controller
@@ -194,12 +195,39 @@ class FacturacionController extends Controller
     {
 
         $sucursalFactura = MantenimientoSucursalController::getSucursalById($this->getUsuarioSucursal());
+        $monedasFacturaPos = collect();
+        try {
+            $monedasFacturaPos = DB::table('sis_moneda')
+                ->where('estado', '=', 'A')
+                ->orderByRaw("CASE WHEN es_base = 'S' THEN 0 ELSE 1 END")
+                ->orderBy('orden_visual')
+                ->get(['id', 'cod_general', 'nombre', 'simbolo', 'decimales', 'es_base']);
+
+            $ultimoTcPorMoneda = DB::table('sis_tipo_cambio')
+                ->select('moneda_id', 'tipo_cambio')
+                ->whereIn('id', function ($q) {
+                    $q->select(DB::raw('MAX(id)'))->from('sis_tipo_cambio')->groupBy('moneda_id');
+                })
+                ->pluck('tipo_cambio', 'moneda_id');
+
+            foreach ($monedasFacturaPos as $mf) {
+                if (($mf->es_base ?? '') === 'S') {
+                    $mf->tipo_cambio_vigente = 1.0;
+                } else {
+                    $raw = $ultimoTcPorMoneda[$mf->id] ?? null;
+                    $mf->tipo_cambio_vigente = $raw !== null ? (float) $raw : null;
+                }
+            }
+        } catch (\Throwable $e) {
+            $monedasFacturaPos = collect();
+        }
         $data = [
             'tipos' => $this->getPosProductos(),
             'sucursalFacturaIva' => $sucursalFactura->factura_iva == 1,
             'mesas' => MesasController::getBySucursal($this->getUsuarioSucursal()),
             'cajaAbierta' =>  CajaController::tieneCajaAbierta(session('usuario')['id'], $this->getUsuarioSucursal()),
-            'panel_configuraciones' => $this->getPanelConfiguraciones()
+            'panel_configuraciones' => $this->getPanelConfiguraciones(),
+            'monedasFacturaPos' => $monedasFacturaPos,
         ];
 
         return view("facturacion.pos", compact("data"));
@@ -1456,6 +1484,44 @@ class FacturacionController extends Controller
             ->update(['cont_ordenes' => $params->cont_ordenes + 1]);
     }
 
+    /**
+     * Cobro con moneda de documento distinta de la base (TC válido en request): solo efectivo.
+     */
+    private function requestPagoPosMonedaExtranjera(Request $request, array $ordenArr = []): bool
+    {
+        $extras = PagoOrdenMoneda::extrasParaInsert($request, $ordenArr);
+        $mid = isset($extras['moneda_factura_id']) ? (int) $extras['moneda_factura_id'] : 0;
+        if ($mid <= 0) {
+            return false;
+        }
+        try {
+            $m = DB::table('sis_moneda')->where('id', '=', $mid)->where('estado', '=', 'A')->first();
+
+            return $m !== null && (($m->es_base ?? 'N') !== 'S');
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * @return string|null mensaje de error o null si OK
+     */
+    private function validarPagoPosMonedaExtranjeraSoloEfectivo(Request $request, array $ordenArr, float $montoSinpe, float $montoTarjeta, float $montoEfectivo): ?string
+    {
+        if (! $this->requestPagoPosMonedaExtranjera($request, $ordenArr)) {
+            return null;
+        }
+        if ($montoSinpe > 0.00001 || $montoTarjeta > 0.00001) {
+            return 'Los cobros en moneda distinta de la base solo admiten pago en efectivo (no use tarjeta ni SINPE con esa moneda).';
+        }
+        $suma = $montoSinpe + $montoTarjeta + $montoEfectivo;
+        if ($suma > 0.00001 && $montoEfectivo <= 0.00001) {
+            return 'Indique el monto en efectivo para cobrar en moneda extranjera.';
+        }
+
+        return null;
+    }
+
     public function crearFactura(Request $request)
     {
 
@@ -1499,6 +1565,17 @@ class FacturacionController extends Controller
         $mto_efectivo = $request->input("mto_efectivo");
         $mto_tarjeta = $request->input("mto_tarjeta");
 
+        $errMon = $this->validarPagoPosMonedaExtranjeraSoloEfectivo(
+            $request,
+            is_array($orden) ? $orden : [],
+            (float) $mto_sinpe,
+            (float) $mto_tarjeta,
+            (float) $mto_efectivo
+        );
+        if ($errMon !== null) {
+            return $this->responseAjaxServerError($errMon, []);
+        }
+
         try {
             DB::beginTransaction();
             $numOrden = $this->getConsecutivoNuevaOrdenSucursal($this->getUsuarioSucursal());
@@ -1540,7 +1617,7 @@ class FacturacionController extends Controller
                 'mto_pagado' => $asignarMontosDetalles['total']
             ]);
 
-            $pagoOrdenId = DB::table('pago_orden')->insertGetId([
+            $pagoOrdenId = DB::table('pago_orden')->insertGetId(array_merge([
                 'orden' => $id_orden,
                 'nombre_cliente' => $cliente,
                 'cliente' => $idCliente == -1 ? null : $idCliente,
@@ -1553,8 +1630,8 @@ class FacturacionController extends Controller
                 'descuento' => $asignarMontosDetalles['descuento'],
                 'fecha_pago' => $fechaActual,
                 'cod_promocion' => $asignarMontosDetalles['codDescuento'],
-                'impuesto_servicio' => $asignarMontosDetalles['montoImpuestoServicioMesa']
-            ]);
+                'impuesto_servicio' => $asignarMontosDetalles['montoImpuestoServicioMesa'],
+            ], PagoOrdenMoneda::extrasParaInsert($request, is_array($orden) ? $orden : [])));
 
             $this->aumentarConsecutivoOrden($this->getUsuarioSucursal());
 
@@ -3116,6 +3193,17 @@ class FacturacionController extends Controller
             'totalPagos' => $totalPagos,
         ]);
 
+        $errMonPagar = $this->validarPagoPosMonedaExtranjeraSoloEfectivo(
+            $request,
+            is_array($orden) ? $orden : [],
+            $montoSinpe,
+            $montoTarjeta,
+            $montoEfectivo
+        );
+        if ($errMonPagar !== null) {
+            return $this->responseAjaxServerError($errMonPagar, []);
+        }
+
         $ordenExistente = DB::table('orden')->where('id', '=', $orden['id'])->first();
         if (!$ordenExistente) {
             return $this->responseAjaxServerError('La orden no existe.', []);
@@ -3258,7 +3346,7 @@ class FacturacionController extends Controller
 
             DB::beginTransaction();
 
-            $pagoOrdenId = DB::table('pago_orden')->insertGetId([
+            $pagoOrdenId = DB::table('pago_orden')->insertGetId(array_merge([
                 'orden' => $orden['id'],
                 'nombre_cliente' => $cliente,
                 'cliente' => $idCliente == -1 ? null : $idCliente,
@@ -3271,8 +3359,8 @@ class FacturacionController extends Controller
                 'descuento' => $asignarMontosDetalles['descuento'],
                 'fecha_pago' => $fechaActual,
                 'cod_promocion' => $asignarMontosDetalles['codDescuento'],
-                'impuesto_servicio' => $asignarMontosDetalles['montoImpuestoServicioMesa']
-            ]);
+                'impuesto_servicio' => $asignarMontosDetalles['montoImpuestoServicioMesa'],
+            ], PagoOrdenMoneda::extrasParaInsert($request, is_array($orden) ? $orden : [])));
 
 
             foreach ($detallesGuardar as $det) {

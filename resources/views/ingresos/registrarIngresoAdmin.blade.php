@@ -53,6 +53,23 @@
                                                     placeholder="0.00" min="0">
                                             </div>
                                         </div>
+
+                                        <div class="col-12">
+                                            <div class="form-group mb-0">
+                                                <label>Pagos en otras monedas (JSON opcional)</label>
+                                                <textarea class="form-control font-monospace" name="ingreso_pagos_json" rows="4"
+                                                    placeholder='[{"medio_pago":"EFECTIVO","moneda_id":2,"monto_moneda":100,"tipo_cambio_snapshot":520}]'>{{ old('ingreso_pagos_json', $data['datos']['ingreso_pagos_json'] ?? '') }}</textarea>
+                                                <small class="text-muted d-block">Si completa este JSON, el total en CRC debe cumplir la regla de mínimo (10) según suma de <code>monto_moneda × tipo_cambio</code>.
+                                                    Los campos efectivo/tarjeta/sinpe arriba pueden quedar en 0. Monedas activas (id):
+                                                    @if (isset($data['monedas']) && count($data['monedas']) > 0)
+                                                        @foreach ($data['monedas'] as $m)
+                                                            {{ $m->id }}={{ $m->cod_general }}{{ !$loop->last ? ', ' : '' }}
+                                                        @endforeach
+                                                    @endif
+                                                </small>
+                                            </div>
+                                        </div>
+
                                         <div class="col-12 col-md-4 col-lg-4">
                                             <div class="form-group">
                                                 <label>Tipo ingreso</label>

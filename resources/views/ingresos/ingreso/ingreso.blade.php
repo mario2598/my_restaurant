@@ -17,7 +17,7 @@
                                 <div class="card-header">
                                     <h4>Ingreso
                                         {{ $data['ingreso']->dscEstado }}
-                                        - {{ $data['ingreso']->nombreUsuario }} - CRC
+                                        - {{ $data['ingreso']->nombreUsuario }} — total base (CRC)
                                         {{ number_format($data['ingreso']->subtotal ?? '0.00', 2, '.', ',') }}
                                     </h4>
 
@@ -106,10 +106,55 @@
                                             </div>
                                         </div>
 
+                                        @if (!empty($data['ingreso_pagos_detalle']) && $data['ingreso_pagos_detalle']->count() > 0)
+                                            <div class="col-12">
+                                                <label class="d-block">Pagos registrados (otras monedas)</label>
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-bordered">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Medio</th>
+                                                                <th>Moneda</th>
+                                                                <th>Monto moneda</th>
+                                                                <th>T.C. snapshot</th>
+                                                                <th>Equivalente base</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach ($data['ingreso_pagos_detalle'] as $lp)
+                                                                <tr>
+                                                                    <td>{{ $lp->medio_pago }}</td>
+                                                                    <td>{{ $lp->moneda_cod }} ({{ $lp->moneda_simbolo }})</td>
+                                                                    <td>{{ number_format($lp->monto_moneda, 4, '.', ',') }}</td>
+                                                                    <td>{{ number_format($lp->tipo_cambio_snapshot, 6, '.', ',') }}</td>
+                                                                    <td>{{ number_format($lp->monto_base, 4, '.', ',') }}</td>
+                                                                </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        @if ($data['ingreso']->cod_general == 'ING_EST_APROBADO')
+                                            <div class="col-12">
+                                                <div class="form-group mb-0">
+                                                    <label>Pagos multimoneda (JSON opcional)</label>
+                                                    <textarea class="form-control font-monospace" name="ingreso_pagos_json" rows="6"
+                                                        placeholder='[{"medio_pago":"EFECTIVO","moneda_id":2,"monto_moneda":100,"tipo_cambio_snapshot":520}]'>{{ old('ingreso_pagos_json', $data['ingreso_pagos_json_prefill'] ?? '') }}</textarea>
+                                                    <small class="text-muted">Si envía JSON válido, reemplaza líneas de <code>ingreso_pago</code> y recalcula efectivo/tarjeta/sinpe en CRC (base).
+                                                        T.C. = unidades CRC por 1 unidad de la moneda indicada. Vacío = solo medios clásicos arriba.</small>
+                                                </div>
+                                            </div>
+                                        @endif
+
                                     </div>
                                 </div>
 
                                 <div class="card-footer text-right">
+                                    @if ($data['ingreso']->cod_general == 'ING_EST_APROBADO')
+                                        <input type="submit" class="btn btn-primary" value="Guardar montos" />
+                                    @endif
                                     @if ($data['ingreso']->cod_general == 'ING_PEND_APB')
                                         <a onclick='confirmarIngreso("{{ $data['ingreso']->id }}")'
                                             style="cursor: pointer; color:white;" class="btn btn-success">
@@ -160,6 +205,7 @@
                                             <th scope="col" style="text-align: center">Tarjeta</th>
                                             <th scope="col" style="text-align: center">Efectivo</th>
                                             <th scope="col" style="text-align: center">SINPE</th>
+                                            <th scope="col" style="text-align: center">Moneda</th>
                                             <th scope="col" style="text-align: center">Cliente</th>
                                             <th scope="col" style="text-align: center">Incidentes</th>
                                             <th scope="col" style="text-align: center">Imprimir</th>
@@ -180,6 +226,13 @@
                                                     {{ $i->cod_general == "ORD_ANULADA" ? 0 : number_format($i->monto_efectivo ?? '0.00', 2, '.', ',') }}</td>
                                                 <td style="text-align: center">
                                                     {{ $i->cod_general == "ORD_ANULADA" ? 0 : number_format($i->monto_sinpe ?? '0.00', 2, '.', ',') }}</td>
+                                                <td style="text-align: center">
+                                                    @if (!empty($i->es_multimoneda))
+                                                        <span class="badge badge-info">{{ $i->moneda_label ?? 'Multimoneda' }}</span>
+                                                    @else
+                                                        <span class="badge badge-secondary">{{ $i->moneda_label ?? 'CRC' }}</span>
+                                                    @endif
+                                                </td>
 
                                                 <td style="text-align: center">{{ $i->nombre_cliente ?? '*' }}</td>
                                                 <td style="text-align: center">
