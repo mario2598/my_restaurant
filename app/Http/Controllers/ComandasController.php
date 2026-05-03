@@ -52,6 +52,7 @@ class ComandasController extends Controller
 
             $payload = [
                 'comandas' => self::getComandasPreparacion($idSucursal, $idComanda),
+                'metricas_tiempo' => self::getMetricasPreparacionPorLinea($idSucursal, $idComanda),
             ];
 
             return $this->responseAjaxSuccess("", $payload);
@@ -62,33 +63,6 @@ class ComandasController extends Controller
                 'descripcion' => $ex->getMessage() . ' - ' . $ex->getTraceAsString()
             ]);
             return $this->responseAjaxServerError("Error al cargar las comandas: " . $ex->getMessage(), []);
-        }
-    }
-
-    /**
-     * Métricas de preparación (SLA, promedios) en petición aparte para no bloquear el listado de comandas.
-     */
-    public function recargarMetricasPreparacion(Request $request)
-    {
-        try {
-            $idComanda = $request->input('idComanda');
-            $idSucursal = $this->getUsuarioSucursal();
-
-            if ($idSucursal == null || $idSucursal < 1) {
-                return $this->responseAjaxServerError("No se pudo obtener la sucursal del usuario", []);
-            }
-
-            return $this->responseAjaxSuccess('', [
-                'metricas_tiempo' => self::getMetricasPreparacionPorLinea($idSucursal, $idComanda),
-            ]);
-        } catch (\Exception $ex) {
-            DB::table('log')->insertGetId([
-                'id' => null,
-                'documento' => 'ComandasController::recargarMetricasPreparacion',
-                'descripcion' => $ex->getMessage() . ' - ' . $ex->getTraceAsString(),
-            ]);
-
-            return $this->responseAjaxServerError('Error al cargar las métricas: ' . $ex->getMessage(), []);
         }
     }
 
