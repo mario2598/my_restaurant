@@ -252,16 +252,19 @@ function recargarMetricasTiempo() {
     $.ajax({
         url: `${base_path}/comandas/preparacion/recargarMetricasPreparacion`,
         type: 'post',
+        dataType: 'json',
         data: {
             _token: CSRF_TOKEN,
-            idComanda: (idComanda == '') ? null : idComanda
+            idComanda: (idComanda === '' || idComanda == null) ? '' : idComanda
         }
     }).done(function (response) {
-        if (!response['estado']) {
+        if (!response || !response['estado']) {
             return;
         }
         var datos = response['datos'] || {};
         actualizarMetricasTiempo(datos.metricas_tiempo || {});
+    }).fail(function () {
+        // El listado principal ya trae metricas_tiempo; esta petición es opcional.
     });
 }
 
@@ -269,8 +272,10 @@ function recargarOrdenes() {
     $.ajax({
         url: `${base_path}/comandas/preparacion/recargarComandas`,
         type: 'post',
+        dataType: 'json',
         data: {
-            _token: CSRF_TOKEN, idComanda: (idComanda == '') ? null : idComanda
+            _token: CSRF_TOKEN,
+            idComanda: (idComanda === '' || idComanda == null) ? '' : idComanda
         }
     }).done(function (response) {
         if (!response['estado']) {
@@ -278,13 +283,22 @@ function recargarOrdenes() {
             return;
         }
 
-        var datos = response['datos'];
-        if (datos && datos.comandas !== undefined) {
-            crearHtmlComanda(datos.comandas);
-        } else {
-            crearHtmlComanda(datos);
+        var datos = response['datos'] || {};
+        try {
+            if (datos.comandas !== undefined) {
+                crearHtmlComanda(datos.comandas);
+            } else {
+                crearHtmlComanda(datos);
+            }
+        } catch (e) {
+            console.error('crearHtmlComanda', e);
         }
-        recargarMetricasTiempo();
+
+        if (datos.metricas_tiempo !== undefined && datos.metricas_tiempo !== null) {
+            actualizarMetricasTiempo(datos.metricas_tiempo);
+        } else {
+            recargarMetricasTiempo();
+        }
     }).fail(function (jqXHR, textStatus, errorThrown) {
         setError('Recargar Comandas', 'Algo salió mal..');
     });
@@ -300,6 +314,19 @@ function crearHtmlComanda(comandasRes) {
     contenedor.empty(); // Limpiar el contenedor
     let nuevaCantidadDetalle = 0;
 
+    if (comandasRes == null || comandasRes === '') {
+        contenedor.append('<div class="alert alert-info">No hay comandas para mostrar.</div>');
+        if (anteriorCantidadDetalle != null) {
+            if (nuevaCantidadDetalle > anteriorCantidadDetalle) {
+                reproducirSonidoNotificacionNuevaOrden();
+            } else if (nuevaCantidadDetalle < anteriorCantidadDetalle) {
+                reproducirSonidoNotificacionMenosOrden();
+            }
+        }
+        anteriorCantidadDetalle = nuevaCantidadDetalle;
+        return;
+    }
+
     // Verificar si response.datos es un objeto y convertirlo en un arreglo si es necesario
     let comandas = Array.isArray(comandasRes) ? comandasRes : Object.values(comandasRes);
 
@@ -307,7 +334,8 @@ function crearHtmlComanda(comandasRes) {
     if (Array.isArray(comandas) && comandas.length > 0) {
 
         comandas.forEach(p => {
-            nuevaCantidadDetalle += p.detalles.length;
+            const lenDet = (p.detalles && p.detalles.length) ? p.detalles.length : 0;
+            nuevaCantidadDetalle += lenDet;
             if (p.detalles && p.detalles.length > 0) {
                 let mesaInfo = p.mesa != null ? `Mesa: ${p.numero_mesa}` : 'Para llevar';
                 let fechaInicio = p.fecha_inicio ? new Date(p.fecha_inicio) : null;
