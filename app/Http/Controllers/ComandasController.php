@@ -350,93 +350,73 @@ class ComandasController extends Controller
             ->where('orden.sucursal', '=', $sucursal)
             ->orderBy('orden_comanda.id', 'ASC')->get();
 
-        if ($ordenes->isEmpty()) {
-            return [];
-        }
-
-        $idsOrdenComanda = $ordenes->pluck('id_orden_comanda')->all();
-        $detallesPorOc = self::batchDetallesSinPrepararPorOrdenComanda($idsOrdenComanda);
-
-        $gruposPromo = [];
-        $codigosMenu = [];
-        $codigosExt = [];
-        foreach ($detallesPorOc as $lista) {
-            foreach ($lista as $row) {
-                if ($row->tipo_producto === 'PROMO') {
-                    $gruposPromo[$row->codigo_producto] = true;
-                } elseif ($row->tipo_producto === 'R' && $row->codigo_producto) {
-                    $codigosMenu[$row->codigo_producto] = true;
-                } elseif ($row->tipo_producto === 'E' && $row->codigo_producto) {
-                    $codigosExt[$row->codigo_producto] = true;
-                }
-            }
-        }
-
-        $promoPorGrupo = self::batchPromocionesPorGrupos(array_keys($gruposPromo));
-        foreach ($promoPorGrupo['menu'] as $productos) {
-            foreach ($productos as $p) {
-                if (!empty($p->codigo)) {
-                    $codigosMenu[$p->codigo] = true;
-                }
-            }
-        }
-        foreach ($promoPorGrupo['ext'] as $productos) {
-            foreach ($productos as $p) {
-                if (!empty($p->codigo_barra)) {
-                    $codigosExt[$p->codigo_barra] = true;
-                }
-            }
-        }
-
-        $menuMap = self::batchIdComandaMenuPorCodigosSucursal($sucursal, array_keys($codigosMenu));
-        $extMap = self::batchIdComandaExternoPorCodigosSucursal($sucursal, array_keys($codigosExt));
-
         $result = [];
         foreach ($ordenes as $o) {
             $o->fecha_inicio = $o->fecha_inicio_cmd;
             $phpdate = strtotime($o->fecha_inicio_cmd);
-
+            
+            // Usar Carbon para formatear la fecha en español (compatible con PHP 8.1+)
             try {
                 $carbonDate = Carbon::parse($o->fecha_inicio_cmd);
                 $carbonDate->setLocale('es');
                 $fechaAux = ucfirst($carbonDate->isoFormat('dddd, D [de] MMMM'));
                 $fechaAux .= ' - ' . date("g:i a", $phpdate);
             } catch (\Exception $e) {
+                // Fallback si Carbon falla
                 $fechaAux = date("d-m-Y", $phpdate) . ' - ' . date("g:i a", $phpdate);
             }
-
+            
             $o->fecha_inicio_hora_tiempo = date("g:i a", $phpdate);
             $o->fecha_inicio_texto = $fechaAux;
 
-            $detalles = $detallesPorOc[$o->id_orden_comanda] ?? [];
+            $detalles = DB::table('detalle_orden')
+                ->join('detalle_orden_comanda', 'detalle_orden_comanda.detalle_orden', '=', 'detalle_orden.id')
+                ->select('detalle_orden.*',
+                 'detalle_orden_comanda.id as id_detalle_orden_comanda',
+                 'detalle_orden_comanda.cantidad as cantidad_comanda', 
+                 'detalle_orden_comanda.fecha_fin as fecha_fin_comanda')
+                ->where('detalle_orden_comanda.orden_comanda', '=', $o->id_orden_comanda)
+                ->where('detalle_orden_comanda.preparado', '=', 0)
+                ->get();
+
             $o->detalles = [];
 
             foreach ($detalles as $d) {
                 $idComandaAux = null;
                 if ($d->tipo_producto == 'R') {
-                    $info = $menuMap[$d->codigo_producto] ?? null;
-                    if ($info === null) {
+                    $productoMenu = ProductosMenuController::getIdByCodigo($d->codigo_producto);
+                    if ($productoMenu != null) {
+                        $d->idProd = $productoMenu->id;
+                        $idComandaAux = ProductosMenuController::getIdComandaByCodigoSucursal($d->codigo_producto, $sucursal);
+                    } else {
+                        // Si no se encuentra el producto, saltar este detalle
                         continue;
                     }
-                    $d->idProd = $info['id'];
-                    $idComandaAux = $info['comanda'];
-                } elseif ($d->tipo_producto == 'E') {
-                    $info = $extMap[$d->codigo_producto] ?? null;
-                    if ($info === null) {
+                } else if ($d->tipo_producto == 'E') {
+                    $productoExterno = ProductosExternosController::getIdByCodigo($d->codigo_producto);
+                    if ($productoExterno != null) {
+                        $d->idProd = $productoExterno->id;
+                        $idComandaAux = ProductosExternosController::getIdComandaByCodigoSucursal($d->codigo_producto, $sucursal);
+                    } else {
+                        // Si no se encuentra el producto, saltar este detalle
                         continue;
                     }
-                    $d->idProd = $info['id'];
-                    $idComandaAux = $info['comanda'];
                 }
 
+                // Filtrar los productos de tipo `PROMO` con sus productos internos
                 if ($d->tipo_producto == 'PROMO') {
-                    $productosPromo = $promoPorGrupo['menu'][$d->codigo_producto] ?? [];
+                    $productosPromo = DB::table('det_grupo_promocion')
+                        ->leftjoin('producto_menu', 'producto_menu.id', '=', 'det_grupo_promocion.producto')
+                        ->select('producto_menu.*', 'det_grupo_promocion.cantidad as cantProd')
+                        ->where('det_grupo_promocion.tipo', '=', "R")
+                        ->where('det_grupo_promocion.grupo_promocion', '=', $d->codigo_producto)
+                        ->get();
+
                     foreach ($productosPromo as $p) {
                         if ($p->codigo == null) {
                             continue;
                         }
-                        $infoM = $menuMap[$p->codigo] ?? null;
-                        $idComandaAux = $infoM['comanda'] ?? null;
+                        $idComandaAux  = ProductosMenuController::getIdComandaByCodigoSucursal($p->codigo, $sucursal);
                         $nuevoDetalle = clone $d;
                         $nuevoDetalle->codigo_producto = $p->codigo;
                         $nuevoDetalle->nombre_producto = $p->nombre;
@@ -445,18 +425,23 @@ class ComandasController extends Controller
                         $nuevoDetalle->extras = [];
                         $nuevoDetalle->tipo_producto = 'R';
                         $nuevoDetalle->comanda = $idComandaAux;
-                        if ($idComandaAux !== null && ($idComanda == null || $nuevoDetalle->comanda == $idComanda)) {
+                        if ($idComanda == null || $nuevoDetalle->comanda == $idComanda) {
                             $o->detalles[] = $nuevoDetalle;
                         }
                     }
 
-                    $productosPromoE = $promoPorGrupo['ext'][$d->codigo_producto] ?? [];
+                    $productosPromoE = DB::table('det_grupo_promocion')
+                        ->leftjoin('producto_externo', 'producto_externo.id', '=', 'det_grupo_promocion.producto')
+                        ->select('producto_externo.*', 'det_grupo_promocion.cantidad as cantProd')
+                        ->where('det_grupo_promocion.tipo', '=', "E")
+                        ->where('det_grupo_promocion.grupo_promocion', '=', $d->codigo_producto)
+                        ->get();
+
                     foreach ($productosPromoE as $p) {
                         if ($p->codigo_barra == null) {
                             continue;
                         }
-                        $infoE = $extMap[$p->codigo_barra] ?? null;
-                        $idComandaAux = $infoE['comanda'] ?? null;
+                        $idComandaAux  = ProductosExternosController::getIdComandaByCodigoSucursal($p->codigo_barra, $sucursal);
                         $nuevoDetalle = clone $d;
                         $nuevoDetalle->codigo_producto = $p->codigo_barra;
                         $nuevoDetalle->nombre_producto = $p->nombre;
@@ -465,11 +450,12 @@ class ComandasController extends Controller
                         $nuevoDetalle->extras = [];
                         $nuevoDetalle->idProd = $p->id;
                         $nuevoDetalle->comanda = $idComandaAux;
-                        if ($idComandaAux !== null && ($idComanda == null || $nuevoDetalle->comanda == $idComanda)) {
+                        if ($idComanda == null || $nuevoDetalle->comanda == $idComanda) {
                             $o->detalles[] = $nuevoDetalle;
                         }
                     }
                 } else {
+                    // Solo asignar comanda si $idComandaAux fue definido
                     if ($idComandaAux !== null) {
                         $d->comanda = $idComandaAux;
                         if ($idComanda == null || $d->comanda == $idComanda) {
@@ -479,291 +465,70 @@ class ComandasController extends Controller
                 }
             }
 
-            if (!empty($o->detalles)) {
-                $result[] = $o;
-            }
-        }
-
-        self::enriquecerComposicionYExtrasComandas($result);
-
-        return $result;
-    }
-
-    /**
-     * @param  array<int|string>  $idsOrdenComanda
-     * @return array<int, array<int, object>>
-     */
-    private static function batchDetallesSinPrepararPorOrdenComanda(array $idsOrdenComanda): array
-    {
-        if ($idsOrdenComanda === []) {
-            return [];
-        }
-        $filas = DB::table('detalle_orden')
-            ->join('detalle_orden_comanda', 'detalle_orden_comanda.detalle_orden', '=', 'detalle_orden.id')
-            ->select(
-                'detalle_orden.*',
-                'detalle_orden_comanda.id as id_detalle_orden_comanda',
-                'detalle_orden_comanda.cantidad as cantidad_comanda',
-                'detalle_orden_comanda.fecha_fin as fecha_fin_comanda',
-                'detalle_orden_comanda.orden_comanda as _oc_group'
-            )
-            ->whereIn('detalle_orden_comanda.orden_comanda', $idsOrdenComanda)
-            ->where('detalle_orden_comanda.preparado', '=', 0)
-            ->get();
-
-        $byOc = [];
-        foreach ($filas as $f) {
-            $ocId = $f->_oc_group;
-            unset($f->_oc_group);
-            if (!isset($byOc[$ocId])) {
-                $byOc[$ocId] = [];
-            }
-            $byOc[$ocId][] = $f;
-        }
-
-        return $byOc;
-    }
-
-    /**
-     * @param  array<int|string>  $grupoPromocionIds  valores detalle_orden.codigo_producto para tipo PROMO
-     * @return array{menu: array<string, array<int, object>>, ext: array<string, array<int, object>>}
-     */
-    private static function batchPromocionesPorGrupos(array $grupoPromocionIds): array
-    {
-        if ($grupoPromocionIds === []) {
-            return ['menu' => [], 'ext' => []];
-        }
-        $grupoPromocionIds = array_values(array_unique($grupoPromocionIds));
-
-        $menuPorGrupo = [];
-        $rowsR = DB::table('det_grupo_promocion')
-            ->leftjoin('producto_menu', 'producto_menu.id', '=', 'det_grupo_promocion.producto')
-            ->select('producto_menu.*', 'det_grupo_promocion.cantidad as cantProd', 'det_grupo_promocion.grupo_promocion as grp')
-            ->where('det_grupo_promocion.tipo', '=', 'R')
-            ->whereIn('det_grupo_promocion.grupo_promocion', $grupoPromocionIds)
-            ->get();
-        foreach ($rowsR as $p) {
-            if ($p->grp === null) {
-                continue;
-            }
-            $g = (string) $p->grp;
-            if (!isset($menuPorGrupo[$g])) {
-                $menuPorGrupo[$g] = [];
-            }
-            $menuPorGrupo[$g][] = $p;
-        }
-
-        $extPorGrupo = [];
-        $rowsE = DB::table('det_grupo_promocion')
-            ->leftjoin('producto_externo', 'producto_externo.id', '=', 'det_grupo_promocion.producto')
-            ->select('producto_externo.*', 'det_grupo_promocion.cantidad as cantProd', 'det_grupo_promocion.grupo_promocion as grp')
-            ->where('det_grupo_promocion.tipo', '=', 'E')
-            ->whereIn('det_grupo_promocion.grupo_promocion', $grupoPromocionIds)
-            ->get();
-        foreach ($rowsE as $p) {
-            if ($p->grp === null) {
-                continue;
-            }
-            $g = (string) $p->grp;
-            if (!isset($extPorGrupo[$g])) {
-                $extPorGrupo[$g] = [];
-            }
-            $extPorGrupo[$g][] = $p;
-        }
-
-        return ['menu' => $menuPorGrupo, 'ext' => $extPorGrupo];
-    }
-
-    /**
-     * @param  array<string>  $codigos
-     * @return array<string, array{id: int, comanda: mixed}>
-     */
-    private static function batchIdComandaMenuPorCodigosSucursal($sucursal, array $codigos): array
-    {
-        $codigos = array_values(array_unique(array_filter($codigos)));
-        if ($codigos === []) {
-            return [];
-        }
-        $rows = DB::table('pm_x_sucursal')
-            ->join('producto_menu', 'producto_menu.id', '=', 'pm_x_sucursal.producto_menu')
-            ->select('producto_menu.id', 'producto_menu.codigo', 'pm_x_sucursal.comanda')
-            ->where('pm_x_sucursal.sucursal', '=', $sucursal)
-            ->whereIn('producto_menu.codigo', $codigos)
-            ->get();
-        $map = [];
-        foreach ($rows as $row) {
-            $map[$row->codigo] = ['id' => (int) $row->id, 'comanda' => $row->comanda];
-        }
-
-        return $map;
-    }
-
-    /**
-     * @param  array<string>  $codigos  codigo_barra
-     * @return array<string, array{id: int, comanda: mixed}>
-     */
-    private static function batchIdComandaExternoPorCodigosSucursal($sucursal, array $codigos): array
-    {
-        $codigos = array_values(array_unique(array_filter($codigos)));
-        if ($codigos === []) {
-            return [];
-        }
-        $rows = DB::table('pe_x_sucursal')
-            ->join('producto_externo', 'producto_externo.id', '=', 'pe_x_sucursal.producto_externo')
-            ->select('producto_externo.id', 'producto_externo.codigo_barra', 'pe_x_sucursal.comanda')
-            ->where('pe_x_sucursal.sucursal', '=', $sucursal)
-            ->whereIn('producto_externo.codigo_barra', $codigos)
-            ->get();
-        $map = [];
-        foreach ($rows as $row) {
-            $map[$row->codigo_barra] = ['id' => (int) $row->id, 'comanda' => $row->comanda];
-        }
-
-        return $map;
-    }
-
-    /**
-     * @param  array<int, object>  $ordenes  objetos orden con ->id y ->detalles
-     */
-    private static function enriquecerComposicionYExtrasComandas(array $ordenes): void
-    {
-        if ($ordenes === []) {
-            return;
-        }
-
-        $ordenIds = [];
-        $codigosR = [];
-        $codigosE = [];
-        foreach ($ordenes as $o) {
-            $ordenIds[(int) $o->id] = true;
+            // Asignación de composición y extras
             foreach ($o->detalles as $d) {
-                if ($d->tipo_producto === 'R' && !empty($d->codigo_producto)) {
-                    $codigosR[$d->codigo_producto] = true;
-                } elseif ($d->tipo_producto === 'E' && !empty($d->codigo_producto)) {
-                    $codigosE[$d->codigo_producto] = true;
-                }
-            }
-        }
-        $ordenIds = array_keys($ordenIds);
-        $codigosR = array_keys($codigosR);
-        $codigosE = array_keys($codigosE);
+                if ($d->tipo_producto == 'R') {
+                    $d->receta = DB::table('producto_menu')
+                        ->select('producto_menu.receta')
+                        ->where('producto_menu.codigo', '=', $d->codigo_producto)
+                        ->get()->first()->receta ?? "";
 
-        $recetasPorCodigo = [];
-        if ($codigosR !== []) {
-            foreach (DB::table('producto_menu')->select('codigo', 'receta')->whereIn('codigo', $codigosR)->get() as $r) {
-                $recetasPorCodigo[$r->codigo] = $r->receta ?? '';
-            }
-        }
-
-        $mpMenuPorCodigo = [];
-        if ($codigosR !== []) {
-            $filasMp = DB::table('producto_menu')
-                ->leftjoin('mt_x_producto', 'mt_x_producto.producto', '=', 'producto_menu.id')
-                ->leftjoin('materia_prima', 'materia_prima.id', '=', 'mt_x_producto.materia_prima')
-                ->select('producto_menu.codigo', 'materia_prima.nombre', 'materia_prima.unidad_medida', 'mt_x_producto.cantidad', 'producto_menu.nombre as prodNom')
-                ->whereIn('producto_menu.codigo', $codigosR)
-                ->get();
-            foreach ($filasMp as $mp) {
-                $c = $mp->codigo;
-                if (!isset($mpMenuPorCodigo[$c])) {
-                    $mpMenuPorCodigo[$c] = [];
-                }
-                $mpMenuPorCodigo[$c][] = $mp;
-            }
-        }
-
-        $mpExtPorCodigo = [];
-        if ($codigosE !== []) {
-            $filasE = DB::table('producto_externo')
-                ->leftjoin('mt_x_producto_ext', 'mt_x_producto_ext.producto', '=', 'producto_externo.id')
-                ->leftjoin('materia_prima', 'materia_prima.id', '=', 'mt_x_producto_ext.materia_prima')
-                ->select('producto_externo.codigo_barra', 'materia_prima.nombre', 'materia_prima.unidad_medida', 'mt_x_producto_ext.cantidad', 'producto_externo.nombre as prodNom')
-                ->whereIn('producto_externo.codigo_barra', $codigosE)
-                ->get();
-            foreach ($filasE as $mp) {
-                $c = $mp->codigo_barra;
-                if (!isset($mpExtPorCodigo[$c])) {
-                    $mpExtPorCodigo[$c] = [];
-                }
-                $mpExtPorCodigo[$c][] = $mp;
-            }
-        }
-
-        $extrasPorClave = [];
-        if ($ordenIds !== []) {
-            $extrasRows = DB::table('extra_detalle_orden')
-                ->select('extra_detalle_orden.*')
-                ->whereIn('extra_detalle_orden.orden', $ordenIds)
-                ->get();
-            foreach ($extrasRows as $ex) {
-                $k = $ex->orden . '|' . $ex->detalle . '|' . $ex->id_producto;
-                if (!isset($extrasPorClave[$k])) {
-                    $extrasPorClave[$k] = [];
-                }
-                $extrasPorClave[$k][] = $ex;
-            }
-        }
-
-        $mpExtrasPorOrdenDetalle = [];
-        if ($ordenIds !== []) {
-            $mpRows = DB::table('extra_detalle_orden')
-                ->leftjoin('extra_producto_menu', 'extra_producto_menu.id', '=', 'extra_detalle_orden.extra')
-                ->leftjoin('materia_prima', 'materia_prima.id', '=', 'extra_producto_menu.materia_prima')
-                ->select(
-                    'extra_detalle_orden.orden',
-                    'extra_detalle_orden.detalle',
-                    'materia_prima.nombre',
-                    'materia_prima.unidad_medida',
-                    'extra_producto_menu.cant_mp'
-                )
-                ->whereIn('extra_detalle_orden.orden', $ordenIds)
-                ->get();
-            foreach ($mpRows as $row) {
-                $k = $row->orden . '|' . $row->detalle;
-                if (!isset($mpExtrasPorOrdenDetalle[$k])) {
-                    $mpExtrasPorOrdenDetalle[$k] = [];
-                }
-                $mpExtrasPorOrdenDetalle[$k][] = $row;
-            }
-        }
-
-        foreach ($ordenes as $o) {
-            foreach ($o->detalles as $d) {
-                if ($d->tipo_producto === 'R') {
-                    $d->receta = $recetasPorCodigo[$d->codigo_producto] ?? '';
-                    $d->materia_prima = $mpMenuPorCodigo[$d->codigo_producto] ?? [];
-                } elseif ($d->tipo_producto === 'E') {
-                    $d->receta = '';
-                    $d->materia_prima = $mpExtPorCodigo[$d->codigo_producto] ?? [];
-                } else {
-                    $d->receta = '';
-                    $d->materia_prima = [];
+                    $d->materia_prima = DB::table('producto_menu')
+                        ->leftjoin('mt_x_producto', 'mt_x_producto.producto', '=', 'producto_menu.id')
+                        ->leftjoin('materia_prima', 'materia_prima.id', '=', 'mt_x_producto.materia_prima')
+                        ->select('materia_prima.nombre', 'materia_prima.unidad_medida', 'mt_x_producto.cantidad', 'producto_menu.nombre as prodNom')
+                        ->where('producto_menu.codigo', '=', $d->codigo_producto)
+                        ->get() ?? [];
+                } else if ($d->tipo_producto == 'E') {
+                    $d->receta = "";
+                    $d->materia_prima = DB::table('producto_externo')
+                        ->leftjoin('mt_x_producto_ext', 'mt_x_producto_ext.producto', '=', 'producto_externo.id')
+                        ->leftjoin('materia_prima', 'materia_prima.id', '=', 'mt_x_producto_ext.materia_prima')
+                        ->select('materia_prima.nombre', 'materia_prima.unidad_medida', 'mt_x_producto_ext.cantidad', 'producto_externo.nombre as prodNom')
+                        ->where('producto_externo.codigo_barra', '=', $d->codigo_producto)
+                        ->get() ?? [];
                 }
 
-                $kEx = $o->id . '|' . $d->id . '|' . $d->idProd;
-                $d->extras = $extrasPorClave[$kEx] ?? [];
+                $d->extras = DB::table('extra_detalle_orden')
+                    ->select('extra_detalle_orden.*')
+                    ->where('extra_detalle_orden.orden', '=', $o->id)
+                    ->where('extra_detalle_orden.detalle', '=', $d->id)
+                    ->where('extra_detalle_orden.id_producto', '=', $d->idProd)
+                    ->get() ?? [];
                 $d->tieneExtras = count($d->extras) > 0;
 
-                $composicionTxt = '';
+                $composicionTxt = "";
                 foreach ($d->materia_prima as $i => $mp) {
-                    $composicionTxt .= ($i > 0 ? "\n" : '') . '[ ' . $mp->nombre . ', ' . $mp->cantidad . ' ' . $mp->unidad_medida . ' ] ';
+                    $composicionTxt .= ($i > 0 ? "\n" : "") . "[ " . $mp->nombre . ", " . $mp->cantidad . " " . $mp->unidad_medida . " ] ";
                 }
 
-                if ($d->tipo_producto === 'R') {
-                    $kMp = $o->id . '|' . $d->id;
-                    $mpExtras = $mpExtrasPorOrdenDetalle[$kMp] ?? [];
+                if ($d->tipo_producto == 'R') {
+                    $mpExtras = DB::table('extra_detalle_orden')
+                        ->leftjoin('extra_producto_menu', 'extra_producto_menu.id', '=', 'extra_detalle_orden.extra')
+                        ->leftjoin('materia_prima', 'materia_prima.id', '=', 'extra_producto_menu.materia_prima')
+                        ->select('materia_prima.nombre', 'materia_prima.unidad_medida', 'extra_producto_menu.cant_mp')
+                        ->where('extra_detalle_orden.orden', '=', $o->id)
+                        ->where('extra_detalle_orden.detalle', '=', $d->id)
+                        ->get() ?? [];
+
                     if (count($mpExtras) > 0) {
                         $composicionTxt .= " \n ---------- Extras ---------- \n";
                         foreach ($mpExtras as $ex) {
                             if ($ex->nombre != null && $ex->cant_mp != null) {
-                                $composicionTxt .= '[ ' . $ex->nombre . ', ' . $ex->cant_mp . ' ' . $ex->unidad_medida . " ]\n ";
+                                $composicionTxt .= "[ " . $ex->nombre . ", " . $ex->cant_mp . " " . $ex->unidad_medida . " ]\n ";
                             }
                         }
                     }
                 }
                 $d->composicion = $composicionTxt;
             }
+
+            if (!empty($o->detalles)) {
+                $result[] = $o;
+            }
         }
+
+        return $result;
     }
 
     public function terminarPreparacionComanda(Request $request)
