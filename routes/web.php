@@ -193,6 +193,7 @@ Route::group(['middleware' => 'autorizated:panelControl'], function () {
 Route::group(['middleware' => 'autorizated:comandaPrep'], function () {
     Route::get('comandas/preparacion/comandaGen', 'ComandasController@goComandaPreparacionGen');
     Route::post('comandas/preparacion/recargarComandas', 'ComandasController@recargarComandas');
+    Route::post('comandas/preparacion/recargarMetricasPreparacion', 'ComandasController@recargarMetricasPreparacion');
     Route::get('comandas/preparacion/comanda/{idComanda}', 'ComandasController@goComandaPreparacionId');
     Route::post('comandas/preparacion/comanda/terminarPreparacionComanda', 'ComandasController@terminarPreparacionComanda');
     Route::post('comandas/preparacion/comanda/marcarLineaPreparada', 'ComandasController@marcarLineaPreparada');
