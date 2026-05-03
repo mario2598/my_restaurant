@@ -50,8 +50,23 @@ class ComandasController extends Controller
                 return $this->responseAjaxServerError("No se pudo obtener la sucursal del usuario", []);
             }
 
+            $comandas = self::getComandasPreparacion($idSucursal, $idComanda);
+
+            try {
+                $metricasTiempo = self::getMetricasPreparacionPorLinea($idSucursal, $idComanda);
+            } catch (\Throwable $e) {
+                DB::table('log')->insertGetId([
+                    'id' => null,
+                    'documento' => 'ComandasController::recargarComandas metricas_tiempo',
+                    'descripcion' => $e->getMessage() . ' | ' . $e->getFile() . ':' . $e->getLine(),
+                ]);
+                // Estructura vacía coherente con getMetricasPreparacionPorLinea (sucursal inválida)
+                $metricasTiempo = self::getMetricasPreparacionPorLinea(null, null);
+            }
+
             $payload = [
-                'comandas' => self::getComandasPreparacion($idSucursal, $idComanda),
+                'comandas' => $comandas,
+                'metricas_tiempo' => $metricasTiempo,
             ];
 
             return $this->responseAjaxSuccess("", $payload);
@@ -289,6 +304,15 @@ class ComandasController extends Controller
             DB::raw('ROUND(MAX(TIMESTAMPDIFF(MINUTE, detalle_orden_comanda.fecha_ingreso, detalle_orden_comanda.fecha_fin)), 0) as max_min')
         )->first();
 
+        if ($row === null) {
+            $row = (object) [
+                'total_lineas' => 0,
+                'promedio_min' => null,
+                'dentro_sla' => 0,
+                'max_min' => null,
+            ];
+        }
+
         $total = (int) ($row->total_lineas ?? 0);
         $dentro = (int) ($row->dentro_sla ?? 0);
         $pct = $total > 0 ? round(100 * $dentro / $total, 1) : null;
@@ -338,8 +362,8 @@ class ComandasController extends Controller
                 'cantidad' => (int) ($r->cantidad ?? 0),
                 'observacion' => $r->observacion,
                 'minutos' => $min,
-                'fecha_ingreso' => $r->fecha_ingreso,
-                'fecha_fin' => $r->fecha_fin,
+                'fecha_ingreso' => $r->fecha_ingreso !== null ? (string) $r->fecha_ingreso : null,
+                'fecha_fin' => $r->fecha_fin !== null ? (string) $r->fecha_fin : null,
                 'estacion' => $r->estacion_nombre,
                 'excede_sla' => $min > $sla,
             ];
