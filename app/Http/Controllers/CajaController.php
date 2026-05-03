@@ -176,11 +176,12 @@ class CajaController extends Controller
         $sucursal = $this->getSucursalUsuario();
         $idUsuario = session('usuario')['id'];
         $descripcion = "Cierre de caja " . "realizado por " . session('usuario')['usuario'] . ". Fecha : " . $fecha_actual;
-        $efectivoReportado = $request->input('efectivoReportado');
 
-        if ( $efectivoReportado < 0) {
-            return $this->responseAjaxServerError("El campo efectivo reportado debe ser un número mayor o igual a 0.", []);
+        $parseEfectivo = $this->parseEfectivoReportadoCierre($request);
+        if (! $parseEfectivo['ok']) {
+            return $this->responseAjaxServerError($parseEfectivo['mensaje'], []);
         }
+        $efectivoReportado = $parseEfectivo['total_base'];
 
         $caja_calculada = $this->calcularCajaUsuario($idCaja);
 
@@ -192,7 +193,7 @@ class CajaController extends Controller
 
         $total = $caja_calculada['total_sinpe'] + $caja_calculada['total_tarjeta'] + $caja_calculada['total_efectivo'];
 
-        try {
+       
             DB::beginTransaction();
 
             $idIngreso = DB::table('ingreso')->insertGetId([
@@ -209,6 +210,10 @@ class CajaController extends Controller
                 'cliente' => null,
                 'descripcion' => $descripcion
             ]);
+            $this->registrarIngresoPagoCierre(
+                $idIngreso,
+                (int) $idCaja
+            );
 
             DB::table('cierre_caja')
                 ->where('id', '=', $idCaja)
@@ -231,10 +236,7 @@ class CajaController extends Controller
 
             DB::commit();
             return $this->responseAjaxSuccess("Se cerro la caja correctamente.", null);
-        } catch (QueryException $ex) {
-            DB::rollBack();
-            return $this->responseAjaxServerError("Error cerrando caja.", []);
-        }
+     
     }
 
     public function getCajaPrevia(Request $request)
@@ -283,6 +285,173 @@ class CajaController extends Controller
                 'estado' => false,
                 'caja' => []
             ];
+        }
+    }
+
+    /**
+     * Efectivo reportado al cierre: JSON multimoneda (monto por moneda × TC = base) o un solo monto en base.
+     *
+     * @return array{ok: bool, mensaje: string, total_base: float, json_guardar: ?string}
+     */
+    private function parseEfectivoReportadoCierre(Request $request): array
+    {
+        $jsonRaw = trim((string) $request->input('efectivo_por_moneda_json', ''));
+        if ($jsonRaw !== '') {
+            $dec = json_decode($jsonRaw, true);
+            if (! is_array($dec) || count($dec) === 0) {
+                return ['ok' => false, 'mensaje' => 'Datos de efectivo por moneda inválidos.', 'total_base' => 0.0, 'json_guardar' => null];
+            }
+            $sumBase = 0.0;
+            $normalized = [];
+            foreach ($dec as $r) {
+                if (! is_array($r)) {
+                    return ['ok' => false, 'mensaje' => 'Formato de efectivo por moneda inválido.', 'total_base' => 0.0, 'json_guardar' => null];
+                }
+                $mid = (int) ($r['moneda_id'] ?? 0);
+                $mm = round((float) ($r['monto_moneda'] ?? 0), 4);
+                $tc = round((float) ($r['tipo_cambio_snapshot'] ?? 0), 6);
+                $medio = strtoupper((string) ($r['medio_pago'] ?? 'EFECTIVO'));
+                if ($medio !== 'EFECTIVO' || $mid < 1) {
+                    return ['ok' => false, 'mensaje' => 'Cada línea debe ser efectivo con moneda válida.', 'total_base' => 0.0, 'json_guardar' => null];
+                }
+                if ($mm < 0) {
+                    return ['ok' => false, 'mensaje' => 'Los montos deben ser mayores o iguales a 0.', 'total_base' => 0.0, 'json_guardar' => null];
+                }
+                if ($mm > 0 && $tc <= 0) {
+                    return ['ok' => false, 'mensaje' => 'Falta tipo de cambio para una moneda con monto indicado.', 'total_base' => 0.0, 'json_guardar' => null];
+                }
+                try {
+                    if (! DB::table('sis_moneda')->where('id', '=', $mid)->where('estado', '=', 'A')->exists()) {
+                        return ['ok' => false, 'mensaje' => 'Moneda no válida o inactiva.', 'total_base' => 0.0, 'json_guardar' => null];
+                    }
+                } catch (\Throwable $e) {
+                    return ['ok' => false, 'mensaje' => 'Error al validar moneda.', 'total_base' => 0.0, 'json_guardar' => null];
+                }
+                $sumBase += $mm * $tc;
+                if ($mm > 0) {
+                    $normalized[] = [
+                        'medio_pago' => 'EFECTIVO',
+                        'moneda_id' => $mid,
+                        'monto_moneda' => $mm,
+                        'tipo_cambio_snapshot' => $tc,
+                    ];
+                }
+            }
+            if (count($normalized) === 0) {
+                return ['ok' => false, 'mensaje' => 'Indique al menos un monto de efectivo contado en alguna moneda.', 'total_base' => 0.0, 'json_guardar' => null];
+            }
+
+            return [
+                'ok' => true,
+                'mensaje' => '',
+                'total_base' => round($sumBase, 4),
+                'json_guardar' => json_encode($normalized, JSON_UNESCAPED_UNICODE),
+            ];
+        }
+
+        $efectivoReportado = (float) $request->input('efectivoReportado', 0);
+        if ($efectivoReportado < 0) {
+            return ['ok' => false, 'mensaje' => 'El efectivo reportado debe ser mayor o igual a 0.', 'total_base' => 0.0, 'json_guardar' => null];
+        }
+
+        return ['ok' => true, 'mensaje' => '', 'total_base' => $efectivoReportado, 'json_guardar' => null];
+    }
+
+    /**
+     * Genera líneas de ingreso_pago para un cierre de caja usando pagos reales de la caja.
+     * Los montos base salen de pago_orden (monto_efectivo/tarjeta/sinpe) y
+     * si hay moneda/TC de documento se guarda también el monto en moneda del pago.
+     */
+    private function registrarIngresoPagoCierre(int $idIngreso, int $idCaja): void
+    {
+        try {
+            $base = DB::table('sis_moneda')
+                ->where('estado', '=', 'A')
+                ->where('es_base', '=', 'S')
+                ->orderBy('id')
+                ->first(['id']);
+
+            if (! $base || empty($base->id)) {
+                return;
+            }
+
+            $pagos = DB::table('pago_orden')
+                ->join('orden', 'orden.id', '=', 'pago_orden.orden')
+                ->where('orden.cierre_caja', '=', $idCaja)
+                ->where('orden.estado', '<>', SisEstadoController::getIdEstadoByCodGeneral('ORD_ANULADA'))
+                ->select(
+                    'pago_orden.moneda_factura_id',
+                    'pago_orden.tipo_cambio_snapshot',
+                    'pago_orden.monto_efectivo',
+                    'pago_orden.monto_tarjeta',
+                    'pago_orden.monto_sinpe'
+                )
+                ->get();
+
+            $lineas = [];
+            foreach ($pagos as $p) {
+                $midPago = (int) ($p->moneda_factura_id ?? 0);
+                $tcRaw = (float) ($p->tipo_cambio_snapshot ?? 0);
+                $tc = ($midPago > 0 && $tcRaw > 0) ? round($tcRaw, 6) : 1.000000;
+                $mid = ($midPago > 0 && $tcRaw > 0) ? $midPago : (int) $base->id;
+
+                $agregarLinea = function (string $medio, float $montoBase) use (&$lineas, $idIngreso, $mid, $tc): void {
+                    if ($montoBase <= 0) {
+                        return;
+                    }
+                    $mBase = round($montoBase, 4);
+                    $mMon = $tc > 0 ? round($mBase / $tc, 4) : $mBase;
+                    $lineas[] = [
+                        'ingreso' => $idIngreso,
+                        'medio_pago' => $medio,
+                        'moneda_id' => $mid,
+                        'monto_moneda' => $mMon,
+                        'tipo_cambio_snapshot' => $tc,
+                        'monto_base' => $mBase,
+                    ];
+                };
+
+                $agregarLinea('EFECTIVO', (float) ($p->monto_efectivo ?? 0));
+                $agregarLinea('TARJETA', (float) ($p->monto_tarjeta ?? 0));
+                $agregarLinea('SINPE', (float) ($p->monto_sinpe ?? 0));
+            }
+
+            if (! empty($lineas)) {
+                DB::table('ingreso_pago')->where('ingreso', '=', $idIngreso)->delete();
+
+                $agrupadas = [];
+                foreach ($lineas as $ln) {
+                    $key = $ln['medio_pago'] . '|' . $ln['moneda_id'] . '|' . $ln['tipo_cambio_snapshot'];
+                    if (! isset($agrupadas[$key])) {
+                        $agrupadas[$key] = [
+                            'ingreso' => $idIngreso,
+                            'medio_pago' => $ln['medio_pago'],
+                            'moneda_id' => $ln['moneda_id'],
+                            'tipo_cambio_snapshot' => $ln['tipo_cambio_snapshot'],
+                            'monto_moneda' => 0.0,
+                            'monto_base' => 0.0,
+                        ];
+                    }
+                    $agrupadas[$key]['monto_moneda'] += (float) $ln['monto_moneda'];
+                    $agrupadas[$key]['monto_base'] += (float) $ln['monto_base'];
+                }
+                $rowsInsert = [];
+                foreach ($agrupadas as $g) {
+                    $rowsInsert[] = [
+                        'ingreso' => $g['ingreso'],
+                        'medio_pago' => $g['medio_pago'],
+                        'moneda_id' => $g['moneda_id'],
+                        'tipo_cambio_snapshot' => round((float) $g['tipo_cambio_snapshot'], 6),
+                        'monto_moneda' => round((float) $g['monto_moneda'], 4),
+                        'monto_base' => round((float) $g['monto_base'], 4),
+                    ];
+                }
+                if (! empty($rowsInsert)) {
+                    DB::table('ingreso_pago')->insert($rowsInsert);
+                }
+            }
+        } catch (\Throwable $e) {
+            // Si no existe la tabla o hay error de esquema, no interrumpir el cierre de caja.
         }
     }
 }

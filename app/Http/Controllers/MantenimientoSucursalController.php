@@ -61,7 +61,16 @@ class MantenimientoSucursalController extends Controller
                 'estado' => ($estado == 'on' ? 'A' : 'I') ,'nombre_factura' => $nombre_factura ?? '',
                 'cedula_factura' => $cedula_factura?? '',
                 'correo_factura' => $correo_factura ?? '',
+                'id_emisor_fe' => 1,
+                'cont_ordenes' => 0,
+                'factura_iva' => 0,
+                'cod_general' => 'PP',
+                'id_sucursal_fe' => 1,
                 'tipo_identificacion_emisor' => $tipo_identificacion_emisor ?? ''] );
+
+                DB::table('sucursal')->where('id', '=', $idSucursal)->update([
+                    'cod_general' => 'S-' . $idSucursal,
+                ]);
             }else{
                 DB::table('sucursal')
                     ->where('id', '=', $id)

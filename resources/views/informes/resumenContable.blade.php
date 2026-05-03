@@ -147,6 +147,46 @@
                         <strong class="text-danger">CRC {{number_format($data['resumen']['gastosGeneral'] ?? 0, 2, ".", ",")}}</strong>
                       </td>
                     </tr>
+                    @if(($data['resumen']['ingresosConDetalleMoneda'] ?? 0) > 0)
+                    <tr class="space_row_table" style="background:#fafafa;">
+                      <td class="text-left">
+                        <i class="fas fa-coins text-muted"></i>
+                        <small><strong>Resumen multimoneda (informativo)</strong>: {{ $data['resumen']['ingresosConDetalleMoneda'] }} ingreso(s) con detalle
+                          @if(!empty($data['resumen']['monedasDetalle']))
+                            ({{ implode('/', $data['resumen']['monedasDetalle']) }})
+                          @endif
+                        </small>
+                        @if(!empty($data['resumen']['detalleMonedaPorTc']))
+                          <div class="table-responsive mt-2">
+                            <table class="table table-sm table-bordered mb-1" style="background: #fff;">
+                              <thead>
+                                <tr>
+                                  <th>Moneda</th>
+                                  <th>T.C. aplicado</th>
+                                  <th>Monto en moneda</th>
+                                  <th>Equivalente en CRC</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                @foreach($data['resumen']['detalleMonedaPorTc'] as $dmtc)
+                                  <tr>
+                                    <td><small>{{ $dmtc['moneda'] }}</small></td>
+                                    <td><small>{{ number_format($dmtc['tc'], 6, '.', ',') }}</small></td>
+                                    <td><small>{{ number_format($dmtc['monto_moneda'], 4, '.', ',') }}</small></td>
+                                    <td><small>CRC {{ number_format($dmtc['monto_base'], 4, '.', ',') }}</small></td>
+                                  </tr>
+                                @endforeach
+                              </tbody>
+                            </table>
+                          </div>
+                        @endif
+                        <small class="text-muted">Este detalle es de referencia y no modifica los totales del resumen.</small>
+                      </td>
+                      <td class="text-right">
+                        <small class="text-muted">Informativo</small>
+                      </td>
+                    </tr>
+                    @endif
                   
                   </tbody>
                   <tfoot class="thead-dark"> 

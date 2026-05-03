@@ -1102,12 +1102,10 @@ class InformesController extends Controller
 
         $ingresos = $ingresosQuery->orderBy('ingreso.fecha', 'DESC')->get();
 
-        // Calcular totales por ingreso
+        // Calcular totales por ingreso (moneda base; ingreso_pago si aplica)
         foreach ($ingresos as $i) {
-            $sinpe = $i->monto_sinpe ?? 0;
-            $efectivo = $i->monto_efectivo ?? 0;
-            $tarjeta = $i->monto_tarjeta ?? 0;
-            $i->total = $sinpe + $efectivo + $tarjeta;
+            $m = $this->ingresoMontosResumenContable($i->id, $i);
+            $i->total = $m['total'];
             $i->fecha_formateada = $this->fechaFormat($i->fecha);
         }
 

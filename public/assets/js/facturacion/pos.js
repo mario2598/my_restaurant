@@ -54,6 +54,157 @@ function bloquearEdicionPorIncidentesOPagos() {
     return tieneIncidentes() || tienePagosFraccionados();
 }
 
+/** Opción de moneda del modal de pago (sis_moneda + data-tc vigente). */
+function obtenerOpcionMonedaPosSeleccionada() {
+    var sel = document.getElementById('pos_moneda_factura_id');
+    if (!sel || sel.selectedIndex < 0 || !sel.selectedOptions[0]) {
+        return null;
+    }
+    var opt = sel.selectedOptions[0];
+    if (!opt || opt.value === '') {
+        return null;
+    }
+    var id = parseInt(opt.value, 10);
+    if (!id) {
+        return null;
+    }
+    return {
+        id: id,
+        esBase: opt.getAttribute('data-es-base') === 'S',
+        cod: opt.getAttribute('data-cod') || 'CRC',
+        simbolo: opt.getAttribute('data-simbolo') || '₡',
+        decimales: parseInt(opt.getAttribute('data-decimales') || '2', 10) || 2,
+        tc: parseFloat(opt.getAttribute('data-tc') || '1')
+    };
+}
+
+/** Moneda extranjera con TC válido: solo se permite cobrar en efectivo. */
+function posMonedaExtranjeraSeleccionada() {
+    var o = obtenerOpcionMonedaPosSeleccionada();
+    if (!o || o.esBase) {
+        return false;
+    }
+    var tc = parseFloat(o.tc);
+    return !isNaN(tc) && tc > 0;
+}
+
+function aplicarRestriccionMediosPagoPorMoneda() {
+    var ex = posMonedaExtranjeraSeleccionada();
+    var $t = $('#monto_tarjeta');
+    var $s = $('#monto_sinpe');
+    var $bt = $('#btnPagoTarjeta');
+    var $bs = $('#btnPagoSinpe');
+    var $mix = $('#btnPago');
+    if (ex) {
+        $t.val('0').prop('disabled', true).addClass('bg-light');
+        $s.val('0').prop('disabled', true).addClass('bg-light');
+        $bt.prop('disabled', true).addClass('disabled');
+        $bs.prop('disabled', true).addClass('disabled');
+        if ($mix.length) {
+            $mix.prop('disabled', true).addClass('disabled');
+        }
+        $('#pos_aviso_solo_efectivo').show();
+    } else {
+        $t.prop('disabled', false).removeClass('bg-light');
+        $s.prop('disabled', false).removeClass('bg-light');
+        $bt.prop('disabled', false).removeClass('disabled');
+        $bs.prop('disabled', false).removeClass('disabled');
+        if ($mix.length) {
+            $mix.prop('disabled', false).removeClass('disabled');
+        }
+        $('#pos_aviso_solo_efectivo').hide();
+    }
+}
+
+/** Monto en moneda base (CRC) → texto en moneda del cobro (o CRC si es base o sin TC). */
+function formatearMontoEnMonedaDoc(montoBase) {
+    var m = parseFloat(montoBase) || 0;
+    var o = obtenerOpcionMonedaPosSeleccionada();
+    if (!o || o.esBase) {
+        return m.toLocaleString('es-CR', { style: 'currency', currency: 'CRC' });
+    }
+    var tc = parseFloat(o.tc);
+    if (!tc || tc <= 0 || isNaN(tc)) {
+        return m.toLocaleString('es-CR', { style: 'currency', currency: 'CRC' });
+    }
+    var montoDoc = m / tc;
+    try {
+        return montoDoc.toLocaleString('es-CR', { style: 'currency', currency: o.cod });
+    } catch (e) {
+        return (o.simbolo || '') + ' ' + montoDoc.toFixed(o.decimales);
+    }
+}
+
+function htmlMontoResumenModalConBase(montoCrc) {
+    var o = obtenerOpcionMonedaPosSeleccionada();
+    var principal = formatearMontoEnMonedaDoc(montoCrc);
+    if (o && !o.esBase) {
+        var tc = parseFloat(o.tc);
+        if (tc > 0 && !isNaN(tc)) {
+            var crc = (parseFloat(montoCrc) || 0).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' });
+            return principal + ' <small class="text-muted">(' + crc + ')</small>';
+        }
+    }
+    return principal;
+}
+
+function sincronizarMonedaPosDesdeSelect() {
+    var hid = document.getElementById('pos_tipo_cambio_snapshot');
+    var disp = document.getElementById('pos_tc_vigente_display');
+    var o = obtenerOpcionMonedaPosSeleccionada();
+    if (!hid || !disp) {
+        return;
+    }
+    if (!o) {
+        hid.value = '';
+        disp.textContent = '—';
+        actualizarMontosResumenModalPago();
+        return;
+    }
+    var tc = o.esBase ? 1 : (parseFloat(o.tc) || 0);
+    if (!o.esBase && (!tc || tc <= 0 || isNaN(tc))) {
+        hid.value = '';
+        disp.innerHTML = '<span class="text-warning">Sin tipo de cambio en BD para esta moneda</span>';
+    } else {
+        hid.value = String(tc);
+        disp.textContent = o.esBase ? '1 (moneda base)' : (String(tc) + ' (vigente en BD)');
+    }
+    actualizarMontosResumenModalPago();
+    aplicarRestriccionMediosPagoPorMoneda();
+    if (typeof cargarDetallesSeleccionados === 'function') {
+        cargarDetallesSeleccionados();
+    }
+}
+
+/** Totales del modal de pago (subtotal/total orden/envío/pagado/incidentes) según moneda elegida. */
+function actualizarMontosResumenModalPago() {
+    if (typeof ordenGestion === 'undefined') {
+        return;
+    }
+    var totalRebajar = parseFloat(ordenGestion.totalRebajarIncidentes) || 0;
+    var totalConRebaja = Math.max(0, (parseFloat(ordenGestion.total) || 0) - totalRebajar);
+
+    $('#txt-subtotal-pagar').html(`SubTotal: ${(ordenGestion.subTotal).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
+    $('#txt-total-pagar').html(`Total Orden: ${(ordenGestion.total).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
+
+    $('#txt-total-pagar_mdl').html(`Total: ${htmlMontoResumenModalConBase(totalConRebaja)}`);
+    $('#txt-mto-envio_mdl').html(infoEnvio.incluye_envio ? `Envío: ${htmlMontoResumenModalConBase(parseFloat(ordenGestion.envio))}` : "Envío: No aplica");
+    $('#txt-mto-pagado_mdl').html(`Monto Pagado : ${htmlMontoResumenModalConBase(ordenGestion.mto_pagado)}`);
+
+    if (totalRebajar > 0) {
+        $('#row-rebajar-incidentes-mdl').show();
+        $('#txt-rebajar-incidentes-mdl').html(`Total a rebajar en incidentes: ${htmlMontoResumenModalConBase(totalRebajar)}`);
+    } else {
+        $('#row-rebajar-incidentes-mdl').hide();
+    }
+
+    var incidentes = ordenGestion.incidentes || [];
+    if (incidentes.length > 0) {
+        var inc = incidentes[0];
+        $('#incidente-monto-mdl').html(htmlMontoResumenModalConBase(parseFloat(inc.monto_afectado) || 0));
+    }
+}
+
 window.addEventListener("load", init, false);
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -65,6 +216,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Inicializar el estado del botón de FE
     actualizarEstadoBotonFE();
+
+    var selMonPos = document.getElementById('pos_moneda_factura_id');
+    if (selMonPos) {
+        selMonPos.addEventListener('change', sincronizarMonedaPosDesdeSelect);
+    }
 });
 
 function init() {
@@ -903,32 +1059,18 @@ function actualizarOrden() {
     }
 
     ordenGestion.total = total;
-    var totalRebajar = parseFloat(ordenGestion.totalRebajarIncidentes) || 0;
-    var totalConRebaja = Math.max(0, ordenGestion.total - totalRebajar);
 
     // Actualizar los valores en el DOM
     $('#txt-cliente').val(ordenGestion.cliente);
     $('#select_mesa').val(ordenGestion.mesa ?? -1);
 
-    $('#txt-subtotal-pagar').html(`SubTotal: ${(ordenGestion.subTotal).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
-    $('#txt-mto-envio_mdl').html(infoEnvio.incluye_envio ? `Envío: ${(parseFloat(ordenGestion.envio)).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}` : "Envío: No aplica");
-    $('#txt-total-pagar').html(`Total Orden: ${(ordenGestion.total).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
-    $('#txt-mto-pagado_mdl').html(`Monto Pagado : ${(ordenGestion.mto_pagado).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
-    $('#txt-total-pagar_mdl').html(`Total: ${(totalConRebaja).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
-
-    if (totalRebajar > 0) {
-        $('#row-rebajar-incidentes-mdl').show();
-        $('#txt-rebajar-incidentes-mdl').html(`Total a rebajar en incidentes: ${(totalRebajar).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
-    } else {
-        $('#row-rebajar-incidentes-mdl').hide();
-    }
+    actualizarMontosResumenModalPago();
 
     var incidentes = ordenGestion.incidentes || [];
     if (incidentes.length > 0) {
         var inc = incidentes[0];
         $('#cont-incidente-orden-mdl').show();
         $('#incidente-descripcion-mdl').text((inc.descripcion || '').substring(0, 80) + ((inc.descripcion || '').length > 80 ? '...' : ''));
-        $('#incidente-monto-mdl').text((parseFloat(inc.monto_afectado) || 0).toLocaleString('es-CR', { style: 'currency', currency: 'CRC' }));
         $('#btn-eliminar-incidente-mdl').data('incidente-id', inc.id);
     } else {
         $('#cont-incidente-orden-mdl').hide();
@@ -1186,6 +1328,17 @@ function abrirModalPago() {
     $('#monto_sinpe').val(""); // Supongo que txt-sinpe es el campo para el pago con SINPE
     $('#monto_tarjeta').val(""); // Supongo que txt-tarjeta es el campo para el pago con tarjeta
     $('#monto_efectivo').val("");
+    var selMon = document.getElementById('pos_moneda_factura_id');
+    if (selMon && selMon.options.length > 0) {
+        selMon.selectedIndex = 0;
+        sincronizarMonedaPosDesdeSelect();
+    } else {
+        $('#pos_tipo_cambio_snapshot').val('');
+        var disp = document.getElementById('pos_tc_vigente_display');
+        if (disp) {
+            disp.textContent = '—';
+        }
+    }
 
     // Sincronizar el input del modal con el estado del cliente seleccionado
     const inputClienteModal = document.getElementById('nombreCliente');
@@ -1346,6 +1499,15 @@ function verificarAbrirModalPago() {
         pago_efectivo = 0;
     }
 
+    if (posMonedaExtranjeraSeleccionada()) {
+        var pSn = parseFloat(pago_sinpe) || 0;
+        var pTj = parseFloat(pago_tarjeta) || 0;
+        if (pSn > 0 || pTj > 0) {
+            showError('En moneda extranjera solo se permite pago en efectivo. Quite montos de tarjeta y SINPE.');
+            return false;
+        }
+    }
+
     // Calcular el cambio si hay pago en efectivo
     if (parseFloat(pago_efectivo) > 0) {
         let montoTotal = totalSeleccionado + parseFloat(ordenGestion.envio);
@@ -1385,7 +1547,36 @@ function verificarAbrirModalPago() {
 }
 
 function procesarPagoMixto() {
+    if (posMonedaExtranjeraSeleccionada()) {
+        showError('En moneda extranjera use solo efectivo: botón "Pagar todo con efectivo" o el campo Monto Efectivo, sin combinar con tarjeta ni SINPE.');
+        return;
+    }
     verificarAbrirModalPago($('#monto_sinpe').val(), $('#monto_tarjeta').val(), $('#monto_efectivo').val());
+}
+
+/**
+ * Moneda / TC para guardar en pago_orden (vacío = solo moneda base).
+ * @returns {Object|null} objeto con ids o null si hay error de validación
+ */
+function obtenerDatosMonedaFacturaPos() {
+    var sel = document.getElementById('pos_moneda_factura_id');
+    var inp = document.getElementById('pos_tipo_cambio_snapshot');
+    if (!sel || !inp) {
+        return {};
+    }
+    var o = obtenerOpcionMonedaPosSeleccionada();
+    if (!o) {
+        return {};
+    }
+    var tc = o.esBase ? 1 : parseFloat(inp.value);
+    if (!o.esBase && (!tc || tc <= 0 || isNaN(tc))) {
+        showError('No hay tipo de cambio vigente en base de datos para la moneda seleccionada. Registre un tipo de cambio en sis_tipo_cambio.');
+        return null;
+    }
+    if (o.esBase) {
+        tc = 1;
+    }
+    return { moneda_factura_id: o.id, tipo_cambio_snapshot: tc };
 }
 
 function procesarPago() {
@@ -1404,6 +1595,10 @@ function procesarPago() {
 }
 
 function verificarAbrirModalPagoEfectivo() {
+    if (posMonedaExtranjeraSeleccionada()) {
+        $('#monto_tarjeta').val('0');
+        $('#monto_sinpe').val('0');
+    }
     cargarDetallesSeleccionados();
 
     // Solo establecer el valor si el input está vacío o es 0
@@ -1418,6 +1613,10 @@ function verificarAbrirModalPagoEfectivo() {
 
 
 function verificarAbrirModalPagoTarjeta() {
+    if (posMonedaExtranjeraSeleccionada()) {
+        showError('En moneda extranjera no se permite pago con tarjeta; use solo efectivo.');
+        return;
+    }
     cargarDetallesSeleccionados();
     $('#monto_tarjeta').val(totalSeleccionado + parseFloat(ordenGestion.envio));
     $('#monto_sinpe').val("0");
@@ -1427,6 +1626,10 @@ function verificarAbrirModalPagoTarjeta() {
 }
 
 function verificarAbrirModalPagoSinpe() {
+    if (posMonedaExtranjeraSeleccionada()) {
+        showError('En moneda extranjera no se permite pago con SINPE; use solo efectivo.');
+        return;
+    }
     cargarDetallesSeleccionados();
     $('#monto_sinpe').val(totalSeleccionado + parseFloat(ordenGestion.envio));
     $('#monto_efectivo').val("0");
@@ -1438,12 +1641,30 @@ function verificarAbrirModalPagoSinpe() {
 function procesarPagoInmediato(mto_sinpe, mto_efectivo, mto_tarjeta) {
     var sumaPagos = parseFloat(mto_sinpe) + parseFloat(mto_tarjeta) + parseFloat(mto_efectivo);
     if (sumaPagos == (parseFloat(totalSeleccionado) + parseFloat(ordenGestion.envio))) {
+        if (posMonedaExtranjeraSeleccionada()) {
+            var sn = parseFloat(mto_sinpe) || 0;
+            var tj = parseFloat(mto_tarjeta) || 0;
+            var ef = parseFloat(mto_efectivo) || 0;
+            if (sn > 0 || tj > 0) {
+                showError('En moneda extranjera solo se permite efectivo.');
+                return;
+            }
+            if (ef <= 0) {
+                showError('Indique el monto en efectivo para cobrar en moneda extranjera.');
+                return;
+            }
+        }
 
         infoFE.info_ced_fe = (infoFE.info_fe && infoFE.info_fe.identificacion) ? infoFE.info_fe.identificacion : (infoFE.info_ced_fe || '');
         infoFE.info_nombre_fe = (infoFE.info_fe && infoFE.info_fe.nombre_comercial && infoFE.info_fe.nombre_comercial !== '') ?
             infoFE.info_fe.nombre_comercial :
             (infoFE.info_nombre_fe || ordenGestion.cliente || '');
         infoFE.info_correo_fe = (infoFE.info_fe && infoFE.info_fe.correo) ? infoFE.info_fe.correo : (infoFE.info_correo_fe || '');
+
+        var datosMonedaPos = obtenerDatosMonedaFacturaPos();
+        if (datosMonedaPos === null) {
+            return;
+        }
 
         $('#mdl-loader-pago').modal("show");
         ordenGestion.cliente = $('#nombreCliente').val();
@@ -1452,7 +1673,7 @@ function procesarPagoInmediato(mto_sinpe, mto_efectivo, mto_tarjeta) {
             url: `${base_path}/facturacion/pos/crearFactura`,
             type: 'post',
             dataType: "json",
-            data: {
+            data: Object.assign({
                 _token: CSRF_TOKEN,
                 orden: ordenGestion,
                 envio: infoEnvio,
@@ -1462,7 +1683,7 @@ function procesarPagoInmediato(mto_sinpe, mto_efectivo, mto_tarjeta) {
                 mto_efectivo: mto_efectivo,
                 mto_tarjeta: mto_tarjeta,
                 idCliente: idCliente
-            }
+            }, datosMonedaPos)
         }).done(function (res) {
             if (!res['estado']) {
                 showError(res['mensaje']);
@@ -1637,7 +1858,103 @@ function cerrarMdlOrdenes() {
     $("#mdl-ordenes").modal("hide");
 }
 
+function escapeHtmlCierreStr(str) {
+    if (str == null || str === undefined) {
+        return '';
+    }
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/"/g, '&quot;');
+}
+
+function usarCierreEfectivoMultimoneda() {
+    return Array.isArray(window.POS_MONEDAS_CIERRE) && window.POS_MONEDAS_CIERRE.length > 0;
+}
+
+function calcSumaBaseEfectivoCierreInputs() {
+    var sum = 0;
+    $('.cierre-monto-input').each(function () {
+        var $i = $(this);
+        if ($i.prop('disabled')) {
+            return;
+        }
+        var tc = parseFloat($i.data('tc')) || 0;
+        var m = parseFloat($i.val()) || 0;
+        if (tc > 0) {
+            sum += m * tc;
+        }
+    });
+    return sum;
+}
+
+function actualizarTotalEfectivoCierreBase() {
+    var sum = calcSumaBaseEfectivoCierreInputs();
+    var txt = sum.toLocaleString('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    $('#lbl_efectivo_cierre_total_base').text(txt);
+}
+
+function renderEfectivoCierrePorMoneda() {
+    var arr = window.POS_MONEDAS_CIERRE || [];
+    var $body = $('#body_inputs_efectivo_cierre');
+    var $wrap = $('#fila_efectivo_cierre_monedas');
+    var $legacy = $('#fila_efectivo_cierre_legacy');
+    $body.empty();
+    if (!arr.length) {
+        $wrap.hide();
+        $legacy.show();
+        return;
+    }
+    $legacy.hide();
+    $wrap.show();
+    arr.forEach(function (m) {
+        var esBase = (m.es_base || 'N') === 'S';
+        var tcRaw = m.tipo_cambio_vigente;
+        var tc = esBase ? 1 : (tcRaw != null && tcRaw !== '' ? parseFloat(tcRaw) : NaN);
+        var tcOk = !isNaN(tc) && tc > 0;
+        var warn = (!esBase && !tcOk) ? '<span class="text-warning small d-block">Sin tipo de cambio en BD</span>' : '';
+        var tcData = tcOk ? tc : 0;
+        var tcMostrar = tcOk ? String(tc) : '—';
+        var disabledAttr = (!esBase && !tcOk) ? ' disabled' : '';
+        var html = '<div class="row align-items-center py-2" style="border-top: 1px solid #eee;">' +
+            '<div class="col-12 col-md-5"><span style="font-size:13px;color:#000;">' +
+            escapeHtmlCierreStr((m.simbolo || '') + ' ' + (m.nombre || '')) +
+            ' (<strong>' + escapeHtmlCierreStr(m.cod_general || '') + '</strong>)</span>' + warn + '</div>' +
+            '<div class="col-6 col-md-3"><small class="text-muted">TC</small> <span style="font-size:12px;">' + escapeHtmlCierreStr(tcMostrar) + '</span></div>' +
+            '<div class="col-12 col-md-4">' +
+            '<input type="number" step="any" min="0" class="form-control cierre-monto-input" ' +
+            'data-moneda-id="' + parseInt(m.id, 10) + '" data-tc="' + tcData + '" placeholder="0"' + disabledAttr + '/>' +
+            '</div></div>';
+        $body.append(html);
+    });
+    $body.off('input change keyup', '.cierre-monto-input').on('input change keyup', '.cierre-monto-input', actualizarTotalEfectivoCierreBase);
+    actualizarTotalEfectivoCierreBase();
+}
+
+function construirJsonEfectivoCierre() {
+    var rows = [];
+    $('.cierre-monto-input').each(function () {
+        var $i = $(this);
+        if ($i.prop('disabled')) {
+            return;
+        }
+        var mid = parseInt($i.data('moneda-id'), 10);
+        var tc = parseFloat($i.data('tc')) || 0;
+        var m = parseFloat($i.val()) || 0;
+        if (m > 0 && mid > 0 && tc > 0) {
+            rows.push({
+                medio_pago: 'EFECTIVO',
+                moneda_id: mid,
+                monto_moneda: m,
+                tipo_cambio_snapshot: tc
+            });
+        }
+    });
+    return rows.length ? JSON.stringify(rows) : '';
+}
+
 function abrirModalCerrarCaja() {
+    renderEfectivoCierrePorMoneda();
     cargarCajaPrevia();
     $("#mdl-cerrar-caja").modal("show");
 }
@@ -2593,16 +2910,24 @@ function cerrarModalFe() {
 }
 
 function cerrarCaja() {
-    var efectivoR = $('#monto_efectivo_input').val();
+    var datosCierre = { _token: CSRF_TOKEN };
+    if (usarCierreEfectivoMultimoneda()) {
+        var jsonEf = construirJsonEfectivoCierre();
+        if (!jsonEf) {
+            showError('Indique el efectivo contado en al menos una moneda (monto mayor a 0).');
+            return;
+        }
+        datosCierre.efectivo_por_moneda_json = jsonEf;
+        datosCierre.efectivoReportado = calcSumaBaseEfectivoCierreInputs();
+    } else {
+        datosCierre.efectivoReportado = $('#monto_efectivo_input').val();
+    }
     $('#loader').fadeIn();
     $.ajax({
         url: `${base_path}/caja/cerrarcaja`,
         type: 'post',
         dataType: "json",
-        data: {
-            efectivoReportado: efectivoR,
-            _token: CSRF_TOKEN
-        }
+        data: datosCierre
     }).done(function (response) {
         if (!response['estado']) {
             cajaAbierta = true;
@@ -2939,8 +3264,8 @@ function cargarDetallesDividirCuentas() {
                                 value="${cantPendientePagar}" data-precio="${precioExtras}" data-id="${detalle.id}" data-indice="${detalle.indice}"
                                 onchange="actualizarOrden()" />
                         </td>
-                        <td>${currencyCRFormat(precioExtras)}</td>
-                        <td class="total-parcial">${currencyCRFormat(precioFinal)}</td>
+                        <td class="td-precio-unit-modal">${formatearMontoEnMonedaDoc(precioExtras)}</td>
+                        <td class="total-parcial">${formatearMontoEnMonedaDoc(precioFinal)}</td>
                      </tr>`;
         tabla.innerHTML += row;
     });
@@ -3026,7 +3351,14 @@ function cargarDetallesSeleccionados() {
     var totalRebajarIncidentes = parseFloat(ordenGestion.totalRebajarIncidentes) || 0;
 
     detallesSeleccionados.forEach(detalle => {
-        detalle.objRowAux.querySelector('.total-parcial').innerText = currencyCRFormat(detalle.total);
+        var filaSel = detalle.objRowAux;
+        var celPrecio = filaSel.querySelector('.td-precio-unit-modal');
+        var inpCant = filaSel.querySelector('.cantidad-a-pagar');
+        if (celPrecio && inpCant) {
+            var pu = parseFloat(inpCant.getAttribute('data-precio')) || 0;
+            celPrecio.innerText = formatearMontoEnMonedaDoc(pu);
+        }
+        filaSel.querySelector('.total-parcial').innerText = formatearMontoEnMonedaDoc(detalle.total);
         detalle.objRowAux = null;
         totalSeleccionadoAux += detalle.total;
     });
@@ -3037,8 +3369,11 @@ function cargarDetallesSeleccionados() {
     totalSeleccionado = totalSeleccionadoAux;
     mtoDescuentoGen = descuentoAplicado + totalRebajarIncidentes;
     var descuentoMasIncidente = descuentoAplicado + totalRebajarIncidentes;
-    $('#txt-descuento-pagar_mdl').html(`Descuento: ${descuentoMasIncidente.toLocaleString('es-CR', { style: 'currency', currency: 'CRC' })}`);
-    document.getElementById('txt-total-seleccionado').innerText = `Total Seleccionado a Pagar : ${currencyCRFormat(totalSeleccionadoAux)}`;
+    $('#txt-descuento-pagar_mdl').html(`Descuento: ${htmlMontoResumenModalConBase(descuentoMasIncidente)}`);
+    var elTotSel = document.getElementById('txt-total-seleccionado');
+    if (elTotSel) {
+        elTotSel.innerHTML = `Total seleccionado a pagar: ${htmlMontoResumenModalConBase(totalSeleccionadoAux)}`;
+    }
 }
 
 function realizarPagoDividido(montoSinpe, montoEfectivo, montoTarjeta) {
@@ -3075,6 +3410,19 @@ function realizarPagoDividido(montoSinpe, montoEfectivo, montoTarjeta) {
     var sumaPagos = parseFloat(montoSinpe) + parseFloat(montoTarjeta) + parseFloat(montoEfectivo);
 
     if (sumaPagos == (totalSeleccionado + parseFloat(ordenGestion.envio))) {
+        if (posMonedaExtranjeraSeleccionada()) {
+            var sn2 = parseFloat(montoSinpe) || 0;
+            var tj2 = parseFloat(montoTarjeta) || 0;
+            var ef2 = parseFloat(montoEfectivo) || 0;
+            if (sn2 > 0 || tj2 > 0) {
+                showError('En moneda extranjera solo se permite efectivo.');
+                return;
+            }
+            if (ef2 <= 0) {
+                showError('Indique el monto en efectivo para cobrar en moneda extranjera.');
+                return;
+            }
+        }
         ordenGestion.cliente = document.getElementById('nombreCliente').value;
 
         if (detallesSeleccionados.length === 0) {
@@ -3098,12 +3446,18 @@ function realizarPagoDividido(montoSinpe, montoEfectivo, montoTarjeta) {
         ordenGestion.mto_sinpe = mtoSinpe;
         ordenGestion.mto_efectivo = mtoEfectivo;
         ordenGestion.mto_tarjeta = mtoTarjeta;
+
+        var datosMonedaPosPago = obtenerDatosMonedaFacturaPos();
+        if (datosMonedaPosPago === null) {
+            return;
+        }
+
         $('#mdl-loader-pago').modal("show");
         $.ajax({
             url: `${base_path}/facturacion/pos/pagarOrden`,
             type: 'post',
             dataType: "json",
-            data: {
+            data: Object.assign({
                 _token: CSRF_TOKEN,
                 mto_sinpe: mtoSinpe,
                 mto_efectivo: mtoEfectivo,
@@ -3113,7 +3467,7 @@ function realizarPagoDividido(montoSinpe, montoEfectivo, montoTarjeta) {
                 infoFE: infoFE,
                 envio: infoEnvio,
                 detalles: detallesSeleccionados
-            }
+            }, datosMonedaPosPago)
         }).done(function (res) {
             $('#mdl-loader-pago').modal("hide");
             if (!res['estado']) {

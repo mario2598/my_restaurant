@@ -245,6 +245,26 @@ function actualizarMetricasTiempo(m) {
     $wrap.show();
 }
 
+/**
+ * Estadísticas de tiempos/SLA: segunda petición para no retrasar el listado de comandas.
+ */
+function recargarMetricasTiempo() {
+    $.ajax({
+        url: `${base_path}/comandas/preparacion/recargarMetricasPreparacion`,
+        type: 'post',
+        data: {
+            _token: CSRF_TOKEN,
+            idComanda: (idComanda == '') ? null : idComanda
+        }
+    }).done(function (response) {
+        if (!response['estado']) {
+            return;
+        }
+        var datos = response['datos'] || {};
+        actualizarMetricasTiempo(datos.metricas_tiempo || {});
+    });
+}
+
 function recargarOrdenes() {
     $.ajax({
         url: `${base_path}/comandas/preparacion/recargarComandas`,
@@ -260,12 +280,11 @@ function recargarOrdenes() {
 
         var datos = response['datos'];
         if (datos && datos.comandas !== undefined) {
-            actualizarMetricasTiempo(datos.metricas_tiempo || {});
             crearHtmlComanda(datos.comandas);
         } else {
-            actualizarMetricasTiempo({});
             crearHtmlComanda(datos);
         }
+        recargarMetricasTiempo();
     }).fail(function (jqXHR, textStatus, errorThrown) {
         setError('Recargar Comandas', 'Algo salió mal..');
     });

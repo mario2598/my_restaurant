@@ -33,6 +33,7 @@
                                         <th scope="col" style="text-align: center">Usuario</th>
                                         <th scope="col" style="text-align: center">Fecha</th>
                                         <th scope="col" style="text-align: center">Descripción</th>
+                                        <th scope="col" style="text-align: center">Pagos / Monedas</th>
                                         <th scope="col" style="text-align: center">Total</th>
                                     </tr>
                                 </thead>
@@ -52,6 +53,18 @@
                                             </td>
                                             <td>
                                                 {{ $g->descripcion ?? '' }}
+                                            </td>
+                                            <td style="min-width: 290px;">
+                                                @if (!empty($g->tiene_detalle_multimoneda))
+                                                    <span class="badge badge-info mb-1">Multimoneda</span>
+                                                    @if (!empty($g->detalle_pagos_resumen))
+                                                        @foreach ($g->detalle_pagos_resumen as $lineaPago)
+                                                            <div style="font-size: 12px; line-height: 1.3;">{{ $lineaPago }}</div>
+                                                        @endforeach
+                                                    @endif
+                                                @else
+                                                    <span class="text-muted">Sin desglose por moneda (modo clásico)</span>
+                                                @endif
                                             </td>
                                             <td>
                                                 CRC {{ number_format($g->total ?? '0.00', 2, '.', ',') }}

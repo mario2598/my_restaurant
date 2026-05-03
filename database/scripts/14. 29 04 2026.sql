@@ -1,0 +1,2 @@
+ALTER TABLE `ingreso` CHANGE `observacion` `observacion` VARCHAR(10000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL;
+ALTER TABLE `ingreso` CHANGE `descripcion` `descripcion` VARCHAR(10000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL;

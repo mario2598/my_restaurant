@@ -5,6 +5,37 @@
     .panel-control .card-statistic-1 .card-body { font-size: clamp(0.75rem, 2.5vw, 1rem); }
     .panel-control .card-header h4 { font-size: clamp(0.85rem, 2.2vw, 1rem); }
     .panel-control h5.section-title { font-size: clamp(0.9rem, 2vw, 1.1rem); }
+    .panel-control .card { border-radius: 12px; }
+    .panel-control .card .card-body { padding: .65rem .75rem; }
+    .panel-control .card .card-header { padding: .55rem .75rem; }
+    .panel-control .metric-value {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        line-height: 1.25;
+    }
+    .panel-control .card-statistic-1 .card-icon {
+        width: 48px;
+        height: 48px;
+        line-height: 48px;
+        font-size: 1rem;
+    }
+    .panel-control .card-statistic-1 .card-wrap { width: calc(100% - 58px); }
+    .panel-control .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 10px;
+    }
+    .panel-control .table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #f8f9fa;
+    }
+    .panel-control .table td, .panel-control .table th { vertical-align: middle; }
+    .panel-control .btn { min-height: 38px; }
     .panel-control .table { font-size: clamp(0.7rem, 1.8vw, 0.875rem); }
     .panel-control .table th, .panel-control .table td { padding: 0.35rem 0.5rem; }
     .panel-control .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -16,6 +47,22 @@
         .panel-control .card-statistic-1 .card-wrap .card-header h4 { font-size: 0.8rem; }
         .panel-control .section-header h1 { font-size: 1.25rem; }
         .panel-control .table th, .panel-control .table td { white-space: nowrap; }
+        .panel-control .metric-value { font-size: 0.9rem; }
+        .panel-control .card .card-body { padding: .55rem .6rem; }
+        .panel-control .card .card-header { padding: .5rem .6rem; }
+        .panel-control .card-statistic-1 .card-icon {
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            font-size: .9rem;
+        }
+        .panel-control .card-statistic-1 .card-wrap { width: calc(100% - 50px); }
+        .panel-control .btn { min-height: 36px; font-size: .85rem; }
+    }
+    @media (min-width: 576px) and (max-width: 991.98px) {
+        .panel-control .card .card-body { padding: .6rem .7rem; }
+        .panel-control .card .card-header h4 { font-size: .9rem; }
+        .panel-control .table { font-size: .8rem; }
     }
 </style>
 @endsection
@@ -84,7 +131,7 @@
                                 <div class="card-header">
                                     <h4>Ventas totales</h4>
                                 </div>
-                                <div class="card-body text-truncate" title="{{ number_format($resumenGlobal->total_vendido, 2, '.', ',') }} CRC">
+                                <div class="card-body metric-value" title="{{ number_format($resumenGlobal->total_vendido, 2, '.', ',') }} CRC">
                                     {{ number_format($resumenGlobal->total_vendido, 2, '.', ',') }} CRC
                                 </div>
                             </div>
@@ -112,7 +159,7 @@
                                 <div class="card-header">
                                     <h4>Ticket prom.</h4>
                                 </div>
-                                <div class="card-body text-truncate" title="{{ number_format($resumenGlobal->ticket_promedio, 2, '.', ',') }} CRC">
+                                <div class="card-body metric-value" title="{{ number_format($resumenGlobal->ticket_promedio, 2, '.', ',') }} CRC">
                                     {{ number_format($resumenGlobal->ticket_promedio, 2, '.', ',') }} CRC
                                 </div>
                             </div>
@@ -317,7 +364,7 @@
                         </div>
                         <div class="card-wrap">
                             <div class="card-header"><h4>Monto rebajado</h4></div>
-                            <div class="card-body text-truncate" title="{{ number_format($totalMontoRebajado, 2, '.', ',') }} CRC">{{ number_format($totalMontoRebajado, 2, '.', ',') }} CRC</div>
+                            <div class="card-body metric-value" title="{{ number_format($totalMontoRebajado, 2, '.', ',') }} CRC">{{ number_format($totalMontoRebajado, 2, '.', ',') }} CRC</div>
                         </div>
                     </div>
                 </div>

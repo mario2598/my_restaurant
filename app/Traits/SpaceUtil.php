@@ -726,6 +726,49 @@ trait SpaceUtil
   }
 
   /**
+   * Efectivo / tarjeta / sinpe y total en moneda base; usa ingreso_pago si existen líneas.
+   *
+   * @param  object  $row  Fila ingreso con id y monto_*
+   * @return array{efectivo:float,tarjeta:float,sinpe:float,total:float}
+   */
+  protected function ingresoMontosResumenContable($ingresoId, $row): array
+  {
+    try {
+      if (DB::table('ingreso_pago')->where('ingreso', '=', $ingresoId)->exists()) {
+        $grupos = DB::table('ingreso_pago')
+          ->where('ingreso', '=', $ingresoId)
+          ->selectRaw('medio_pago, SUM(monto_base) as t')
+          ->groupBy('medio_pago')
+          ->pluck('t', 'medio_pago');
+
+        $efectivo = (float) ($grupos['EFECTIVO'] ?? 0);
+        $tarjeta = (float) ($grupos['TARJETA'] ?? 0);
+        $sinpe = (float) ($grupos['SINPE'] ?? 0);
+
+        return [
+          'efectivo' => $efectivo,
+          'tarjeta' => $tarjeta,
+          'sinpe' => $sinpe,
+          'total' => $efectivo + $tarjeta + $sinpe,
+        ];
+      }
+    } catch (\Throwable $e) {
+      // Tabla aún no migrada
+    }
+
+    $sinpe = $row->monto_sinpe ?? 0;
+    $efectivo = $row->monto_efectivo ?? 0;
+    $tarjeta = $row->monto_tarjeta ?? 0;
+
+    return [
+      'efectivo' => (float) $efectivo,
+      'tarjeta' => (float) $tarjeta,
+      'sinpe' => (float) $sinpe,
+      'total' => (float) ($sinpe + $efectivo + $tarjeta),
+    ];
+  }
+
+  /**
    * Devuelve el total de ingresos del mes, cantidad de ingresos y el promedio
    */
   public function totalIngresosMes($fecha = null, $tipo_ingreso = null)
@@ -756,10 +799,8 @@ trait SpaceUtil
     $totalGeneral = 0;
 
     foreach ($ingresos as $i) {
-      $sinpe = $i->monto_sinpe ?? 0;
-      $efectivo = $i->monto_efectivo ?? 0;
-      $tarjeta = $i->monto_tarjeta ?? 0;
-      $totalAux = $sinpe + $efectivo + $tarjeta;
+      $m = $this->ingresoMontosResumenContable($i->id, $i);
+      $totalAux = $m['total'];
       $totalGeneral = $totalAux + $totalGeneral;
     }
 
@@ -797,7 +838,7 @@ trait SpaceUtil
 
     $gastos = DB::table('gasto')
       ->join('sis_estado', 'sis_estado.id', '=', 'gasto.estado')
-      ->where('sis_estado.cod_general', '=', "EST_GASTO_ELIMINADO");
+      ->where('sis_estado.cod_general', '!=', "EST_GASTO_ELIMINADO");
 
     if ($sucursal != null && $sucursal != '' && $sucursal != 'T') {
       $ingresos = $ingresos->where('ingreso.sucursal', '=', $sucursal);
@@ -825,19 +866,111 @@ trait SpaceUtil
     $ingresos = $ingresos->get();
     $gastos = $gastos->sum('monto');
 
+    // Indicadores informativos de multimoneda (no afectan cálculos de fondos).
+    $ingresosConDetalleMoneda = 0;
+    $monedasDetectadas = [];
+    $detalleMonedaPorTc = [];
+    try {
+      $codBase = 'CRC';
+      try {
+        $mBase = DB::table('sis_moneda')
+          ->where('estado', '=', 'A')
+          ->where('es_base', '=', 'S')
+          ->orderBy('id')
+          ->first(['cod_general']);
+        if (!empty($mBase->cod_general)) {
+          $codBase = (string) $mBase->cod_general;
+        }
+      } catch (\Throwable $e) {
+      }
+
+      $qMon = DB::table('ingreso_pago')
+        ->join('ingreso', 'ingreso.id', '=', 'ingreso_pago.ingreso')
+        ->join('sis_estado', 'sis_estado.id', '=', 'ingreso.estado')
+        ->leftJoin('sis_moneda', 'sis_moneda.id', '=', 'ingreso_pago.moneda_id')
+        ->where('sis_estado.cod_general', '=', 'ING_EST_APROBADO');
+
+      if ($sucursal != null && $sucursal != '' && $sucursal != 'T') {
+        $qMon = $qMon->where('ingreso.sucursal', '=', $sucursal);
+      }
+      if ($desde != null && $desde != '') {
+        $qMon = $qMon->where('ingreso.fecha', '>=', $desde);
+      }
+      if ($hasta != null && $hasta != '') {
+        $qMon = $qMon->where('ingreso.fecha', '<=', $hasta);
+      }
+
+      $rowsMon = $qMon->select(
+        'ingreso_pago.ingreso',
+        'sis_moneda.cod_general as cod_moneda',
+        'ingreso_pago.tipo_cambio_snapshot',
+        'ingreso_pago.monto_moneda',
+        'ingreso_pago.monto_base'
+      )->get();
+      $idsIng = [];
+      $agr = [];
+      foreach ($rowsMon as $r) {
+        $idsIng[(int) ($r->ingreso ?? 0)] = true;
+        $cod = trim((string) ($r->cod_moneda ?? ''));
+        if ($cod !== '') {
+          $monedasDetectadas[$cod] = true;
+        }
+        if ($cod === '') {
+          $cod = $codBase;
+        }
+        $tc = round((float) ($r->tipo_cambio_snapshot ?? 0), 6);
+        if ($tc <= 0) {
+          $tc = 1.000000;
+        }
+        $k = $cod . '|' . number_format($tc, 6, '.', '');
+        if (!isset($agr[$k])) {
+          $agr[$k] = [
+            'moneda' => $cod,
+            'tc' => $tc,
+            'monto_moneda' => 0.0,
+            'monto_base' => 0.0,
+          ];
+        }
+        $agr[$k]['monto_moneda'] += (float) ($r->monto_moneda ?? 0);
+        $agr[$k]['monto_base'] += (float) ($r->monto_base ?? 0);
+      }
+      foreach ($agr as $g) {
+        $detalleMonedaPorTc[] = [
+          'moneda' => $g['moneda'],
+          'tc' => round((float) $g['tc'], 6),
+          'monto_moneda' => round((float) $g['monto_moneda'], 4),
+          'monto_base' => round((float) $g['monto_base'], 4),
+        ];
+      }
+      usort($detalleMonedaPorTc, function ($a, $b) {
+        if ($a['moneda'] === $b['moneda']) {
+          return $a['tc'] <=> $b['tc'];
+        }
+        return strcmp((string) $a['moneda'], (string) $b['moneda']);
+      });
+      if (count($detalleMonedaPorTc) > 0) {
+        $detalleMonedaPorTc = array_slice($detalleMonedaPorTc, 0, 12);
+      }
+      $ingresosConDetalleMoneda = count($idsIng);
+    } catch (\Throwable $e) {
+      $ingresosConDetalleMoneda = 0;
+      $monedasDetectadas = [];
+      $detalleMonedaPorTc = [];
+    }
+
     $totalIngresos = 0;
     $totalIngresosEfectivo = 0;
     $totalIngresosTarjeta = 0;
     $totalIngresosSinpe = 0;
 
     foreach ($ingresos as $i) {
-      $sinpe = $i->monto_sinpe ?? 0;
-      $efectivo = $i->monto_efectivo ?? 0;
-
-      $tarjeta = $i->monto_tarjeta ?? 0;
+      $m = $this->ingresoMontosResumenContable($i->id, $i);
+      $sinpe = $m['sinpe'];
+      $efectivo = $m['efectivo'];
+      $tarjeta = $m['tarjeta'];
       $porcentaje_cobro_tarjeta_aux = $tarjeta * $porcentaje_banco;
 
-      $i->total = $sinpe + $efectivo + $tarjeta;
+      $i->total = $m['total'];
 
       $totalIngresosEfectivo = $totalIngresosEfectivo + $efectivo;
       $totalIngresosTarjeta = $totalIngresosTarjeta + $tarjeta;
@@ -881,6 +1014,9 @@ trait SpaceUtil
       'totalPagoTarjetaGeneral' => $totalPagoTarjetaGeneral,
       'gastos' => $gastos,
       'gastosGeneral' => $gastosGeneral,
+      'ingresosConDetalleMoneda' => $ingresosConDetalleMoneda,
+      'monedasDetalle' => array_values(array_keys($monedasDetectadas)),
+      'detalleMonedaPorTc' => $detalleMonedaPorTc,
       'subTotalFondos' => $subTotalFondos,
       'totalFondosGeneral' => $totalFondosGeneral,
       'subTotalFondosGeneral' => $subTotalFondosGeneral,
