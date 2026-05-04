@@ -534,7 +534,10 @@ function terminarPreparacion(id_orden_comanda) {
                         window.location.href = window.location.url;
                     }, 1000);
                 } else {
-                    setSuccess('Terminar Preparación Orden.', 'Orden terminada correctamente.');
+                    const msgOk = (res['mensaje'] && String(res['mensaje']).trim() !== '')
+                        ? res['mensaje']
+                        : 'Orden terminada correctamente.';
+                    setSuccess('Terminar Preparación Orden.', msgOk);
                     recargarOrdenes();
                 }
             }).fail(function (jqXHR, textStatus, errorThrown) {

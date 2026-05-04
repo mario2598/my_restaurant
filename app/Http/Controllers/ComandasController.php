@@ -854,10 +854,15 @@ class ComandasController extends Controller
             $idSucursalOrden = (int) $orden->sucursal;
             $idComandaFiltro = $filtrarPorComanda ? (int) $request->input('id_comanda') : null;
 
-            $qBase = DB::table('detalle_orden')->select('detalle_orden.*',
-                'detalle_orden_comanda.cantidad as cantidad_prep', 'detalle_orden_comanda.fecha_fin as fecha_fin_comanda')
+            $qBase = DB::table('detalle_orden')->select(
+                'detalle_orden.*',
+                'detalle_orden_comanda.id as id_detalle_orden_comanda',
+                'detalle_orden_comanda.cantidad as cantidad_prep',
+                'detalle_orden_comanda.fecha_fin as fecha_fin_comanda'
+            )
                 ->join('detalle_orden_comanda', 'detalle_orden_comanda.detalle_orden', '=', 'detalle_orden.id')
-                ->where('detalle_orden_comanda.orden_comanda', '=', $id_orden_comanda);
+                ->where('detalle_orden_comanda.orden_comanda', '=', $id_orden_comanda)
+                ->where('detalle_orden_comanda.preparado', '=', 0);
 
             $qFiltrada = clone $qBase;
             if ($filtrarPorComanda && $idComandaFiltro > 0) {
@@ -918,6 +923,7 @@ class ComandasController extends Controller
             // Determinar si la orden está completamente preparada
 
 
+            $lineasAfectadas = 0;
             foreach ($detalles as $detalle) {
                 // Actualizar la cantidad_preparada en detalle_orden
                 DB::table('detalle_orden')
@@ -926,13 +932,12 @@ class ComandasController extends Controller
 
                 if ($detalle->fecha_fin_comanda == null) {
                     DB::table('detalle_orden_comanda')
-                        ->where('detalle_orden', '=', $detalle->id)
-                        ->where('orden_comanda', '=', $id_orden_comanda)
+                        ->where('id', '=', $detalle->id_detalle_orden_comanda)
                         ->update(['fecha_fin' => $fechaActual]);
                 }
-                DB::table('detalle_orden_comanda')
-                    ->where('detalle_orden', '=', $detalle->id)
-                    ->where('orden_comanda', '=', $id_orden_comanda)
+                $lineasAfectadas += DB::table('detalle_orden_comanda')
+                    ->where('id', '=', $detalle->id_detalle_orden_comanda)
+                    ->where('preparado', '=', 0)
                     ->update(['preparado' => 1]);
 
                 $facturacion = new FacturacionController();
@@ -983,9 +988,14 @@ class ComandasController extends Controller
                 }
             }
 
+            if ($lineasAfectadas === 0) {
+                DB::rollBack();
+                return $this->responseAjaxServerError('No se pudo marcar ninguna línea como preparada (0 filas afectadas).', []);
+            }
+
             DB::commit();
 
-            return $this->setAjaxResponse(200, "", [], true);
+            return $this->setAjaxResponse(200, 'Líneas preparadas: ' . $lineasAfectadas, ['lineas_afectadas' => $lineasAfectadas], true);
         } catch (QueryException $ex) {
             DB::rollBack();
             return $this->responseAjaxServerError('Algo salio mal...', []);
