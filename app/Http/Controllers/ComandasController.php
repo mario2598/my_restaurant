@@ -821,6 +821,7 @@ class ComandasController extends Controller
 
         $id_orden_comanda = $request->input('id_orden_comanda');
         $id_comanda = $request->input('id_comanda');
+        $filtrarPorComanda = !$this->isNull($id_comanda) && $id_comanda !== '';
 
         if ($id_orden_comanda < 1 || $this->isNull($id_orden_comanda)) {
             return $this->responseAjaxServerError('Id de la orden incorrecto...', []);
@@ -850,18 +851,51 @@ class ComandasController extends Controller
             $fac = new EntregasOrdenController();
             DB::beginTransaction();
             $idEstEntrega = SisEstadoController::getIdEstadoByCodGeneral('ORD_PARA_ENTREGA');
-            if ($id_comanda  != null) {
-                $detalles = DB::table('detalle_orden')->select('detalle_orden.*',
-                 'detalle_orden_comanda.cantidad as cantidad_prep', 'detalle_orden_comanda.fecha_fin as fecha_fin_comanda')
-                    ->join('detalle_orden_comanda', 'detalle_orden_comanda.detalle_orden', '=', 'detalle_orden.id')
-                    ->where('detalle_orden_comanda.orden_comanda', '=', $id_orden_comanda)
-                    ->where('detalle_orden.comanda', '=', $id_comanda)->get();
-            } else {
-                $detalles = DB::table('detalle_orden')->select('detalle_orden.*',
-                 'detalle_orden_comanda.cantidad as cantidad_prep', 'detalle_orden_comanda.fecha_fin as fecha_fin_comanda')
-                    ->join('detalle_orden_comanda', 'detalle_orden_comanda.detalle_orden', '=', 'detalle_orden.id')
-                    ->where('detalle_orden_comanda.orden_comanda', '=', $id_orden_comanda)->get();
+            $idSucursalOrden = (int) $orden->sucursal;
+            $idComandaFiltro = $filtrarPorComanda ? (int) $id_comanda : null;
+
+            $qDetalles = DB::table('detalle_orden')->select('detalle_orden.*',
+                'detalle_orden_comanda.cantidad as cantidad_prep', 'detalle_orden_comanda.fecha_fin as fecha_fin_comanda')
+                ->join('detalle_orden_comanda', 'detalle_orden_comanda.detalle_orden', '=', 'detalle_orden.id')
+                ->where('detalle_orden_comanda.orden_comanda', '=', $id_orden_comanda);
+
+            if ($filtrarPorComanda && $idComandaFiltro > 0) {
+                $qDetalles->where(function ($q) use ($idComandaFiltro, $idSucursalOrden) {
+                    $q->where('detalle_orden.comanda', '=', $idComandaFiltro)
+                        ->orWhere('detalle_orden_comanda.comanda', '=', $idComandaFiltro);
+                    if ($idSucursalOrden > 0) {
+                        $q->orWhere(function ($qPromo) use ($idComandaFiltro, $idSucursalOrden) {
+                            $qPromo->where('detalle_orden.tipo_producto', '=', 'PROMO')
+                                ->where(function ($qEx) use ($idComandaFiltro, $idSucursalOrden) {
+                                    $qEx->whereExists(function ($sub) use ($idComandaFiltro, $idSucursalOrden) {
+                                        $sub->select(DB::raw('1'))
+                                            ->from('det_grupo_promocion as dgp')
+                                            ->join('pm_x_sucursal as pmxs', function ($join) use ($idSucursalOrden) {
+                                                $join->on('pmxs.producto_menu', '=', 'dgp.producto')
+                                                    ->where('pmxs.sucursal', '=', $idSucursalOrden);
+                                            })
+                                            ->whereColumn('dgp.grupo_promocion', 'detalle_orden.codigo_producto')
+                                            ->where('dgp.tipo', '=', 'R')
+                                            ->where('pmxs.comanda', '=', $idComandaFiltro);
+                                    })
+                                        ->orWhereExists(function ($sub) use ($idComandaFiltro, $idSucursalOrden) {
+                                            $sub->select(DB::raw('1'))
+                                                ->from('det_grupo_promocion as dgp')
+                                                ->join('pe_x_sucursal as pex', function ($join) use ($idSucursalOrden) {
+                                                    $join->on('pex.producto_externo', '=', 'dgp.producto')
+                                                        ->where('pex.sucursal', '=', $idSucursalOrden);
+                                                })
+                                                ->whereColumn('dgp.grupo_promocion', 'detalle_orden.codigo_producto')
+                                                ->where('dgp.tipo', '=', 'E')
+                                                ->where('pex.comanda', '=', $idComandaFiltro);
+                                        });
+                                });
+                        });
+                    }
+                });
             }
+
+            $detalles = $qDetalles->get();
 
             // Determinar si la orden está completamente preparada
 
@@ -874,13 +908,14 @@ class ComandasController extends Controller
 
                 if ($detalle->fecha_fin_comanda == null) {
                     DB::table('detalle_orden_comanda')
-                    ->where('detalle_orden', '=', $detalle->id)
-                    ->update(['fecha_fin' => $fechaActual]); 
+                        ->where('detalle_orden', '=', $detalle->id)
+                        ->where('orden_comanda', '=', $id_orden_comanda)
+                        ->update(['fecha_fin' => $fechaActual]);
                 }
-                // Actualizar el detalle_orden_comanda si es necesario
                 DB::table('detalle_orden_comanda')
                     ->where('detalle_orden', '=', $detalle->id)
-                    ->update([ 'preparado' => 1]); // o el estado correspondiente
+                    ->where('orden_comanda', '=', $id_orden_comanda)
+                    ->update(['preparado' => 1]);
 
                 $facturacion = new FacturacionController();
                 $res =  $facturacion->restarProductoMenuMatPrima($detalle->id, $detalle->cantidad_prep);
