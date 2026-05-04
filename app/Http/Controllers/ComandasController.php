@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
 use App\Traits\SpaceUtil;
@@ -820,8 +821,7 @@ class ComandasController extends Controller
     {
 
         $id_orden_comanda = $request->input('id_orden_comanda');
-        $id_comanda = $request->input('id_comanda');
-        $filtrarPorComanda = !$this->isNull($id_comanda) && $id_comanda !== '';
+        $filtrarPorComanda = $request->filled('id_comanda');
 
         if ($id_orden_comanda < 1 || $this->isNull($id_orden_comanda)) {
             return $this->responseAjaxServerError('Id de la orden incorrecto...', []);
@@ -852,15 +852,16 @@ class ComandasController extends Controller
             DB::beginTransaction();
             $idEstEntrega = SisEstadoController::getIdEstadoByCodGeneral('ORD_PARA_ENTREGA');
             $idSucursalOrden = (int) $orden->sucursal;
-            $idComandaFiltro = $filtrarPorComanda ? (int) $id_comanda : null;
+            $idComandaFiltro = $filtrarPorComanda ? (int) $request->input('id_comanda') : null;
 
-            $qDetalles = DB::table('detalle_orden')->select('detalle_orden.*',
+            $qBase = DB::table('detalle_orden')->select('detalle_orden.*',
                 'detalle_orden_comanda.cantidad as cantidad_prep', 'detalle_orden_comanda.fecha_fin as fecha_fin_comanda')
                 ->join('detalle_orden_comanda', 'detalle_orden_comanda.detalle_orden', '=', 'detalle_orden.id')
                 ->where('detalle_orden_comanda.orden_comanda', '=', $id_orden_comanda);
 
+            $qFiltrada = clone $qBase;
             if ($filtrarPorComanda && $idComandaFiltro > 0) {
-                $qDetalles->where(function ($q) use ($idComandaFiltro, $idSucursalOrden) {
+                $qFiltrada->where(function ($q) use ($idComandaFiltro, $idSucursalOrden) {
                     $q->where('detalle_orden.comanda', '=', $idComandaFiltro)
                         ->orWhere('detalle_orden_comanda.comanda', '=', $idComandaFiltro);
                     if ($idSucursalOrden > 0) {
@@ -895,7 +896,24 @@ class ComandasController extends Controller
                 });
             }
 
-            $detalles = $qDetalles->get();
+            $detalles = $qFiltrada->get();
+            if ($detalles->isEmpty() && $filtrarPorComanda && $idComandaFiltro > 0) {
+                $detalles = $qBase->get();
+            }
+
+            if ($detalles->isEmpty()) {
+                Log::warning('terminarPreparacionComanda: sin líneas para procesar', [
+                    'id_orden_comanda' => $id_orden_comanda,
+                    'orden_id' => $orden->id,
+                    'filtrar_por_comanda' => $filtrarPorComanda,
+                    'id_comanda_filtro' => $idComandaFiltro,
+                ]);
+                DB::rollBack();
+                return $this->responseAjaxServerError(
+                    'No hay líneas pendientes para esta orden de comanda. Si acaba de cargar la pantalla, reintente; si persiste, revise la orden en base de datos.',
+                    []
+                );
+            }
 
             // Determinar si la orden está completamente preparada
 
@@ -1019,12 +1037,15 @@ class ComandasController extends Controller
 
             $updated = DB::table('detalle_orden_comanda')
                 ->where('id', '=', $id_detalle_orden_comanda)
-                ->update(['fecha_fin' => $fechaActual]);
+                ->update(['fecha_fin' => $fechaActual, 'preparado' => 1]);
 
             $detalleSinPreparar = DB::table('detalle_orden')
                 ->join('detalle_orden_comanda', 'detalle_orden_comanda.detalle_orden', '=', 'detalle_orden.id')
                 ->where('detalle_orden.orden', '=', $orden->id)
-                ->where('detalle_orden_comanda.fecha_fin', '=', null)
+                ->where(function ($q) {
+                    $q->whereNull('detalle_orden_comanda.fecha_fin')
+                        ->orWhere('detalle_orden_comanda.preparado', '=', 0);
+                })
                 ->exists();
 
             DB::commit();
