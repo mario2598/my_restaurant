@@ -569,7 +569,7 @@ Route::post('usuarioExterno/menu/mesas-disponibles', 'UsuarioExternoController@o
 /** PRODUCTOS MENU */
 Route::post('productoMenu/producto/cargarProducto', 'ProductosMenuController@cargarProducto');
 Route::post('menu/producto/guardar', 'ProductosMenuController@guardarProducto');
-Route::get('menu', 'UsuarioExternoController@goMenuMobile');
+Route::get('menu', 'UsuarioExternoController@goMenu');
 
 
 /** CLIENTE*/
