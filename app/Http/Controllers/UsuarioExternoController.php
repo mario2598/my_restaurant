@@ -22,20 +22,7 @@ class UsuarioExternoController extends Controller
 
     public function goMenu()
     {
-        if (!$this->validarSesion("usuExtMnu")) {
-            return redirect('/');
-        }
-
-        $contro = new FacturacionController();
-        $categorias =  $contro->getCategoriasTodosProductos($this->getUsuarioSucursal());
-
-        $data = [
-            'categorias' => $categorias,
-            'impuestos' => $this->getImpuestos(),
-            'proveedores' => $this->getProveedores(),
-            'panel_configuraciones' => $this->getPanelConfiguraciones()
-        ];
-        return view('usuarioExterno.menu', compact('data'));
+        return view('usuarioExterno.menuExterno');
     }
 
     public function goMenuMobile()
