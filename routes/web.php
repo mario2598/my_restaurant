@@ -560,6 +560,9 @@ Route::post('mant/grupoPromocion/eliminarDetallePromocion', 'MantGrupoPromocione
 
 
 /*****************Grupos Promociones**************************** */
+Route::get('/home', function () {
+    return view('usuarioExterno.homeExterno');
+});
 Route::get('/menu', 'UsuarioExternoController@goMenu');
 Route::post('usuarioExterno/menu/cargarTiposGeneral', 'UsuarioExternoController@cargarTiposGeneral');
 Route::post('usuarioExterno/menuMobile/cargarTiposGeneral', 'UsuarioExternoController@cargarTiposGeneralMobile');
