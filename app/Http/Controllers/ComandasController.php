@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
 use App\Traits\SpaceUtil;
@@ -820,7 +821,7 @@ class ComandasController extends Controller
     {
 
         $id_orden_comanda = $request->input('id_orden_comanda');
-        $id_comanda = $request->input('id_comanda');
+        $filtrarPorComanda = $request->filled('id_comanda');
 
         if ($id_orden_comanda < 1 || $this->isNull($id_orden_comanda)) {
             return $this->responseAjaxServerError('Id de la orden incorrecto...', []);
@@ -850,22 +851,79 @@ class ComandasController extends Controller
             $fac = new EntregasOrdenController();
             DB::beginTransaction();
             $idEstEntrega = SisEstadoController::getIdEstadoByCodGeneral('ORD_PARA_ENTREGA');
-            if ($id_comanda  != null) {
-                $detalles = DB::table('detalle_orden')->select('detalle_orden.*',
-                 'detalle_orden_comanda.cantidad as cantidad_prep', 'detalle_orden_comanda.fecha_fin as fecha_fin_comanda')
-                    ->join('detalle_orden_comanda', 'detalle_orden_comanda.detalle_orden', '=', 'detalle_orden.id')
-                    ->where('detalle_orden_comanda.orden_comanda', '=', $id_orden_comanda)
-                    ->where('detalle_orden.comanda', '=', $id_comanda)->get();
-            } else {
-                $detalles = DB::table('detalle_orden')->select('detalle_orden.*',
-                 'detalle_orden_comanda.cantidad as cantidad_prep', 'detalle_orden_comanda.fecha_fin as fecha_fin_comanda')
-                    ->join('detalle_orden_comanda', 'detalle_orden_comanda.detalle_orden', '=', 'detalle_orden.id')
-                    ->where('detalle_orden_comanda.orden_comanda', '=', $id_orden_comanda)->get();
+            $idSucursalOrden = (int) $orden->sucursal;
+            $idComandaFiltro = $filtrarPorComanda ? (int) $request->input('id_comanda') : null;
+
+            $qBase = DB::table('detalle_orden')->select(
+                'detalle_orden.*',
+                'detalle_orden_comanda.id as id_detalle_orden_comanda',
+                'detalle_orden_comanda.cantidad as cantidad_prep',
+                'detalle_orden_comanda.fecha_fin as fecha_fin_comanda'
+            )
+                ->join('detalle_orden_comanda', 'detalle_orden_comanda.detalle_orden', '=', 'detalle_orden.id')
+                ->where('detalle_orden_comanda.orden_comanda', '=', $id_orden_comanda)
+                ->where('detalle_orden_comanda.preparado', '=', 0);
+
+            $qFiltrada = clone $qBase;
+            if ($filtrarPorComanda && $idComandaFiltro > 0) {
+                $qFiltrada->where(function ($q) use ($idComandaFiltro, $idSucursalOrden) {
+                    $q->where('detalle_orden.comanda', '=', $idComandaFiltro)
+                        ->orWhere('detalle_orden_comanda.comanda', '=', $idComandaFiltro);
+                    if ($idSucursalOrden > 0) {
+                        $q->orWhere(function ($qPromo) use ($idComandaFiltro, $idSucursalOrden) {
+                            $qPromo->where('detalle_orden.tipo_producto', '=', 'PROMO')
+                                ->where(function ($qEx) use ($idComandaFiltro, $idSucursalOrden) {
+                                    $qEx->whereExists(function ($sub) use ($idComandaFiltro, $idSucursalOrden) {
+                                        $sub->select(DB::raw('1'))
+                                            ->from('det_grupo_promocion as dgp')
+                                            ->join('pm_x_sucursal as pmxs', function ($join) use ($idSucursalOrden) {
+                                                $join->on('pmxs.producto_menu', '=', 'dgp.producto')
+                                                    ->where('pmxs.sucursal', '=', $idSucursalOrden);
+                                            })
+                                            ->whereColumn('dgp.grupo_promocion', 'detalle_orden.codigo_producto')
+                                            ->where('dgp.tipo', '=', 'R')
+                                            ->where('pmxs.comanda', '=', $idComandaFiltro);
+                                    })
+                                        ->orWhereExists(function ($sub) use ($idComandaFiltro, $idSucursalOrden) {
+                                            $sub->select(DB::raw('1'))
+                                                ->from('det_grupo_promocion as dgp')
+                                                ->join('pe_x_sucursal as pex', function ($join) use ($idSucursalOrden) {
+                                                    $join->on('pex.producto_externo', '=', 'dgp.producto')
+                                                        ->where('pex.sucursal', '=', $idSucursalOrden);
+                                                })
+                                                ->whereColumn('dgp.grupo_promocion', 'detalle_orden.codigo_producto')
+                                                ->where('dgp.tipo', '=', 'E')
+                                                ->where('pex.comanda', '=', $idComandaFiltro);
+                                        });
+                                });
+                        });
+                    }
+                });
+            }
+
+            $detalles = $qFiltrada->get();
+            if ($detalles->isEmpty() && $filtrarPorComanda && $idComandaFiltro > 0) {
+                $detalles = $qBase->get();
+            }
+
+            if ($detalles->isEmpty()) {
+                Log::warning('terminarPreparacionComanda: sin líneas para procesar', [
+                    'id_orden_comanda' => $id_orden_comanda,
+                    'orden_id' => $orden->id,
+                    'filtrar_por_comanda' => $filtrarPorComanda,
+                    'id_comanda_filtro' => $idComandaFiltro,
+                ]);
+                DB::rollBack();
+                return $this->responseAjaxServerError(
+                    'No hay líneas pendientes para esta orden de comanda. Si acaba de cargar la pantalla, reintente; si persiste, revise la orden en base de datos.',
+                    []
+                );
             }
 
             // Determinar si la orden está completamente preparada
 
 
+            $lineasAfectadas = 0;
             foreach ($detalles as $detalle) {
                 // Actualizar la cantidad_preparada en detalle_orden
                 DB::table('detalle_orden')
@@ -874,13 +932,13 @@ class ComandasController extends Controller
 
                 if ($detalle->fecha_fin_comanda == null) {
                     DB::table('detalle_orden_comanda')
-                    ->where('detalle_orden', '=', $detalle->id)
-                    ->update(['fecha_fin' => $fechaActual]); 
+                        ->where('id', '=', $detalle->id_detalle_orden_comanda)
+                        ->update(['fecha_fin' => $fechaActual]);
                 }
-                // Actualizar el detalle_orden_comanda si es necesario
-                DB::table('detalle_orden_comanda')
-                    ->where('detalle_orden', '=', $detalle->id)
-                    ->update([ 'preparado' => 1]); // o el estado correspondiente
+                $lineasAfectadas += DB::table('detalle_orden_comanda')
+                    ->where('id', '=', $detalle->id_detalle_orden_comanda)
+                    ->where('preparado', '=', 0)
+                    ->update(['preparado' => 1]);
 
                 $facturacion = new FacturacionController();
                 $res =  $facturacion->restarProductoMenuMatPrima($detalle->id, $detalle->cantidad_prep);
@@ -930,9 +988,14 @@ class ComandasController extends Controller
                 }
             }
 
+            if ($lineasAfectadas === 0) {
+                DB::rollBack();
+                return $this->responseAjaxServerError('No se pudo marcar ninguna línea como preparada (0 filas afectadas).', []);
+            }
+
             DB::commit();
 
-            return $this->setAjaxResponse(200, "", [], true);
+            return $this->setAjaxResponse(200, 'Líneas preparadas: ' . $lineasAfectadas, ['lineas_afectadas' => $lineasAfectadas], true);
         } catch (QueryException $ex) {
             DB::rollBack();
             return $this->responseAjaxServerError('Algo salio mal...', []);
@@ -984,12 +1047,15 @@ class ComandasController extends Controller
 
             $updated = DB::table('detalle_orden_comanda')
                 ->where('id', '=', $id_detalle_orden_comanda)
-                ->update(['fecha_fin' => $fechaActual]);
+                ->update(['fecha_fin' => $fechaActual, 'preparado' => 1]);
 
             $detalleSinPreparar = DB::table('detalle_orden')
                 ->join('detalle_orden_comanda', 'detalle_orden_comanda.detalle_orden', '=', 'detalle_orden.id')
                 ->where('detalle_orden.orden', '=', $orden->id)
-                ->where('detalle_orden_comanda.fecha_fin', '=', null)
+                ->where(function ($q) {
+                    $q->whereNull('detalle_orden_comanda.fecha_fin')
+                        ->orWhere('detalle_orden_comanda.preparado', '=', 0);
+                })
                 ->exists();
 
             DB::commit();
