@@ -21,6 +21,170 @@ class MesasController extends Controller
         return view('mobiliario.mesas.administrar', compact('data'));
     }
 
+    public function goPlanoMesas()
+    {
+        $data = [
+            'sucursales' => MantenimientoSucursalController::getSucursalesActivas(),
+            'panel_configuraciones' => $this->getPanelConfiguraciones()
+        ];
+        return view('mobiliario.mesas.plano', compact('data'));
+    }
+
+    /** Zonas por defecto según layout típico de sucursal (cocina, baño, entrada, jardín). */
+    public static function getZonasPlanoDefault(): array
+    {
+        return [
+            ['id' => 'cocina', 'nombre' => 'Cocina', 'x' => 2, 'y' => 2, 'w' => 40, 'h' => 44, 'color' => '#e9ecef'],
+            ['id' => 'bano', 'nombre' => 'Baño', 'x' => 68, 'y' => 36, 'w' => 14, 'h' => 18, 'color' => '#f1f3f5'],
+            ['id' => 'entrada', 'nombre' => 'Entrada', 'x' => 36, 'y' => 80, 'w' => 20, 'h' => 18, 'color' => '#fff3cd'],
+            ['id' => 'jardin', 'nombre' => 'Jardín', 'x' => 70, 'y' => 68, 'w' => 28, 'h' => 30, 'color' => '#d4edda'],
+        ];
+    }
+
+    public static function getPlanoDataForSucursal(int $idSucursal): array
+    {
+        $plano = DB::table('sucursal_plano')->where('sucursal', '=', $idSucursal)->first();
+        $zonas = self::getZonasPlanoDefault();
+        $anchoRef = 100;
+        $altoRef = 150;
+
+        if ($plano != null) {
+            $anchoRef = (int) ($plano->ancho_referencia ?? 100);
+            $altoRef = (int) ($plano->alto_referencia ?? 150);
+            if (!empty($plano->zonas_json)) {
+                $decoded = json_decode($plano->zonas_json, true);
+                if (is_array($decoded) && count($decoded) > 0) {
+                    $zonas = $decoded;
+                }
+            }
+        }
+
+        $mesas = DB::table('mesa')
+            ->join('sis_estado', 'sis_estado.id', '=', 'mesa.estado')
+            ->where('mesa.sucursal', '=', $idSucursal)
+            ->select(
+                'mesa.*',
+                'sis_estado.cod_general as estado_codigo',
+                'sis_estado.nombre as estado_nombre'
+            )
+            ->orderBy('mesa.numero_mesa', 'ASC')
+            ->get();
+
+        return [
+            'plano' => $plano,
+            'zonas' => $zonas,
+            'ancho_referencia' => $anchoRef,
+            'alto_referencia' => $altoRef,
+            'mesas' => $mesas,
+        ];
+    }
+
+    public function cargarPlano(Request $request)
+    {
+        try {
+            $idSucursal = (int) $request->input('idSucursal');
+            if ($idSucursal < 1) {
+                return $this->responseAjaxServerError("La sucursal es obligatoria", []);
+            }
+
+            return $this->responseAjaxSuccess("", self::getPlanoDataForSucursal($idSucursal));
+        } catch (\Exception $ex) {
+            DB::table('log')->insertGetId([
+                'id' => null,
+                'documento' => 'MesasController',
+                'descripcion' => 'cargarPlano: ' . $ex->getMessage()
+            ]);
+            return $this->responseAjaxServerError("Error al cargar el plano", []);
+        }
+    }
+
+    public function guardarPosicionMesa(Request $request)
+    {
+        try {
+            $id = (int) $request->input('id');
+            $planoX = $request->input('plano_x');
+            $planoY = $request->input('plano_y');
+            $planoAncho = $request->input('plano_ancho');
+            $planoAlto = $request->input('plano_alto');
+            $forma = $request->input('forma', 'rectangular');
+            $zona = $request->input('zona');
+
+            if ($id < 1) {
+                return $this->responseAjaxServerError("ID de mesa inválido", []);
+            }
+
+            $formasValidas = ['rectangular', 'cuadrada', 'redonda'];
+            if (!in_array($forma, $formasValidas, true)) {
+                $forma = 'rectangular';
+            }
+
+            DB::table('mesa')->where('id', '=', $id)->update([
+                'plano_x' => $planoX !== null && $planoX !== '' ? round((float) $planoX, 2) : null,
+                'plano_y' => $planoY !== null && $planoY !== '' ? round((float) $planoY, 2) : null,
+                'plano_ancho' => $planoAncho !== null && $planoAncho !== '' ? round((float) $planoAncho, 2) : 7,
+                'plano_alto' => $planoAlto !== null && $planoAlto !== '' ? round((float) $planoAlto, 2) : 7,
+                'forma' => $forma,
+                'zona' => $zona,
+            ]);
+
+            return $this->responseAjaxSuccess("Posición guardada", []);
+        } catch (\Exception $ex) {
+            DB::table('log')->insertGetId([
+                'id' => null,
+                'documento' => 'MesasController',
+                'descripcion' => 'guardarPosicionMesa: ' . $ex->getMessage()
+            ]);
+            return $this->responseAjaxServerError("Error al guardar la posición", []);
+        }
+    }
+
+    public function guardarPlanoSucursal(Request $request)
+    {
+        try {
+            $idSucursal = (int) $request->input('idSucursal');
+            $zonas = $request->input('zonas');
+            $anchoRef = (int) $request->input('ancho_referencia', 100);
+            $altoRef = (int) $request->input('alto_referencia', 150);
+
+            if ($idSucursal < 1) {
+                return $this->responseAjaxServerError("La sucursal es obligatoria", []);
+            }
+
+            if (!is_array($zonas)) {
+                $zonas = self::getZonasPlanoDefault();
+            }
+
+            $zonasJson = json_encode($zonas, JSON_UNESCAPED_UNICODE);
+            $existente = DB::table('sucursal_plano')->where('sucursal', '=', $idSucursal)->first();
+
+            if ($existente != null) {
+                DB::table('sucursal_plano')->where('sucursal', '=', $idSucursal)->update([
+                    'zonas_json' => $zonasJson,
+                    'ancho_referencia' => max(1, $anchoRef),
+                    'alto_referencia' => max(1, $altoRef),
+                ]);
+            } else {
+                DB::table('sucursal_plano')->insert([
+                    'sucursal' => $idSucursal,
+                    'nombre' => 'Plano principal',
+                    'ancho_referencia' => max(1, $anchoRef),
+                    'alto_referencia' => max(1, $altoRef),
+                    'zonas_json' => $zonasJson,
+                    'activo' => 'S',
+                ]);
+            }
+
+            return $this->responseAjaxSuccess("Plano guardado correctamente", []);
+        } catch (\Exception $ex) {
+            DB::table('log')->insertGetId([
+                'id' => null,
+                'documento' => 'MesasController',
+                'descripcion' => 'guardarPlanoSucursal: ' . $ex->getMessage()
+            ]);
+            return $this->responseAjaxServerError("Error al guardar el plano", []);
+        }
+    }
+
     public static function getBySucursal($idSucursal)
     {
         return DB::table('mesa')->where('sucursal', '=', $idSucursal)->get();
@@ -82,12 +246,19 @@ class MesasController extends Controller
                 }
 
                 // Actualizar la comanda
+                $updateData = [
+                    'numero_mesa' => $numero_mesa,
+                    'capacidad' => $capacidad
+                ];
+                if (array_key_exists('plano_x', $mesa)) {
+                    $updateData['plano_x'] = $mesa['plano_x'] ?? null;
+                    $updateData['plano_y'] = $mesa['plano_y'] ?? null;
+                    $updateData['forma'] = $mesa['forma'] ?? 'rectangular';
+                    $updateData['zona'] = $mesa['zona'] ?? null;
+                }
                 DB::table('mesa')
                     ->where('id', '=', $id)
-                    ->update([
-                        'numero_mesa' => $numero_mesa,
-                        'capacidad' => $capacidad
-                    ]);
+                    ->update($updateData);
             } else {
                 $nombreEnUso = DB::table('mesa')
                     ->where('sucursal', '=', $idSucursal)

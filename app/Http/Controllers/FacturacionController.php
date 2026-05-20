@@ -1889,6 +1889,81 @@ class FacturacionController extends Controller
         return $this->responseAjaxSuccess("", $ordenes);
     }
 
+    /**
+     * Plano de mesas para POS: layout + órdenes activas de la caja por mesa.
+     */
+    public function cargarPlanoPos(Request $request)
+    {
+        if (!$this->validarSesion("facFac")) {
+            return $this->responseAjaxServerError("No tienes permisos para realizar la acción.", []);
+        }
+
+        try {
+            $idSucursal = $this->getUsuarioSucursal();
+            $datos = MesasController::getPlanoDataForSucursal((int) $idSucursal);
+
+            $idCaja = CajaController::getIdCaja(session('usuario')['id'], $idSucursal);
+            $ordenesPorMesa = [];
+            $sinMesa = [];
+
+            if ($idCaja) {
+                $ordenes = DB::table('orden')
+                    ->leftJoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+                    ->leftJoin('mesa', 'mesa.id', '=', 'orden.mesa')
+                    ->select(
+                        'orden.id',
+                        'orden.mesa',
+                        'orden.numero_orden',
+                        'orden.pagado',
+                        'orden.total',
+                        'orden.nombre_cliente',
+                        'orden.fecha_inicio',
+                        'sis_estado.cod_general as estado_codigo',
+                        'mesa.numero_mesa'
+                    )
+                    ->where('orden.cierre_caja', '=', $idCaja)
+                    ->where(function ($q) {
+                        $q->whereNull('sis_estado.cod_general')
+                            ->orWhere('sis_estado.cod_general', '!=', 'ORD_ANULADA');
+                    })
+                    ->orderBy('orden.fecha_inicio', 'DESC')
+                    ->get();
+
+                foreach ($ordenes as $o) {
+                    $item = [
+                        'id' => $o->id,
+                        'numero_orden' => $o->numero_orden,
+                        'pagado' => (int) $o->pagado,
+                        'total' => (float) ($o->total ?? 0),
+                        'nombre_cliente' => $o->nombre_cliente,
+                        'fecha_inicio' => $o->fecha_inicio,
+                        'estado_codigo' => $o->estado_codigo,
+                    ];
+                    if ($o->mesa) {
+                        if (!isset($ordenesPorMesa[$o->mesa])) {
+                            $ordenesPorMesa[$o->mesa] = [];
+                        }
+                        $ordenesPorMesa[$o->mesa][] = $item;
+                    } else {
+                        $sinMesa[] = $item;
+                    }
+                }
+            }
+
+            $datos['ordenes_por_mesa'] = $ordenesPorMesa;
+            $datos['ordenes_sin_mesa'] = $sinMesa;
+
+            return $this->responseAjaxSuccess("", $datos);
+        } catch (\Exception $ex) {
+            DB::table('log')->insertGetId([
+                'id' => null,
+                'documento' => 'FacturacionController',
+                'descripcion' => 'cargarPlanoPos: ' . $ex->getMessage(),
+            ]);
+            return $this->responseAjaxServerError("Error al cargar el mapa de mesas", []);
+        }
+    }
+
     public function devolverInventarioOrden($id_orden, $lineas)
     {
         $detalles = DB::table('detalle_orden')->select('detalle_orden.*')->where('orden', '=', $id_orden)->whereIn('detalle_orden.id', $lineas)->get();
@@ -2838,9 +2913,14 @@ class FacturacionController extends Controller
                 'monto_envio' => 0,
                 'ind_requiere_envio' => false,
                 'info_descuento' => '',
-                'mesa' => $orden['mesa'] == "-1" ? null : $orden['mesa']
+                'mesa' => $orden['mesa'] == "-1" ? null : $orden['mesa'],
+                'cuenta_barra_id' => !empty($orden['cuenta_barra_id']) ? (int) $orden['cuenta_barra_id'] : null,
             ]);
             $this->aumentarConsecutivoOrden($this->getUsuarioSucursal());
+
+            if (!empty($orden['cuenta_barra_id'])) {
+                PosBarraController::vincularOrdenACuenta((int) $id_orden, (int) $orden['cuenta_barra_id']);
+            }
 
             $id_comanda = DB::table('orden_comanda')->insertGetId([
                 'orden' => $id_orden,
@@ -2963,7 +3043,7 @@ class FacturacionController extends Controller
             DB::beginTransaction();
 
             // Actualizar la tabla 'orden'
-            DB::table('orden')->where("id", "=", $orden['id'])->update([
+            $updateOrden = [
                 'nombre_cliente' => $orden['cliente'],
                 'cliente' => $idCliente == -1 ? null : $idCliente,
                 'mesa' => $orden['mesa'] == "-1" ? null : $orden['mesa'],
@@ -2973,7 +3053,15 @@ class FacturacionController extends Controller
                 'mto_impuesto_servicio' => $infoFacturacionFinal['montoImpuestoServicioMesa'],
                 'impuesto' => $infoFacturacionFinal['montoImpuestos'],
                 'descuento' => 0
-            ]);
+            ];
+            if (array_key_exists('cuenta_barra_id', $orden)) {
+                $updateOrden['cuenta_barra_id'] = !empty($orden['cuenta_barra_id']) ? (int) $orden['cuenta_barra_id'] : null;
+            }
+            DB::table('orden')->where('id', '=', $orden['id'])->update($updateOrden);
+
+            if (!empty($orden['cuenta_barra_id'])) {
+                PosBarraController::vincularOrdenACuenta((int) $orden['id'], (int) $orden['cuenta_barra_id']);
+            }
 
             // Obtener detalles anteriores de la orden
             $detallesAnteriores = DB::table('detalle_orden')->where('orden', '=', $orden['id'])->get()->keyBy('id')->toArray();
@@ -3491,6 +3579,10 @@ class FacturacionController extends Controller
                 CodigosPromocionController::usarPromocion($asignarMontosDetalles['idDesc']);
             }
 
+
+            if (!empty($ordenExistente->cuenta_barra_id) && ($cubreMontoCompleto ?? true)) {
+                PosBarraController::cerrarCuentaPorOrden((int) $ordenExistente->id);
+            }
 
             DB::commit();
             $numFactura = (!$unSoloPago ? ($ordenExistente->numero_orden . ':' . $pagoOrdenId) : $ordenExistente->id);

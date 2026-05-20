@@ -1,0 +1,388 @@
+/* POS Barra — layout a pantalla completa, colores alineados al template (Stisla) */
+
+:root {
+    --pos-barra-primary: #6777ef;
+    --pos-barra-primary-hover: #5a67d8;
+    --pos-barra-surface: #ffffff;
+    --pos-barra-bg: #f4f6f9;
+    --pos-barra-border: #e4e6fc;
+    --pos-barra-text: #34395e;
+    --pos-barra-muted: #98a6ad;
+    --pos-barra-radius: 10px;
+    --pos-barra-shadow: 0 2px 12px rgba(90, 97, 105, 0.1);
+    --pos-barra-top-offset: 70px;
+}
+
+.pos-barra-page .main-footer {
+    margin-top: 0 !important;
+}
+
+.pos-barra-section.section {
+    padding-top: 0;
+    margin-bottom: 0;
+}
+
+.pos-barra-body.section-body {
+    padding: 12px 16px 16px;
+}
+
+/* Grid principal: cuentas | productos | orden */
+.pos-barra-app {
+    display: grid;
+    grid-template-columns: minmax(200px, 240px) minmax(0, 1fr) minmax(300px, 380px);
+    gap: 12px;
+    height: calc(100vh - var(--pos-barra-top-offset));
+    min-height: 480px;
+    align-items: stretch;
+}
+
+.pos-barra-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+    background: var(--pos-barra-surface);
+    border-radius: var(--pos-barra-radius);
+    box-shadow: var(--pos-barra-shadow);
+    border: 1px solid var(--pos-barra-border);
+    overflow: hidden;
+}
+
+.pos-barra-panel__head {
+    flex-shrink: 0;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--pos-barra-border);
+    background: #fff;
+}
+
+.pos-barra-panel__head--compact {
+    padding: 8px 10px 4px;
+    border-bottom: none;
+}
+
+.pos-barra-panel__title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--pos-barra-text);
+}
+
+.pos-barra-panel__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.pos-barra-panel__foot {
+    flex-shrink: 0;
+    padding: 12px 14px;
+    border-top: 1px solid var(--pos-barra-border);
+    background: #fafbff;
+}
+
+.pos-barra-caja-cerrada {
+    padding: 8px 14px 12px;
+    border-top: 1px dashed var(--pos-barra-border);
+}
+
+/* Cuentas */
+.pos-barra-panel--cuentas #lista-cuentas-barra {
+    padding: 8px 10px;
+}
+
+.cuenta-barra-item {
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    background: #f8f9ff;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-size: 0.8125rem;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.cuenta-barra-item:hover {
+    background: #eef0ff;
+    border-color: #c7cff9;
+}
+
+.cuenta-barra-item.activa {
+    border-color: var(--pos-barra-primary);
+    background: #eef0ff;
+}
+
+.cuenta-barra-item .cb-etiqueta {
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: var(--pos-barra-text);
+}
+
+.cuenta-barra-item .cb-total {
+    font-weight: 700;
+    color: var(--pos-barra-primary);
+    margin-top: 2px;
+}
+
+/* Tipos y categorías */
+.pos-barra-tipos,
+.pos-barra-categorias {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+    margin-bottom: 0;
+    scrollbar-width: thin;
+}
+
+.pos-barra-tipos .nav-item,
+.pos-barra-categorias .nav-item {
+    flex-shrink: 0;
+}
+
+#pos-barra-app .pos-barra-tipos .nav-link,
+#pos-barra-app .pos-barra-categorias .nav-link {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 0.4rem 0.85rem;
+    border-radius: 50px;
+    white-space: nowrap;
+    border: 1px solid var(--pos-barra-border);
+    background: #fff;
+    color: var(--pos-barra-text);
+    margin-right: 6px;
+}
+
+#pos-barra-app .pos-barra-tipos .nav-link.active,
+#pos-barra-app .pos-barra-categorias .nav-link.active {
+    background: var(--pos-barra-primary) !important;
+    border-color: var(--pos-barra-primary) !important;
+    color: #fff !important;
+}
+
+.pos-barra-buscar {
+    flex-shrink: 0;
+    padding: 0 12px 8px;
+}
+
+.pos-barra-buscar .input-group-text {
+    background: #fff;
+    border-color: #ced4da;
+    color: var(--pos-barra-muted);
+}
+
+.pos-barra-categorias-wrap {
+    flex-shrink: 0;
+    padding: 0 10px 8px;
+    border-bottom: 1px solid var(--pos-barra-border);
+}
+
+.pos-barra-grid-wrap {
+    padding: 10px 12px 12px;
+    background: var(--pos-barra-bg);
+}
+
+.pos-barra-productos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+    gap: 10px;
+    align-content: start;
+}
+
+.pos-barra-prod-btn {
+    min-height: 80px;
+    padding: 10px 8px;
+    border: 1px solid var(--pos-barra-border);
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+    user-select: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.pos-barra-prod-btn:hover {
+    border-color: var(--pos-barra-primary);
+    box-shadow: 0 4px 14px rgba(103, 119, 239, 0.25);
+}
+
+.pos-barra-prod-btn:active {
+    transform: scale(0.98);
+}
+
+.pos-barra-prod-btn .pb-nombre {
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--pos-barra-text);
+    word-break: break-word;
+}
+
+.pos-barra-prod-btn .pb-precio {
+    font-size: 0.9375rem;
+    font-weight: 800;
+    color: var(--pos-barra-primary);
+    margin-top: 6px;
+}
+
+.pos-barra-prod-btn .pb-stock {
+    font-size: 0.65rem;
+    color: #fc544b;
+    margin-top: 2px;
+}
+
+/* Panel orden */
+.pos-barra-total-strip {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: var(--pos-barra-primary);
+    color: #fff;
+}
+
+.pos-barra-total-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.pos-barra-total {
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.pos-barra-orden-lines {
+    background: #fff;
+}
+
+.pos-barra-tabla-orden thead th {
+    position: sticky;
+    top: 0;
+    background: #f8f9ff;
+    z-index: 1;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--pos-barra-muted);
+    border-bottom: 1px solid var(--pos-barra-border);
+}
+
+.pos-barra-acciones .btn {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+#pos-barra-app.caja-cerrada .pos-barra-panel--productos,
+#pos-barra-app.caja-cerrada .pos-barra-panel--orden {
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+/* Tablet: cuentas arriba, productos y orden abajo */
+@media (max-width: 1199.98px) {
+    .pos-barra-app {
+        grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+        grid-template-rows: auto 1fr;
+        height: calc(100vh - var(--pos-barra-top-offset));
+    }
+
+    .pos-barra-panel--cuentas {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        flex-wrap: wrap;
+        max-height: none;
+    }
+
+    .pos-barra-panel--cuentas .pos-barra-panel__head {
+        width: 100%;
+    }
+
+    .pos-barra-panel--cuentas .pos-barra-panel__body {
+        flex: 1 1 100%;
+        max-height: 120px;
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: 8px;
+        padding: 8px 10px;
+    }
+
+    .pos-barra-panel--cuentas .pos-barra-panel__body .cuenta-barra-item,
+    .pos-barra-panel--cuentas .pos-barra-panel__body > p {
+        flex: 0 0 auto;
+        min-width: 140px;
+        margin-bottom: 0;
+    }
+
+    .pos-barra-panel--cuentas .pos-barra-panel__foot {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+        padding: 8px 10px;
+    }
+
+    .pos-barra-panel--cuentas .pos-barra-panel__foot .btn {
+        flex: 1;
+        margin-top: 0 !important;
+    }
+
+    .pos-barra-panel--productos {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    .pos-barra-panel--orden {
+        grid-column: 2;
+        grid-row: 2;
+    }
+}
+
+/* Móvil: una columna */
+@media (max-width: 767.98px) {
+    .pos-barra-body.section-body {
+        padding: 8px 10px 12px;
+    }
+
+    .pos-barra-app {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto minmax(280px, 1fr) minmax(320px, 42vh);
+        height: auto;
+        min-height: calc(100vh - var(--pos-barra-top-offset));
+    }
+
+    .pos-barra-panel--cuentas {
+        grid-row: 1;
+    }
+
+    .pos-barra-panel--productos {
+        grid-column: 1;
+        grid-row: 2;
+        min-height: 50vh;
+    }
+
+    .pos-barra-panel--orden {
+        grid-column: 1;
+        grid-row: 3;
+    }
+
+    .pos-barra-productos-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    }
+
+    .pos-barra-total {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .pos-barra-productos-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
