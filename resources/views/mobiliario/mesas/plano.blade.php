@@ -42,7 +42,7 @@
                                             <input type="radio" name="modo_plano" id="modo_mesas" value="mesas" checked> Mesas
                                         </label>
                                         <label class="btn btn-outline-primary btn-sm">
-                                            <input type="radio" name="modo_plano" id="modo_zonas" value="zonas"> Áreas (cocina, baño…)
+                                            <input type="radio" name="modo_plano" id="modo_zonas" value="zonas"> Áreas del local
                                         </label>
                                     </div>
                                 </div>
@@ -104,7 +104,42 @@
                                         <h6 class="mb-0">Área seleccionada</h6>
                                     </div>
                                     <div class="card-body" id="panel-zona-detalle">
-                                        <p class="text-muted small">Seleccione cocina, baño, entrada o jardín en el plano.</p>
+                                        <p class="text-muted small">Seleccione un área en el plano.</p>
+                                    </div>
+                                </div>
+                                <div class="card card-light mt-2 d-none" id="card-config-areas">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">Configurar áreas</h6>
+                                        <button type="button" class="btn btn-primary btn-sm" onclick="abrirFormNuevaArea()" title="Nueva área">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <p class="text-muted small mb-2">Defina las zonas de su local (salón, terraza, cocina…). Luego ubíquelas en el plano.</p>
+                                        <div id="lista-areas-config" style="max-height: 220px; overflow-y: auto;">
+                                            <p class="text-muted small mb-0">Cargue el plano.</p>
+                                        </div>
+                                        <div id="form-area-config" class="border rounded p-2 mt-2 d-none bg-white">
+                                            <input type="hidden" id="area_config_id" value="">
+                                            <div class="form-group mb-2">
+                                                <label class="small mb-0">Nombre</label>
+                                                <input type="text" class="form-control form-control-sm" id="area_config_nombre" maxlength="80" placeholder="Ej. Terraza VIP">
+                                            </div>
+                                            <div class="form-group mb-2">
+                                                <label class="small mb-0">Código (opcional)</label>
+                                                <input type="text" class="form-control form-control-sm" id="area_config_codigo" maxlength="40" placeholder="terraza_vip">
+                                            </div>
+                                            <div class="form-group mb-2">
+                                                <label class="small mb-0">Color</label>
+                                                <input type="color" class="form-control form-control-sm" id="area_config_color" value="#e9ecef">
+                                            </div>
+                                            <div class="custom-control custom-checkbox mb-2">
+                                                <input type="checkbox" class="custom-control-input" id="area_config_colocar" checked>
+                                                <label class="custom-control-label small" for="area_config_colocar">Colocar en el plano al guardar</label>
+                                            </div>
+                                            <button type="button" class="btn btn-primary btn-sm btn-block" onclick="guardarAreaConfig()">Guardar área</button>
+                                            <button type="button" class="btn btn-link btn-sm btn-block" onclick="cerrarFormAreaConfig()">Cancelar</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

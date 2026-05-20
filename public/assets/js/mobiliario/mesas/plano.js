@@ -1,5 +1,5 @@
 var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
-var planoDatos = { mesas: [], zonas: [], ancho_referencia: 100, alto_referencia: 150 };
+var planoDatos = { mesas: [], zonas: [], areas_catalogo: [], ancho_referencia: 100, alto_referencia: 150 };
 var mesaSeleccionadaId = null;
 var zonaSeleccionadaId = null;
 var arrastre = null;
@@ -35,8 +35,9 @@ function aplicarModoPlano() {
     $('#toolbar-zonas').toggleClass('d-none', !editarZonas);
     $('#card-panel-mesa').toggleClass('d-none', editarZonas);
     $('#card-panel-zona').toggleClass('d-none', !editarZonas);
+    $('#card-config-areas').toggleClass('d-none', !editarZonas);
     $('#plano-ayuda').html(editarZonas
-        ? '<strong>Áreas:</strong> arrastre cocina, baño, entrada o jardín; use las esquinas azules para el tamaño. Pulse <strong>Guardar</strong>.'
+        ? '<strong>Áreas:</strong> configure las zonas en el panel derecho, arrástrelas en el plano y use las esquinas azules para el tamaño. Pulse <strong>Guardar</strong>.'
         : '<strong>Mesas:</strong> arrastre cada mesa y pulse Guardar. Referencia: <span id="plano-ref-dimensiones">'
         + (planoDatos.ancho_referencia || 100) + ' × ' + (planoDatos.alto_referencia || 150) + '</span>.');
     if (editarZonas) {
@@ -65,6 +66,7 @@ function aplicarEstiloZona($el, x, y, w, h) {
 function leerZonaDesdeElemento($el) {
     return {
         id: $el.data('id'),
+        area_id: $el.data('area-id') || null,
         nombre: $el.data('nombre') || $el.find('.plano-zona-label').text(),
         x: parsePct($el[0].style.left),
         y: parsePct($el[0].style.top),
@@ -72,6 +74,160 @@ function leerZonaDesdeElemento($el) {
         h: parsePct($el[0].style.height),
         color: $el.data('color') || '#eeeeee'
     };
+}
+
+function getAreasCatalogo() {
+    return planoDatos.areas_catalogo || [];
+}
+
+function renderListaAreasConfig() {
+    var areas = getAreasCatalogo();
+    if (!areas.length) {
+        $('#lista-areas-config').html('<p class="text-muted small mb-0">Sin áreas. Pulse + para crear.</p>');
+        return;
+    }
+    var html = '<ul class="list-group list-group-flush">';
+    areas.forEach(function (a) {
+        var enPlano = a.plano_x !== null && a.plano_x !== '' && a.plano_y !== null && a.plano_y !== '';
+        html += '<li class="list-group-item px-1 py-2">'
+            + '<div class="d-flex align-items-center">'
+            + '<span class="area-color-badge mr-2" style="background:' + escAttr(a.color || '#eee') + '"></span>'
+            + '<div class="flex-grow-1 min-w-0">'
+            + '<strong class="d-block text-truncate small">' + escHtml(a.nombre) + '</strong>'
+            + '<span class="text-muted" style="font-size:10px">' + escHtml(a.codigo) + (enPlano ? ' · en plano' : ' · sin ubicar') + '</span>'
+            + '</div>'
+            + '<div class="btn-group btn-group-sm flex-shrink-0">'
+            + (enPlano ? '' : '<button type="button" class="btn btn-outline-primary btn-sm" onclick="colocarAreaEnPlano(' + a.id + ')" title="Ubicar"><i class="fas fa-map-pin"></i></button>')
+            + '<button type="button" class="btn btn-outline-secondary btn-sm" onclick="editarAreaConfig(' + a.id + ')" title="Editar"><i class="fas fa-pen"></i></button>'
+            + '<button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminarAreaConfig(' + a.id + ')" title="Eliminar"><i class="fas fa-trash"></i></button>'
+            + '</div></div></li>';
+    });
+    html += '</ul>';
+    $('#lista-areas-config').html(html);
+}
+
+function abrirFormNuevaArea() {
+    $('#area_config_id').val('');
+    $('#area_config_nombre').val('');
+    $('#area_config_codigo').val('');
+    $('#area_config_color').val('#e9ecef');
+    $('#area_config_colocar').prop('checked', true);
+    $('#form-area-config').removeClass('d-none');
+}
+
+function editarAreaConfig(id) {
+    var a = getAreasCatalogo().find(function (x) { return String(x.id) === String(id); });
+    if (!a) return;
+    $('#area_config_id').val(a.id);
+    $('#area_config_nombre').val(a.nombre);
+    $('#area_config_codigo').val(a.codigo);
+    $('#area_config_color').val(a.color || '#e9ecef');
+    $('#area_config_colocar').prop('checked', false);
+    $('#form-area-config').removeClass('d-none');
+}
+
+function cerrarFormAreaConfig() {
+    $('#form-area-config').addClass('d-none');
+}
+
+function guardarAreaConfig() {
+    var nombre = $('#area_config_nombre').val().trim();
+    if (!nombre) {
+        showError('Indique el nombre del área.');
+        return;
+    }
+    $('#loader').fadeIn();
+    $.ajax({
+        url: base_path + '/mobiliario/mesas/guardar-area',
+        type: 'post',
+        dataType: 'json',
+        data: {
+            _token: CSRF_TOKEN,
+            idSucursal: $('#select_sucursal_plano').val(),
+            id: $('#area_config_id').val() || 0,
+            nombre: nombre,
+            codigo: $('#area_config_codigo').val().trim(),
+            color: $('#area_config_color').val(),
+            colocar_en_plano: $('#area_config_colocar').is(':checked') ? 1 : 0
+        }
+    }).done(function (r) {
+        if (!r.estado) {
+            showError(r.mensaje || 'Error');
+            return;
+        }
+        showSuccess('Área guardada.');
+        cerrarFormAreaConfig();
+        cargarPlano();
+    }).fail(function () {
+        showError('Error al guardar el área');
+    }).always(function () {
+        $('#loader').fadeOut();
+    });
+}
+
+function eliminarAreaConfig(id) {
+    swal({
+        title: '¿Eliminar esta área?',
+        text: 'Se quitará del plano. Las mesas conservan su etiqueta de zona.',
+        icon: 'warning',
+        buttons: true
+    }).then(function (ok) {
+        if (!ok) return;
+        $('#loader').fadeIn();
+        $.ajax({
+            url: base_path + '/mobiliario/mesas/eliminar-area',
+            type: 'post',
+            dataType: 'json',
+            data: { _token: CSRF_TOKEN, id: id, idSucursal: $('#select_sucursal_plano').val() }
+        }).done(function (r) {
+            if (r.estado) {
+                showSuccess('Área eliminada.');
+                cargarPlano();
+            } else showError(r.mensaje);
+        }).fail(function () {
+            showError('Error al eliminar');
+        }).always(function () {
+            $('#loader').fadeOut();
+        });
+    });
+}
+
+function colocarAreaEnPlano(id) {
+    var a = getAreasCatalogo().find(function (x) { return String(x.id) === String(id); });
+    if (!a) return;
+    var existentes = (planoDatos.zonas || []).length;
+    var z = {
+        id: a.codigo,
+        area_id: a.id,
+        nombre: a.nombre,
+        x: 10 + (existentes % 4) * 18,
+        y: 10 + Math.floor(existentes / 4) * 15,
+        w: parseFloat(a.plano_ancho) || 18,
+        h: parseFloat(a.plano_alto) || 14,
+        color: a.color || '#e9ecef'
+    };
+    planoDatos.zonas = planoDatos.zonas || [];
+    var idx = planoDatos.zonas.findIndex(function (x) { return x.id === z.id; });
+    if (idx >= 0) {
+        planoDatos.zonas[idx] = z;
+    } else {
+        planoDatos.zonas.push(z);
+    }
+    renderizarZonas(planoDatos.zonas);
+    seleccionarZona(z.id);
+    showSuccess('Área colocada. Pulse Guardar para conservar.');
+}
+
+function optionsZonaMesaSelect(zonaActual) {
+    var html = '<option value="">— Sin zona —</option>';
+    getAreasCatalogo().forEach(function (a) {
+        var sel = (zonaActual && (zonaActual === a.codigo || zonaActual === a.nombre)) ? ' selected' : '';
+        html += '<option value="' + escAttr(a.codigo) + '"' + sel + '>' + escHtml(a.nombre) + '</option>';
+    });
+    if (zonaActual && !getAreasCatalogo().some(function (a) { return a.codigo === zonaActual || a.nombre === zonaActual; })) {
+        html += '<option value="' + escAttr(zonaActual) + '" selected>' + escHtml(zonaActual) + ' (legacy)</option>';
+    }
+    return html;
 }
 
 function leerZonasDesdeDom() {
@@ -104,9 +260,11 @@ function cargarPlano() {
         var al = planoDatos.alto_referencia || 150;
         $('#plano-ref-dimensiones').text(ar + ' × ' + al + ' (referencia)');
         $('#plano-canvas').css('aspect-ratio', ar + ' / ' + al);
+        planoDatos.areas_catalogo = planoDatos.areas_catalogo || [];
         renderizarZonas(planoDatos.zonas || []);
         renderizarMesas(planoDatos.mesas || []);
         renderizarSinPosicion(planoDatos.mesas || []);
+        renderListaAreasConfig();
         aplicarModoPlano();
     }).fail(function () {
         $('#loader').fadeOut();
@@ -117,7 +275,7 @@ function cargarPlano() {
 function renderizarZonas(zonas) {
     var html = '';
     zonas.forEach(function (z) {
-        html += '<div class="plano-zona" data-id="' + (z.id || '') + '" data-nombre="' + escAttr(z.nombre || z.id) + '"'
+        html += '<div class="plano-zona" data-id="' + (z.id || '') + '" data-area-id="' + (z.area_id || '') + '" data-nombre="' + escAttr(z.nombre || z.id) + '"'
             + ' data-color="' + escAttr(z.color || '#eee') + '"'
             + ' style="left:' + z.x + '%;top:' + z.y + '%;width:' + z.w + '%;height:' + z.h + '%;'
             + 'background:' + (z.color || '#eee') + ';">'
@@ -368,16 +526,35 @@ function aplicarDetalleZona(id) {
 
 function restaurarZonasDefault() {
     swal({
-        title: '¿Restaurar posición de las áreas?',
-        text: 'Cocina, baño, entrada y jardín volverán al diseño inicial. Debe guardar después.',
+        title: '¿Restaurar áreas al diseño inicial?',
+        text: 'Se reemplazarán todas las áreas configuradas (cocina, baño, entrada, jardín).',
         icon: 'warning',
         buttons: true
     }).then(function (ok) {
         if (!ok) return;
-        planoDatos.zonas = JSON.parse(JSON.stringify(ZONAS_DEFAULT));
-        renderizarZonas(planoDatos.zonas);
-        seleccionarZona('cocina');
-        showSuccess('Áreas restauradas. Pulse Guardar para aplicar a la sucursal.');
+        $('#loader').fadeIn();
+        $.ajax({
+            url: base_path + '/mobiliario/mesas/restaurar-areas-default',
+            type: 'post',
+            dataType: 'json',
+            data: { _token: CSRF_TOKEN, idSucursal: $('#select_sucursal_plano').val() }
+        }).done(function (r) {
+            if (!r.estado) {
+                showError(r.mensaje || 'Error');
+                return;
+            }
+            planoDatos = r.datos;
+            renderizarZonas(planoDatos.zonas || []);
+            renderListaAreasConfig();
+            if ((planoDatos.zonas || []).length) {
+                seleccionarZona(planoDatos.zonas[0].id);
+            }
+            showSuccess('Áreas restauradas.');
+        }).fail(function () {
+            showError('Error al restaurar');
+        }).always(function () {
+            $('#loader').fadeOut();
+        });
     });
 }
 
@@ -544,7 +721,7 @@ function seleccionarMesa(id) {
         + '<option value="cuadrada"' + (m.forma === 'cuadrada' ? ' selected' : '') + '>Cuadrada</option>'
         + '<option value="redonda"' + (m.forma === 'redonda' ? ' selected' : '') + '>Redonda</option>'
         + '</select></p>'
-        + '<p class="mb-2">Zona: <input type="text" id="detalle_zona" class="form-control form-control-sm" value="' + escAttr(m.zona || '') + '" placeholder="salon, jardin…"></p>'
+        + '<p class="mb-2">Zona: <select id="detalle_zona" class="form-control form-control-sm">' + optionsZonaMesaSelect(m.zona || '') + '</select></p>'
         + '<button type="button" class="btn btn-sm btn-primary btn-block" onclick="aplicarDetalleMesa(' + id + ')">Aplicar forma/zona</button>'
         + '<button type="button" class="btn btn-sm btn-outline-' + (m.estado_codigo === 'MESA_DISPONIBLE' ? 'danger' : 'success') + ' btn-block mt-1" onclick="toggleEstadoMesa(' + id + ', \'' + (m.estado_codigo === 'MESA_DISPONIBLE' ? 'MESA_OCUPADA' : 'MESA_DISPONIBLE') + '\')">'
         + (m.estado_codigo === 'MESA_DISPONIBLE' ? 'Marcar ocupada' : 'Marcar disponible') + '</button>';
