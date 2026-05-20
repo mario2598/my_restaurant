@@ -139,10 +139,14 @@ Route::group(['middleware' => 'autorizated:comandasAdmin'], function () {
 | Mantenimiento de Mesas
 |--------------------------------------------------------------------------
 */
-Route::group(['middleware' => 'autorizated:mesasAdmin'], function () {
+Route::group(['middleware' => 'autorizated:mesasAdmin,mesasPlano'], function () {
     Route::get('mobiliario/mesas/admin', 'MesasController@goMesasAdmin');
+    Route::get('mobiliario/mesas/plano', 'MesasController@goPlanoMesas');
     Route::get('mobiliario/mesas/cargar', 'MesasController@cargarMesasAdmin');
+    Route::get('mobiliario/mesas/cargar-plano', 'MesasController@cargarPlano');
     Route::post('mobiliario/mesas/guardarMesa', 'MesasController@guardarMesa');
+    Route::post('mobiliario/mesas/guardar-posicion', 'MesasController@guardarPosicionMesa');
+    Route::post('mobiliario/mesas/guardar-plano', 'MesasController@guardarPlanoSucursal');
     Route::post('mobiliario/mesas/eliminarMesa', 'MesasController@eliminarMesa');
     Route::post('mobiliario/mesas/cambiar-estado', 'MesasController@cambiarEstadoMesa');
     Route::post('mobiliario/mesas/obtener-mesas', 'MesasController@obtenerMesasSucursal');
@@ -153,7 +157,9 @@ Route::group(['middleware' => 'autorizated:mesasAdmin'], function () {
 |POS
 |--------------------------------------------------------------------------
 */
-Route::group(['middleware' => 'autorizated:facFac'], function () {
+Route::get('facturacion/posBarra', 'PosBarraController@goPosBarra')->middleware('autorizated:posBarra');
+
+Route::group(['middleware' => 'autorizated:facFac,posBarra'], function () {
     Route::post('facturacion/pos/crearFactura', 'FacturacionController@crearFactura');
     Route::post('facturacion/pos/iniciarOrden', 'FacturacionController@iniciarOrden');
     Route::post('facturacion/pos/actualizarOrden', 'FacturacionController@actualizarOrden');
@@ -162,6 +168,11 @@ Route::group(['middleware' => 'autorizated:facFac'], function () {
     Route::get('facturacion/pos', 'FacturacionController@goPos');
     Route::post('facturacion/mesas/cambiar-estado', 'MesasController@cambiarEstadoMesa');
     Route::post('facturacion/mesas/obtener-mesas', 'MesasController@obtenerMesasSucursal');
+    Route::get('facturacion/mesas/cargar-plano', 'FacturacionController@cargarPlanoPos');
+    Route::get('facturacion/posBarra/cuentas', 'PosBarraController@listarCuentasAbiertas');
+    Route::post('facturacion/posBarra/cuentas/abrir', 'PosBarraController@abrirCuenta');
+    Route::post('facturacion/posBarra/cuentas/seleccionar', 'PosBarraController@seleccionarCuenta');
+    Route::post('facturacion/posBarra/cuentas/cerrar', 'PosBarraController@cerrarCuenta');
     Route::post('facturacion/buscar-clientes', 'FacturacionController@buscarClientes');
     Route::post('facturacion/obtener-cliente', 'FacturacionController@obtenerCliente');
     Route::post('facturacion/clientes/guardar', 'MantenimientoClientesController@guardarCliente');

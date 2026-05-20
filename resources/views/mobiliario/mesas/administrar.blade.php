@@ -52,7 +52,7 @@
 
                                     </div>
 
-                                    <div class="col-sm-12 col-md-2 col-xl-4">
+                                    <div class="col-sm-12 col-md-2 col-xl-3">
                                         <div class="form-group">
                                             <label>Agregar Mesa</label>
                                             <a class="btn btn-success btn-icon form-control"
@@ -61,7 +61,14 @@
                                                 Agregar Nueva
                                             </a>
                                         </div>
-
+                                    </div>
+                                    <div class="col-sm-12 col-md-2 col-xl-3">
+                                        <div class="form-group">
+                                            <label style="color: transparent">Plano</label>
+                                            <a href="{{ url('mobiliario/mesas/plano') }}" class="btn btn-info form-control">
+                                                <i class="fas fa-map"></i> Ver plano de mesas
+                                            </a>
+                                        </div>
                                     </div>
 
                                 </div>
