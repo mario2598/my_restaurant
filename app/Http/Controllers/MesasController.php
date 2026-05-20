@@ -30,7 +30,7 @@ class MesasController extends Controller
         return view('mobiliario.mesas.plano', compact('data'));
     }
 
-    /** Zonas por defecto según layout típico de sucursal (cocina, baño, entrada, jardín). */
+    /** Plantilla inicial de áreas (se copia a sucursal_plano_area la primera vez). */
     public static function getZonasPlanoDefault(): array
     {
         return [
@@ -41,23 +41,111 @@ class MesasController extends Controller
         ];
     }
 
+    public static function slugCodigoArea(string $nombre): string
+    {
+        $s = strtolower(trim($nombre));
+        $s = preg_replace('/[^a-z0-9]+/', '_', $s);
+        $s = trim($s, '_');
+        return $s !== '' ? substr($s, 0, 40) : 'area';
+    }
+
+    /** @return \Illuminate\Support\Collection */
+    public static function getAreasCatalogoSucursal(int $idSucursal)
+    {
+        return DB::table('sucursal_plano_area')
+            ->where('sucursal', '=', $idSucursal)
+            ->where('activo', '=', 'S')
+            ->orderBy('orden', 'ASC')
+            ->orderBy('nombre', 'ASC')
+            ->get();
+    }
+
+    public static function asegurarAreasSucursal(int $idSucursal, $plano = null): void
+    {
+        $count = DB::table('sucursal_plano_area')->where('sucursal', '=', $idSucursal)->count();
+        if ($count > 0) {
+            return;
+        }
+
+        if ($plano === null) {
+            $plano = DB::table('sucursal_plano')->where('sucursal', '=', $idSucursal)->first();
+        }
+
+        if ($plano != null && !empty($plano->zonas_json)) {
+            $decoded = json_decode($plano->zonas_json, true);
+            if (is_array($decoded) && count($decoded) > 0) {
+                $orden = 0;
+                foreach ($decoded as $z) {
+                    $codigo = $z['id'] ?? self::slugCodigoArea($z['nombre'] ?? 'area');
+                    DB::table('sucursal_plano_area')->insert([
+                        'sucursal' => $idSucursal,
+                        'codigo' => $codigo,
+                        'nombre' => $z['nombre'] ?? $codigo,
+                        'color' => $z['color'] ?? '#e9ecef',
+                        'plano_x' => isset($z['x']) ? round((float) $z['x'], 2) : null,
+                        'plano_y' => isset($z['y']) ? round((float) $z['y'], 2) : null,
+                        'plano_ancho' => isset($z['w']) ? round((float) $z['w'], 2) : null,
+                        'plano_alto' => isset($z['h']) ? round((float) $z['h'], 2) : null,
+                        'orden' => $orden++,
+                        'activo' => 'S',
+                    ]);
+                }
+                return;
+            }
+        }
+
+        $orden = 0;
+        foreach (self::getZonasPlanoDefault() as $z) {
+            DB::table('sucursal_plano_area')->insert([
+                'sucursal' => $idSucursal,
+                'codigo' => $z['id'],
+                'nombre' => $z['nombre'],
+                'color' => $z['color'],
+                'plano_x' => $z['x'],
+                'plano_y' => $z['y'],
+                'plano_ancho' => $z['w'],
+                'plano_alto' => $z['h'],
+                'orden' => $orden++,
+                'activo' => 'S',
+            ]);
+        }
+    }
+
+    public static function areasCatalogoToZonasPlano($areas): array
+    {
+        $zonas = [];
+        foreach ($areas as $a) {
+            if ($a->plano_x === null || $a->plano_y === null) {
+                continue;
+            }
+            $zonas[] = [
+                'id' => $a->codigo,
+                'area_id' => (int) $a->id,
+                'nombre' => $a->nombre,
+                'x' => (float) $a->plano_x,
+                'y' => (float) $a->plano_y,
+                'w' => (float) ($a->plano_ancho ?? 10),
+                'h' => (float) ($a->plano_alto ?? 10),
+                'color' => $a->color ?? '#e9ecef',
+            ];
+        }
+        return $zonas;
+    }
+
     public static function getPlanoDataForSucursal(int $idSucursal): array
     {
         $plano = DB::table('sucursal_plano')->where('sucursal', '=', $idSucursal)->first();
-        $zonas = self::getZonasPlanoDefault();
         $anchoRef = 100;
         $altoRef = 150;
 
         if ($plano != null) {
             $anchoRef = (int) ($plano->ancho_referencia ?? 100);
             $altoRef = (int) ($plano->alto_referencia ?? 150);
-            if (!empty($plano->zonas_json)) {
-                $decoded = json_decode($plano->zonas_json, true);
-                if (is_array($decoded) && count($decoded) > 0) {
-                    $zonas = $decoded;
-                }
-            }
         }
+
+        self::asegurarAreasSucursal($idSucursal, $plano);
+        $areasCatalogo = self::getAreasCatalogoSucursal($idSucursal);
+        $zonas = self::areasCatalogoToZonasPlano($areasCatalogo);
 
         $mesas = DB::table('mesa')
             ->join('sis_estado', 'sis_estado.id', '=', 'mesa.estado')
@@ -73,6 +161,7 @@ class MesasController extends Controller
         return [
             'plano' => $plano,
             'zonas' => $zonas,
+            'areas_catalogo' => $areasCatalogo,
             'ancho_referencia' => $anchoRef,
             'alto_referencia' => $altoRef,
             'mesas' => $mesas,
@@ -151,15 +240,42 @@ class MesasController extends Controller
             }
 
             if (!is_array($zonas)) {
-                $zonas = self::getZonasPlanoDefault();
+                $zonas = [];
             }
 
-            $zonasJson = json_encode($zonas, JSON_UNESCAPED_UNICODE);
+            self::asegurarAreasSucursal($idSucursal);
+            $orden = 0;
+            foreach ($zonas as $z) {
+                $codigo = !empty($z['id']) ? $z['id'] : self::slugCodigoArea($z['nombre'] ?? 'area');
+                $existenteArea = DB::table('sucursal_plano_area')
+                    ->where('sucursal', '=', $idSucursal)
+                    ->where('codigo', '=', $codigo)
+                    ->first();
+
+                $datosArea = [
+                    'nombre' => $z['nombre'] ?? $codigo,
+                    'color' => $z['color'] ?? '#e9ecef',
+                    'plano_x' => isset($z['x']) ? round((float) $z['x'], 2) : null,
+                    'plano_y' => isset($z['y']) ? round((float) $z['y'], 2) : null,
+                    'plano_ancho' => isset($z['w']) ? round((float) $z['w'], 2) : null,
+                    'plano_alto' => isset($z['h']) ? round((float) $z['h'], 2) : null,
+                    'orden' => $orden++,
+                    'activo' => 'S',
+                ];
+
+                if ($existenteArea != null) {
+                    DB::table('sucursal_plano_area')->where('id', '=', $existenteArea->id)->update($datosArea);
+                } else {
+                    $datosArea['sucursal'] = $idSucursal;
+                    $datosArea['codigo'] = $codigo;
+                    DB::table('sucursal_plano_area')->insert($datosArea);
+                }
+            }
+
             $existente = DB::table('sucursal_plano')->where('sucursal', '=', $idSucursal)->first();
 
             if ($existente != null) {
                 DB::table('sucursal_plano')->where('sucursal', '=', $idSucursal)->update([
-                    'zonas_json' => $zonasJson,
                     'ancho_referencia' => max(1, $anchoRef),
                     'alto_referencia' => max(1, $altoRef),
                 ]);
@@ -169,7 +285,7 @@ class MesasController extends Controller
                     'nombre' => 'Plano principal',
                     'ancho_referencia' => max(1, $anchoRef),
                     'alto_referencia' => max(1, $altoRef),
-                    'zonas_json' => $zonasJson,
+                    'zonas_json' => null,
                     'activo' => 'S',
                 ]);
             }
@@ -182,6 +298,136 @@ class MesasController extends Controller
                 'descripcion' => 'guardarPlanoSucursal: ' . $ex->getMessage()
             ]);
             return $this->responseAjaxServerError("Error al guardar el plano", []);
+        }
+    }
+
+    public function guardarAreaPlano(Request $request)
+    {
+        try {
+            $idSucursal = (int) $request->input('idSucursal');
+            $id = (int) $request->input('id', 0);
+            $nombre = trim((string) $request->input('nombre', ''));
+            $codigo = trim((string) $request->input('codigo', ''));
+            $color = trim((string) $request->input('color', '#e9ecef'));
+            $colocarEnPlano = $request->input('colocar_en_plano', false);
+
+            if ($idSucursal < 1) {
+                return $this->responseAjaxServerError("La sucursal es obligatoria", []);
+            }
+            if ($nombre === '') {
+                return $this->responseAjaxServerError("El nombre del área es obligatorio", []);
+            }
+            if ($codigo === '') {
+                $codigo = self::slugCodigoArea($nombre);
+            } else {
+                $codigo = self::slugCodigoArea($codigo);
+            }
+
+            $datos = [
+                'nombre' => $nombre,
+                'color' => $color !== '' ? $color : '#e9ecef',
+                'activo' => 'S',
+            ];
+
+            if ($colocarEnPlano) {
+                $existentes = DB::table('sucursal_plano_area')
+                    ->where('sucursal', '=', $idSucursal)
+                    ->whereNotNull('plano_x')
+                    ->count();
+                $datos['plano_x'] = 10 + ($existentes % 4) * 18;
+                $datos['plano_y'] = 10 + floor($existentes / 4) * 15;
+                $datos['plano_ancho'] = 18;
+                $datos['plano_alto'] = 14;
+            }
+
+            if ($id > 0) {
+                $area = DB::table('sucursal_plano_area')
+                    ->where('id', '=', $id)
+                    ->where('sucursal', '=', $idSucursal)
+                    ->first();
+                if ($area == null) {
+                    return $this->responseAjaxServerError("Área no encontrada", []);
+                }
+                DB::table('sucursal_plano_area')->where('id', '=', $id)->update($datos);
+                $idArea = $id;
+            } else {
+                $dup = DB::table('sucursal_plano_area')
+                    ->where('sucursal', '=', $idSucursal)
+                    ->where('codigo', '=', $codigo)
+                    ->first();
+                if ($dup != null) {
+                    return $this->responseAjaxServerError("Ya existe un área con el código «{$codigo}»", []);
+                }
+                $maxOrden = (int) DB::table('sucursal_plano_area')->where('sucursal', '=', $idSucursal)->max('orden');
+                $datos['sucursal'] = $idSucursal;
+                $datos['codigo'] = $codigo;
+                $datos['orden'] = $maxOrden + 1;
+                $idArea = DB::table('sucursal_plano_area')->insertGetId($datos);
+            }
+
+            return $this->responseAjaxSuccess("Área guardada", [
+                'area' => DB::table('sucursal_plano_area')->where('id', '=', $idArea)->first(),
+            ]);
+        } catch (\Exception $ex) {
+            DB::table('log')->insertGetId([
+                'id' => null,
+                'documento' => 'MesasController',
+                'descripcion' => 'guardarAreaPlano: ' . $ex->getMessage()
+            ]);
+            return $this->responseAjaxServerError("Error al guardar el área", []);
+        }
+    }
+
+    public function eliminarAreaPlano(Request $request)
+    {
+        try {
+            $id = (int) $request->input('id');
+            $idSucursal = (int) $request->input('idSucursal');
+
+            if ($id < 1 || $idSucursal < 1) {
+                return $this->responseAjaxServerError("Datos inválidos", []);
+            }
+
+            DB::table('sucursal_plano_area')
+                ->where('id', '=', $id)
+                ->where('sucursal', '=', $idSucursal)
+                ->update(['activo' => 'N', 'plano_x' => null, 'plano_y' => null]);
+
+            return $this->responseAjaxSuccess("Área eliminada", []);
+        } catch (\Exception $ex) {
+            return $this->responseAjaxServerError("Error al eliminar el área", []);
+        }
+    }
+
+    public function restaurarAreasPlanoDefault(Request $request)
+    {
+        try {
+            $idSucursal = (int) $request->input('idSucursal');
+            if ($idSucursal < 1) {
+                return $this->responseAjaxServerError("La sucursal es obligatoria", []);
+            }
+
+            DB::table('sucursal_plano_area')->where('sucursal', '=', $idSucursal)->delete();
+
+            $orden = 0;
+            foreach (self::getZonasPlanoDefault() as $z) {
+                DB::table('sucursal_plano_area')->insert([
+                    'sucursal' => $idSucursal,
+                    'codigo' => $z['id'],
+                    'nombre' => $z['nombre'],
+                    'color' => $z['color'],
+                    'plano_x' => $z['x'],
+                    'plano_y' => $z['y'],
+                    'plano_ancho' => $z['w'],
+                    'plano_alto' => $z['h'],
+                    'orden' => $orden++,
+                    'activo' => 'S',
+                ]);
+            }
+
+            return $this->responseAjaxSuccess("Áreas restauradas al diseño inicial", self::getPlanoDataForSucursal($idSucursal));
+        } catch (\Exception $ex) {
+            return $this->responseAjaxServerError("Error al restaurar áreas", []);
         }
     }
 
