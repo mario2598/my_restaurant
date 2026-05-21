@@ -1916,6 +1916,7 @@ class FacturacionController extends Controller
                         'orden.numero_orden',
                         'orden.pagado',
                         'orden.total',
+                        'orden.mto_pagado',
                         'orden.nombre_cliente',
                         'orden.fecha_inicio',
                         'sis_estado.cod_general as estado_codigo',
@@ -1930,11 +1931,15 @@ class FacturacionController extends Controller
                     ->get();
 
                 foreach ($ordenes as $o) {
+                    $total = (float) ($o->total ?? 0);
+                    $mtoPagado = (float) ($o->mto_pagado ?? 0);
                     $item = [
                         'id' => $o->id,
                         'numero_orden' => $o->numero_orden,
                         'pagado' => (int) $o->pagado,
-                        'total' => (float) ($o->total ?? 0),
+                        'total' => $total,
+                        'mto_pagado' => $mtoPagado,
+                        'saldo' => max(0, $total - $mtoPagado),
                         'nombre_cliente' => $o->nombre_cliente,
                         'fecha_inicio' => $o->fecha_inicio,
                         'estado_codigo' => $o->estado_codigo,

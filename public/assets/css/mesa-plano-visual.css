@@ -1,0 +1,240 @@
+/* Visualización de mesas en planos — redonda, cuadrada, rectangular */
+
+.plano-mesa,
+.pos-plano-mesa {
+    position: absolute;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 2px;
+    border: none;
+    background: transparent;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    overflow: visible;
+}
+
+.mesa-plano-superficie {
+    position: absolute;
+    inset: 3px;
+    border-radius: inherit;
+    background: linear-gradient(155deg, #e8c887 0%, #b8893a 35%, #7a5520 70%, #5c3f18 100%);
+    box-shadow:
+        inset 0 2px 6px rgba(255, 255, 255, 0.35),
+        inset 0 -3px 8px rgba(0, 0, 0, 0.25),
+        0 4px 14px rgba(0, 0, 0, 0.35);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    pointer-events: none;
+}
+
+.plano-mesa.forma-redonda .mesa-plano-superficie,
+.pos-plano-mesa.forma-redonda .mesa-plano-superficie {
+    border-radius: 50%;
+}
+
+.plano-mesa.forma-cuadrada .mesa-plano-superficie,
+.pos-plano-mesa.forma-cuadrada .mesa-plano-superficie {
+    border-radius: 6px;
+}
+
+.plano-mesa.forma-rectangular .mesa-plano-superficie,
+.pos-plano-mesa.forma-rectangular .mesa-plano-superficie {
+    border-radius: 5px 8px 8px 5px;
+}
+
+/* Borde de estado alrededor de la superficie */
+.plano-mesa.disponible .mesa-plano-superficie,
+.pos-plano-mesa.disponible .mesa-plano-superficie {
+    outline: 3px solid #28a745;
+    outline-offset: 1px;
+}
+
+.plano-mesa.ocupada .mesa-plano-superficie,
+.pos-plano-mesa.ocupada .mesa-plano-superficie {
+    outline: 3px solid #dc3545;
+    outline-offset: 1px;
+    filter: brightness(0.92);
+}
+
+.plano-mesa.con-orden-pendiente .mesa-plano-superficie,
+.pos-plano-mesa.con-orden-pendiente .mesa-plano-superficie {
+    outline: 3px solid #ff9800;
+    outline-offset: 1px;
+    box-shadow:
+        inset 0 2px 6px rgba(255, 255, 255, 0.3),
+        0 0 0 4px rgba(255, 152, 0, 0.35),
+        0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.plano-mesa.con-orden-pagada .mesa-plano-superficie,
+.pos-plano-mesa.con-orden-pagada .mesa-plano-superficie {
+    outline: 3px solid #17a2b8;
+    outline-offset: 1px;
+}
+
+.plano-mesa.mesa-actual .mesa-plano-superficie,
+.pos-plano-mesa.mesa-actual .mesa-plano-superficie {
+    outline: 3px solid #007bff;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 5px rgba(0, 123, 255, 0.35), 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+.plano-mesa.sin-posicion-en-plano .mesa-plano-superficie {
+    outline-style: dashed;
+    opacity: 0.88;
+}
+
+.plano-mesa:hover,
+.pos-plano-mesa:hover {
+    transform: scale(1.06);
+    z-index: 25;
+}
+
+.plano-mesa .plano-mesa-numero,
+.pos-plano-mesa .pos-plano-mesa-num,
+.plano-mesa .plano-mesa-numero {
+    position: relative;
+    z-index: 2;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.plano-mesa .plano-mesa-cap,
+.pos-plano-mesa .pos-plano-mesa-hint {
+    position: relative;
+    z-index: 2;
+    font-size: 8px;
+    font-weight: 600;
+    opacity: 0.95;
+}
+
+/* Sillas decorativas (mesas redondas) */
+.plano-mesa.forma-redonda::before,
+.plano-mesa.forma-redonda::after,
+.pos-plano-mesa.forma-redonda::before,
+.pos-plano-mesa.forma-redonda::after {
+    content: '';
+    position: absolute;
+    width: 22%;
+    height: 22%;
+    background: radial-gradient(circle, #5a4a3a 0%, #3d3228 100%);
+    border-radius: 50%;
+    z-index: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.plano-mesa.forma-redonda::before,
+.pos-plano-mesa.forma-redonda::before {
+    top: -8%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.plano-mesa.forma-redonda::after,
+.pos-plano-mesa.forma-redonda::after {
+    bottom: -8%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Selector de forma (admin + plano) */
+.mesa-forma-picker {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.mesa-forma-opt {
+    flex: 1;
+    min-width: 72px;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    background: #fff;
+    padding: 8px 6px 6px;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.mesa-forma-opt:hover {
+    border-color: #adb5bd;
+    background: #f8f9fa;
+}
+
+.mesa-forma-opt.activa {
+    border-color: #6777ef;
+    background: #eef0ff;
+}
+
+.mesa-forma-preview {
+    display: block;
+    width: 36px;
+    height: 28px;
+    margin: 0 auto 6px;
+    background: linear-gradient(155deg, #e8c887, #7a5520);
+    box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.4), 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.mesa-forma-preview.forma-redonda {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+}
+
+.mesa-forma-preview.forma-cuadrada {
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+}
+
+.mesa-forma-preview.forma-rectangular {
+    width: 40px;
+    height: 26px;
+    border-radius: 4px;
+}
+
+.mesa-forma-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #34395e;
+}
+
+.mesa-forma-badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #e9ecef;
+    color: #495057;
+    font-weight: 600;
+}
+
+.mesa-forma-badge.forma-redonda {
+    background: #fff3e0;
+    color: #e65100;
+}
+
+.mesa-forma-badge.forma-cuadrada {
+    background: #e3f2fd;
+    color: #1565c0;
+}
+
+/* Leyenda formas */
+.plano-leyenda .leyenda-forma-redonda i,
+.pos-plano-leyenda .lg-forma-redonda::before {
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+}
+
+.plano-leyenda .leyenda-forma-cuadrada i {
+    border-radius: 2px;
+}

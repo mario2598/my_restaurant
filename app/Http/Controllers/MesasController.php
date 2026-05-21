@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Schema;
 use App\Traits\SpaceUtil;
 use App\Http\Controllers\SisEstadoController;
 
@@ -458,6 +459,11 @@ class MesasController extends Controller
             $idSucursal = $mesa['sucursal'];
             $numero_mesa = $mesa['numero_mesa'];
             $capacidad = $mesa['capacidad'];
+            $forma = $mesa['forma'] ?? 'rectangular';
+            $formasValidas = ['rectangular', 'cuadrada', 'redonda'];
+            if (!in_array($forma, $formasValidas, true)) {
+                $forma = 'rectangular';
+            }
 
             // Validar que nombre y sucursal no sean nulos
             if (empty($numero_mesa)) {
@@ -494,12 +500,12 @@ class MesasController extends Controller
                 // Actualizar la comanda
                 $updateData = [
                     'numero_mesa' => $numero_mesa,
-                    'capacidad' => $capacidad
+                    'capacidad' => $capacidad,
+                    'forma' => $forma,
                 ];
                 if (array_key_exists('plano_x', $mesa)) {
                     $updateData['plano_x'] = $mesa['plano_x'] ?? null;
                     $updateData['plano_y'] = $mesa['plano_y'] ?? null;
-                    $updateData['forma'] = $mesa['forma'] ?? 'rectangular';
                     $updateData['zona'] = $mesa['zona'] ?? null;
                 }
                 DB::table('mesa')
@@ -519,6 +525,7 @@ class MesasController extends Controller
                         'sucursal' => $idSucursal,
                         'numero_mesa' => $numero_mesa,
                         'capacidad' => $capacidad,
+                        'forma' => $forma,
                         'estado' => SisEstadoController::getIdEstadoByCodGeneral("MESA_DISPONIBLE")
                     ]);
             }
@@ -538,35 +545,66 @@ class MesasController extends Controller
 
     public function eliminarMesa(Request $request)
     {
-        $id = $request->input('id');
+        $id = (int) $request->input('id');
 
         try {
-            if (is_null($id) || $id < 1) {
+            if ($id < 1) {
                 return $this->responseAjaxServerError("El ID de la mesa es obligatorio", []);
             }
 
-            DB::beginTransaction();
-
-            // Obtener la comanda actual para asegurarse de que existe
             $mesaEntity = DB::table('mesa')->where('id', '=', $id)->first();
-
             if ($mesaEntity == null) {
                 return $this->responseAjaxServerError("No se encontró la mesa", []);
             }
 
-            // Eliminar la comanda
+            $pendientes = DB::table('orden')
+                ->leftJoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+                ->where('orden.mesa', '=', $id)
+                ->where('orden.pagado', '=', 0)
+                ->where(function ($q) {
+                    $q->whereNull('sis_estado.cod_general')
+                        ->orWhere('sis_estado.cod_general', '!=', 'ORD_ANULADA');
+                })
+                ->count();
+
+            if ($pendientes > 0) {
+                return $this->responseAjaxServerError(
+                    "No se puede eliminar la mesa {$mesaEntity->numero_mesa}: tiene {$pendientes} orden(es) pendiente(s) de cobro en el sistema. Cóbrelas, anúlelas o quíteles la mesa antes de eliminar.",
+                    []
+                );
+            }
+
+            DB::beginTransaction();
+
+            DB::table('orden')->where('mesa', '=', $id)->update(['mesa' => null]);
+
+            if (Schema::hasTable('cuenta_barra')) {
+                DB::table('cuenta_barra')->where('mesa', '=', $id)->update(['mesa' => null]);
+            }
+
             DB::table('mesa')->where('id', '=', $id)->delete();
 
             DB::commit();
             return $this->responseAjaxSuccess("Mesa eliminada correctamente", "");
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            DB::table('log')->insertGetId([
+                'id' => null,
+                'documento' => 'MesasController',
+                'descripcion' => 'eliminarMesa: ' . $ex->getMessage()
+            ]);
+            return $this->responseAjaxServerError(
+                "No se pudo eliminar la mesa: tiene registros vinculados (órdenes u otros). " . $ex->getMessage(),
+                []
+            );
         } catch (\Exception $ex) {
             DB::rollBack();
             DB::table('log')->insertGetId([
                 'id' => null,
-                'documento' => 'ComandasController',
-                'descripcion' => $ex->getMessage()
+                'documento' => 'MesasController',
+                'descripcion' => 'eliminarMesa: ' . $ex->getMessage()
             ]);
-            return $this->responseAjaxServerError("Error al eliminar la mesa", []);
+            return $this->responseAjaxServerError("Error al eliminar la mesa: " . $ex->getMessage(), []);
         }
     }
 
