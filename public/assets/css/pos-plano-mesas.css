@@ -1,5 +1,5 @@
 #mdl-pos-plano-mesas .modal-dialog {
-    max-width: 960px;
+    max-width: 1020px;
 }
 
 #pos-plano-resumen {
@@ -215,4 +215,131 @@
 
 #pos-plano-mesas .pos-plano-mesa .mesa-plano-superficie {
     border-width: 2px;
+}
+
+.pos-plano-mesa.mesa-seleccionada-mapa {
+    z-index: 30;
+    transform: scale(1.08);
+}
+
+.pos-plano-mesa.mesa-seleccionada-mapa .mesa-plano-superficie {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.55);
+}
+
+.pos-plano-leyenda .lg-seleccion::before {
+    outline: 2px solid #007bff;
+    background: #d4a84b;
+}
+
+.pos-plano-sidebar-panel {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: #fff;
+    max-height: 58vh;
+    overflow-y: auto;
+}
+
+.pos-plano-sidebar-welcome {
+    padding: 1.25rem 1rem;
+    text-align: center;
+}
+
+.pos-plano-welcome-icon {
+    font-size: 2rem;
+    color: #6777ef;
+    margin-bottom: 0.5rem;
+}
+
+.pos-plano-sidebar-header {
+    padding: 0.75rem 1rem;
+    background: linear-gradient(180deg, #f0f3ff 0%, #fff 100%);
+    border-bottom: 1px solid #dee2e6;
+}
+
+.pos-plano-cuentas-titulo {
+    background: #fff8e1;
+    border-bottom: 1px solid #ffe082;
+    font-size: 0.8125rem;
+}
+
+.pos-plano-cuentas-lista {
+    padding-bottom: 0.5rem;
+}
+
+.pos-plano-cuenta-card {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    border-left: 4px solid #ff9800;
+}
+
+.pos-plano-cuenta-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.pos-plano-cuenta-num {
+    display: block;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #212529;
+}
+
+.pos-plano-cuenta-hora {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-left: 6px;
+}
+
+.pos-plano-cuenta-mesa {
+    display: block;
+    font-size: 0.7rem;
+    color: #6c757d;
+    margin-bottom: 2px;
+}
+
+.pos-plano-cuenta-cliente {
+    font-size: 0.8125rem;
+    color: #495057;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pos-plano-cuenta-monto {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #212529;
+    margin-bottom: 8px;
+}
+
+.pos-plano-acciones-mesa {
+    padding: 12px;
+    border-top: 2px solid #e9ecef;
+    background: #f8f9fa;
+    position: sticky;
+    bottom: 0;
+}
+
+.pos-plano-btn-volver {
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
+.pos-plano-btn-volver:hover {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.pos-plano-sin-mesa-block {
+    border-top: 1px dashed #dee2e6;
+    margin-top: 0.5rem;
+    padding-top: 0.75rem;
 }
