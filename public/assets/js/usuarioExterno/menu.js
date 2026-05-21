@@ -3,6 +3,24 @@
  */
 var tipos = [];
 var categoriaAbierta = null;
+var menuIdSucursal = null;
+
+/** Asegura array (en prod JSON a veces llega como objeto). */
+function normalizarTipos(datos) {
+    if (!datos) {
+        return [];
+    }
+    if (Array.isArray(datos)) {
+        return datos;
+    }
+    if (typeof datos === 'object') {
+        return Object.keys(datos)
+            .sort(function (a, b) { return Number(a) - Number(b); })
+            .map(function (k) { return datos[k]; })
+            .filter(function (c) { return c && typeof c === 'object'; });
+    }
+    return [];
+}
 
 var $q = function (sel) { return document.querySelector(sel); };
 var fmtPrecio = function (n) {
@@ -39,6 +57,14 @@ function wireEnlaces() {
 }
 
 function iniciarMenu() {
+    tipos = normalizarTipos(tipos);
+    if (!tipos.length) {
+        var list = $q('#category-list');
+        if (list) {
+            list.innerHTML = '<p class="small" style="color:rgba(244,234,208,0.9);text-align:center;padding:2rem 0;">No hay productos disponibles en el men\u00fa.</p>';
+        }
+        return;
+    }
     wireEnlaces();
     renderDestacados();
     renderListaCategorias();
@@ -78,12 +104,138 @@ function marcarNavCategoriaActiva(idx) {
     });
 }
 
-function cargarTiposGeneral() {
+function sucursalMenuPorDefecto() {
+    var list = window.MENU_SUCURSALES || [];
+    if (list.length) return Number(list[0].id);
+    return 1;
+}
+
+function idSucursalValido(id) {
+    var list = window.MENU_SUCURSALES || [];
+    for (var i = 0; i < list.length; i++) {
+        if (Number(list[i].id) === Number(id)) return true;
+    }
+    return false;
+}
+
+function nombreSucursalPorId(id) {
+    var list = window.MENU_SUCURSALES || [];
+    for (var i = 0; i < list.length; i++) {
+        if (Number(list[i].id) === Number(id)) return list[i].nombre || '';
+    }
+    return '';
+}
+
+function guardarSucursalMenu(id) {
+    try {
+        localStorage.setItem(window.MENU_STORAGE_KEY || 'menu_id_sucursal', String(id));
+    } catch (e) { /* ignore */ }
+}
+
+function leerSucursalGuardada() {
+    try {
+        var v = localStorage.getItem(window.MENU_STORAGE_KEY || 'menu_id_sucursal');
+        return v ? parseInt(v, 10) : 0;
+    } catch (e) {
+        return 0;
+    }
+}
+
+function mostrarOverlaySucursal(show) {
+    var ov = $q('#menu-sucursal-overlay');
+    var shell = $q('#menu-shell');
+    if (ov) {
+        ov.classList.toggle('is-visible', !!show);
+        ov.setAttribute('aria-hidden', show ? 'false' : 'true');
+    }
+    if (shell) shell.classList.toggle('menu-shell--pending', !!show);
+    document.body.classList.toggle('no-scroll', !!show);
+}
+
+function resetPanelMesasMenu() {
+    var contentDiv = document.getElementById('mesas-disponibles-content');
+    if (contentDiv) {
+        delete contentDiv.dataset.loaded;
+        contentDiv.innerHTML = '<p class="small text-muted mb-0">Toque para ver mesas libres</p>';
+    }
+    var panel = document.getElementById('menu-mesas-panel');
+    if (panel) panel.classList.remove('is-open');
+}
+
+function seleccionarSucursalMenu(id, opts) {
+    opts = opts || {};
+    menuIdSucursal = Number(id);
+    if (!idSucursalValido(menuIdSucursal)) return;
+
+    guardarSucursalMenu(menuIdSucursal);
+    mostrarOverlaySucursal(false);
+
+    var btnCambiar = $q('#menu-cambiar-sucursal');
+    if (btnCambiar) btnCambiar.hidden = false;
+
+    var label = $q('#menu-sucursal-label');
+    if (label) label.textContent = nombreSucursalPorId(menuIdSucursal);
+
+    var logo = $q('#menu-logo');
+    if (logo && typeof base_path !== 'undefined') {
+        logo.onerror = function () {
+            if (typeof DEFAULT_IMAGE_URL !== 'undefined') logo.src = DEFAULT_IMAGE_URL;
+        };
+        logo.src = base_path + '/assets/images/sucursales/' + menuIdSucursal + '/logo_sistema.png';
+    }
+
+    resetPanelMesasMenu();
+    if (typeof cerrarCategoria === 'function') cerrarCategoria();
+    if (typeof cerrarDetalle === 'function') cerrarDetalle();
+
+    if (!opts.skipUrl) {
+        try {
+            var u = new URL(window.location.href);
+            u.searchParams.set('sucursal', String(menuIdSucursal));
+            window.history.replaceState({}, '', u);
+        } catch (e) { /* ignore */ }
+    }
+
+    var iniciales = opts.iniciales ? normalizarTipos(opts.iniciales) : [];
+    if (iniciales.length) {
+        tipos = iniciales;
+        iniciarMenu();
+        return;
+    }
+    cargarTiposGeneral(menuIdSucursal);
+}
+
+function configurarSelectorSucursal() {
+    var list = $q('#menu-sucursal-list');
+    if (!list) return;
+    list.querySelectorAll('.menu-sucursal-btn').forEach(function (btn) {
+        btn.onclick = function () {
+            seleccionarSucursalMenu(btn.getAttribute('data-id'));
+        };
+    });
+    var cambiar = $q('#menu-cambiar-sucursal');
+    if (cambiar) {
+        cambiar.onclick = function () {
+            mostrarOverlaySucursal(true);
+        };
+    }
+}
+
+function cargarTiposGeneral(idSucursal) {
+    var id = Number(idSucursal || menuIdSucursal);
+    if (!id || !idSucursalValido(id)) return;
+    menuIdSucursal = id;
+
+    var list = $q('#category-list');
+    if (list) {
+        list.innerHTML = '<p class="small" style="color:rgba(244,234,208,0.9);text-align:center;padding:2rem 0;">Cargando men\u00fa\u2026</p>';
+    }
+
     $.ajax({
         url: base_path + '/usuarioExterno/menuMobile/cargarTiposGeneral',
         type: 'post',
         dataType: 'json',
-        data: { _token: CSRF_TOKEN }
+        data: { _token: CSRF_TOKEN, id_sucursal: menuIdSucursal }
     }).done(function (response) {
         if (!response.estado) {
             if (typeof showError === 'function') {
@@ -91,7 +243,7 @@ function cargarTiposGeneral() {
             }
             return;
         }
-        tipos = response.datos || [];
+        tipos = normalizarTipos(response.datos);
         iniciarMenu();
     }).fail(function () {
         if (typeof showError === 'function') {
@@ -339,12 +491,16 @@ function toggleMesasMenuPanel() {
 function cargarMesasDisponiblesMenu() {
     var contentDiv = document.getElementById('mesas-disponibles-content');
     if (!contentDiv || contentDiv.dataset.loaded === '1') return;
+    if (!menuIdSucursal) {
+        contentDiv.innerHTML = '<p class="small text-muted mb-0">Seleccione una sucursal primero.</p>';
+        return;
+    }
 
     $.ajax({
         url: base_path + '/usuarioExterno/menu/mesas-disponibles',
         type: 'POST',
         dataType: 'json',
-        data: { _token: CSRF_TOKEN }
+        data: { _token: CSRF_TOKEN, id_sucursal: menuIdSucursal }
     }).done(function (response) {
         contentDiv.dataset.loaded = '1';
         if (!response.estado || !response.datos || !response.datos.length) {
@@ -365,10 +521,43 @@ function cargarMesasDisponiblesMenu() {
 }
 
 $(document).ready(function () {
-    if (window.MENU_TIPOS_INICIAL && window.MENU_TIPOS_INICIAL.length) {
-        tipos = window.MENU_TIPOS_INICIAL;
-        iniciarMenu();
+    configurarSelectorSucursal();
+
+    var idInicial = window.MENU_ID_SUCURSAL;
+    if (idInicial == null || idInicial === 'null' || isNaN(Number(idInicial))) {
+        if (window.MENU_REQUIERE_SUCURSAL) {
+            var guardada = leerSucursalGuardada();
+            if (idSucursalValido(guardada)) idInicial = guardada;
+        } else if ((window.MENU_SUCURSALES || []).length === 1) {
+            idInicial = Number(window.MENU_SUCURSALES[0].id);
+        }
     } else {
-        cargarTiposGeneral();
+        idInicial = Number(idInicial);
     }
+
+    if (idInicial && idSucursalValido(idInicial)) {
+        var iniciales = normalizarTipos(window.MENU_TIPOS_INICIAL);
+        var skipUrl = window.MENU_ID_SUCURSAL != null && window.MENU_ID_SUCURSAL !== 'null';
+        if (iniciales.length) {
+            seleccionarSucursalMenu(idInicial, { iniciales: iniciales, skipUrl: skipUrl });
+        } else {
+            seleccionarSucursalMenu(idInicial, { skipUrl: skipUrl });
+        }
+        return;
+    }
+
+    if (window.MENU_REQUIERE_SUCURSAL) {
+        mostrarOverlaySucursal(true);
+        return;
+    }
+
+    var inicialesSolo = normalizarTipos(window.MENU_TIPOS_INICIAL);
+    if (inicialesSolo.length) {
+        tipos = inicialesSolo;
+        menuIdSucursal = sucursalMenuPorDefecto();
+        iniciarMenu();
+        return;
+    }
+    menuIdSucursal = sucursalMenuPorDefecto();
+    cargarTiposGeneral(menuIdSucursal);
 });

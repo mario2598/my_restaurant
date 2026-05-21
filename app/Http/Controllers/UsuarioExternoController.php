@@ -20,14 +20,35 @@ class UsuarioExternoController extends Controller
     {
     }
 
-    public function goMenu()
+    public function goMenu(Request $request)
     {
-        $contro = new FacturacionController();
-        $categorias = $contro->getCategoriasTodosProductos(1);
+        $sucursalesMenu = $this->getSucursalesParaMenu();
+        $idSucursal = $this->resolverIdSucursalMenu($request, $sucursalesMenu);
+        $menuTipos = [];
+        $nombreSucursalActiva = null;
+
+        if ($idSucursal) {
+            $contro = new FacturacionController();
+            $categorias = $contro->getCategoriasTodosProductos($idSucursal);
+            $menuTipos = collect($categorias)->values()->all();
+            foreach ($sucursalesMenu as $s) {
+                if ((int) $s['id'] === (int) $idSucursal) {
+                    $nombreSucursalActiva = $s['nombre'];
+                    break;
+                }
+            }
+        }
+
+        $idLogo = $idSucursal ?: ($sucursalesMenu[0]['id'] ?? 1);
 
         return view('usuarioExterno.menu', [
-            'data' => ['categorias' => $categorias],
-            'logoUrl' => asset(app(LogInController::class)->getLogoSistema(1)),
+            'data' => ['categorias' => $menuTipos],
+            'menuTipos' => $menuTipos,
+            'sucursalesMenu' => $sucursalesMenu,
+            'idSucursalMenu' => $idSucursal,
+            'nombreSucursalActiva' => $nombreSucursalActiva,
+            'mostrarSelectorSucursal' => count($sucursalesMenu) > 1,
+            'logoUrl' => asset(app(LogInController::class)->getLogoSistema($idLogo)),
             'nombreNegocio' => config('app.name', 'Restaurante'),
             'sloganNegocio' => config('app.slogan', ''),
             'siteUrl' => url('/'),
@@ -61,9 +82,14 @@ class UsuarioExternoController extends Controller
 
     public function cargarTiposGeneralMobile(Request $request)
     {
-        $contro = new FacturacionController();
-        $categorias =  $contro->getCategoriasTodosProductos(1);
+        $idSucursal = (int) $request->input('id_sucursal');
+        if (!$this->idSucursalPermitidaMenu($idSucursal)) {
+            return $this->responseAjaxServerError('Seleccione una sucursal válida', []);
+        }
 
+        $contro = new FacturacionController();
+        $categorias = $contro->getCategoriasTodosProductos($idSucursal);
+        $categorias = collect($categorias)->values()->all();
         return $this->responseAjaxSuccess("", $categorias);
     }
 
@@ -120,10 +146,18 @@ class UsuarioExternoController extends Controller
     public function obtenerMesasDisponibles(Request $request)
     {
         try {
-            $idSucursal = $request->input('id_sucursal');
-            
-            if (empty($idSucursal)) {
-                $idSucursal = $this->getUsuarioSucursal();
+            $idSucursal = (int) $request->input('id_sucursal');
+
+            if ($idSucursal < 1) {
+                if (session()->has('usuario')) {
+                    $idSucursal = (int) $this->getUsuarioSucursal();
+                } else {
+                    return $this->responseAjaxServerError('Seleccione una sucursal', []);
+                }
+            }
+
+            if (!$this->idSucursalPermitidaMenu($idSucursal)) {
+                return $this->responseAjaxServerError('Sucursal no válida', []);
             }
 
             $estadoDisponibleId = SisEstadoController::getIdEstadoByCodGeneral('MESA_DISPONIBLE');
@@ -145,5 +179,60 @@ class UsuarioExternoController extends Controller
             ]);
             return $this->responseAjaxServerError("Error al cargar las mesas disponibles: " . $ex->getMessage(), []);
         }
+    }
+
+    /**
+     * Sucursales activas visibles en el menú público (excluye bodegas).
+     */
+    private function getSucursalesParaMenu(): array
+    {
+        $query = DB::table('sucursal')
+            ->where('estado', 'A')
+            ->select('id', 'descripcion')
+            ->orderBy('descripcion', 'asc');
+
+        if (\Illuminate\Support\Facades\Schema::hasColumn('sucursal', 'bodega')) {
+            $query->where(function ($q) {
+                $q->whereNull('bodega')->orWhere('bodega', '<>', 'S');
+            });
+        }
+
+        return $query->get()->map(function ($s) {
+            return [
+                'id' => (int) $s->id,
+                'nombre' => $s->descripcion,
+            ];
+        })->values()->all();
+    }
+
+    private function resolverIdSucursalMenu(Request $request, array $sucursalesMenu): ?int
+    {
+        if (count($sucursalesMenu) === 0) {
+            return null;
+        }
+        if (count($sucursalesMenu) === 1) {
+            return (int) $sucursalesMenu[0]['id'];
+        }
+
+        $id = (int) $request->query('sucursal', 0);
+        if ($id > 0 && $this->idSucursalPermitidaMenu($id, $sucursalesMenu)) {
+            return $id;
+        }
+
+        return null;
+    }
+
+    private function idSucursalPermitidaMenu(int $idSucursal, ?array $sucursalesMenu = null): bool
+    {
+        if ($idSucursal < 1) {
+            return false;
+        }
+        $lista = $sucursalesMenu ?? $this->getSucursalesParaMenu();
+        foreach ($lista as $s) {
+            if ((int) $s['id'] === $idSucursal) {
+                return true;
+            }
+        }
+        return false;
     }
 }
