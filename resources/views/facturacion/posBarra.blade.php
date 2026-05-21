@@ -57,7 +57,10 @@
                             <i class="fas fa-plus"></i> Nueva cuenta
                         </button>
                         <button type="button" class="btn btn-outline-primary btn-block btn-sm mt-2" onclick="abrirMapaMesas('ordenes')">
-                            <i class="fas fa-map"></i> Mapa
+                            <i class="fas fa-map"></i> Mapa por mesa
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-block btn-sm mt-1" onclick="abrirMapaMesas('generales')">
+                            <i class="fas fa-list"></i> Órdenes generales
                         </button>
                     </div>
                     <div id="contAbrirCaja" class="pos-barra-caja-cerrada" style="display:none;">

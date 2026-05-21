@@ -1905,6 +1905,7 @@ class FacturacionController extends Controller
             $idCaja = CajaController::getIdCaja(session('usuario')['id'], $idSucursal);
             $ordenesPorMesa = [];
             $sinMesa = [];
+            $ordenesPendientesTodas = [];
 
             if ($idCaja) {
                 $ordenes = DB::table('orden')
@@ -1923,6 +1924,7 @@ class FacturacionController extends Controller
                         'mesa.numero_mesa'
                     )
                     ->where('orden.cierre_caja', '=', $idCaja)
+                    ->where('orden.pagado', '=', 0)
                     ->where(function ($q) {
                         $q->whereNull('sis_estado.cod_general')
                             ->orWhere('sis_estado.cod_general', '!=', 'ORD_ANULADA');
@@ -1943,7 +1945,9 @@ class FacturacionController extends Controller
                         'nombre_cliente' => $o->nombre_cliente,
                         'fecha_inicio' => $o->fecha_inicio,
                         'estado_codigo' => $o->estado_codigo,
+                        'numero_mesa' => $o->numero_mesa,
                     ];
+                    $ordenesPendientesTodas[] = $item;
                     if ($o->mesa) {
                         if (!isset($ordenesPorMesa[$o->mesa])) {
                             $ordenesPorMesa[$o->mesa] = [];
@@ -1957,6 +1961,7 @@ class FacturacionController extends Controller
 
             $datos['ordenes_por_mesa'] = $ordenesPorMesa;
             $datos['ordenes_sin_mesa'] = $sinMesa;
+            $datos['ordenes_pendientes'] = $ordenesPendientesTodas;
 
             return $this->responseAjaxSuccess("", $datos);
         } catch (\Exception $ex) {

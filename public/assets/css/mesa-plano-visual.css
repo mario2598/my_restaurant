@@ -77,11 +77,6 @@
     box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.5);
 }
 
-.plano-mesa.con-orden-pagada .mesa-plano-superficie,
-.pos-plano-mesa.con-orden-pagada .mesa-plano-superficie {
-    border-color: #17a2b8;
-}
-
 .plano-mesa.mesa-actual .mesa-plano-superficie,
 .pos-plano-mesa.mesa-actual .mesa-plano-superficie {
     border-color: #007bff;
