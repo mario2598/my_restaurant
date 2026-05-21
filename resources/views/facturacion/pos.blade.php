@@ -1754,11 +1754,11 @@
             </button>
         </div>
         <div class="px-3 pt-2 pb-0">
-            <button type="button" class="btn btn-info btn-sm btn-block" onclick="abrirMapaMesas('ordenes')">
-                <i class="fas fa-map-marked-alt"></i> Mapa — órdenes por mesa
+            <button type="button" class="btn btn-info btn-sm btn-block" onclick="abrirMapaMesas('mapa')">
+                <i class="fas fa-map-marked-alt"></i> Mapa del local
             </button>
             <button type="button" class="btn btn-outline-info btn-sm btn-block mt-1" onclick="abrirMapaMesas('generales')">
-                <i class="fas fa-list"></i> Órdenes generales
+                <i class="fas fa-list"></i> Todas las cuentas
             </button>
         </div>
         <div class="panel-body" id="panel-mesas-body">
