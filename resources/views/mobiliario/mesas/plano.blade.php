@@ -21,6 +21,11 @@
                         </div>
                     </div>
                     <div class="card-body">
+                        <div class="alert alert-info py-2 small mb-3">
+                            <i class="fas fa-gamepad"></i>
+                            Las posiciones y zonas de este plano se muestran en el <strong>menú público</strong>
+                            (sala estilo Habbo). Coloque cada mesa en el mapa y use áreas con color para cocina, deck, etc.
+                        </div>
                         <div class="row mb-3">
                             <div class="col-md-4">
                                 <label>Sucursal</label>
