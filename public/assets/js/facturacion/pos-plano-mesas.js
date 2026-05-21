@@ -1,5 +1,5 @@
 /**
- * Mapa de mesas en POS: seleccionar mesa y ver/abrir órdenes por mesa.
+ * Mapa de mesas en POS: seleccionar mesa, órdenes por mesa y listado general (solo pendientes de cobro).
  */
 var posPlanoDatos = null;
 var posPlanoModo = 'seleccionar';
@@ -8,26 +8,48 @@ function abrirMapaMesas(modo) {
     posPlanoModo = modo || 'seleccionar';
     if (posPlanoModo === 'ordenes') {
         $('#tab-pos-plano-ordenes').tab('show');
+    } else if (posPlanoModo === 'generales') {
+        $('#tab-pos-plano-generales').tab('show');
     } else {
         $('#tab-pos-plano-seleccionar').tab('show');
     }
+    actualizarLayoutPlanoPos();
+    actualizarAyudaPlanoPos();
     $('#mdl-pos-plano-mesas').modal('show');
     cargarPlanoPos();
 }
 
 function setModoPlanoPos(modo) {
     posPlanoModo = modo;
+    actualizarLayoutPlanoPos();
     actualizarAyudaPlanoPos();
     if (posPlanoDatos) {
-        renderizarPlanoPos();
+        if (posPlanoModo !== 'generales') {
+            renderizarPlanoPos();
+        }
         renderizarResumenPlanoPos();
+        if (posPlanoModo === 'generales') {
+            renderizarListaGeneralesPos();
+        }
     }
 }
 
+function actualizarLayoutPlanoPos() {
+    var esGeneral = posPlanoModo === 'generales';
+    $('#pos-plano-layout-mapa').toggleClass('d-none', esGeneral);
+    $('#pos-plano-layout-generales').toggleClass('d-none', !esGeneral);
+    $('#pos-plano-ayuda').toggleClass('d-none', esGeneral);
+}
+
 function actualizarAyudaPlanoPos() {
-    var txt = posPlanoModo === 'ordenes'
-        ? 'Mesas con borde naranja tienen cuenta por cobrar. Toque la mesa y elija la orden en el panel derecho. El número en la esquina indica cuántas órdenes hay en esta caja.'
-        : 'Toque una mesa libre (verde) para asignarla a la orden actual. Si la mesa ya tiene órdenes, verá el detalle al tocarla.';
+    var txt;
+    if (posPlanoModo === 'ordenes') {
+        txt = 'Mesas con borde naranja tienen cuenta por cobrar. Toque la mesa y elija la orden en el panel derecho.';
+    } else if (posPlanoModo === 'seleccionar') {
+        txt = 'Toque una mesa libre (verde) para asignarla a la orden actual. Si la mesa ya tiene cuentas pendientes, use la pestaña «Órdenes por mesa».';
+    } else {
+        txt = '';
+    }
     $('#pos-plano-ayuda').text(txt);
 }
 
@@ -36,28 +58,32 @@ function getOrdenesMesa(mesaId) {
     return posPlanoDatos.ordenes_por_mesa[mesaId] || posPlanoDatos.ordenes_por_mesa[String(mesaId)] || [];
 }
 
+function getOrdenesPendientesPlano() {
+    if (!posPlanoDatos) return [];
+    if (posPlanoDatos.ordenes_pendientes && posPlanoDatos.ordenes_pendientes.length) {
+        return posPlanoDatos.ordenes_pendientes;
+    }
+    var todas = [];
+    var porMesa = posPlanoDatos.ordenes_por_mesa || {};
+    Object.keys(porMesa).forEach(function (mesaId) {
+        (porMesa[mesaId] || []).forEach(function (o) { todas.push(o); });
+    });
+    (posPlanoDatos.ordenes_sin_mesa || []).forEach(function (o) { todas.push(o); });
+    return todas;
+}
+
 function contarOrdenesPlano() {
-    var pendientes = 0;
-    var pagadas = 0;
+    var pendientes = getOrdenesPendientesPlano().length;
     var mesasConPendiente = 0;
     var porMesa = posPlanoDatos.ordenes_por_mesa || {};
-
     Object.keys(porMesa).forEach(function (mesaId) {
-        var lista = porMesa[mesaId] || [];
-        var tienePend = false;
-        lista.forEach(function (o) {
-            if (o.pagado === 0) {
-                pendientes++;
-                tienePend = true;
-            } else {
-                pagadas++;
-            }
-        });
-        if (tienePend) mesasConPendiente++;
+        if ((porMesa[mesaId] || []).length > 0) mesasConPendiente++;
     });
-
-    var sinMesa = (posPlanoDatos.ordenes_sin_mesa || []).length;
-    return { pendientes: pendientes, pagadas: pagadas, mesasConPendiente: mesasConPendiente, sinMesa: sinMesa };
+    return {
+        pendientes: pendientes,
+        mesasConPendiente: mesasConPendiente,
+        sinMesa: (posPlanoDatos.ordenes_sin_mesa || []).length
+    };
 }
 
 function renderizarResumenPlanoPos() {
@@ -67,27 +93,22 @@ function renderizarResumenPlanoPos() {
         return;
     }
     var c = contarOrdenesPlano();
-    if (c.pendientes === 0 && c.pagadas === 0 && c.sinMesa === 0) {
+    if (c.pendientes === 0) {
         $box.addClass('d-none');
         return;
     }
     var html = '<strong>Caja actual:</strong> ';
-    var totalMesas = (posPlanoDatos.mesas || []).length;
-    html += '<span class="text-primary">' + totalMesas + ' mesa(s)</span> en el mapa';
-    if (c.pendientes > 0) {
-        html += ' · <span class="text-warning">' + c.pendientes + ' orden(es) por cobrar</span>';
+    html += '<span class="text-warning">' + c.pendientes + ' cuenta(s) por cobrar</span>';
+    if (c.mesasConPendiente > 0) {
         html += ' en <span class="text-warning">' + c.mesasConPendiente + ' mesa(s)</span>';
-    } else {
-        html += ' · sin cuentas pendientes';
-    }
-    if (c.pagadas > 0) {
-        html += ' · <span class="text-success">' + c.pagadas + ' ya pagada(s)</span>';
     }
     if (c.sinMesa > 0) {
-        html += ' · <span class="text-info">' + c.sinMesa + ' para llevar / sin mesa</span>';
+        html += ' · <span class="text-info">' + c.sinMesa + ' sin mesa / para llevar</span>';
     }
     if (posPlanoModo === 'ordenes') {
-        html += '<br><span class="text-muted">Toque una mesa naranja para abrir su cuenta.</span>';
+        html += '<br><span class="text-muted">Solo se muestran órdenes no pagadas.</span>';
+    } else if (posPlanoModo === 'generales') {
+        html += '<br><span class="text-muted">Listado de todas las cuentas pendientes de esta caja.</span>';
     }
     $box.html(html).removeClass('d-none');
 }
@@ -95,6 +116,7 @@ function renderizarResumenPlanoPos() {
 function cargarPlanoPos() {
     $('#pos-plano-zonas, #pos-plano-mesas').html('');
     $('#pos-plano-sidebar').html('<p class="text-muted small p-2"><i class="fas fa-spinner fa-spin"></i> Cargando mapa…</p>');
+    $('#pos-plano-lista-generales').html('<p class="text-muted small mb-0"><i class="fas fa-spinner fa-spin"></i> Cargando…</p>');
     $.ajax({
         url: base_path + '/facturacion/mesas/cargar-plano',
         type: 'get',
@@ -110,15 +132,19 @@ function cargarPlanoPos() {
         var al = posPlanoDatos.alto_referencia || 150;
         $('#pos-plano-canvas').css('aspect-ratio', ar + ' / ' + al);
         renderizarZonasPos(posPlanoDatos.zonas || []);
-        renderizarPlanoPos();
+        actualizarLayoutPlanoPos();
+        if (posPlanoModo !== 'generales') {
+            renderizarPlanoPos();
+        }
         renderizarResumenPlanoPos();
         actualizarAyudaPlanoPos();
-        if (!mesas.length) {
+        renderizarListaGeneralesPos();
+        if (!mesas.length && posPlanoModo !== 'generales') {
             $('#pos-plano-sidebar').html(
                 '<p class="text-warning small p-2 mb-0"><i class="fas fa-exclamation-triangle"></i> '
                 + 'No hay mesas en esta sucursal. Créelas en Mobiliario → Administrar mesas y ubíquelas en el plano.</p>'
             );
-        } else {
+        } else if (posPlanoModo !== 'generales') {
             renderizarSidebarPos(null);
         }
     }).fail(function (jqXHR) {
@@ -128,6 +154,7 @@ function cargarPlanoPos() {
         }
         showError(msg + ' Configure el plano en Mobiliario → Plano de mesas.');
         $('#pos-plano-sidebar').html('<p class="text-danger small p-2">' + escHtmlPos(msg) + '</p>');
+        $('#pos-plano-lista-generales').html('<p class="text-danger small mb-0">' + escHtmlPos(msg) + '</p>');
     });
 }
 
@@ -147,26 +174,21 @@ function tienePosicionPlano(m) {
 }
 
 function resumenOrdenesMesa(ordenes) {
-    var pend = ordenes.filter(function (o) { return o.pagado === 0; });
-    var pag = ordenes.filter(function (o) { return o.pagado === 1; });
-    var saldoPend = pend.reduce(function (s, o) { return s + (o.saldo != null ? o.saldo : o.total || 0); }, 0);
-    return { pendientes: pend.length, pagadas: pag.length, saldoPend: saldoPend };
+    var saldoPend = ordenes.reduce(function (s, o) {
+        return s + (o.saldo != null ? o.saldo : o.total || 0);
+    }, 0);
+    return { pendientes: ordenes.length, saldoPend: saldoPend };
 }
 
 function tooltipOrdenesMesa(m, ordenes) {
     if (!ordenes.length) {
-        return 'Mesa ' + m.numero_mesa + ' — sin órdenes en esta caja';
+        return 'Mesa ' + m.numero_mesa + ' — libre en esta caja';
     }
     var r = resumenOrdenesMesa(ordenes);
     var lines = ['Mesa ' + m.numero_mesa];
-    if (r.pendientes) {
-        lines.push(r.pendientes + ' pendiente(s) — saldo ₡' + r.saldoPend.toLocaleString('es-CR'));
-    }
-    if (r.pagadas) {
-        lines.push(r.pagadas + ' pagada(s)');
-    }
+    lines.push(r.pendientes + ' por cobrar — saldo ₡' + r.saldoPend.toLocaleString('es-CR'));
     ordenes.slice(0, 4).forEach(function (o) {
-        lines.push('#' + o.numero_orden + ' ' + etiquetaEstadoOrden(o) + ' ₡' + (o.total || 0).toLocaleString('es-CR'));
+        lines.push('#' + o.numero_orden + ' ' + etiquetaEstadoOrden(o) + ' ₡' + (o.saldo || o.total || 0).toLocaleString('es-CR'));
     });
     if (ordenes.length > 4) {
         lines.push('… y ' + (ordenes.length - 4) + ' más');
@@ -201,27 +223,28 @@ function renderizarPlanoPos() {
         var extras = [];
         extras.push(m.estado_codigo === 'MESA_OCUPADA' ? 'ocupada' : 'disponible');
         if (res.pendientes > 0) extras.push('con-orden-pendiente');
-        else if (res.pagadas > 0) extras.push('con-orden-pagada');
         if (String(m.id) === String(mesaActual) && mesaActual !== '-1') extras.push('mesa-actual');
 
         var clases = ['pos-plano-mesa', 'forma-' + forma].concat(extras);
         var badge = '';
-        if (ordenes.length > 0) {
-            var badgeTxt = res.pendientes > 0 ? res.pendientes : ordenes.length;
-            var badgeCls = res.pendientes > 0 ? 'pos-plano-mesa-badge pendiente' : 'pos-plano-mesa-badge pagada';
-            badge = '<span class="' + badgeCls + '" title="' + escAttrPos(tooltipOrdenesMesa(m, ordenes)) + '">' + badgeTxt + '</span>';
+        if (res.pendientes > 0) {
+            badge = '<span class="pos-plano-mesa-badge pendiente" title="' + escAttrPos(tooltipOrdenesMesa(m, ordenes)) + '">'
+                + res.pendientes + '</span>';
         }
 
         var hint = res.pendientes > 0
             ? '<span class="pos-plano-mesa-hint">₡' + Math.round(res.saldoPend).toLocaleString('es-CR') + '</span>'
             : '<span class="pos-plano-mesa-hint">' + (m.capacidad || 0) + ' p.</span>';
 
+        var estiloFn = typeof estiloPosicionMesaPos === 'function' ? estiloPosicionMesaPos : estiloPosicionMesa;
+        var etiqueta = typeof etiquetaCortaMesa === 'function' ? etiquetaCortaMesa(m.numero_mesa) : m.numero_mesa;
+
         html += '<div class="' + clases.join(' ') + '" data-mesa-id="' + m.id + '" data-forma="' + forma + '"'
-            + ' style="' + estiloPosicionMesa(forma, x, y, w, h) + '"'
+            + ' style="' + estiloFn(forma, x, y, w, h) + '"'
             + ' title="' + escAttrPos(tooltipOrdenesMesa(m, ordenes)) + '">'
             + badge
             + '<span class="mesa-plano-superficie" aria-hidden="true"></span>'
-            + '<span class="pos-plano-mesa-num">' + escHtmlPos(m.numero_mesa) + '</span>'
+            + '<span class="pos-plano-mesa-num">' + escHtmlPos(etiqueta) + '</span>'
             + hint
             + '</div>';
     });
@@ -240,24 +263,19 @@ function onClickMesaPlanoPos() {
 
     if (posPlanoModo === 'seleccionar') {
         if (ordenes.length > 0) {
-            var res = resumenOrdenesMesa(ordenes);
-            if (res.pendientes > 0) {
-                showError('Mesa ' + mesa.numero_mesa + ' tiene ' + res.pendientes + ' cuenta(s) pendiente(s). Use la pestaña «Ver órdenes por mesa» para abrirlas, o asigne otra mesa.');
-                return;
-            }
+            showError('Mesa ' + mesa.numero_mesa + ' tiene ' + ordenes.length + ' cuenta(s) por cobrar. Use «Órdenes por mesa» para abrirlas.');
+            return;
         }
         seleccionarMesaDesdeMapa(mesaId);
         return;
     }
 
     if (ordenes.length === 0) {
-        showError('Mesa ' + mesa.numero_mesa + ' no tiene órdenes en la caja abierta.');
+        showError('Mesa ' + mesa.numero_mesa + ' no tiene cuentas pendientes en esta caja.');
         return;
     }
-    var pendientes = ordenes.filter(function (o) { return o.pagado === 0; });
-    var abrir = pendientes.length ? pendientes : ordenes;
-    if (abrir.length === 1) {
-        abrirOrdenDesdeMapa(abrir[0].id);
+    if (ordenes.length === 1) {
+        abrirOrdenDesdeMapa(ordenes[0].id);
     }
 }
 
@@ -288,6 +306,28 @@ function abrirOrdenDesdeMapa(idOrden) {
     }
 }
 
+function renderizarListaGeneralesPos() {
+    var $lista = $('#pos-plano-lista-generales');
+    if (!$lista.length) return;
+    if (!posPlanoDatos) {
+        $lista.html('<p class="text-muted small mb-0">Sin datos.</p>');
+        return;
+    }
+    var ordenes = getOrdenesPendientesPlano();
+    if (!ordenes.length) {
+        $lista.html('<p class="text-muted small mb-0"><i class="fas fa-check-circle text-success"></i> No hay cuentas pendientes de cobro en esta caja.</p>');
+        return;
+    }
+    var html = '<p class="small font-weight-bold mb-2">' + ordenes.length + ' cuenta(s) por cobrar — toque para abrir</p>';
+    ordenes.forEach(function (o) {
+        html += ordenItemHtml(o, true);
+    });
+    $lista.html(html);
+    $lista.find('.pos-plano-orden-item').on('click', function () {
+        abrirOrdenDesdeMapa($(this).data('orden-id'));
+    });
+}
+
 function renderizarSidebarPos(mesa, ordenes) {
     var $sb = $('#pos-plano-sidebar');
     ordenes = ordenes || [];
@@ -296,7 +336,7 @@ function renderizarSidebarPos(mesa, ordenes) {
         var sinMesa = (posPlanoDatos && posPlanoDatos.ordenes_sin_mesa) || [];
         var html = '<p class="small text-muted px-2 mb-2">Toque una mesa en el mapa.</p>';
         if (sinMesa.length > 0) {
-            html += '<p class="small font-weight-bold px-2 mb-1 text-info"><i class="fas fa-shopping-bag"></i> Para llevar / sin mesa (' + sinMesa.length + ')</p>';
+            html += '<p class="small font-weight-bold px-2 mb-1 text-info"><i class="fas fa-shopping-bag"></i> Sin mesa (' + sinMesa.length + ')</p>';
             sinMesa.forEach(function (o) {
                 html += ordenItemHtml(o);
             });
@@ -315,17 +355,11 @@ function renderizarSidebarPos(mesa, ordenes) {
         + escHtmlPos(mesa.estado_nombre || '') + '</span></p>';
 
     if (ordenes.length) {
-        titulo += '<p class="small mb-2">';
-        if (res.pendientes) {
-            titulo += '<span class="badge badge-warning">' + res.pendientes + ' por cobrar</span> ';
-            titulo += '<span class="text-muted">Saldo ₡' + res.saldoPend.toLocaleString('es-CR') + '</span>';
-        }
-        if (res.pagadas) {
-            titulo += ' <span class="badge badge-success">' + res.pagadas + ' pagada(s)</span>';
-        }
-        titulo += '</p>';
+        titulo += '<p class="small mb-2">'
+            + '<span class="badge badge-warning">' + res.pendientes + ' por cobrar</span> '
+            + '<span class="text-muted">Saldo ₡' + res.saldoPend.toLocaleString('es-CR') + '</span></p>';
     } else {
-        titulo += '<p class="text-muted small mb-2">Sin órdenes en la caja actual.</p>';
+        titulo += '<p class="text-muted small mb-2">Sin cuentas pendientes en esta caja.</p>';
     }
     titulo += '</div>';
 
@@ -335,21 +369,18 @@ function renderizarSidebarPos(mesa, ordenes) {
             + '<button type="button" class="btn btn-primary btn-sm btn-block" onclick="seleccionarMesaDesdeMapa(' + mesa.id + ')">'
             + '<i class="fas fa-check"></i> Usar esta mesa en la orden</button>';
         if (ordenes.length) {
-            body += '<p class="small text-muted mt-2 mb-1">Órdenes en esta caja:</p>' + ordenes.map(ordenItemHtml).join('');
+            body += '<p class="small text-muted mt-2 mb-1">Cuentas pendientes:</p>' + ordenes.map(function (o) { return ordenItemHtml(o); }).join('');
         }
         body += '</div>';
         $sb.html(body);
     } else {
         if (!ordenes.length) {
-            $sb.html(titulo + '<p class="text-muted small px-2">Elija otra mesa o cree una orden en el POS.</p>');
+            $sb.html(titulo + '<p class="text-muted small px-2">Elija otra mesa con cuenta pendiente.</p>');
             return;
         }
-        var pendientes = ordenes.filter(function (o) { return o.pagado === 0; });
-        var lista = pendientes.length ? pendientes : ordenes;
-        var hint = pendientes.length
-            ? '<p class="small px-2 mb-1"><strong>Toque una orden para abrirla y cobrar:</strong></p>'
-            : '<p class="small px-2 mb-1 text-muted">Solo hay órdenes ya pagadas en esta mesa:</p>';
-        $sb.html(titulo + hint + '<div class="px-2 pb-2">' + lista.map(ordenItemHtml).join('') + '</div>');
+        $sb.html(titulo
+            + '<p class="small px-2 mb-1"><strong>Toque una orden para abrirla:</strong></p>'
+            + '<div class="px-2 pb-2">' + ordenes.map(function (o) { return ordenItemHtml(o); }).join('') + '</div>');
     }
 
     $sb.find('.pos-plano-orden-item').on('click', function () {
@@ -358,7 +389,6 @@ function renderizarSidebarPos(mesa, ordenes) {
 }
 
 function etiquetaEstadoOrden(o) {
-    if (o.pagado === 1) return 'Pagada';
     var saldo = o.saldo != null ? o.saldo : (o.total || 0) - (o.mto_pagado || 0);
     if ((o.mto_pagado || 0) > 0 && saldo > 0.01) {
         return 'Pago parcial';
@@ -377,19 +407,24 @@ function formatoHoraOrden(fecha) {
     }
 }
 
-function ordenItemHtml(o) {
-    var cls = o.pagado === 0 ? 'pendiente' : 'pagada';
+function ordenItemHtml(o, conMesa) {
     var estado = etiquetaEstadoOrden(o);
     var hora = formatoHoraOrden(o.fecha_inicio);
-    var monto = o.pagado === 0 && o.saldo > 0 ? o.saldo : (o.total || 0);
-    var montoLabel = o.pagado === 0 && (o.mto_pagado || 0) > 0
+    var monto = o.saldo > 0 ? o.saldo : (o.total || 0);
+    var montoLabel = (o.mto_pagado || 0) > 0
         ? 'Saldo ₡' + monto.toLocaleString('es-CR')
         : '₡' + monto.toLocaleString('es-CR');
+    var mesaTxt = '';
+    if (conMesa) {
+        mesaTxt = o.numero_mesa
+            ? '<span class="badge badge-secondary mr-1">Mesa ' + escHtmlPos(o.numero_mesa) + '</span>'
+            : '<span class="badge badge-info mr-1">Sin mesa</span>';
+    }
 
-    return '<div class="pos-plano-orden-item ' + cls + '" data-orden-id="' + o.id + '">'
-        + '<div class="d-flex justify-content-between align-items-start">'
-        + '<strong>#' + escHtmlPos(o.numero_orden) + '</strong>'
-        + '<span class="badge badge-' + (o.pagado === 0 ? 'warning' : 'success') + '">' + estado + '</span>'
+    return '<div class="pos-plano-orden-item pendiente" data-orden-id="' + o.id + '">'
+        + '<div class="d-flex justify-content-between align-items-start flex-wrap">'
+        + '<div>' + mesaTxt + '<strong>#' + escHtmlPos(o.numero_orden) + '</strong></div>'
+        + '<span class="badge badge-warning">' + estado + '</span>'
         + '</div>'
         + '<div class="text-truncate">' + escHtmlPos(o.nombre_cliente || 'Sin nombre') + '</div>'
         + '<div class="d-flex justify-content-between small text-muted mt-1">'
@@ -413,5 +448,8 @@ $(document).ready(function () {
     });
     $('a[data-toggle="tab"][href="#pos-plano-tab-seleccionar"]').on('shown.bs.tab', function () {
         setModoPlanoPos('seleccionar');
+    });
+    $('a[data-toggle="tab"][href="#pos-plano-tab-generales"]').on('shown.bs.tab', function () {
+        setModoPlanoPos('generales');
     });
 });

@@ -1755,7 +1755,10 @@
         </div>
         <div class="px-3 pt-2 pb-0">
             <button type="button" class="btn btn-info btn-sm btn-block" onclick="abrirMapaMesas('ordenes')">
-                <i class="fas fa-map-marked-alt"></i> Mapa — ver órdenes
+                <i class="fas fa-map-marked-alt"></i> Mapa — órdenes por mesa
+            </button>
+            <button type="button" class="btn btn-outline-info btn-sm btn-block mt-1" onclick="abrirMapaMesas('generales')">
+                <i class="fas fa-list"></i> Órdenes generales
             </button>
         </div>
         <div class="panel-body" id="panel-mesas-body">

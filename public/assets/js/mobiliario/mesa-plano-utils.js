@@ -35,6 +35,27 @@ function estiloPosicionMesa(forma, x, y, w, h) {
     return s;
 }
 
+/** Vista POS: limita % para evitar mesas gigantes o texto cortado. */
+function estiloPosicionMesaPos(forma, x, y, w, h) {
+    w = parseFloat(w) || 7;
+    h = parseFloat(h) || 7;
+    var maxCuad = 11;
+    var maxW = 12;
+    var maxH = 10;
+    if (esFormaCuadradaVisual(forma)) {
+        var tam = Math.min(Math.max(w, h), maxCuad);
+        return estiloPosicionMesa(forma, x, y, tam, tam);
+    }
+    return estiloPosicionMesa(forma, x, y, Math.min(w, maxW), Math.min(h, maxH));
+}
+
+function etiquetaCortaMesa(numero, maxLen) {
+    var s = String(numero == null ? '' : numero);
+    maxLen = maxLen || 14;
+    if (s.length <= maxLen) return s;
+    return s.substring(0, maxLen - 1) + '\u2026';
+}
+
 function etiquetaFormaMesa(forma) {
     if (forma === 'redonda') return 'Redonda';
     if (forma === 'cuadrada') return 'Cuadrada';

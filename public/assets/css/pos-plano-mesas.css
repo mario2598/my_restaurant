@@ -132,7 +132,6 @@
 .pos-plano-leyenda .lg-disponible::before,
 .pos-plano-leyenda .lg-ocupada::before,
 .pos-plano-leyenda .lg-pendiente::before,
-.pos-plano-leyenda .lg-pagada::before,
 .pos-plano-leyenda .lg-actual::before {
     background: linear-gradient(155deg, #e8c887, #7a5520);
 }
@@ -153,11 +152,6 @@
 
 .pos-plano-leyenda .lg-forma-redonda::before {
     border-radius: 50%;
-}
-
-.pos-plano-leyenda .lg-pagada::before {
-    background: #a67c2a;
-    border: 2px solid #17a2b8;
 }
 
 .pos-plano-leyenda .lg-actual::before {
@@ -194,6 +188,31 @@
     border-left: 4px solid #ff9800;
 }
 
-.pos-plano-orden-item.pagada {
-    border-left: 4px solid #28a745;
+#pos-plano-lista-generales .pos-plano-orden-item {
+    margin-bottom: 8px;
+}
+
+#pos-plano-mesas .pos-plano-mesa {
+    overflow: hidden;
+    min-width: 24px;
+    min-height: 24px;
+}
+
+#pos-plano-mesas .pos-plano-mesa .pos-plano-mesa-num,
+#pos-plano-mesas .pos-plano-mesa .pos-plano-mesa-hint {
+    max-width: 92%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+    padding: 0 2px;
+    box-sizing: border-box;
+}
+
+#pos-plano-mesas .pos-plano-mesa.forma-rectangular .pos-plano-mesa-num {
+    font-size: 9px;
+}
+
+#pos-plano-mesas .pos-plano-mesa .mesa-plano-superficie {
+    border-width: 2px;
 }
