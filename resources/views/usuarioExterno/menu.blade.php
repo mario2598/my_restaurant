@@ -3,10 +3,11 @@
 @section('styles')
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:wght@500;600&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:wght@500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('assets/css/menu-digital.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/menu-digital-responsive.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/menu-plano-habbo.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/mesa-plano-visual.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/menu-plano-publico.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         body.menu-digital-page .loader,
@@ -91,28 +92,50 @@
 
             <div class="menu-body">
                 <div class="menu-body__main">
-                    <div class="section-head menu-section-head" data-menu-section="destacados">
+                    <div class="section-head menu-section-head">
                         <h2 id="featured-head">Destacados</h2>
                     </div>
                     <div class="featured" id="featured"></div>
 
-                    <div class="section-head menu-section-head" id="search-results-head" hidden>
-                        <h2>Resultados de búsqueda</h2>
-                    </div>
-
-                    <div class="section-head menu-section-head" data-menu-section="categorias">
+                    <div class="section-head menu-section-head">
                         <h2>Categorías</h2>
                         <span class="menu-section-hint d-none d-md-inline">Elija una sección</span>
                     </div>
                     <div class="category-list" id="category-list"></div>
 
-                    <div class="menu-mesas-panel" id="menu-mesas-panel" data-menu-section="mesas">
+                    <div id="search-results-block" class="search-results-block" hidden>
+                        <div class="section-head menu-section-head">
+                            <h2>Resultados</h2>
+                            <span id="search-results-count"></span>
+                        </div>
+                        <div class="search-results-list" id="search-results"></div>
+                    </div>
+
+                    <div class="menu-mesas-panel" id="menu-mesas-panel">
                         <div class="menu-mesas-panel__head" onclick="toggleMesasMenuPanel()">
-                            <span><i class="fas fa-gamepad"></i> Sala de mesas</span>
+                            <span><i class="fas fa-map"></i> Mapa del local</span>
+                            <span class="menu-mesas-panel__badge" id="menu-mesas-badge" hidden></span>
                             <i class="fas fa-chevron-down" id="menu-mesas-chevron"></i>
                         </div>
                         <div class="menu-mesas-panel__content" id="mesas-disponibles-content">
-                            <p class="menu-mesas-placeholder small text-muted mb-0">Toque para ver el mapa de mesas libres</p>
+                            <p class="menu-plano-hint">Plano de la sucursal — mesas libres resaltadas</p>
+                            <div class="menu-plano-leyenda" aria-hidden="true">
+                                <span><i class="leyenda-dot disponible"></i> Libre</span>
+                                <span><i class="leyenda-dot ocupada"></i> Ocupada</span>
+                            </div>
+                            <div class="menu-plano-stage" id="menu-plano-stage" hidden>
+                                <div class="menu-plano-canvas" id="menu-plano-canvas">
+                                    <div id="menu-plano-zonas"></div>
+                                    <div id="menu-plano-mesas"></div>
+                                </div>
+                                <p class="menu-plano-ref" id="menu-plano-ref"></p>
+                            </div>
+                            <div id="menu-plano-loading" class="menu-plano-loading" hidden>
+                                <i class="fas fa-spinner fa-spin"></i> Cargando mapa…
+                            </div>
+                            <div id="menu-plano-empty" class="menu-plano-empty" hidden>
+                                <p class="small mb-0">No hay mesas configuradas para esta sucursal.</p>
+                            </div>
                         </div>
                     </div>
 
@@ -127,7 +150,7 @@
                     </div>
                 </div>
 
-                <aside class="menu-body__aside" id="menu-sidebar" data-menu-section="nav" aria-label="Navegación por categorías">
+                <aside class="menu-body__aside" id="menu-sidebar" aria-label="Navegación por categorías">
                     <p class="menu-body__aside-title">Categorías</p>
                     <ul class="menu-nav-cats" id="menu-nav-cats"></ul>
                 </aside>
@@ -177,6 +200,7 @@
         window.MENU_TIPOS_INICIAL = @json($menuTipos ?? []);
         window.MENU_STORAGE_KEY = 'menu_id_sucursal';
     </script>
-    <script src="{{ asset('assets/js/usuarioExterno/menu-plano.js') }}"></script>
+    <script src="{{ asset('assets/js/mobiliario/mesa-plano-utils.js') }}"></script>
+    <script src="{{ asset('assets/js/usuarioExterno/menu-plano-publico.js') }}"></script>
     <script src="{{ asset('assets/js/usuarioExterno/menu.js') }}"></script>
 @endsection
