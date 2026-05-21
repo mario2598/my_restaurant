@@ -113,43 +113,9 @@
                         </div>
                     </div>
 
-                    <!-- Formas de pago -->
-                    <div class="row mb-3">
-                        <div class="col-12 col-md-4 mb-3">
-                            <label for="monto_tarjeta">Monto Tarjeta (â‚¡)</label>
-                            <input type="number" class="form-control" step="any" id="monto_tarjeta"
-                                name="monto_tarjeta" placeholder="0.00" onkeyup="enterCampoPago(event)"
-                                min="0">
-                            <button type="button" class="btn btn-primary btn-block mt-2" id="btnPagoTarjeta"
-                                onclick="verificarAbrirModalPagoTarjeta()">
-                                Pagar Todo con Tarjeta
-                            </button>
-                        </div>
-                        <div class="col-12 col-md-4 mb-3">
-                            <label for="monto_efectivo">Monto Efectivo (â‚¡)</label>
-                            <input type="number" class="form-control" step="any" id="monto_efectivo"
-                                name="monto_efectivo" placeholder="0.00" onkeyup="enterCampoPago(event)"
-                                min="0">
-                            <button type="button" class="btn btn-primary btn-block mt-2" id="btnPagoEfectivo"
-                                onclick="verificarAbrirModalPagoEfectivo()">
-                                Pagar Todo con Efectivo
-                            </button>
-                        </div>
-                        <div class="col-12 col-md-4 mb-3">
-                            <label for="monto_sinpe">Monto Sinpe (â‚¡)</label>
-                            <input type="number" class="form-control" step="any" id="monto_sinpe"
-                                name="monto_sinpe" placeholder="0.00" onkeyup="enterCampoPago(event)"
-                                min="0">
-                            <button type="button" class="btn btn-primary btn-block mt-2" id="btnPagoSinpe"
-                                onclick="verificarAbrirModalPagoSinpe()">
-                                Pagar Todo con Sinpe
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Moneda / tipo de cambio (tiquete y pago_orden); TC se toma del Ãºltimo registro en sis_tipo_cambio (base = 1). -->
-                    <div class="row mb-3 border-top pt-3">
-                        <div class="col-12 col-md-6 mb-3">
+                    <!-- Moneda / tipo de cambio -->
+                    <div class="row mb-2 border-top pt-3">
+                        <div class="col-12 col-md-5 mb-3">
                             <label for="pos_moneda_factura_id">Moneda del cobro</label>
                             <select class="form-control" id="pos_moneda_factura_id" name="pos_moneda_factura_id">
                                 @foreach ($data['monedasFacturaPos'] ?? [] as $mf)
@@ -164,18 +130,141 @@
                                         data-tc="{{ $tcAttr }}">{{ $mf->simbolo }} {{ $mf->nombre }} ({{ $mf->cod_general }})</option>
                                 @endforeach
                             </select>
-                            <small class="text-muted">El tipo de cambio se carga automÃ¡ticamente desde la tabla vigente (moneda base: TC = 1).</small>
                         </div>
-                        <div class="col-12 col-md-6 mb-3">
-                            <label>Tipo de cambio aplicado</label>
+                        <div class="col-12 col-md-4 mb-3">
+                            <label for="pos_tipo_cambio_edit">Tipo de cambio (₡ por 1 unidad)</label>
+                            <input type="number" class="form-control" id="pos_tipo_cambio_edit" step="0.000001" min="0.000001"
+                                placeholder="Ej. 520" disabled>
                             <input type="hidden" id="pos_tipo_cambio_snapshot" name="pos_tipo_cambio_snapshot" value="">
-                            <p class="form-control mb-0 bg-light" id="pos_tc_vigente_display" style="min-height: 38px; line-height: 38px;">â€”</p>
-                            <small class="text-muted">Unidades de moneda base por <strong>1</strong> unidad de la moneda elegida.</small>
+                            <small class="text-muted" id="pos_tc_ayuda">Moneda base: TC = 1. Si cambia el TC en otra moneda, se guarda en BD automáticamente.</small>
+                        </div>
+                        <div class="col-12 col-md-3 mb-3 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-secondary btn-sm btn-block" id="pos_btn_restaurar_tc"
+                                onclick="restaurarTipoCambioPosBd()" style="display:none;">
+                                <i class="fas fa-undo"></i> TC de BD
+                            </button>
                         </div>
                     </div>
                     <div class="col-12 mb-2" id="pos_aviso_solo_efectivo" style="display: none;">
                         <div class="alert alert-info py-2 mb-0 small">
-                            Moneda distinta de la base: el cobro solo puede hacerse en <strong>efectivo</strong> (tarjeta y SINPE no estÃ¡n disponibles para esta moneda).
+                            Cobro en moneda extranjera: solo <strong>efectivo</strong>. Indique cuánto recibió; el vuelto se calcula automáticamente.
+                        </div>
+                    </div>
+                    <div class="col-12 mb-3" id="pos_cobro_extranjero_efectivo" style="display: none;">
+                        <div class="card border-warning">
+                            <div class="card-body py-2">
+                                <h6 class="mb-2"><i class="fas fa-money-bill-wave text-warning"></i> Cobro en efectivo (moneda del cobro)</h6>
+                                <div class="row">
+                                    <div class="col-md-4 mb-2">
+                                        <label class="small text-muted mb-0">Total a pagar</label>
+                                        <p class="font-weight-bold mb-0 h5" id="pos_total_pagar_doc_display">—</p>
+                                        <small class="text-muted" id="pos_total_pagar_crc_display"></small>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <label for="pos_monto_recibido_doc" class="small">Monto recibido del cliente</label>
+                                        <input type="number" class="form-control" id="pos_monto_recibido_doc" step="any" min="0"
+                                            placeholder="0.00" oninput="actualizarPanelVueltoPos()">
+                                    </div>
+                                    <div class="col-md-4 mb-2 d-flex align-items-end">
+                                        <button type="button" class="btn btn-outline-primary btn-block btn-sm"
+                                            onclick="rellenarMontoRecibidoExactoPos()">
+                                            Igual al total
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="pos_vuelto_panel" class="mt-2 border-top pt-2" style="display: none;">
+                                    <p class="small font-weight-bold mb-2"><i class="fas fa-hand-holding-usd text-warning"></i> Vuelto calculado</p>
+                                    <div class="row">
+                                        <div class="col-6 mb-2">
+                                            <span class="small text-muted d-block" id="lbl_vuelto_moneda_doc">Vuelto en divisa</span>
+                                            <span class="font-weight-bold" id="pos_vuelto_moneda_doc_display">—</span>
+                                        </div>
+                                        <div class="col-6 mb-2">
+                                            <span class="small text-muted d-block">Equivalente en colones (₡)</span>
+                                            <span class="font-weight-bold" id="pos_vuelto_moneda_base_display">—</span>
+                                        </div>
+                                    </div>
+                                    <p class="small text-muted mb-1" id="pos_vuelto_equiv_hint"></p>
+                                    <p class="small mb-0">Queda en caja (divisa): <strong id="pos_monto_retenido_doc_display">—</strong></p>
+                                    <div class="custom-control custom-checkbox mt-2" id="pos_vuelto_en_base_wrap">
+                                        <input type="checkbox" class="custom-control-input" id="pos_vuelto_en_moneda_base"
+                                            onchange="actualizarPanelVueltoPos()">
+                                        <label class="custom-control-label small" for="pos_vuelto_en_moneda_base">
+                                            El vuelto se entregó en <strong>colones (moneda base)</strong>
+                                        </label>
+                                    </div>
+                                    <p class="small text-muted mb-0 mt-1" id="pos_vuelto_registro_hint">
+                                        Si el vuelto fue en la misma moneda del cobro, no se guarda registro en caja.
+                                    </p>
+                                </div>
+                                <p id="pos_sin_vuelto_msg" class="small text-success mb-0 mt-2" style="display:none;">
+                                    <i class="fas fa-check"></i> Monto exacto — no hay vuelto.
+                                </p>
+                                <button type="button" class="btn btn-success btn-block btn-lg mt-3" id="btnPagoEfectivoExtranjero"
+                                    onclick="verificarAbrirModalPagoEfectivo()">
+                                    <i class="fas fa-money-bill-wave"></i> Cobrar en efectivo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 mb-3" id="pos_tabla_vueltos_wrap" style="display: none;">
+                        <h6 class="small font-weight-bold mb-2"><i class="fas fa-list-alt"></i> Vueltos en colones — caja actual</h6>
+                        <div class="table-responsive" style="max-height: 180px; overflow-y: auto;">
+                            <table class="table table-sm table-bordered mb-1" id="pos_tabla_vueltos">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Hora</th>
+                                        <th>Orden</th>
+                                        <th>Recibido</th>
+                                        <th>Vuelto ₡</th>
+                                        <th>Queda divisa</th>
+                                        <th>TC</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pos_tabla_vueltos_body">
+                                    <tr><td colspan="6" class="text-muted small text-center">Sin registros (solo vueltos en colones)</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="small mb-0" id="pos_totales_vueltos_resumen"></p>
+                    </div>
+
+                    <!-- Formas de pago -->
+                    <div class="row mb-3">
+                        <div class="col-12 col-md-4 mb-3">
+                            <label for="monto_tarjeta">Monto Tarjeta (₡)</label>
+                            <input type="number" class="form-control" step="any" id="monto_tarjeta"
+                                name="monto_tarjeta" placeholder="0.00" onkeyup="enterCampoPago(event)"
+                                min="0">
+                            <button type="button" class="btn btn-primary btn-block mt-2" id="btnPagoTarjeta"
+                                onclick="verificarAbrirModalPagoTarjeta()">
+                                Pagar Todo con Tarjeta
+                            </button>
+                        </div>
+                        <div class="col-12 col-md-4 mb-3" id="pos_col_monto_efectivo_crc">
+                            <div id="pos_campos_efectivo_crc">
+                                <label for="monto_efectivo" id="lbl_monto_efectivo">Monto Efectivo (₡)</label>
+                                <input type="number" class="form-control" step="any" id="monto_efectivo"
+                                    name="monto_efectivo" placeholder="0.00" onkeyup="enterCampoPago(event); actualizarPanelVueltoCrcPos();"
+                                    min="0">
+                                <div id="pos_vuelto_crc_panel" class="small mt-1" style="display:none;">
+                                    <span class="text-warning font-weight-bold" id="pos_vuelto_crc_inline"></span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary btn-block mt-2" id="btnPagoEfectivo"
+                                onclick="verificarAbrirModalPagoEfectivo()">
+                                Pagar Todo con Efectivo
+                            </button>
+                        </div>
+                        <div class="col-12 col-md-4 mb-3">
+                            <label for="monto_sinpe">Monto Sinpe (₡)</label>
+                            <input type="number" class="form-control" step="any" id="monto_sinpe"
+                                name="monto_sinpe" placeholder="0.00" onkeyup="enterCampoPago(event)"
+                                min="0">
+                            <button type="button" class="btn btn-primary btn-block mt-2" id="btnPagoSinpe"
+                                onclick="verificarAbrirModalPagoSinpe()">
+                                Pagar Todo con Sinpe
+                            </button>
                         </div>
                     </div>
 

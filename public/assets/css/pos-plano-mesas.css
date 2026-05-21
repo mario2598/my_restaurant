@@ -343,3 +343,131 @@
     margin-top: 0.5rem;
     padding-top: 0.75rem;
 }
+
+/* Botón mapa junto al selector de mesa (POS) */
+.pos-btn-mapa-mesa {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-width: 2.85rem;
+    padding: 0.45rem 0.65rem;
+    border: 2px solid #17a2b8;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 0.35rem;
+    border-bottom-right-radius: 0.35rem;
+    background: linear-gradient(145deg, #f0fbfd 0%, #d1ecf1 100%);
+    color: #117a8b;
+    font-weight: 600;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    position: relative;
+    overflow: visible;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    cursor: pointer;
+}
+
+.pos-btn-mapa-mesa__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 50%;
+    background: rgba(23, 162, 184, 0.15);
+    transition: transform 0.25s ease, background 0.2s ease;
+}
+
+.pos-btn-mapa-mesa__icon i {
+    font-size: 0.95rem;
+}
+
+.pos-btn-mapa-mesa__text {
+    letter-spacing: 0.02em;
+}
+
+.pos-btn-mapa-mesa__badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 1.15rem;
+    height: 1.15rem;
+    padding: 0 0.25rem;
+    border-radius: 999px;
+    background: #28a745;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1.15rem;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(40, 167, 69, 0.45);
+    animation: pos-mapa-badge-pop 0.35s ease;
+}
+
+@keyframes pos-mapa-badge-pop {
+    0% { transform: scale(0.5); opacity: 0; }
+    70% { transform: scale(1.15); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pos-mapa-attract {
+    0%, 100% { box-shadow: 0 2px 8px rgba(23, 162, 184, 0.2); }
+    50% { box-shadow: 0 4px 14px rgba(23, 162, 184, 0.45); }
+}
+
+.pos-btn-mapa-mesa--para-llevar:not(:hover):not(:focus) {
+    animation: pos-mapa-attract 2.8s ease-in-out infinite;
+}
+
+.pos-btn-mapa-mesa:hover,
+.pos-btn-mapa-mesa:focus {
+    transform: translateY(-2px) scale(1.03);
+    border-color: #138496;
+    background: linear-gradient(145deg, #17a2b8 0%, #138496 100%);
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(23, 162, 184, 0.45);
+    outline: none;
+    animation: none;
+}
+
+.pos-btn-mapa-mesa:hover .pos-btn-mapa-mesa__icon,
+.pos-btn-mapa-mesa:focus .pos-btn-mapa-mesa__icon {
+    transform: scale(1.12) rotate(-8deg);
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.pos-btn-mapa-mesa:active,
+.pos-btn-mapa-mesa.pos-btn-mapa-mesa--click {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 2px 6px rgba(23, 162, 184, 0.35);
+}
+
+.pos-btn-mapa-mesa--con-mesa {
+    border-color: #28a745;
+    background: linear-gradient(145deg, #f4fff6 0%, #d4edda 100%);
+    color: #1e7e34;
+    animation: none;
+}
+
+.pos-btn-mapa-mesa--con-mesa:hover,
+.pos-btn-mapa-mesa--con-mesa:focus {
+    border-color: #218838;
+    background: linear-gradient(145deg, #28a745 0%, #218838 100%);
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
+}
+
+.pos-btn-mapa-mesa--con-mesa .pos-btn-mapa-mesa__icon {
+    background: rgba(40, 167, 69, 0.2);
+}
+
+@media (max-width: 767.98px) {
+    .pos-btn-mapa-mesa__text {
+        display: none;
+    }
+    .pos-btn-mapa-mesa {
+        min-width: 2.5rem;
+        padding: 0.45rem 0.5rem;
+    }
+}

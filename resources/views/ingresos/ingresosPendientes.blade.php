@@ -65,6 +65,15 @@
                                                 @else
                                                     <span class="text-muted">Sin desglose por moneda (modo clásico)</span>
                                                 @endif
+                                                @if (!empty($g->tiene_vueltos_pos))
+                                                    <span class="badge badge-warning mb-1 mt-1">Vueltos POS (₡)</span>
+                                                    @foreach ($g->vueltos_pos_resumen as $lineaVuelto)
+                                                        <div style="font-size: 12px; line-height: 1.3;">{{ $lineaVuelto }}</div>
+                                                    @endforeach
+                                                    <div style="font-size: 12px; line-height: 1.3;" class="font-weight-bold text-warning">
+                                                        Total vuelto en colones: ₡{{ number_format($g->total_vuelto_pos_base ?? 0, 2, '.', ',') }}
+                                                    </div>
+                                                @endif
                                             </td>
                                             <td>
                                                 CRC {{ number_format($g->total ?? '0.00', 2, '.', ',') }}

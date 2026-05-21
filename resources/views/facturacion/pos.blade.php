@@ -644,13 +644,287 @@
         }
     }
 
-    #btn-mapa-mesa {
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
+    /* Botón flotante mapa (abajo, a la izquierda del de mesas) */
+    #mapa-flotante-container {
+        position: fixed;
+        bottom: 20px;
+        right: 88px;
+        z-index: 1055;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
     }
+
+    #panel-mapa-fab {
+        position: absolute;
+        bottom: 72px;
+        right: 0;
+        width: 300px;
+        max-width: calc(100vw - 100px);
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 10px 32px rgba(0, 0, 0, 0.18);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        animation: slideUpMapaFab 0.3s ease;
+    }
+
+    #panel-mapa-fab.mostrar {
+        display: flex;
+    }
+
+    @keyframes slideUpMapaFab {
+        from {
+            opacity: 0;
+            transform: translateY(16px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    #panel-mapa-fab .panel-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: #fff;
+        padding: 12px 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    #panel-mapa-fab .panel-header h5 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    #panel-mapa-fab .panel-body {
+        padding: 14px;
+    }
+
+    #panel-mapa-fab .mapa-fab-mesa-actual {
+        font-size: 13px;
+        padding: 8px 10px;
+        background: #e8f7fa;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        color: #0c5460;
+    }
+
+    #panel-mapa-fab .btn-mapa-accion {
+        width: 100%;
+        margin-bottom: 8px;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 10px 12px;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    #panel-mapa-fab .btn-mapa-accion:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(23, 162, 184, 0.35);
+    }
+
+    #panel-mapa-fab .mapa-fab-ayuda {
+        font-size: 12px;
+        color: #6c757d;
+        margin: 0 0 10px;
+        line-height: 1.4;
+    }
+
+    .pos-fab-mapa-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .pos-fab-mapa-directo-wrap {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .pos-fab-mapa-label {
+        font-size: 10px;
+        font-weight: 700;
+        color: #117a8b;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        background: rgba(255, 255, 255, 0.92);
+        padding: 2px 8px;
+        border-radius: 10px;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
+        pointer-events: none;
+        white-space: nowrap;
+    }
+
+    #btn-mapa-directo {
+        position: relative;
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        border: none;
+        background: linear-gradient(135deg, #17a2b8 0%, #0d6efd 100%);
+        color: #fff;
+        font-size: 24px;
+        box-shadow: 0 4px 18px rgba(23, 162, 184, 0.5);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    #btn-mapa-directo::before {
+        content: '';
+        position: absolute;
+        inset: -4px;
+        border-radius: 50%;
+        border: 2px solid rgba(23, 162, 184, 0.55);
+        animation: mapaFabRing 2s ease-out infinite;
+        pointer-events: none;
+    }
+
+    @keyframes mapaFabRing {
+        0% { transform: scale(1); opacity: 0.85; }
+        100% { transform: scale(1.35); opacity: 0; }
+    }
+
+    #btn-mapa-directo:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 24px rgba(23, 162, 184, 0.55);
+    }
+
+    #btn-mapa-directo.pos-fab-mapa--click {
+        transform: scale(0.95);
+    }
+
+    #btn-mapa-directo.pos-fab-mapa--con-mesa {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        box-shadow: 0 4px 18px rgba(40, 167, 69, 0.45);
+    }
+
+    #btn-mapa-directo.pos-fab-mapa--con-mesa::before {
+        border-color: rgba(40, 167, 69, 0.5);
+    }
+
+    #btn-toggle-mapa-fab {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        border: 2px solid #17a2b8;
+        background: #fff;
+        color: #17a2b8;
+        font-size: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    #btn-toggle-mapa-fab:hover {
+        background: #e8f7fa;
+        transform: scale(1.05);
+    }
+
+    #btn-toggle-mapa-fab[aria-expanded="true"] {
+        background: #17a2b8;
+        color: #fff;
+    }
+
+    #mapa-fab-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        min-width: 1.25rem;
+        height: 1.25rem;
+        padding: 0 0.3rem;
+        border-radius: 999px;
+        background: #ffc107;
+        color: #212529;
+        font-size: 0.7rem;
+        font-weight: 800;
+        line-height: 1.25rem;
+        text-align: center;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    #btn-mapa-directo.pos-fab-mapa--con-mesa #mapa-fab-badge {
+        background: #fff;
+        color: #1e7e34;
+    }
+
+    /* iPad y celular: mapa arriba (no compite con FAB de mesas abajo) */
+    @media (max-width: 991.98px) {
+        #mapa-flotante-container {
+            top: 62px;
+            bottom: auto;
+            right: 14px;
+        }
+
+        #panel-mapa-fab {
+            top: 112px;
+            bottom: auto;
+            right: 0;
+            width: min(300px, calc(100vw - 28px));
+            max-width: none;
+            animation: slideDownMapaFab 0.3s ease;
+        }
+
+        @keyframes slideDownMapaFab {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        #mapa-flotante-container {
+            top: 56px;
+            right: 10px;
+        }
+
+        #panel-mapa-fab {
+            top: 108px;
+            width: calc(100vw - 24px);
+        }
+
+        .pos-fab-mapa-label {
+            display: none;
+        }
+    }
+
+    /* Escritorio ancho: abajo, junto al botón de mesas */
+    @media (min-width: 992px) {
+        #mapa-flotante-container {
+            top: auto;
+            bottom: 20px;
+            right: 88px;
+        }
+
+        #panel-mapa-fab {
+            top: auto;
+            bottom: 72px;
+            animation: slideUpMapaFab 0.3s ease;
+        }
+    }
+
 </style>
 <link rel="stylesheet" href="{{ asset('assets/css/mesa-plano-visual.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/css/pos-plano-mesas.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/css/pos-layout.css') }}">
 
 <!-- Main Content -->
 
@@ -661,7 +935,7 @@
                 <div class="col-12 col-md-12 col-lg-12">
                     <div class="row">
 
-                        <div class="col-sm-12 col-md-5 col-lg-5" id="contEscogerProductos"
+                        <div class="col-12 col-lg-5" id="contEscogerProductos"
                             style="padding-right: 0px !important;padding-left: 0px !important;">
 
                             <div class="col-lg-12 col-md-12 pr-25">
@@ -722,13 +996,13 @@
                             </div>
 
                         </div>
-                        <div class="col-sm-12 col-md-7 col-lg-7"
+                        <div class="col-12 col-lg-7" id="contPanelOrden"
                             style="padding-right: 0px !important;padding-left: 0px !important;">
                             <!-- Panel orden -->
                             <div class="col-lg-12 col-md-12 pl-0">
                                 <!-- Acciones -->
                                 <div style="padding: 0 5% 1.3% 0">
-                                    <ul class="nav nav-pills d-flex flex-row justify-content-end" id="nv-acciones">
+                                    <ul class="nav nav-pills d-flex flex-row justify-content-end flex-wrap" id="nv-acciones">
                                         <li id="contAbrirCaja">
                                             <button type="button" class="btn btn-success px-2 mr-1"
                                                 onclick="abrirCaja()">Abrir Caja <i class="fas fa-list"
@@ -771,7 +1045,7 @@
                                                     <div class="col-sm-12 col-md-12 col-lg-12">
                                                         <h4 id="infoHeaderOrden">Orden Nueva</h4>
                                                     </div>
-                                                    <div class="col-sm-12 col-md-6 col-lg-6">
+                                                    <div class="col-12 col-lg-6 mb-2 mb-lg-0">
                                                         <div class="input-group">
                                                             <input type="text" class="form-control h-75" onkeyup="changeNombreCliente(this.value,true)"
                                                                 name="txt-cliente" id="txt-cliente"
@@ -785,11 +1059,12 @@
                                                         </div>
 
                                                     </div>
-                                                    <div class="col-sm-12 col-md-6 col-lg-6 mt-1">
-                                                        <div class="input-group">
-                                                            <label class="mr-4 pt-2 pl-2">Mesa</label>
+                                                    <div class="col-12 col-lg-6">
+                                                        <div class="input-group pos-mesa-input-group">
+                                                            <label class="mr-2 pt-2 pl-1 pos-mesa-label" for="select_mesa">Mesa</label>
                                                             <select class="form-control" onchange="cambiarMesa()"
-                                                                id="select_mesa" name="select_mesa">
+                                                                id="select_mesa" name="select_mesa"
+                                                                title="Use el botón flotante «Mapa» (arriba a la derecha) para elegir mesa en el plano">
                                                                 <option value="-1" selected>PARA LLEVAR</option>
                                                                 @foreach ($data['mesas'] as $i)
                                                                 <option value="{{ $i->id ?? '' }}"
@@ -799,12 +1074,6 @@
                                                                 </option>
                                                                 @endforeach
                                                             </select>
-                                                            <div class="input-group-append">
-                                                                <button type="button" class="btn btn-outline-info" id="btn-mapa-mesa"
-                                                                    onclick="abrirMapaMesas('seleccionar')" title="Elegir mesa en el mapa">
-                                                                    <i class="fas fa-map-marked-alt"></i>
-                                                                </button>
-                                                            </div>
                                                         </div>
                                                     </div>
                                                     <div class="col-12">
@@ -836,9 +1105,9 @@
                                         </div>
 
 
-                                        <div class="col-sm-12 col-md-2 col-lg-12" id="contFacturar" style="padding: 0;">
+                                        <div class="col-12" id="contFacturar">
                                             <div class="container-fluid">
-                                                <div class="row" class="mb-3">
+                                                <div class="row mb-3">
                                                     <div class="col-12">
                                                         <h4 id="txt-total-pagar" class="text-muted ">Total:
                                                             0,00</h4>
@@ -1022,43 +1291,9 @@
                         </div>
                     </div>
 
-                    <!-- Formas de pago -->
-                    <div class="row mb-3">
-                        <div class="col-12 col-md-4 mb-3">
-                            <label for="monto_tarjeta">Monto Tarjeta (₡)</label>
-                            <input type="number" class="form-control" step="any" id="monto_tarjeta"
-                                name="monto_tarjeta" placeholder="0.00" onkeyup="enterCampoPago(event)"
-                                min="0">
-                            <button type="button" class="btn btn-primary btn-block mt-2" id="btnPagoTarjeta"
-                                onclick="verificarAbrirModalPagoTarjeta()">
-                                Pagar Todo con Tarjeta
-                            </button>
-                        </div>
-                        <div class="col-12 col-md-4 mb-3">
-                            <label for="monto_efectivo">Monto Efectivo (₡)</label>
-                            <input type="number" class="form-control" step="any" id="monto_efectivo"
-                                name="monto_efectivo" placeholder="0.00" onkeyup="enterCampoPago(event)"
-                                min="0">
-                            <button type="button" class="btn btn-primary btn-block mt-2" id="btnPagoEfectivo"
-                                onclick="verificarAbrirModalPagoEfectivo()">
-                                Pagar Todo con Efectivo
-                            </button>
-                        </div>
-                        <div class="col-12 col-md-4 mb-3">
-                            <label for="monto_sinpe">Monto Sinpe (₡)</label>
-                            <input type="number" class="form-control" step="any" id="monto_sinpe"
-                                name="monto_sinpe" placeholder="0.00" onkeyup="enterCampoPago(event)"
-                                min="0">
-                            <button type="button" class="btn btn-primary btn-block mt-2" id="btnPagoSinpe"
-                                onclick="verificarAbrirModalPagoSinpe()">
-                                Pagar Todo con Sinpe
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Moneda / tipo de cambio (tiquete y pago_orden); TC se toma del último registro en sis_tipo_cambio (base = 1). -->
-                    <div class="row mb-3 border-top pt-3">
-                        <div class="col-12 col-md-6 mb-3">
+                    <!-- Moneda / tipo de cambio -->
+                    <div class="row mb-2 border-top pt-3">
+                        <div class="col-12 col-md-5 mb-3">
                             <label for="pos_moneda_factura_id">Moneda del cobro</label>
                             <select class="form-control" id="pos_moneda_factura_id" name="pos_moneda_factura_id">
                                 @foreach ($data['monedasFacturaPos'] ?? [] as $mf)
@@ -1073,18 +1308,141 @@
                                         data-tc="{{ $tcAttr }}">{{ $mf->simbolo }} {{ $mf->nombre }} ({{ $mf->cod_general }})</option>
                                 @endforeach
                             </select>
-                            <small class="text-muted">El tipo de cambio se carga automáticamente desde la tabla vigente (moneda base: TC = 1).</small>
                         </div>
-                        <div class="col-12 col-md-6 mb-3">
-                            <label>Tipo de cambio aplicado</label>
+                        <div class="col-12 col-md-4 mb-3">
+                            <label for="pos_tipo_cambio_edit">Tipo de cambio (₡ por 1 unidad)</label>
+                            <input type="number" class="form-control" id="pos_tipo_cambio_edit" step="0.000001" min="0.000001"
+                                placeholder="Ej. 520" disabled>
                             <input type="hidden" id="pos_tipo_cambio_snapshot" name="pos_tipo_cambio_snapshot" value="">
-                            <p class="form-control mb-0 bg-light" id="pos_tc_vigente_display" style="min-height: 38px; line-height: 38px;">—</p>
-                            <small class="text-muted">Unidades de moneda base por <strong>1</strong> unidad de la moneda elegida.</small>
+                            <small class="text-muted" id="pos_tc_ayuda">Moneda base: TC = 1. Si cambia el TC en otra moneda, se guarda en BD automáticamente.</small>
+                        </div>
+                        <div class="col-12 col-md-3 mb-3 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-secondary btn-sm btn-block" id="pos_btn_restaurar_tc"
+                                onclick="restaurarTipoCambioPosBd()" style="display:none;">
+                                <i class="fas fa-undo"></i> TC de BD
+                            </button>
                         </div>
                     </div>
                     <div class="col-12 mb-2" id="pos_aviso_solo_efectivo" style="display: none;">
                         <div class="alert alert-info py-2 mb-0 small">
-                            Moneda distinta de la base: el cobro solo puede hacerse en <strong>efectivo</strong> (tarjeta y SINPE no están disponibles para esta moneda).
+                            Cobro en moneda extranjera: solo <strong>efectivo</strong>. Indique cuánto recibió; el vuelto se calcula automáticamente.
+                        </div>
+                    </div>
+                    <div class="col-12 mb-3" id="pos_cobro_extranjero_efectivo" style="display: none;">
+                        <div class="card border-warning">
+                            <div class="card-body py-2">
+                                <h6 class="mb-2"><i class="fas fa-money-bill-wave text-warning"></i> Cobro en efectivo (moneda del cobro)</h6>
+                                <div class="row">
+                                    <div class="col-md-4 mb-2">
+                                        <label class="small text-muted mb-0">Total a pagar</label>
+                                        <p class="font-weight-bold mb-0 h5" id="pos_total_pagar_doc_display">—</p>
+                                        <small class="text-muted" id="pos_total_pagar_crc_display"></small>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <label for="pos_monto_recibido_doc" class="small">Monto recibido del cliente</label>
+                                        <input type="number" class="form-control" id="pos_monto_recibido_doc" step="any" min="0"
+                                            placeholder="0.00" oninput="actualizarPanelVueltoPos()">
+                                    </div>
+                                    <div class="col-md-4 mb-2 d-flex align-items-end">
+                                        <button type="button" class="btn btn-outline-primary btn-block btn-sm"
+                                            onclick="rellenarMontoRecibidoExactoPos()">
+                                            Igual al total
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="pos_vuelto_panel" class="mt-2 border-top pt-2" style="display: none;">
+                                    <p class="small font-weight-bold mb-2"><i class="fas fa-hand-holding-usd text-warning"></i> Vuelto calculado</p>
+                                    <div class="row">
+                                        <div class="col-6 mb-2">
+                                            <span class="small text-muted d-block" id="lbl_vuelto_moneda_doc">Vuelto en divisa</span>
+                                            <span class="font-weight-bold" id="pos_vuelto_moneda_doc_display">—</span>
+                                        </div>
+                                        <div class="col-6 mb-2">
+                                            <span class="small text-muted d-block">Equivalente en colones (₡)</span>
+                                            <span class="font-weight-bold" id="pos_vuelto_moneda_base_display">—</span>
+                                        </div>
+                                    </div>
+                                    <p class="small text-muted mb-1" id="pos_vuelto_equiv_hint"></p>
+                                    <p class="small mb-0">Queda en caja (divisa): <strong id="pos_monto_retenido_doc_display">—</strong></p>
+                                    <div class="custom-control custom-checkbox mt-2" id="pos_vuelto_en_base_wrap">
+                                        <input type="checkbox" class="custom-control-input" id="pos_vuelto_en_moneda_base"
+                                            onchange="actualizarPanelVueltoPos()">
+                                        <label class="custom-control-label small" for="pos_vuelto_en_moneda_base">
+                                            El vuelto se entregó en <strong>colones (moneda base)</strong>
+                                        </label>
+                                    </div>
+                                    <p class="small text-muted mb-0 mt-1" id="pos_vuelto_registro_hint">
+                                        Si el vuelto fue en la misma moneda del cobro, no se guarda registro en caja.
+                                    </p>
+                                </div>
+                                <p id="pos_sin_vuelto_msg" class="small text-success mb-0 mt-2" style="display:none;">
+                                    <i class="fas fa-check"></i> Monto exacto — no hay vuelto.
+                                </p>
+                                <button type="button" class="btn btn-success btn-block btn-lg mt-3" id="btnPagoEfectivoExtranjero"
+                                    onclick="verificarAbrirModalPagoEfectivo()">
+                                    <i class="fas fa-money-bill-wave"></i> Cobrar en efectivo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 mb-3" id="pos_tabla_vueltos_wrap" style="display: none;">
+                        <h6 class="small font-weight-bold mb-2"><i class="fas fa-list-alt"></i> Vueltos en colones — caja actual</h6>
+                        <div class="table-responsive" style="max-height: 180px; overflow-y: auto;">
+                            <table class="table table-sm table-bordered mb-1" id="pos_tabla_vueltos">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Hora</th>
+                                        <th>Orden</th>
+                                        <th>Recibido</th>
+                                        <th>Vuelto ₡</th>
+                                        <th>Queda divisa</th>
+                                        <th>TC</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pos_tabla_vueltos_body">
+                                    <tr><td colspan="6" class="text-muted small text-center">Sin registros (solo vueltos en colones)</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="small mb-0" id="pos_totales_vueltos_resumen"></p>
+                    </div>
+
+                    <!-- Formas de pago -->
+                    <div class="row mb-3">
+                        <div class="col-12 col-md-4 mb-3">
+                            <label for="monto_tarjeta">Monto Tarjeta (₡)</label>
+                            <input type="number" class="form-control" step="any" id="monto_tarjeta"
+                                name="monto_tarjeta" placeholder="0.00" onkeyup="enterCampoPago(event)"
+                                min="0">
+                            <button type="button" class="btn btn-primary btn-block mt-2" id="btnPagoTarjeta"
+                                onclick="verificarAbrirModalPagoTarjeta()">
+                                Pagar Todo con Tarjeta
+                            </button>
+                        </div>
+                        <div class="col-12 col-md-4 mb-3" id="pos_col_monto_efectivo_crc">
+                            <div id="pos_campos_efectivo_crc">
+                                <label for="monto_efectivo" id="lbl_monto_efectivo">Monto Efectivo (₡)</label>
+                                <input type="number" class="form-control" step="any" id="monto_efectivo"
+                                    name="monto_efectivo" placeholder="0.00" onkeyup="enterCampoPago(event); actualizarPanelVueltoCrcPos();"
+                                    min="0">
+                                <div id="pos_vuelto_crc_panel" class="small mt-1" style="display:none;">
+                                    <span class="text-warning font-weight-bold" id="pos_vuelto_crc_inline"></span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary btn-block mt-2" id="btnPagoEfectivo"
+                                onclick="verificarAbrirModalPagoEfectivo()">
+                                Pagar Todo con Efectivo
+                            </button>
+                        </div>
+                        <div class="col-12 col-md-4 mb-3">
+                            <label for="monto_sinpe">Monto Sinpe (₡)</label>
+                            <input type="number" class="form-control" step="any" id="monto_sinpe"
+                                name="monto_sinpe" placeholder="0.00" onkeyup="enterCampoPago(event)"
+                                min="0">
+                            <button type="button" class="btn btn-primary btn-block mt-2" id="btnPagoSinpe"
+                                onclick="verificarAbrirModalPagoSinpe()">
+                                Pagar Todo con Sinpe
+                            </button>
                         </div>
                     </div>
 
@@ -1742,6 +2100,60 @@
 </div>
 
 @include('facturacion.partials.pos-plano-mesas-modal')
+
+<!-- Botón flotante: mapa del local (abajo, junto al de mesas) -->
+<div id="mapa-flotante-container">
+    <div id="panel-mapa-fab" role="dialog" aria-label="Acciones del mapa de mesas">
+        <div class="panel-header">
+            <h5><i class="fas fa-map-marked-alt"></i> Mapa del local</h5>
+            <button type="button" class="btn btn-sm text-white" onclick="togglePanelMapaFab(false)"
+                style="background: rgba(255,255,255,0.2); border: none;" aria-label="Cerrar">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="panel-body">
+            <p class="mapa-fab-ayuda">
+                <i class="fas fa-hand-pointer text-info"></i>
+                Abra el plano, toque una mesa y asigne la cuenta o revise los cobros pendientes.
+            </p>
+            <div class="mapa-fab-mesa-actual" id="mapa-fab-mesa-actual">
+                <i class="fas fa-shopping-bag"></i> Sin mesa — PARA LLEVAR
+            </div>
+            <button type="button" class="btn btn-info btn-mapa-accion"
+                onclick="togglePanelMapaFab(false); pulsarBotonMapaMesaPos(); abrirMapaMesas('seleccionar');">
+                <i class="fas fa-map-marked-alt"></i> Abrir mapa y elegir mesa
+            </button>
+            <button type="button" class="btn btn-outline-info btn-mapa-accion"
+                onclick="togglePanelMapaFab(false); abrirMapaMesas('mapa');">
+                <i class="fas fa-chair"></i> Ver plano del salón
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-mapa-accion mb-0"
+                onclick="togglePanelMapaFab(false); abrirMapaMesas('generales');">
+                <i class="fas fa-list"></i> Todas las cuentas abiertas
+            </button>
+        </div>
+    </div>
+    <div class="pos-fab-mapa-actions">
+        <div class="pos-fab-mapa-directo-wrap">
+            <span class="pos-fab-mapa-label">Abrir mapa</span>
+            <button type="button" id="btn-mapa-directo" class="pos-fab-mapa--para-llevar"
+                onclick="abrirMapaDirectoPos()"
+                title="Abrir el plano del local de inmediato"
+                aria-label="Abrir mapa del local ahora">
+                <i class="fas fa-map-marked-alt"></i>
+                <span id="mapa-fab-badge" style="display: none;" aria-hidden="true"></span>
+            </button>
+        </div>
+        <button type="button" id="btn-toggle-mapa-fab"
+            onclick="togglePanelMapaFab()"
+            title="Más opciones del mapa (cuentas, plano, asignar mesa)"
+            aria-label="Menú de opciones del mapa"
+            aria-expanded="false"
+            aria-controls="panel-mapa-fab">
+            <i class="fas fa-ellipsis-h" id="icon-toggle-mapa"></i>
+        </button>
+    </div>
+</div>
 
 <!-- Componente flotante para gestión de mesas -->
 <div id="mesas-flotante-container">

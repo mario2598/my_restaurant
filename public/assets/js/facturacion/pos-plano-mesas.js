@@ -5,7 +5,100 @@ var posPlanoDatos = null;
 var posPlanoModo = 'mapa';
 var posPlanoMesaSeleccionadaId = null;
 
+/**
+ * Acceso directo: abre el modal del mapa sin pasar por el panel de opciones.
+ */
+function abrirMapaDirectoPos() {
+    pulsarBotonMapaMesaPos();
+    abrirMapaMesas('seleccionar');
+}
+
+/**
+ * Panel flotante del mapa (abajo), estilo FAB de mesas.
+ * @param {boolean|undefined} forzarAbrir true=abrir, false=cerrar, undefined=toggle
+ */
+function togglePanelMapaFab(forzarAbrir) {
+    var panel = document.getElementById('panel-mapa-fab');
+    var btn = document.getElementById('btn-toggle-mapa-fab');
+    var icon = document.getElementById('icon-toggle-mapa');
+    if (!panel || !btn) {
+        return;
+    }
+    var abrir = forzarAbrir === true
+        ? true
+        : (forzarAbrir === false ? false : !panel.classList.contains('mostrar'));
+
+    if (abrir) {
+        panel.classList.add('mostrar');
+        btn.setAttribute('aria-expanded', 'true');
+        if (icon) {
+            var arriba = window.matchMedia('(max-width: 991.98px)').matches;
+            icon.className = arriba ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+        }
+        actualizarBotonMapaMesaPos();
+    } else {
+        panel.classList.remove('mostrar');
+        btn.setAttribute('aria-expanded', 'false');
+        if (icon) {
+            icon.className = 'fas fa-ellipsis-h';
+        }
+    }
+}
+
+/**
+ * Refleja en el FAB del mapa la mesa actual del selector (badge + colores).
+ */
+function actualizarBotonMapaMesaPos() {
+    var $btn = $('#btn-mapa-directo');
+    var $badge = $('#mapa-fab-badge');
+    var $info = $('#mapa-fab-mesa-actual');
+    if (!$btn.length) {
+        return;
+    }
+    var val = String($('#select_mesa').val() || '-1');
+    var $opt = $('#select_mesa option:selected');
+    var esMesa = val !== '' && val !== '-1';
+
+    $btn.removeClass('pos-fab-mapa--con-mesa pos-fab-mapa--para-llevar');
+
+    if (esMesa) {
+        $btn.addClass('pos-fab-mapa--con-mesa');
+        var etiqueta = ($opt.attr('title') || $opt.text() || '').trim();
+        var match = etiqueta.match(/Mesa\s*:\s*([^,]+)/i);
+        var num = match ? match[1].trim() : val;
+        if (num.length > 8) {
+            num = num.substring(0, 8);
+        }
+        $badge.text(num).show();
+        $btn.attr('title', 'Mesa ' + num + ' — toque para abrir el mapa');
+        if ($info.length) {
+            $info.html('<i class="fas fa-chair text-success"></i> Mesa asignada: <strong>' + escHtmlPos(num) + '</strong>');
+        }
+    } else {
+        $btn.addClass('pos-fab-mapa--para-llevar');
+        $badge.hide().text('');
+        $btn.attr('title', 'Abrir el plano del local de inmediato');
+        if ($info.length) {
+            $info.html('<i class="fas fa-shopping-bag"></i> Sin mesa — PARA LLEVAR');
+        }
+    }
+}
+
+function pulsarBotonMapaMesaPos() {
+    var $btn = $('#btn-mapa-directo');
+    if (!$btn.length) {
+        return;
+    }
+    $btn.addClass('pos-fab-mapa--click');
+    setTimeout(function () {
+        $btn.removeClass('pos-fab-mapa--click');
+    }, 220);
+}
+
 function abrirMapaMesas(modo) {
+    if (typeof togglePanelMapaFab === 'function') {
+        togglePanelMapaFab(false);
+    }
     posPlanoModo = (modo === 'generales') ? 'generales' : 'mapa';
     posPlanoMesaSeleccionadaId = null;
 
@@ -270,6 +363,7 @@ function seleccionarMesaDesdeMapa(mesaId) {
         ordenGestion.mesa = mesaId;
     }
     $('#mdl-pos-plano-mesas').modal('hide');
+    actualizarBotonMapaMesaPos();
     showSuccess('Mesa asignada correctamente.');
 }
 
@@ -469,6 +563,20 @@ function escAttrPos(s) {
 }
 
 $(document).ready(function () {
+    actualizarBotonMapaMesaPos();
+    $('#select_mesa').on('change', actualizarBotonMapaMesaPos);
+
+    $(document).on('click', function (e) {
+        var $wrap = $('#mapa-flotante-container');
+        if (!$wrap.length || !$('#panel-mapa-fab').hasClass('mostrar')) {
+            return;
+        }
+        if ($(e.target).closest('#mapa-flotante-container').length) {
+            return;
+        }
+        togglePanelMapaFab(false);
+    });
+
     $('a[data-toggle="tab"][href="#pos-plano-tab-mapa"]').on('shown.bs.tab', function () {
         setModoPlanoPos('mapa');
     });

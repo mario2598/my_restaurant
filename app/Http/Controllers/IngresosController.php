@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
+use App\Support\PosVueltoRegistro;
 use App\Traits\SpaceUtil;
 use Illuminate\Support\Facades\Validator;
 
@@ -102,6 +103,8 @@ class IngresosController extends Controller
                 ];
             })->values()->all(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
+        $posVueltos = PosVueltoRegistro::listarPorIdIngreso((int) $ingreso->id);
+
         $data = [
             'ingreso' => $ingreso,
             'ventas' => $ventas,
@@ -111,6 +114,7 @@ class IngresosController extends Controller
             'estados_ingreso' => SisEstadoController::getEstadosByCodClase("INGRESOS_EST"),
             'ingreso_pagos_detalle' => $ingresoPagosDetalle,
             'ingreso_pagos_json_prefill' => $ingresoPagosJsonPrefill,
+            'pos_vueltos' => $posVueltos,
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
 
@@ -187,6 +191,8 @@ class IngresosController extends Controller
                 ];
             })->values()->all(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
+        $posVueltos = PosVueltoRegistro::listarPorIdIngreso((int) $ingreso->id);
+
         $data = [
             'ingreso' => $ingreso,
             'ventas' => $ventas,
@@ -196,6 +202,7 @@ class IngresosController extends Controller
             'estados_ingreso' => SisEstadoController::getEstadosByCodClase("INGRESOS_EST"),
             'ingreso_pagos_detalle' => $ingresoPagosDetalle,
             'ingreso_pagos_json_prefill' => $ingresoPagosJsonPrefill,
+            'pos_vueltos' => $posVueltos,
             'panel_configuraciones' => $this->getPanelConfiguraciones()
         ];
         return view('ingresos.ingreso.ingreso', compact('data'));
@@ -373,6 +380,11 @@ class IngresosController extends Controller
             }
             $i->total = $m['total'];
             $i->fecha = $this->fechaFormat($i->fecha);
+
+            $vueltosPos = PosVueltoRegistro::listarPorIdIngreso((int) $i->id);
+            $i->tiene_vueltos_pos = count($vueltosPos['filas']) > 0;
+            $i->vueltos_pos_resumen = PosVueltoRegistro::lineasResumenIngreso((int) $i->id);
+            $i->total_vuelto_pos_base = (float) ($vueltosPos['totales']['vuelto_moneda_base'] ?? 0);
         }
 
         $data = [

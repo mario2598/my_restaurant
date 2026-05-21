@@ -106,6 +106,54 @@
                                             </div>
                                         </div>
 
+                                        @php
+                                            $posVueltosFilas = $data['pos_vueltos']['filas'] ?? [];
+                                            $posVueltosTotales = $data['pos_vueltos']['totales'] ?? [];
+                                        @endphp
+                                        @if (!empty($posVueltosFilas))
+                                            <div class="col-12">
+                                                <label class="d-block">Vueltos en colones (POS multimoneda)</label>
+                                                <p class="small text-muted mb-2">
+                                                    Salieron de caja en ₡ al cobrar en moneda extranjera y entregar el vuelto en colones.
+                                                </p>
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-bordered">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Hora</th>
+                                                                <th>Orden</th>
+                                                                <th>Moneda cobro</th>
+                                                                <th>Recibido</th>
+                                                                <th>Vuelto ₡</th>
+                                                                <th>Retenido divisa</th>
+                                                                <th>T.C.</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach ($posVueltosFilas as $v)
+                                                                <tr>
+                                                                    <td class="small">{{ $v->fecha_hora ?? '' }}</td>
+                                                                    <td class="small">{{ $v->numero_orden ?? '—' }}</td>
+                                                                    <td class="small">{{ $v->moneda_cod ?? '' }}</td>
+                                                                    <td class="small">{{ number_format((float) ($v->monto_recibido_doc ?? 0), 2, '.', ',') }}</td>
+                                                                    <td class="small font-weight-bold text-warning">₡{{ number_format((float) ($v->vuelto_moneda_base ?? 0), 2, '.', ',') }}</td>
+                                                                    <td class="small">{{ number_format((float) ($v->monto_retenido_doc ?? 0), 2, '.', ',') }}</td>
+                                                                    <td class="small">{{ number_format((float) ($v->tipo_cambio_snapshot ?? 0), 2, '.', ',') }}</td>
+                                                                </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                        <tfoot>
+                                                            <tr class="font-weight-bold">
+                                                                <td colspan="4" class="text-right">Total vuelto en colones</td>
+                                                                <td>₡{{ number_format((float) ($posVueltosTotales['vuelto_moneda_base'] ?? 0), 2, '.', ',') }}</td>
+                                                                <td colspan="2"></td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        @endif
+
                                         @if (!empty($data['ingreso_pagos_detalle']) && $data['ingreso_pagos_detalle']->count() > 0)
                                             <div class="col-12">
                                                 <label class="d-block">Pagos registrados (otras monedas)</label>
