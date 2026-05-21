@@ -15,6 +15,13 @@ var MIN_ZONA_PCT = 4;
 var MIN_MESA_PCT = 4;
 var MAX_MESA_PCT = 25;
 
+function mensajeErrorAjax(jqXHR, mensajePorDefecto) {
+    if (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.mensaje) {
+        return jqXHR.responseJSON.mensaje;
+    }
+    return mensajePorDefecto;
+}
+
 $(document).ready(function () {
     $('input[name="modo_plano"]').on('change', aplicarModoPlano);
     if ($('#select_sucursal_plano').val()) {
@@ -160,8 +167,8 @@ function guardarAreaConfig() {
         showSuccess('Área guardada.');
         cerrarFormAreaConfig();
         cargarPlano();
-    }).fail(function () {
-        showError('Error al guardar el área');
+    }).fail(function (jqXHR) {
+        showError(mensajeErrorAjax(jqXHR, 'Error al guardar el área'));
     }).always(function () {
         $('#loader').fadeOut();
     });
@@ -331,7 +338,7 @@ function renderizarMesas(mesas) {
             + ' data-id="' + m.id + '" data-forma="' + forma + '"'
             + ' style="' + estiloPosicionMesa(forma, x, y, w, h) + '"'
             + ' title="Mesa ' + m.numero_mesa + ' (' + etiquetaFormaMesa(forma) + ') — ' + (m.estado_nombre || '') + '">'
-            + htmlContenidoMesaPlano(m.numero_mesa, m.capacidad)
+            + htmlContenidoMesaPlano(m.numero_mesa, m.capacidad, '', forma, w, h)
             + (typeof htmlAsaRedimensionMesa === 'function' ? htmlAsaRedimensionMesa() : '')
             + '</div>';
     });

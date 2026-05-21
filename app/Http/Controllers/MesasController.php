@@ -312,12 +312,19 @@ class MesasController extends Controller
     public function guardarAreaPlano(Request $request)
     {
         try {
+            if (!Schema::hasTable('sucursal_plano_area')) {
+                return $this->responseAjaxServerError(
+                    'Falta la tabla sucursal_plano_area. Ejecute database/scripts/17.plano_areas_config.sql o 18.actualizacion_completa_plano_pos_barra.sql en la base de datos.',
+                    []
+                );
+            }
+
             $idSucursal = (int) $request->input('idSucursal');
             $id = (int) $request->input('id', 0);
             $nombre = trim((string) $request->input('nombre', ''));
             $codigo = trim((string) $request->input('codigo', ''));
             $color = trim((string) $request->input('color', '#e9ecef'));
-            $colocarEnPlano = $request->input('colocar_en_plano', false);
+            $colocarEnPlano = filter_var($request->input('colocar_en_plano', false), FILTER_VALIDATE_BOOLEAN);
 
             if ($idSucursal < 1) {
                 return $this->responseAjaxServerError("La sucursal es obligatoria", []);
@@ -336,6 +343,8 @@ class MesasController extends Controller
                 'color' => $color !== '' ? $color : '#e9ecef',
                 'activo' => 'S',
             ];
+
+            self::asegurarAreasSucursal($idSucursal);
 
             if ($colocarEnPlano) {
                 $existentes = DB::table('sucursal_plano_area')
@@ -376,13 +385,29 @@ class MesasController extends Controller
             return $this->responseAjaxSuccess("Área guardada", [
                 'area' => DB::table('sucursal_plano_area')->where('id', '=', $idArea)->first(),
             ]);
-        } catch (\Exception $ex) {
-            DB::table('log')->insertGetId([
-                'id' => null,
-                'documento' => 'MesasController',
-                'descripcion' => 'guardarAreaPlano: ' . $ex->getMessage()
-            ]);
+        } catch (QueryException $ex) {
+            if ((int) ($ex->errorInfo[1] ?? 0) === 1062) {
+                return $this->responseAjaxServerError("Ya existe un área con ese código en la sucursal", []);
+            }
+            $this->registrarLogMesas('guardarAreaPlano', $ex->getMessage());
             return $this->responseAjaxServerError("Error al guardar el área", []);
+        } catch (\Exception $ex) {
+            $this->registrarLogMesas('guardarAreaPlano', $ex->getMessage());
+            return $this->responseAjaxServerError("Error al guardar el área", []);
+        }
+    }
+
+    private function registrarLogMesas(string $metodo, string $mensaje): void
+    {
+        try {
+            if (Schema::hasTable('log')) {
+                DB::table('log')->insertGetId([
+                    'id' => null,
+                    'documento' => 'MesasController',
+                    'descripcion' => $metodo . ': ' . $mensaje,
+                ]);
+            }
+        } catch (\Exception $ignored) {
         }
     }
 

@@ -213,6 +213,29 @@ function marcarMesaSeleccionadaPlano(mesaId) {
     }
 }
 
+/**
+ * Aplica ancho_referencia × alto_referencia igual que en mobiliario/mesas/plano.
+ */
+function aplicarProporcionCanvasPos() {
+    if (!posPlanoDatos) {
+        return;
+    }
+    var ar = parseInt(posPlanoDatos.ancho_referencia, 10) || 100;
+    var al = parseInt(posPlanoDatos.alto_referencia, 10) || 150;
+    var $c = $('#pos-plano-canvas');
+    if (!$c.length) {
+        return;
+    }
+    $c.css({
+        aspectRatio: ar + ' / ' + al,
+        maxWidth: '900px',
+        width: '100%',
+        maxHeight: 'none',
+        height: 'auto',
+        minHeight: Math.min(400, Math.max(240, al * 2.8)) + 'px'
+    });
+}
+
 function cargarPlanoPos() {
     posPlanoMesaSeleccionadaId = null;
     $('#pos-plano-zonas, #pos-plano-mesas').html('');
@@ -228,9 +251,7 @@ function cargarPlanoPos() {
             return;
         }
         posPlanoDatos = response.datos;
-        var ar = posPlanoDatos.ancho_referencia || 100;
-        var al = posPlanoDatos.alto_referencia || 150;
-        $('#pos-plano-canvas').css('aspect-ratio', ar + ' / ' + al);
+        aplicarProporcionCanvasPos();
         renderizarZonasPos(posPlanoDatos.zonas || []);
         actualizarLayoutPlanoPos();
         if (posPlanoModo !== 'generales') {
@@ -320,16 +341,13 @@ function renderizarPlanoPos() {
             ? '<span class="pos-plano-mesa-hint">₡' + Math.round(res.saldoPend).toLocaleString('es-CR') + '</span>'
             : '<span class="pos-plano-mesa-hint">' + (m.capacidad || 0) + ' p.</span>';
 
-        var estiloFn = typeof estiloPosicionMesaPos === 'function' ? estiloPosicionMesaPos : estiloPosicionMesa;
-        var etiqueta = typeof etiquetaCortaMesa === 'function' ? etiquetaCortaMesa(m.numero_mesa) : m.numero_mesa;
-
         html += '<div class="pos-plano-mesa forma-' + forma + ' ' + extras.join(' ') + '" data-mesa-id="' + m.id + '" data-forma="' + forma + '"'
-            + ' style="' + estiloFn(forma, x, y, w, h) + '"'
+            + ' style="' + estiloPosicionMesa(forma, x, y, w, h) + '"'
             + ' title="' + escAttrPos(tooltipOrdenesMesa(m, ordenes)) + '">'
+            + (typeof htmlContenidoMesaPlanoPos === 'function'
+                ? htmlContenidoMesaPlanoPos(m, hint)
+                : '')
             + badge
-            + '<span class="mesa-plano-superficie" aria-hidden="true"></span>'
-            + '<span class="pos-plano-mesa-num">' + escHtmlPos(etiqueta) + '</span>'
-            + hint
             + '</div>';
     });
 
@@ -565,6 +583,18 @@ function escAttrPos(s) {
 $(document).ready(function () {
     actualizarBotonMapaMesaPos();
     $('#select_mesa').on('change', actualizarBotonMapaMesaPos);
+
+    $('#mdl-pos-plano-mesas').on('shown.bs.modal', function () {
+        if (posPlanoDatos) {
+            aplicarProporcionCanvasPos();
+        }
+    });
+
+    $(window).on('resize', function () {
+        if ($('#mdl-pos-plano-mesas').hasClass('show') && posPlanoDatos) {
+            aplicarProporcionCanvasPos();
+        }
+    });
 
     $(document).on('click', function (e) {
         var $wrap = $('#mapa-flotante-container');
