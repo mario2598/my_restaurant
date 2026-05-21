@@ -160,17 +160,49 @@ class UsuarioExternoController extends Controller
                 return $this->responseAjaxServerError('Sucursal no válida', []);
             }
 
-            $estadoDisponibleId = SisEstadoController::getIdEstadoByCodGeneral('MESA_DISPONIBLE');
+            $planoData = MesasController::getPlanoDataForSucursal($idSucursal);
+            $mesas = collect($planoData['mesas'] ?? []);
+            $disponibles = $mesas->filter(function ($m) {
+                return ($m->estado_codigo ?? '') === 'MESA_DISPONIBLE';
+            })->count();
 
-            $mesas = DB::table('mesa')
-                ->join('sis_estado', 'sis_estado.id', '=', 'mesa.estado')
-                ->where('mesa.sucursal', '=', $idSucursal)
-                ->where('mesa.estado', '=', $estadoDisponibleId)
-                ->select('mesa.*', 'sis_estado.cod_general as estado_codigo', 'sis_estado.nombre as estado_nombre')
-                ->orderBy('mesa.numero_mesa', 'ASC')
-                ->get();
+            $zonas = collect($planoData['zonas'] ?? [])->map(function ($z) {
+                return [
+                    'id' => $z['id'] ?? null,
+                    'nombre' => $z['nombre'] ?? '',
+                    'x' => $z['x'] ?? 0,
+                    'y' => $z['y'] ?? 0,
+                    'w' => $z['w'] ?? 10,
+                    'h' => $z['h'] ?? 10,
+                    'color' => $z['color'] ?? '#e8ebe6',
+                ];
+            })->values()->all();
 
-            return $this->responseAjaxSuccess("Mesas disponibles cargadas correctamente", $mesas);
+            $mesasOut = $mesas->map(function ($m) {
+                return [
+                    'id' => (int) $m->id,
+                    'numero_mesa' => $m->numero_mesa,
+                    'capacidad' => (int) ($m->capacidad ?? 0),
+                    'forma' => $m->forma ?? 'rectangular',
+                    'zona' => $m->zona ?? null,
+                    'plano_x' => $m->plano_x,
+                    'plano_y' => $m->plano_y,
+                    'plano_ancho' => $m->plano_ancho,
+                    'plano_alto' => $m->plano_alto,
+                    'estado_codigo' => $m->estado_codigo ?? '',
+                    'estado_nombre' => $m->estado_nombre ?? '',
+                    'disponible' => ($m->estado_codigo ?? '') === 'MESA_DISPONIBLE',
+                ];
+            })->values()->all();
+
+            return $this->responseAjaxSuccess('Plano cargado', [
+                'ancho_referencia' => (int) ($planoData['ancho_referencia'] ?? 100),
+                'alto_referencia' => (int) ($planoData['alto_referencia'] ?? 150),
+                'zonas' => $zonas,
+                'mesas' => $mesasOut,
+                'disponibles' => $disponibles,
+                'total_mesas' => count($mesasOut),
+            ]);
         } catch (\Exception $ex) {
             DB::table('log')->insertGetId([
                 'id' => null,
@@ -178,26 +210,6 @@ class UsuarioExternoController extends Controller
                 'descripcion' => $ex->getMessage()
             ]);
             return $this->responseAjaxServerError("Error al cargar las mesas disponibles: " . $ex->getMessage(), []);
-        }
-    }
-
-    public function obtenerPlanoMenu(Request $request)
-    {
-        try {
-            $idSucursal = (int) $request->input('id_sucursal');
-            if (!$this->idSucursalPermitidaMenu($idSucursal)) {
-                return $this->responseAjaxServerError('Sucursal no válida', []);
-            }
-
-            $datos = MesasController::getPlanoDataForSucursal($idSucursal);
-            return $this->responseAjaxSuccess('Plano cargado', $datos);
-        } catch (\Exception $ex) {
-            DB::table('log')->insertGetId([
-                'id' => null,
-                'documento' => 'UsuarioExternoController',
-                'descripcion' => 'obtenerPlanoMenu: ' . $ex->getMessage()
-            ]);
-            return $this->responseAjaxServerError('Error al cargar el plano: ' . $ex->getMessage(), []);
         }
     }
 

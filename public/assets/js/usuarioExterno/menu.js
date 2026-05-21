@@ -4,9 +4,10 @@
 var tipos = [];
 var categoriaAbierta = null;
 var menuIdSucursal = null;
+var menuBusquedaConfigurada = false;
 
 /** Asegura array (en prod JSON a veces llega como objeto). */
-function normalizarLista(datos) {
+function normalizarTipos(datos) {
     if (!datos) {
         return [];
     }
@@ -17,19 +18,9 @@ function normalizarLista(datos) {
         return Object.keys(datos)
             .sort(function (a, b) { return Number(a) - Number(b); })
             .map(function (k) { return datos[k]; })
-            .filter(function (item) { return item && typeof item === 'object'; });
+            .filter(function (c) { return c && typeof c === 'object'; });
     }
     return [];
-}
-
-function normalizarTipos(datos) {
-    var cats = normalizarLista(datos);
-    cats.forEach(function (cat) {
-        if (cat && cat.productos) {
-            cat.productos = normalizarLista(cat.productos);
-        }
-    });
-    return cats;
 }
 
 var $q = function (sel) { return document.querySelector(sel); };
@@ -68,6 +59,13 @@ function wireEnlaces() {
 
 function iniciarMenu() {
     tipos = normalizarTipos(tipos);
+    var inputBusq = $q('#search');
+    if (inputBusq) inputBusq.value = '';
+    document.body.classList.remove('menu-en-busqueda');
+    var blockBusq = $q('#search-results-block');
+    if (blockBusq) blockBusq.hidden = true;
+    if ($q('#search-empty')) $q('#search-empty').hidden = true;
+
     if (!tipos.length) {
         var list = $q('#category-list');
         if (list) {
@@ -163,13 +161,11 @@ function mostrarOverlaySucursal(show) {
 }
 
 function resetPanelMesasMenu() {
-    var contentDiv = document.getElementById('mesas-disponibles-content');
-    if (contentDiv) {
-        delete contentDiv.dataset.loaded;
-        contentDiv.innerHTML = '<p class="menu-mesas-placeholder small text-muted mb-0">Toque para ver el mapa de mesas libres</p>';
-    }
     var panel = document.getElementById('menu-mesas-panel');
     if (panel) panel.classList.remove('is-open');
+    if (typeof MenuPlanoPublico !== 'undefined') {
+        MenuPlanoPublico.reset();
+    }
 }
 
 function seleccionarSucursalMenu(id, opts) {
@@ -265,7 +261,7 @@ function cargarTiposGeneral(idSucursal) {
 function todosLosProductos() {
     var lista = [];
     tipos.forEach(function (cat) {
-        normalizarLista(cat.productos).forEach(function (p) {
+        (cat.productos || []).forEach(function (p) {
             lista.push({ producto: p, categoria: cat.categoria });
         });
     });
@@ -280,7 +276,7 @@ function renderDestacados() {
 
     var picks = [];
     tipos.forEach(function (cat) {
-        normalizarLista(cat.productos).forEach(function (p) {
+        (cat.productos || []).forEach(function (p) {
             if (imagenValida(p.url_imagen) && picks.length < 8) {
                 picks.push({ producto: p, categoria: cat.categoria });
             }
@@ -288,7 +284,7 @@ function renderDestacados() {
     });
     if (picks.length < 4) {
         tipos.forEach(function (cat) {
-            normalizarLista(cat.productos).slice(0, 2).forEach(function (p) {
+            (cat.productos || []).slice(0, 2).forEach(function (p) {
                 if (picks.length < 8) {
                     picks.push({ producto: p, categoria: cat.categoria });
                 }
@@ -353,7 +349,7 @@ function abrirCategoria(cat, idx) {
     var list = $q('#item-list');
     list.innerHTML = '';
 
-    normalizarLista(cat.productos).forEach(function (p) {
+    (cat.productos || []).forEach(function (p) {
         var img = urlImagen(p.url_imagen);
         var inicial = (p.nombre || '?').trim().charAt(0).toUpperCase();
         var btn = document.createElement('button');
@@ -426,87 +422,121 @@ function configurarVistaCategoria() {
     if (back) back.onclick = cerrarCategoria;
 }
 
-var menuBusquedaInicializada = false;
+function textoBusquedaProducto(p, cat) {
+    return [
+        p.nombre,
+        p.descripcion,
+        p.codigo,
+        cat.categoria,
+        cat.id
+    ].map(function (x) { return String(x == null ? '' : x).toLowerCase(); }).join(' ');
+}
 
-function setSeccionesMenuVisibles(mostrar, excepto) {
-    excepto = excepto || '';
-    document.querySelectorAll('[data-menu-section]').forEach(function (el) {
-        if (excepto && el.getAttribute('data-menu-section') === excepto) return;
-        el.hidden = !mostrar;
+function productoCoincideBusqueda(p, cat, q) {
+    if (!q) return false;
+    return textoBusquedaProducto(p, cat).indexOf(q) !== -1;
+}
+
+function limpiarBusquedaMenu() {
+    document.body.classList.remove('menu-en-busqueda');
+    var input = $q('#search');
+    var block = $q('#search-results-block');
+    var empty = $q('#search-empty');
+    if (block) block.hidden = true;
+    if (empty) empty.hidden = true;
+    if ($q('#featured')) $q('#featured').hidden = false;
+    if ($q('#category-list')) $q('#category-list').hidden = false;
+    if ($q('#menu-mesas-panel')) $q('#menu-mesas-panel').hidden = false;
+    var sidebar = $q('#menu-sidebar');
+    if (sidebar) {
+        sidebar.style.opacity = '';
+        sidebar.style.pointerEvents = '';
+    }
+    renderDestacados();
+    renderListaCategorias();
+    renderNavCategorias();
+}
+
+function aplicarBusquedaMenu(q) {
+    if ($q('#cat-view') && $q('#cat-view').classList.contains('is-active')) {
+        cerrarCategoria();
+    }
+    if (typeof cerrarDetalle === 'function') {
+        cerrarDetalle();
+    }
+
+    document.body.classList.add('menu-en-busqueda');
+    var block = $q('#search-results-block');
+    var list = $q('#search-results');
+    var countEl = $q('#search-results-count');
+    var empty = $q('#search-empty');
+
+    if (block) block.hidden = false;
+    if (list) list.innerHTML = '';
+
+    var matches = [];
+    tipos.forEach(function (cat) {
+        (cat.productos || []).forEach(function (p) {
+            if (productoCoincideBusqueda(p, cat, q)) {
+                matches.push({ producto: p, categoria: cat.categoria });
+            }
+        });
     });
-    var feat = $q('#featured');
-    if (feat && excepto !== 'destacados') feat.hidden = !mostrar;
-    var navAside = $q('#menu-sidebar');
-    if (navAside) navAside.hidden = !mostrar;
+
+    if (countEl) {
+        countEl.textContent = matches.length
+            ? matches.length + (matches.length === 1 ? ' resultado' : ' resultados')
+            : '';
+    }
+
+    if (!matches.length) {
+        if (empty) empty.hidden = false;
+        return;
+    }
+    if (empty) empty.hidden = true;
+
+    matches.forEach(function (item) {
+        var p = item.producto;
+        var img = urlImagen(p.url_imagen);
+        var inicial = (p.nombre || '?').trim().charAt(0).toUpperCase();
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'item-card';
+        btn.innerHTML =
+            (img
+                ? '<img class="item-card__img" src="' + escHtml(img) + '" alt="">'
+                : '<div class="item-card__img placeholder">' + escHtml(inicial) + '</div>') +
+            '<div class="item-card__body">' +
+            '<h3>' + escHtml(p.nombre) + '</h3>' +
+            '<p>' + escHtml(item.categoria) + '</p>' +
+            '</div>' +
+            '<div class="item-card__price">' + fmtPrecio(p.precio) + '</div>';
+        btn.onclick = function () { abrirDetalle(p, item.categoria); };
+        if (list) list.appendChild(btn);
+    });
 }
 
 function configurarBusqueda() {
+    if (menuBusquedaConfigurada) return;
     var input = $q('#search');
-    if (!input || menuBusquedaInicializada) return;
-    menuBusquedaInicializada = true;
+    if (!input) return;
+    menuBusquedaConfigurada = true;
 
     input.addEventListener('input', function (e) {
         var q = e.target.value.trim().toLowerCase();
-        var list = $q('#category-list');
-        var resultsHead = $q('#search-results-head');
-        var searchEmpty = $q('#search-empty');
-
         if (!q) {
-            if (searchEmpty) searchEmpty.hidden = true;
-            if (resultsHead) resultsHead.hidden = true;
-            if (list) list.hidden = false;
-            setSeccionesMenuVisibles(true);
-            renderDestacados();
-            renderListaCategorias();
-            renderNavCategorias();
+            limpiarBusquedaMenu();
             return;
         }
+        if (!tipos.length) return;
+        aplicarBusquedaMenu(q);
+    });
 
-        setSeccionesMenuVisibles(false);
-        if (resultsHead) resultsHead.hidden = false;
-        if (list) {
-            list.hidden = false;
-            list.innerHTML = '';
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            input.value = '';
+            limpiarBusquedaMenu();
         }
-
-        var matches = [];
-        tipos.forEach(function (cat) {
-            normalizarLista(cat.productos).forEach(function (p) {
-                var nombre = String(p.nombre || '').toLowerCase();
-                var desc = String(p.descripcion || '').toLowerCase();
-                var catNombre = String(cat.categoria || '').toLowerCase();
-                if (nombre.indexOf(q) !== -1 || desc.indexOf(q) !== -1 || catNombre.indexOf(q) !== -1) {
-                    matches.push({ producto: p, categoria: cat.categoria });
-                }
-            });
-        });
-
-        if (!matches.length) {
-            if (searchEmpty) searchEmpty.hidden = false;
-            return;
-        }
-        if (searchEmpty) searchEmpty.hidden = true;
-
-        matches.forEach(function (item) {
-            var p = item.producto;
-            var img = urlImagen(p.url_imagen);
-            var inicial = (p.nombre || '?').trim().charAt(0).toUpperCase();
-            var btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'item-card';
-            btn.style.marginBottom = '0.6rem';
-            btn.innerHTML =
-                (img
-                    ? '<img class="item-card__img" src="' + escHtml(img) + '" alt="">'
-                    : '<div class="item-card__img placeholder">' + escHtml(inicial) + '</div>') +
-                '<div class="item-card__body">' +
-                '<h3>' + escHtml(p.nombre) + '</h3>' +
-                '<p>' + escHtml(item.categoria) + '</p>' +
-                '</div>' +
-                '<div class="item-card__price">' + fmtPrecio(p.precio) + '</div>';
-            btn.onclick = function () { abrirDetalle(p, item.categoria); };
-            list.appendChild(btn);
-        });
     });
 }
 
@@ -524,40 +554,17 @@ function toggleMesasMenuPanel() {
 }
 
 function cargarMesasDisponiblesMenu() {
-    var contentDiv = document.getElementById('mesas-disponibles-content');
-    if (!contentDiv || contentDiv.dataset.loaded === '1') return;
     if (!menuIdSucursal) {
-        contentDiv.innerHTML = '<p class="small text-muted mb-0">Seleccione una sucursal primero.</p>';
-        return;
-    }
-
-    if (typeof MenuPlanoPublico !== 'undefined' && MenuPlanoPublico.cargar) {
-        MenuPlanoPublico.cargar(menuIdSucursal, contentDiv);
-        return;
-    }
-
-    $.ajax({
-        url: base_path + '/usuarioExterno/menu/mesas-disponibles',
-        type: 'POST',
-        dataType: 'json',
-        data: { _token: CSRF_TOKEN, id_sucursal: menuIdSucursal }
-    }).done(function (response) {
-        contentDiv.dataset.loaded = '1';
-        if (!response.estado || !response.datos || !response.datos.length) {
-            contentDiv.innerHTML = '<p class="small text-muted mb-0">No hay mesas libres en este momento.</p>';
-            return;
+        var empty = document.getElementById('menu-plano-empty');
+        if (empty) {
+            empty.hidden = false;
+            empty.innerHTML = '<p class="small mb-0">Seleccione una sucursal primero.</p>';
         }
-        var html = '<div class="menu-mesas-grid">';
-        response.datos.forEach(function (mesa) {
-            html += '<div class="menu-mesa-chip" title="Capacidad: ' + escHtml(mesa.capacidad) + '">';
-            html += '<i class="fas fa-chair"></i>' + escHtml(mesa.numero_mesa || '\u2014');
-            html += '</div>';
-        });
-        html += '</div>';
-        contentDiv.innerHTML = html;
-    }).fail(function () {
-        contentDiv.innerHTML = '<p class="small text-danger mb-0">No se pudieron cargar las mesas.</p>';
-    });
+        return;
+    }
+    if (typeof MenuPlanoPublico !== 'undefined') {
+        MenuPlanoPublico.cargar(menuIdSucursal);
+    }
 }
 
 $(document).ready(function () {
