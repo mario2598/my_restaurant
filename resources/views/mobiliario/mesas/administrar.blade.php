@@ -1,5 +1,9 @@
 @extends('layout.master')
 
+@section('styles')
+    <link rel="stylesheet" href="{{ asset('assets/css/mesa-plano-visual.css') }}">
+@endsection
+
 @section('content')
     @include('layout.sidebar')
 
@@ -87,6 +91,7 @@
                                                 <th class="text-center">
                                                     Capacidad
                                                 </th>
+                                                <th class="text-center">Forma</th>
                                                 <th class="text-center">Acciones</th>
 
                                             </tr>
@@ -128,6 +133,7 @@
                         <label for="capacidadMesa" class="form-label">Capacidad</label>
                         <input type="number" class="form-control" id="capacidadMesa" name="capacidadMesa" required>
                     </div>
+                    <div class="mb-0" id="contenedor-forma-mesa"></div>
                 </div>
                 <div class="modal-footer">
                     <input type="hidden" id="comanda_id" name="comanda_id">
@@ -143,5 +149,6 @@
 
 
 @section('script')
+    <script src="{{ asset('assets/js/mobiliario/mesa-plano-utils.js') }}"></script>
     <script src="{{ asset('assets/js/mobiliario/mesas/administrar.js') }}"></script>
 @endsection

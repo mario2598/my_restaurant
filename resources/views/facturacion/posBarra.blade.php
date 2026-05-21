@@ -2,6 +2,7 @@
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('assets/css/pos-barra.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/css/mesa-plano-visual.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/css/pos-plano-mesas.css') }}">
 @endsection
 
@@ -200,6 +201,7 @@
 
 @section('script')
 <script src="{{ asset('assets/js/facturacion/pos.js') }}"></script>
+<script src="{{ asset('assets/js/mobiliario/mesa-plano-utils.js') }}"></script>
 <script src="{{ asset('assets/js/facturacion/pos-plano-mesas.js') }}"></script>
 <script src="{{ asset('assets/js/facturacion/pos-barra.js') }}"></script>
 @endsection

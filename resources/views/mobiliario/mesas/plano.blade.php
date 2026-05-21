@@ -1,6 +1,7 @@
 @extends('layout.master')
 
 @section('styles')
+    <link rel="stylesheet" href="{{ asset('assets/css/mesa-plano-visual.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/mobiliario-plano.css') }}">
 @endsection
 
@@ -74,7 +75,10 @@
                                     <div class="plano-leyenda mt-2">
                                         <span class="leyenda-item disponible"><i></i> Disponible</span>
                                         <span class="leyenda-item ocupada"><i></i> Ocupada</span>
-                                        <span class="leyenda-item sin-posicion"><i></i> Sin ubicar en plano</span>
+                                        <span class="leyenda-item sin-posicion"><i></i> Sin ubicar</span>
+                                        <span class="leyenda-item leyenda-forma-redonda"><i style="border-radius:50%"></i> Redonda</span>
+                                        <span class="leyenda-item leyenda-forma-cuadrada"><i></i> Cuadrada</span>
+                                        <span class="leyenda-item"><i style="width:18px;border-radius:3px"></i> Rectangular</span>
                                     </div>
                                 </div>
                                 <p class="text-muted small mt-2 mb-0" id="plano-ayuda">
@@ -152,5 +156,6 @@
 @endsection
 
 @section('script')
+    <script src="{{ asset('assets/js/mobiliario/mesa-plano-utils.js') }}"></script>
     <script src="{{ asset('assets/js/mobiliario/mesas/plano.js') }}"></script>
 @endsection

@@ -321,15 +321,18 @@ function renderizarMesas(mesas) {
             y = 8 + Math.floor(idxSinPos / 4) * 10;
             idxSinPos++;
         }
+        var forma = getFormaMesa(m);
+        var dims = ajustarTamanoMesaPorForma(forma, w, h);
+        w = dims.w;
+        h = dims.h;
         var estado = m.estado_codigo === 'MESA_OCUPADA' ? 'ocupada' : 'disponible';
         var sinPosClass = tienePosicion(m) ? '' : ' sin-posicion-en-plano';
-        var forma = (m.forma || 'rectangular').toLowerCase();
-        html += '<div class="plano-mesa ' + estado + sinPosClass + ' forma-' + forma + '"'
-            + ' data-id="' + m.id + '"'
+        var clases = construirClasesMesaPlano(m, [estado, sinPosClass]);
+        html += '<div class="' + clases.join(' ') + '"'
+            + ' data-id="' + m.id + '" data-forma="' + forma + '"'
             + ' style="left:' + x + '%;top:' + y + '%;width:' + w + '%;height:' + h + '%;"'
-            + ' title="Mesa ' + m.numero_mesa + ' — ' + (m.estado_nombre || '') + '">'
-            + '<span class="plano-mesa-numero">' + m.numero_mesa + '</span>'
-            + '<span class="plano-mesa-cap">' + (m.capacidad || 0) + ' p.</span>'
+            + ' title="Mesa ' + m.numero_mesa + ' (' + etiquetaFormaMesa(forma) + ') — ' + (m.estado_nombre || '') + '">'
+            + htmlContenidoMesaPlano(m.numero_mesa, m.capacidad)
             + '</div>';
     });
     $('#plano-mesas').html(html);
@@ -712,16 +715,13 @@ function seleccionarMesa(id) {
     $('.plano-mesa[data-id="' + id + '"]').css('outline', '3px solid #007bff');
 
     var estado = m.estado_codigo === 'MESA_OCUPADA' ? 'Ocupada' : 'Disponible';
-    var html = '<p><strong>Mesa ' + m.numero_mesa + '</strong></p>'
+    var formaActual = getFormaMesa(m);
+    var html = '<p><strong>Mesa ' + m.numero_mesa + '</strong>'
+        + ' <span class="mesa-forma-badge forma-' + formaActual + '">' + etiquetaFormaMesa(formaActual) + '</span></p>'
         + '<p class="mb-1">Capacidad: ' + (m.capacidad || 0) + '</p>'
         + '<p class="mb-1">Estado: ' + estado + '</p>'
-        + '<p class="mb-2">Forma: '
-        + '<select id="detalle_forma" class="form-control form-control-sm">'
-        + '<option value="rectangular"' + (m.forma === 'rectangular' ? ' selected' : '') + '>Rectangular</option>'
-        + '<option value="cuadrada"' + (m.forma === 'cuadrada' ? ' selected' : '') + '>Cuadrada</option>'
-        + '<option value="redonda"' + (m.forma === 'redonda' ? ' selected' : '') + '>Redonda</option>'
-        + '</select></p>'
-        + '<p class="mb-2">Zona: <select id="detalle_zona" class="form-control form-control-sm">' + optionsZonaMesaSelect(m.zona || '') + '</select></p>'
+        + htmlSelectorFormaMesa(formaActual, 'detalle_forma')
+        + '<p class="mb-2 mt-2">Zona: <select id="detalle_zona" class="form-control form-control-sm">' + optionsZonaMesaSelect(m.zona || '') + '</select></p>'
         + '<button type="button" class="btn btn-sm btn-primary btn-block" onclick="aplicarDetalleMesa(' + id + ')">Aplicar forma/zona</button>'
         + '<button type="button" class="btn btn-sm btn-outline-' + (m.estado_codigo === 'MESA_DISPONIBLE' ? 'danger' : 'success') + ' btn-block mt-1" onclick="toggleEstadoMesa(' + id + ', \'' + (m.estado_codigo === 'MESA_DISPONIBLE' ? 'MESA_OCUPADA' : 'MESA_DISPONIBLE') + '\')">'
         + (m.estado_codigo === 'MESA_DISPONIBLE' ? 'Marcar ocupada' : 'Marcar disponible') + '</button>';
@@ -733,15 +733,19 @@ function aplicarDetalleMesa(id) {
     var canvas = document.getElementById('plano-canvas');
     var rect = canvas.getBoundingClientRect();
     var elRect = $el[0].getBoundingClientRect();
-    var forma = $('#detalle_forma').val();
+    var forma = $('#detalle_forma').val() || getFormaMesa({ forma: 'rectangular' });
     var zona = $('#detalle_zona').val();
-    $el.removeClass('forma-rectangular forma-cuadrada forma-redonda').addClass('forma-' + forma);
+    var w = ((elRect.width / rect.width) * 100);
+    var h = ((elRect.height / rect.height) * 100);
+    var dims = ajustarTamanoMesaPorForma(forma, w, h);
+    $el.removeClass('forma-rectangular forma-cuadrada forma-redonda').addClass('forma-' + forma).attr('data-forma', forma);
+    $el.css({ width: dims.w + '%', height: dims.h + '%' });
     guardarPosicionAjax(
         id,
         ((elRect.left - rect.left) / rect.width) * 100,
         ((elRect.top - rect.top) / rect.height) * 100,
-        (elRect.width / rect.width) * 100,
-        (elRect.height / rect.height) * 100,
+        dims.w,
+        dims.h,
         forma,
         zona
     ).done(function (r) {

@@ -11,6 +11,9 @@ $(document).ready(function () {
         });
     });
 
+    if (typeof htmlSelectorFormaMesa === 'function') {
+        $('#contenedor-forma-mesa').html(htmlSelectorFormaMesa('rectangular', 'formaMesaAdmin'));
+    }
     cargarMesas();
 });
 
@@ -44,10 +47,13 @@ function generarHTMLMesas(mesas) {
     var texto = "";
     mesasGeneral = mesas;
     mesasGeneral.forEach(mesa => {
+        var forma = (mesa.forma || 'rectangular').toLowerCase();
+        var formaLabel = typeof etiquetaFormaMesa === 'function' ? etiquetaFormaMesa(forma) : forma;
         texto += `
             <tr > 
               <td class="text-center">${mesa.numero_mesa ?? "S/A"}</td>
               <td class="text-center">${mesa.capacidad ?? "S/A"}</td>
+              <td class="text-center"><span class="mesa-forma-badge forma-${forma}">${formaLabel}</span></td>
                <td class="text-center"><a title="Eliminar" 
                     class="btn btn-primary" onclick="eliminarMesaAction(${mesa.id ?? null})"  style="color:white;cursor:pointer;">
                     <i class="fas fa-trash"></i></a>
@@ -70,6 +76,9 @@ function cargarMesaModal(idMesa) {
     $('#mdl_gestiona_mesa_label').text('Editar Mesa');
     $('#numeroMesa').val(mesaGestion.numero_mesa);
     $('#capacidadMesa').val(mesaGestion.capacidad);
+    if (typeof htmlSelectorFormaMesa === 'function') {
+        $('#contenedor-forma-mesa').html(htmlSelectorFormaMesa(getFormaMesa(mesaGestion), 'formaMesaAdmin'));
+    }
     $('#mdl_gestiona_mesa').modal('show');
 }
 
@@ -78,6 +87,9 @@ function addMesaModal() {
     $('#mdl_gestiona_mesa_label').text('Agregar Nueva Mesa');
     $('#numeroMesa').val("");
     $('#capacidadMesa').val("");
+    if (typeof htmlSelectorFormaMesa === 'function') {
+        $('#contenedor-forma-mesa').html(htmlSelectorFormaMesa('redonda', 'formaMesaAdmin'));
+    }
     $('#mdl_gestiona_mesa').modal('show');
 }
 
@@ -94,7 +106,8 @@ function guardarMesa() {
         "id": mesaGestion == null ? -1 : mesaGestion.id,
         "numero_mesa": $('#numeroMesa').val(),
         "sucursal": $('#select_sucursal').val(),
-        "capacidad": $('#capacidadMesa').val()
+        "capacidad": $('#capacidadMesa').val(),
+        "forma": $('#formaMesaAdmin').val() || 'rectangular'
     }
 
     $('#loader').fadeIn();
@@ -161,8 +174,12 @@ function eliminarMesa(idMesa) {
         showSuccess("Se elimino la mesa correctamente.");
         $('#loader').fadeOut();
         cargarMesas();
-    }).fail(function (jqXHR, textStatus, errorThrown) {
-        showError("Algo salió mal");
+    }).fail(function (jqXHR) {
+        var msg = 'No se pudo eliminar la mesa.';
+        if (jqXHR.responseJSON && jqXHR.responseJSON.mensaje) {
+            msg = jqXHR.responseJSON.mensaje;
+        }
+        showError(msg);
         $('#loader').fadeOut();
     });
     cerrarMesaModal();
