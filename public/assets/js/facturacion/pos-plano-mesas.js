@@ -72,11 +72,13 @@ function renderizarResumenPlanoPos() {
         return;
     }
     var html = '<strong>Caja actual:</strong> ';
+    var totalMesas = (posPlanoDatos.mesas || []).length;
+    html += '<span class="text-primary">' + totalMesas + ' mesa(s)</span> en el mapa';
     if (c.pendientes > 0) {
-        html += '<span class="text-warning">' + c.pendientes + ' orden(es) por cobrar</span>';
+        html += ' · <span class="text-warning">' + c.pendientes + ' orden(es) por cobrar</span>';
         html += ' en <span class="text-warning">' + c.mesasConPendiente + ' mesa(s)</span>';
     } else {
-        html += 'sin cuentas pendientes';
+        html += ' · sin cuentas pendientes';
     }
     if (c.pagadas > 0) {
         html += ' · <span class="text-success">' + c.pagadas + ' ya pagada(s)</span>';
@@ -103,6 +105,7 @@ function cargarPlanoPos() {
             return;
         }
         posPlanoDatos = response.datos;
+        var mesas = posPlanoDatos.mesas || [];
         var ar = posPlanoDatos.ancho_referencia || 100;
         var al = posPlanoDatos.alto_referencia || 150;
         $('#pos-plano-canvas').css('aspect-ratio', ar + ' / ' + al);
@@ -110,10 +113,21 @@ function cargarPlanoPos() {
         renderizarPlanoPos();
         renderizarResumenPlanoPos();
         actualizarAyudaPlanoPos();
-        renderizarSidebarPos(null);
-    }).fail(function () {
-        showError('No se pudo cargar el mapa. Configure el plano en Mobiliario → Plano de mesas.');
-        $('#pos-plano-sidebar').html('<p class="text-danger small p-2">Error de conexión o falta script SQL del plano.</p>');
+        if (!mesas.length) {
+            $('#pos-plano-sidebar').html(
+                '<p class="text-warning small p-2 mb-0"><i class="fas fa-exclamation-triangle"></i> '
+                + 'No hay mesas en esta sucursal. Créelas en Mobiliario → Administrar mesas y ubíquelas en el plano.</p>'
+            );
+        } else {
+            renderizarSidebarPos(null);
+        }
+    }).fail(function (jqXHR) {
+        var msg = 'No se pudo cargar el mapa.';
+        if (jqXHR.responseJSON && jqXHR.responseJSON.mensaje) {
+            msg = jqXHR.responseJSON.mensaje;
+        }
+        showError(msg + ' Configure el plano en Mobiliario → Plano de mesas.');
+        $('#pos-plano-sidebar').html('<p class="text-danger small p-2">' + escHtmlPos(msg) + '</p>');
     });
 }
 

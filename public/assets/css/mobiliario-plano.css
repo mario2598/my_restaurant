@@ -24,11 +24,30 @@
     max-width: 900px;
     margin: 0 auto;
     aspect-ratio: 2 / 3;
+    min-height: 400px;
     background: #fff;
     border: 2px solid #dee2e6;
     box-shadow: inset 0 0 0 1px #f8f9fa;
     overflow: hidden;
     user-select: none;
+}
+
+#plano-zonas,
+#plano-mesas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+#plano-mesas {
+    z-index: 12;
+}
+
+#plano-wrapper.modo-editar-mesas #plano-mesas .plano-mesa {
+    pointer-events: auto;
 }
 
 .plano-zona {

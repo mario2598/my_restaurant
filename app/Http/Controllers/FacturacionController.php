@@ -1894,8 +1894,8 @@ class FacturacionController extends Controller
      */
     public function cargarPlanoPos(Request $request)
     {
-        if (!$this->validarSesion("facFac")) {
-            return $this->responseAjaxServerError("No tienes permisos para realizar la acción.", []);
+        if (!$this->validarSesion()) {
+            return $this->responseAjaxServerError("Sesión no válida.", []);
         }
 
         try {

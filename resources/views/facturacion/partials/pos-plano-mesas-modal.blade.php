@@ -18,7 +18,7 @@
                     </li>
                 </ul>
                 <div id="pos-plano-resumen" class="alert alert-light border py-2 px-3 mb-2 small d-none"></div>
-                <p class="small text-muted mb-2" id="pos-plano-ayuda">Toque una mesa para asignarla a la orden actual.</p>
+                <p class="small text-muted mb-2" id="pos-plano-ayuda">Toque una mesa en el plano para asignarla o ver sus órdenes.</p>
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="pos-plano-tab-seleccionar" role="tabpanel"></div>
                     <div class="tab-pane fade" id="pos-plano-tab-ordenes" role="tabpanel"></div>
