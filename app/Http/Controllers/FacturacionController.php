@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\QueryException;
 use App\Traits\SpaceUtil;
 use App\Support\PagoOrdenMoneda;
+use App\Support\PosVueltoRegistro;
+use App\Support\SisTipoCambioPos;
 use Intervention\Image\ImageManagerStatic as Image;
 
 class FacturacionController extends Controller
@@ -1617,6 +1619,16 @@ class FacturacionController extends Controller
                 'mto_pagado' => $asignarMontosDetalles['total']
             ]);
 
+            $extrasMonedaPago = PagoOrdenMoneda::extrasParaInsert($request, is_array($orden) ? $orden : []);
+            if (! empty($extrasMonedaPago['moneda_factura_id']) && ! empty($extrasMonedaPago['tipo_cambio_snapshot'])) {
+                SisTipoCambioPos::registrarSiDifiere(
+                    (int) $extrasMonedaPago['moneda_factura_id'],
+                    (float) $extrasMonedaPago['tipo_cambio_snapshot'],
+                    (int) session('usuario')['id'],
+                    (int) $this->getUsuarioSucursal()
+                );
+            }
+
             $pagoOrdenId = DB::table('pago_orden')->insertGetId(array_merge([
                 'orden' => $id_orden,
                 'nombre_cliente' => $cliente,
@@ -1631,7 +1643,16 @@ class FacturacionController extends Controller
                 'fecha_pago' => $fechaActual,
                 'cod_promocion' => $asignarMontosDetalles['codDescuento'],
                 'impuesto_servicio' => $asignarMontosDetalles['montoImpuestoServicioMesa'],
-            ], PagoOrdenMoneda::extrasParaInsert($request, is_array($orden) ? $orden : [])));
+            ], $extrasMonedaPago));
+
+            PosVueltoRegistro::insertar(
+                $request,
+                (int) $pagoOrdenId,
+                (int) $id_orden,
+                (string) $numOrden,
+                (int) session('usuario')['id'],
+                (int) $this->getUsuarioSucursal()
+            );
 
             $this->aumentarConsecutivoOrden($this->getUsuarioSucursal());
 
@@ -1902,7 +1923,12 @@ class FacturacionController extends Controller
             $idSucursal = $this->getUsuarioSucursal();
             $datos = MesasController::getPlanoDataForSucursal((int) $idSucursal);
 
-            $idCaja = CajaController::getIdCaja(session('usuario')['id'], $idSucursal);
+            $idCaja = null;
+            try {
+                $idCaja = CajaController::getIdCaja(session('usuario')['id'], $idSucursal);
+            } catch (\Throwable $e) {
+                $idCaja = null;
+            }
             $ordenesPorMesa = [];
             $sinMesa = [];
             $ordenesPendientesTodas = [];
@@ -1972,6 +1998,56 @@ class FacturacionController extends Controller
             ]);
             return $this->responseAjaxServerError("Error al cargar el mapa de mesas", []);
         }
+    }
+
+    public function listarVueltosCajaPos(Request $request)
+    {
+        if (! $this->validarSesion('facFac')) {
+            return $this->responseAjaxServerError('Sesión inválida', []);
+        }
+        $idSucursal = $this->getUsuarioSucursal();
+        $idUsuario = session('usuario')['id'];
+        $datos = PosVueltoRegistro::listarPorCajaAbierta((int) $idUsuario, (int) $idSucursal);
+
+        return $this->responseAjaxSuccess('', $datos);
+    }
+
+    /**
+     * Guarda un nuevo tipo de cambio en sis_tipo_cambio si difiere del último vigente.
+     */
+    public function guardarTipoCambioPos(Request $request)
+    {
+        if (! $this->validarSesion('facFac')) {
+            return $this->responseAjaxServerError('Sesión inválida', []);
+        }
+
+        $monedaId = (int) $request->input('moneda_id');
+        $tipoCambio = (float) $request->input('tipo_cambio');
+
+        if ($monedaId <= 0 || $tipoCambio <= 0) {
+            return $this->responseAjaxServerError('Indique moneda y tipo de cambio válidos.', []);
+        }
+
+        $resultado = SisTipoCambioPos::registrarSiDifiere(
+            $monedaId,
+            $tipoCambio,
+            (int) session('usuario')['id'],
+            (int) $this->getUsuarioSucursal()
+        );
+
+        if (! empty($resultado['mensaje']) && ! $resultado['guardado'] && ! $resultado['era_igual']) {
+            return $this->responseAjaxServerError($resultado['mensaje'], []);
+        }
+
+        $msg = $resultado['guardado']
+            ? 'Tipo de cambio actualizado en base de datos.'
+            : ($resultado['era_igual'] ? 'El tipo de cambio ya estaba vigente.' : 'Sin cambios.');
+
+        return $this->responseAjaxSuccess($msg, [
+            'guardado' => $resultado['guardado'],
+            'era_igual' => $resultado['era_igual'],
+            'tipo_cambio' => $resultado['tipo_cambio'],
+        ]);
     }
 
     public function devolverInventarioOrden($id_orden, $lineas)
@@ -3444,6 +3520,16 @@ class FacturacionController extends Controller
 
             DB::beginTransaction();
 
+            $extrasMonedaPago = PagoOrdenMoneda::extrasParaInsert($request, is_array($orden) ? $orden : []);
+            if (! empty($extrasMonedaPago['moneda_factura_id']) && ! empty($extrasMonedaPago['tipo_cambio_snapshot'])) {
+                SisTipoCambioPos::registrarSiDifiere(
+                    (int) $extrasMonedaPago['moneda_factura_id'],
+                    (float) $extrasMonedaPago['tipo_cambio_snapshot'],
+                    (int) session('usuario')['id'],
+                    (int) $this->getUsuarioSucursal()
+                );
+            }
+
             $pagoOrdenId = DB::table('pago_orden')->insertGetId(array_merge([
                 'orden' => $orden['id'],
                 'nombre_cliente' => $cliente,
@@ -3458,8 +3544,16 @@ class FacturacionController extends Controller
                 'fecha_pago' => $fechaActual,
                 'cod_promocion' => $asignarMontosDetalles['codDescuento'],
                 'impuesto_servicio' => $asignarMontosDetalles['montoImpuestoServicioMesa'],
-            ], PagoOrdenMoneda::extrasParaInsert($request, is_array($orden) ? $orden : [])));
+            ], $extrasMonedaPago));
 
+            PosVueltoRegistro::insertar(
+                $request,
+                (int) $pagoOrdenId,
+                (int) $orden['id'],
+                (string) ($ordenExistente->numero_orden ?? $orden['numero_orden'] ?? ''),
+                (int) session('usuario')['id'],
+                (int) $this->getUsuarioSucursal()
+            );
 
             foreach ($detallesGuardar as $det) {
                 $d = $det['detalle'];

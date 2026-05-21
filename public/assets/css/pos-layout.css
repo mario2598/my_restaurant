@@ -1,0 +1,154 @@
+/**
+ * POS — layout responsive (productos + orden)
+ */
+
+/* Panel cobro: ancho completo siempre (evita col-md-2 estrecho en tablet) */
+#contFacturar {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+    padding: 0.75rem 1rem !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    background: #f8f9fa;
+}
+
+#contFacturar .container-fluid {
+    padding: 0;
+    max-width: 100%;
+}
+
+#contFacturar #txt-total-pagar {
+    white-space: nowrap;
+    word-break: normal;
+    font-size: 1.35rem;
+    margin-bottom: 0.5rem;
+}
+
+#contFacturar .btn {
+    white-space: normal;
+    word-break: normal;
+    width: 100%;
+    max-width: 100%;
+}
+
+#contFacturar ul.nav-pills {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+#contFacturar ul.nav-pills + ul.nav-pills {
+    margin-top: 0.5rem;
+}
+
+/* Acciones superiores (caja, órdenes…) */
+#nv-acciones {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.35rem;
+    padding: 0 0.25rem;
+}
+
+#nv-acciones > li {
+    margin: 0;
+}
+
+#nv-acciones .btn {
+    white-space: nowrap;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.65rem;
+}
+
+/* Cabecera orden: cliente + mesa */
+#contDetalles .card-header .card-title > .row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+#contDetalles .card-header .input-group label.mr-4 {
+    flex: 0 0 auto;
+    min-width: 2.5rem;
+}
+
+#contDetalles .card-header .input-group {
+    flex-wrap: nowrap;
+}
+
+#contDetalles .card-header #select_mesa {
+    min-width: 0;
+}
+
+/* Tabla detalle orden — scroll horizontal en pantallas chicas */
+#contDetalles .card-body {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+#contDetalles .card-body .table {
+    min-width: 280px;
+    margin-bottom: 0;
+}
+
+/* Columnas principales: apilar hasta lg (992px) */
+@media (max-width: 991.98px) {
+    #contEscogerProductos,
+    #contPanelOrden {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    #contPanelOrden {
+        margin-top: 0.75rem;
+    }
+
+    #nv-acciones {
+        justify-content: center;
+    }
+
+    #scrl-productos {
+        max-height: 42vh !important;
+        min-height: 220px !important;
+    }
+
+    #contDetalles .card-header {
+        padding: 0.75rem !important;
+    }
+}
+
+@media (max-width: 767.98px) {
+    #nv-acciones .btn {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.5rem;
+    }
+
+    #contDetalles .card-header .pos-mesa-label {
+        display: none;
+    }
+
+    #contDetalles .card-header .pos-mesa-input-group #select_mesa {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    #contDetalles .card-header .pos-mesa-input-group #select_mesa {
+        flex: 1 1 auto;
+    }
+
+    #contFacturar #txt-total-pagar {
+        font-size: 1.2rem;
+    }
+
+    #mesas-flotante-container {
+        bottom: 12px;
+        right: 12px;
+    }
+}
+
+/* Tablet apaisada / ventana estrecha con dos columnas forzadas */
+@media (min-width: 768px) and (max-width: 991.98px) {
+    #contDetalles .card-header .card-title > .row > [class*="col-"] {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}

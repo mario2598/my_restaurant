@@ -135,18 +135,25 @@ class MesasController extends Controller
 
     public static function getPlanoDataForSucursal(int $idSucursal): array
     {
-        $plano = DB::table('sucursal_plano')->where('sucursal', '=', $idSucursal)->first();
         $anchoRef = 100;
         $altoRef = 150;
+        $plano = null;
+        $areasCatalogo = collect();
+        $zonas = [];
 
-        if ($plano != null) {
-            $anchoRef = (int) ($plano->ancho_referencia ?? 100);
-            $altoRef = (int) ($plano->alto_referencia ?? 150);
+        if (Schema::hasTable('sucursal_plano')) {
+            $plano = DB::table('sucursal_plano')->where('sucursal', '=', $idSucursal)->first();
+            if ($plano != null) {
+                $anchoRef = (int) ($plano->ancho_referencia ?? 100);
+                $altoRef = (int) ($plano->alto_referencia ?? 150);
+            }
         }
 
-        self::asegurarAreasSucursal($idSucursal, $plano);
-        $areasCatalogo = self::getAreasCatalogoSucursal($idSucursal);
-        $zonas = self::areasCatalogoToZonasPlano($areasCatalogo);
+        if (Schema::hasTable('sucursal_plano_area')) {
+            self::asegurarAreasSucursal($idSucursal, $plano);
+            $areasCatalogo = self::getAreasCatalogoSucursal($idSucursal);
+            $zonas = self::areasCatalogoToZonasPlano($areasCatalogo);
+        }
 
         $mesas = DB::table('mesa')
             ->join('sis_estado', 'sis_estado.id', '=', 'mesa.estado')

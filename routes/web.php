@@ -172,6 +172,8 @@ Route::group(['middleware' => 'autorizated:facFac,posBarra'], function () {
     Route::post('facturacion/mesas/cambiar-estado', 'MesasController@cambiarEstadoMesa');
     Route::post('facturacion/mesas/obtener-mesas', 'MesasController@obtenerMesasSucursal');
     Route::get('facturacion/mesas/cargar-plano', 'FacturacionController@cargarPlanoPos');
+    Route::get('facturacion/pos/vueltos-caja', 'FacturacionController@listarVueltosCajaPos');
+    Route::post('facturacion/pos/tipo-cambio', 'FacturacionController@guardarTipoCambioPos');
     Route::get('facturacion/posBarra/cuentas', 'PosBarraController@listarCuentasAbiertas');
     Route::post('facturacion/posBarra/cuentas/abrir', 'PosBarraController@abrirCuenta');
     Route::post('facturacion/posBarra/cuentas/seleccionar', 'PosBarraController@seleccionarCuenta');

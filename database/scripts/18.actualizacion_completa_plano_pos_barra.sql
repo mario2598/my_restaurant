@@ -133,6 +133,10 @@ WHERE NOT EXISTS (
 );
 
 -- =============================================================================
+-- 6) Registro de vueltos multimoneda en POS (ejecutar también 19.pos_vuelto_registro.sql si no está incluido)
+-- =============================================================================
+
+-- =============================================================================
 -- Fin. Verifique:
 --   SELECT * FROM vista WHERE codigo_pantalla IN ('mesasPlano','posBarra');
 --   SHOW TABLES LIKE 'sucursal_plano%';
