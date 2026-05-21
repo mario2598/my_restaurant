@@ -942,7 +942,7 @@ function generarProductos() {
  * Genera el elemento HTML correspondiente a la categoría
  */
 function generarHTMLProducto(nombre, codigo, precio, cantidad, tipoProd, descripcion = '') {
-    var text = `<tr class="filaProductos">
+    var text = `<tr class="filaProductos pos-fila-producto" data-codigo="${escAttrPos(codigo)}">
     <td width="40%">
         <div style="display: flex; align-items: center; justify-content: space-between;">
             <span onclick="seleccionarProducto('N','${codigo}')" style="cursor: pointer; flex: 1;">${nombre}</span>`;
@@ -1237,16 +1237,92 @@ function seleccionarProducto(impuestoServicio, codigo, todos = false) {
     }
 }
 
+function escAttrPos(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;');
+}
+
+/**
+ * Indicador visual rápido: pulso en producto, línea de orden y toast.
+ */
+function feedbackProductoAgregado(producto, detalleArrayIndex) {
+    if (!producto || !producto.codigo) {
+        return;
+    }
+    var codigo = String(producto.codigo);
+    var nombre = producto.nombre || codigo;
+    var cantidad = 1;
+    if (detalleArrayIndex >= 0 && detalles[detalleArrayIndex]) {
+        cantidad = detalles[detalleArrayIndex].cantidad || 1;
+    }
+
+    var selCodigo = '[data-codigo="' + escAttrPos(codigo) + '"]';
+    $(selCodigo + '.pos-barra-prod-btn, tr.pos-fila-producto' + selCodigo).each(function () {
+        var $el = $(this);
+        $el.removeClass('pos-prod-agregado-flash');
+        void $el[0].offsetWidth;
+        $el.addClass('pos-prod-agregado-flash');
+        setTimeout(function () { $el.removeClass('pos-prod-agregado-flash'); }, 600);
+    });
+
+    setTimeout(function () {
+        var $linea = $('tr.pos-linea-orden[data-orden-idx="' + detalleArrayIndex + '"]');
+        if ($linea.length) {
+            $linea.removeClass('pos-orden-linea-flash');
+            void $linea[0].offsetWidth;
+            $linea.addClass('pos-orden-linea-flash');
+            setTimeout(function () { $linea.removeClass('pos-orden-linea-flash'); }, 900);
+            var el = $linea[0];
+            if (el && typeof el.scrollIntoView === 'function') {
+                el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        }
+    }, 30);
+
+    var $toast = $('#pos-feedback-toast');
+    if (!$toast.length) {
+        $('body').append(
+            '<div id="pos-feedback-toast" class="pos-feedback-toast" aria-live="polite" role="status"></div>'
+        );
+        $toast = $('#pos-feedback-toast');
+    }
+    var textoCant = cantidad > 1 ? ' ×' + cantidad : '';
+    $toast.html(
+        '<span class="pos-feedback-toast__icon"><i class="fas fa-check"></i></span>'
+        + '<span class="pos-feedback-toast__text">'
+        + $('<span>').text(nombre).html() + textoCant
+        + '</span>'
+    );
+    $toast.removeClass('is-leaving').addClass('is-visible');
+    clearTimeout(window._posFeedbackToastTimer);
+    window._posFeedbackToastTimer = setTimeout(function () {
+        $toast.addClass('is-leaving');
+        setTimeout(function () { $toast.removeClass('is-visible is-leaving'); }, 280);
+    }, 850);
+}
+
 function agregarProducto(producto) {
     productoSeleccionado = producto;
     let indice = buscarDetallePrevio(producto);
     if (indice >= 0) {
         actualizarDetalleOrden(indice);
-    } else {
-        const indiceMasAlto = obtenerIndiceMasAlto(detalles) + 1;
-        detalles.push(crearDetalleOrden(indiceMasAlto, 1, producto, ""));
-        reducirCantidadProducto(producto.codigo);
+        productoSeleccionado.extras.forEach(extra => {
+            extra.extras.forEach(extra1 => {
+                extra1.seleccionado = false;
+            });
+        });
+        setTimeout(function () {
+            feedbackProductoAgregado(producto, indice);
+        }, 0);
+        return;
     }
+
+    const indiceMasAlto = obtenerIndiceMasAlto(detalles) + 1;
+    detalles.push(crearDetalleOrden(indiceMasAlto, 1, producto, ""));
+    reducirCantidadProducto(producto.codigo);
+    var nuevoIdx = detalles.length - 1;
 
     productoSeleccionado.extras.forEach(extra => {
         extra.extras.forEach(extra1 => {
@@ -1255,6 +1331,9 @@ function agregarProducto(producto) {
     });
     cambiosPendientes = true;
     actualizarOrden();
+    setTimeout(function () {
+        feedbackProductoAgregado(producto, nuevoIdx);
+    }, 0);
 }
 
 function obtenerIndiceMasAlto(detalles) {
@@ -1608,7 +1687,7 @@ function generarHTMLProductoOrden(indice, detalle, precio, cantidad, total, codi
 
     var deshabilitarCantidad = (cantidad_pagada >= cantidad) || bloquearEdicionCantidad;
 
-    let texto = `<tr style="border-bottom: 1px solid grey;">
+    let texto = `<tr class="pos-linea-orden" data-codigo="${escAttrPos(codigo)}" data-orden-idx="${indice}" style="border-bottom: 1px solid grey;">
                     <td> 
                     <small>
                         ${detalle}

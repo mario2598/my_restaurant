@@ -51,7 +51,7 @@ function generarHTMLProducto(nombre, codigo, precio, cantidad, tipoProd, descrip
     if (tipoProd === 'E' && cantidad < 15) {
         stock = '<span class="pb-stock">Quedan ' + cantidad + '</span>';
     }
-    return '<button type="button" class="pos-barra-prod-btn" onclick="seleccionarProducto(\'N\',\'' + String(codigo).replace(/'/g, "\\'") + '\')">'
+    return '<button type="button" class="pos-barra-prod-btn" data-codigo="' + escBarraHtml(codigo) + '" onclick="seleccionarProducto(\'N\',\'' + String(codigo).replace(/'/g, "\\'") + '\')">'
         + '<span class="pb-nombre">' + escBarraHtml(nombre) + '</span>'
         + '<span class="pb-precio">₡' + parseFloat(precio).toFixed(0) + '</span>'
         + stock + '</button>';
