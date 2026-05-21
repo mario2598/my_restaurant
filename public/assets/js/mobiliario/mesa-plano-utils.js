@@ -115,3 +115,43 @@ function leerPorcentajesMesaEnCanvas($el, canvas) {
         h: (elRect.height / rect.height) * 100
     };
 }
+
+function aplicarTamanoMesaEnDom($el, forma, w, h) {
+    forma = forma || getFormaMesa({ forma: $el.data('forma') });
+    w = parseFloat(w) || 7;
+    h = parseFloat(h) || 7;
+    $el.attr('data-forma', forma);
+    if (esFormaCuadradaVisual(forma)) {
+        $el.css({ width: w + '%', height: 'auto' });
+    } else {
+        $el.css({ width: w + '%', height: h + '%' });
+    }
+}
+
+function htmlAsaRedimensionMesa() {
+    return '<span class="mesa-plano-handle mesa-plano-handle-se" data-handle="se"></span>';
+}
+
+function htmlControlesTamanoMesa(m) {
+    var forma = getFormaMesa(m);
+    var w = parseFloat(m.plano_ancho) || 7;
+    var h = parseFloat(m.plano_alto) || 7;
+    var tam = esFormaCuadradaVisual(forma) ? w : Math.round((w + h) / 2 * 10) / 10;
+    var html = '<div class="mesa-tamano-controles border-top pt-2 mt-2">'
+        + '<label class="small font-weight-bold d-block mb-1">Tamaño en el plano</label>';
+    if (esFormaCuadradaVisual(forma)) {
+        html += '<input type="range" class="custom-range mb-1" id="mesa_tamano_pct" min="4" max="20" step="0.5" value="' + tam + '"'
+            + ' oninput="vistaPreviaTamanoMesa(' + m.id + ')">'
+            + '<div class="d-flex justify-content-between small text-muted">'
+            + '<span>4%</span><span id="mesa_tamano_val">' + tam + '%</span><span>20%</span></div>';
+    } else {
+        html += '<div class="form-row">'
+            + '<div class="col-6"><label class="small mb-0">Ancho %</label>'
+            + '<input type="number" class="form-control form-control-sm" id="mesa_ancho_pct" min="4" max="25" step="0.5" value="' + w.toFixed(1) + '" onchange="vistaPreviaTamanoMesa(' + m.id + ')"></div>'
+            + '<div class="col-6"><label class="small mb-0">Alto %</label>'
+            + '<input type="number" class="form-control form-control-sm" id="mesa_alto_pct" min="4" max="25" step="0.5" value="' + h.toFixed(1) + '" onchange="vistaPreviaTamanoMesa(' + m.id + ')"></div>'
+            + '</div>';
+    }
+    html += '<p class="small text-muted mt-1 mb-0">Arrastre la esquina azul de la mesa o use los controles.</p></div>';
+    return html;
+}

@@ -93,6 +93,39 @@
     border-style: dashed;
 }
 
+.plano-mesa.seleccionada .mesa-plano-superficie {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.5);
+}
+
+/* Asa para redimensionar (modo edición plano) */
+#plano-wrapper.modo-editar-mesas .mesa-plano-handle {
+    display: block;
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #007bff;
+    border: 2px solid #fff;
+    border-radius: 2px;
+    z-index: 15;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+#plano-wrapper.modo-editar-mesas .mesa-plano-handle-se {
+    right: -5px;
+    bottom: -5px;
+    cursor: se-resize;
+}
+
+#plano-wrapper.modo-editar-mesas .plano-mesa.seleccionada {
+    z-index: 22;
+}
+
+.mesa-plano-handle {
+    display: none;
+    pointer-events: auto;
+}
+
 .plano-mesa:hover,
 .pos-plano-mesa:hover {
     transform: scale(1.04);

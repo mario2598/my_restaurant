@@ -19,9 +19,28 @@
     margin: 0 auto;
     aspect-ratio: 2 / 3;
     max-height: 55vh;
+    min-height: 280px;
     background: #fff;
     border: 2px solid #dee2e6;
     overflow: hidden;
+}
+
+#pos-plano-zonas,
+#pos-plano-mesas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+#pos-plano-mesas {
+    z-index: 12;
+}
+
+#pos-plano-mesas .pos-plano-mesa {
+    pointer-events: auto;
 }
 
 #pos-plano-canvas .plano-zona {

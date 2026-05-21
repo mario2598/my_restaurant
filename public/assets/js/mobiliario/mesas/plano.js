@@ -12,6 +12,8 @@ var ZONAS_DEFAULT = [
 ];
 
 var MIN_ZONA_PCT = 4;
+var MIN_MESA_PCT = 4;
+var MAX_MESA_PCT = 25;
 
 $(document).ready(function () {
     $('input[name="modo_plano"]').on('change', aplicarModoPlano);
@@ -330,6 +332,7 @@ function renderizarMesas(mesas) {
             + ' style="' + estiloPosicionMesa(forma, x, y, w, h) + '"'
             + ' title="Mesa ' + m.numero_mesa + ' (' + etiquetaFormaMesa(forma) + ') — ' + (m.estado_nombre || '') + '">'
             + htmlContenidoMesaPlano(m.numero_mesa, m.capacidad)
+            + (typeof htmlAsaRedimensionMesa === 'function' ? htmlAsaRedimensionMesa() : '')
             + '</div>';
     });
     $('#plano-mesas').html(html);
@@ -596,18 +599,30 @@ function guardarCambiosPlano() {
 function enlazarEventosMesas() {
     var canvas = document.getElementById('plano-canvas');
     $('.plano-mesa').off('mousedown click');
-    $('.plano-mesa').on('click', function () {
+    $('.mesa-plano-handle').off('mousedown');
+
+    $('.plano-mesa').on('click', function (e) {
+        if ($(e.target).hasClass('mesa-plano-handle')) return;
         if (arrastre && arrastre.movio) return;
         seleccionarMesa($(this).data('id'));
     });
 
     if (getModoPlano() !== 'mesas') return;
 
+    $('.mesa-plano-handle').on('mousedown', function (e) {
+        e.stopPropagation();
+        if (getModoPlano() !== 'mesas') return;
+        var mesaEl = $(this).closest('.plano-mesa')[0];
+        iniciarRedimensionMesa.call(mesaEl, e);
+    });
+
     $('.plano-mesa').on('mousedown', function (evt) {
+        if ($(evt.target).hasClass('mesa-plano-handle')) return;
         var el = $(this);
         var canvasRect = canvas.getBoundingClientRect();
         var elRect = this.getBoundingClientRect();
         arrastre = {
+            tipo: 'move',
             el: el,
             canvas: canvas,
             offsetX: evt.clientX - elRect.left,
@@ -639,11 +654,77 @@ function enlazarEventosMesas() {
     function finalizarArrastreMesa() {
         if (!arrastre || !arrastre.el) return;
         arrastre.el.removeClass('arrastrando');
-        if (arrastre.movio) {
+        if (arrastre.movio && arrastre.tipo !== 'resize') {
+            guardarPosicionElemento(arrastre.el);
+        } else if (arrastre.movio && arrastre.tipo === 'resize') {
+            sincronizarPanelTamanoDesdeMesa(arrastre.el.data('id'));
             guardarPosicionElemento(arrastre.el);
         }
         $(document).off('mousemove.plano mouseup.plano');
         arrastre = null;
+    }
+
+    function iniciarRedimensionMesa(evt) {
+        evt.preventDefault();
+        var el = $(this);
+        var canvasRect = canvas.getBoundingClientRect();
+        var pct = leerPorcentajesMesaEnCanvas(el, canvas);
+        seleccionarMesa(el.data('id'));
+        arrastre = {
+            tipo: 'resize',
+            el: el,
+            canvas: canvas,
+            inicio: pct,
+            movio: false,
+            startX: evt.clientX,
+            startY: evt.clientY
+        };
+        $(document).on('mousemove.planoMesaResize', moverRedimensionMesa);
+        $(document).on('mouseup.planoMesaResize', finalizarRedimensionMesa);
+    }
+
+    function moverRedimensionMesa(evt) {
+        if (!arrastre || arrastre.tipo !== 'resize') return;
+        arrastre.movio = true;
+        var rect = arrastre.canvas.getBoundingClientRect();
+        var dx = ((evt.clientX - arrastre.startX) / rect.width) * 100;
+        var dy = ((evt.clientY - arrastre.startY) / rect.height) * 100;
+        var forma = getFormaMesa({ forma: arrastre.el.data('forma') });
+        var w = Math.max(MIN_MESA_PCT, Math.min(MAX_MESA_PCT, arrastre.inicio.w + dx));
+        var h = Math.max(MIN_MESA_PCT, Math.min(MAX_MESA_PCT, arrastre.inicio.h + dy));
+        if (esFormaCuadradaVisual(forma)) {
+            var s = Math.max(w, h);
+            w = s;
+            h = s;
+        }
+        aplicarTamanoMesaEnDom(arrastre.el, forma, w, h);
+        sincronizarPanelTamanoDesdeMesa(arrastre.el.data('id'));
+    }
+
+    function finalizarRedimensionMesa() {
+        if (!arrastre || arrastre.tipo !== 'resize') return;
+        if (arrastre.movio) {
+            guardarPosicionElemento(arrastre.el);
+        }
+        $(document).off('mousemove.planoMesaResize mouseup.planoMesaResize');
+        arrastre = null;
+    }
+}
+
+function sincronizarPanelTamanoDesdeMesa(id) {
+    var $el = $('.plano-mesa[data-id="' + id + '"]');
+    if (!$el.length) return;
+    var canvas = document.getElementById('plano-canvas');
+    var pct = leerPorcentajesMesaEnCanvas($el, canvas);
+    var forma = getFormaMesa({ forma: $el.data('forma') });
+    if (esFormaCuadradaVisual(forma)) {
+        if ($('#mesa_tamano_pct').length) {
+            $('#mesa_tamano_pct').val(Math.round(pct.w * 10) / 10);
+            $('#mesa_tamano_val').text(Math.round(pct.w * 10) / 10 + '%');
+        }
+    } else {
+        if ($('#mesa_ancho_pct').length) $('#mesa_ancho_pct').val(pct.w.toFixed(1));
+        if ($('#mesa_alto_pct').length) $('#mesa_alto_pct').val(pct.h.toFixed(1));
     }
 }
 
@@ -711,8 +792,8 @@ function seleccionarMesa(id) {
     $('.plano-zona').removeClass('seleccionada');
     var m = (planoDatos.mesas || []).find(function (x) { return x.id == id; });
     if (!m) return;
-    $('.plano-mesa').css('outline', '');
-    $('.plano-mesa[data-id="' + id + '"]').css('outline', '3px solid #007bff');
+    $('.plano-mesa').removeClass('seleccionada');
+    $('.plano-mesa[data-id="' + id + '"]').addClass('seleccionada');
 
     var estado = m.estado_codigo === 'MESA_OCUPADA' ? 'Ocupada' : 'Disponible';
     var formaActual = getFormaMesa(m);
@@ -721,33 +802,60 @@ function seleccionarMesa(id) {
         + '<p class="mb-1">Capacidad: ' + (m.capacidad || 0) + '</p>'
         + '<p class="mb-1">Estado: ' + estado + '</p>'
         + htmlSelectorFormaMesa(formaActual, 'detalle_forma')
+        + htmlControlesTamanoMesa(m)
         + '<p class="mb-2 mt-2">Zona: <select id="detalle_zona" class="form-control form-control-sm">' + optionsZonaMesaSelect(m.zona || '') + '</select></p>'
-        + '<button type="button" class="btn btn-sm btn-primary btn-block" onclick="aplicarDetalleMesa(' + id + ')">Aplicar forma/zona</button>'
+        + '<button type="button" class="btn btn-sm btn-primary btn-block" onclick="aplicarDetalleMesa(' + id + ')">Guardar mesa</button>'
         + '<button type="button" class="btn btn-sm btn-outline-' + (m.estado_codigo === 'MESA_DISPONIBLE' ? 'danger' : 'success') + ' btn-block mt-1" onclick="toggleEstadoMesa(' + id + ', \'' + (m.estado_codigo === 'MESA_DISPONIBLE' ? 'MESA_OCUPADA' : 'MESA_DISPONIBLE') + '\')">'
         + (m.estado_codigo === 'MESA_DISPONIBLE' ? 'Marcar ocupada' : 'Marcar disponible') + '</button>';
     $('#panel-mesa-detalle').html(html);
+    if (getModoPlano() === 'mesas') {
+        enlazarEventosMesas();
+    }
+}
+
+function leerTamanoDesdePanel(mesaId) {
+    var $el = $('.plano-mesa[data-id="' + mesaId + '"]');
+    var forma = $('#detalle_forma').val() || getFormaMesa({ forma: $el.data('forma') });
+    var w, h;
+    if (esFormaCuadradaVisual(forma)) {
+        w = parseFloat($('#mesa_tamano_pct').val()) || 7;
+        h = w;
+    } else {
+        w = parseFloat($('#mesa_ancho_pct').val()) || 7;
+        h = parseFloat($('#mesa_alto_pct').val()) || 7;
+    }
+    w = Math.max(MIN_MESA_PCT, Math.min(MAX_MESA_PCT, w));
+    h = Math.max(MIN_MESA_PCT, Math.min(MAX_MESA_PCT, h));
+    return { forma: forma, w: w, h: h };
+}
+
+function vistaPreviaTamanoMesa(id) {
+    var $el = $('.plano-mesa[data-id="' + id + '"]');
+    if (!$el.length) return;
+    var t = leerTamanoDesdePanel(id);
+    if ($('#mesa_tamano_val').length) {
+        $('#mesa_tamano_val').text(t.w + '%');
+    }
+    aplicarTamanoMesaEnDom($el, t.forma, t.w, t.h);
 }
 
 function aplicarDetalleMesa(id) {
     var $el = $('.plano-mesa[data-id="' + id + '"]');
     var canvas = document.getElementById('plano-canvas');
-    var rect = canvas.getBoundingClientRect();
-    var elRect = $el[0].getBoundingClientRect();
-    var forma = $('#detalle_forma').val() || getFormaMesa({ forma: 'rectangular' });
+    var tam = leerTamanoDesdePanel(id);
     var zona = $('#detalle_zona').val();
     var pct = leerPorcentajesMesaEnCanvas($el, canvas);
-    $el.removeClass('forma-rectangular forma-cuadrada forma-redonda').addClass('forma-' + forma).attr('data-forma', forma);
-    if (esFormaCuadradaVisual(forma)) {
-        $el.css({ width: pct.w + '%', height: 'auto' });
-        pct.h = pct.w;
-    }
+    $el.removeClass('forma-rectangular forma-cuadrada forma-redonda').addClass('forma-' + tam.forma).attr('data-forma', tam.forma);
+    aplicarTamanoMesaEnDom($el, tam.forma, tam.w, tam.h);
+    pct.w = tam.w;
+    pct.h = tam.h;
     guardarPosicionAjax(
         id,
         pct.x,
         pct.y,
         pct.w,
         pct.h,
-        forma,
+        tam.forma,
         zona
     ).done(function (r) {
         if (r.estado) {
