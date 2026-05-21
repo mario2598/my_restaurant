@@ -1,6 +1,6 @@
 <!-- Modal mapa de mesas (POS) -->
 <div class="modal fade" id="mdl-pos-plano-mesas" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header py-2">
                 <h5 class="modal-title"><i class="fas fa-map-marked-alt text-info"></i> Mapa del local</h5>
@@ -26,7 +26,7 @@
                     <div class="tab-pane fade" id="pos-plano-tab-generales" role="tabpanel"></div>
                 </div>
                 <div class="row" id="pos-plano-layout-mapa">
-                    <div class="col-lg-7" id="pos-plano-col-mapa">
+                    <div class="col-12 col-lg-7" id="pos-plano-col-mapa">
                         <div id="pos-plano-wrapper">
                             <div id="pos-plano-canvas" class="plano-canvas">
                                 <div id="pos-plano-zonas"></div>
@@ -42,7 +42,11 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-5" id="pos-plano-col-sidebar">
+                    <div class="col-12 col-lg-5" id="pos-plano-col-sidebar">
+                        <div id="pos-plano-detalle-hint" class="pos-plano-detalle-hint d-none" aria-live="polite">
+                            <i class="fas fa-chevron-down"></i>
+                            Detalle de <strong class="pos-plano-detalle-hint__mesa">la mesa</strong> — cuentas y acciones abajo
+                        </div>
                         <div id="pos-plano-sidebar" class="pos-plano-sidebar-panel">
                             <div class="pos-plano-sidebar-welcome">
                                 <div class="pos-plano-welcome-icon"><i class="fas fa-map-marked-alt"></i></div>

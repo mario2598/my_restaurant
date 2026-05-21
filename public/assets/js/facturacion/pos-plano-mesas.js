@@ -139,9 +139,56 @@ function actualizarLayoutPlanoPos() {
     $('#pos-plano-ayuda').toggleClass('d-none', esGeneral);
 }
 
+function esVistaPlanoMovil() {
+    return window.matchMedia('(max-width: 991.98px)').matches;
+}
+
+function actualizarEstadoSidebarMovil(mesa) {
+    var activo = !!(mesa && esVistaPlanoMovil());
+    $('#pos-plano-layout-mapa').toggleClass('pos-plano-mesa-elegida', activo);
+    $('#pos-plano-col-sidebar').toggleClass('pos-plano-sidebar--activo', activo);
+    var $hint = $('#pos-plano-detalle-hint');
+    if (!$hint.length) {
+        return;
+    }
+    $hint.toggleClass('d-none', !activo);
+    if (activo) {
+        $hint.find('.pos-plano-detalle-hint__mesa').text('Mesa ' + (mesa.numero_mesa || ''));
+    }
+}
+
+function scrollDetalleMesaPlanoPos() {
+    if (!esVistaPlanoMovil()) {
+        return;
+    }
+    var target = document.getElementById('pos-plano-detalle-hint')
+        || document.getElementById('pos-plano-col-sidebar');
+    if (!target) {
+        return;
+    }
+    setTimeout(function () {
+        try {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (e) {
+            target.scrollIntoView(true);
+        }
+        $('#pos-plano-col-sidebar').addClass('pos-plano-sidebar-flash');
+        setTimeout(function () {
+            $('#pos-plano-col-sidebar').removeClass('pos-plano-sidebar-flash');
+        }, 1400);
+    }, 100);
+}
+
 function actualizarAyudaPlanoPos() {
     if (posPlanoModo === 'generales') {
         $('#pos-plano-ayuda').addClass('d-none');
+        return;
+    }
+    if (esVistaPlanoMovil()) {
+        $('#pos-plano-ayuda').removeClass('d-none').html(
+            '<i class="fas fa-hand-pointer"></i> Toque una mesa: el detalle aparecerá <strong>debajo del mapa</strong> '
+            + '(la pantalla bajará sola).'
+        );
         return;
     }
     $('#pos-plano-ayuda').removeClass('d-none').html(
@@ -226,13 +273,21 @@ function aplicarProporcionCanvasPos() {
     if (!$c.length) {
         return;
     }
+    var movil = esVistaPlanoMovil();
+    var mesaElegida = $('#pos-plano-layout-mapa').hasClass('pos-plano-mesa-elegida');
+    var minH = movil
+        ? Math.min(200, Math.max(140, al * 1.4))
+        : Math.min(400, Math.max(240, al * 2.8));
+    if (movil && mesaElegida) {
+        minH = Math.min(160, Math.max(120, al * 1.1));
+    }
     $c.css({
         aspectRatio: ar + ' / ' + al,
         maxWidth: '900px',
         width: '100%',
-        maxHeight: 'none',
+        maxHeight: movil ? (mesaElegida ? '28vh' : '40vh') : 'none',
         height: 'auto',
-        minHeight: Math.min(400, Math.max(240, al * 2.8)) + 'px'
+        minHeight: minH + 'px'
     });
 }
 
@@ -454,6 +509,8 @@ function renderizarSidebarPos(mesa, ordenes) {
     if (!mesa) {
         $sb.html(htmlSidebarWelcome());
         enlazarBotonesCuentaPlano($sb);
+        actualizarEstadoSidebarMovil(null);
+        aplicarProporcionCanvasPos();
         return;
     }
 
@@ -506,6 +563,9 @@ function renderizarSidebarPos(mesa, ordenes) {
 
     $sb.html(html);
     enlazarBotonesCuentaPlano($sb);
+    actualizarEstadoSidebarMovil(mesa);
+    aplicarProporcionCanvasPos();
+    scrollDetalleMesaPlanoPos();
 }
 
 function volverSeleccionMesaPlano() {
@@ -593,6 +653,13 @@ $(document).ready(function () {
     $(window).on('resize', function () {
         if ($('#mdl-pos-plano-mesas').hasClass('show') && posPlanoDatos) {
             aplicarProporcionCanvasPos();
+            actualizarAyudaPlanoPos();
+            if (posPlanoMesaSeleccionadaId) {
+                var mesaR = (posPlanoDatos.mesas || []).find(function (m) {
+                    return String(m.id) === String(posPlanoMesaSeleccionadaId);
+                });
+                actualizarEstadoSidebarMovil(mesaR || null);
+            }
         }
     });
 

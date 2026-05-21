@@ -161,12 +161,14 @@ function htmlContenidoMesaPlano(numero, capacidad, extraHtml, forma, planoAncho,
 /** POS: número corto + hint opcional dentro del gráfico */
 function htmlContenidoMesaPlanoPos(m, extraHtml) {
     var forma = getFormaMesa(m);
-    var numero = typeof etiquetaCortaMesa === 'function' ? etiquetaCortaMesa(m.numero_mesa, 10) : m.numero_mesa;
+    var numero = typeof etiquetaCortaMesa === 'function' ? etiquetaCortaMesa(m.numero_mesa, 8) : m.numero_mesa;
     return '<div class="mesa-plano-grafico">'
         + htmlSillasMesaPlano(forma, m.capacidad, m.plano_ancho, m.plano_alto)
         + '<span class="mesa-plano-superficie" aria-hidden="true"></span>'
+        + '<div class="mesa-plano-etiquetas">'
         + '<span class="pos-plano-mesa-num">' + numero + '</span>'
         + (extraHtml || '')
+        + '</div>'
         + '</div>';
 }
 
