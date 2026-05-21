@@ -28,9 +28,11 @@
                 <div class="row" id="pos-plano-layout-mapa">
                     <div class="col-12 col-lg-7" id="pos-plano-col-mapa">
                         <div id="pos-plano-wrapper">
-                            <div id="pos-plano-canvas" class="plano-canvas">
-                                <div id="pos-plano-zonas"></div>
-                                <div id="pos-plano-mesas"></div>
+                            <div id="pos-plano-canvas-scaler" class="pos-plano-canvas-scaler">
+                                <div id="pos-plano-canvas" class="plano-canvas">
+                                    <div id="pos-plano-zonas"></div>
+                                    <div id="pos-plano-mesas"></div>
+                                </div>
                             </div>
                             <div class="pos-plano-leyenda">
                                 <span class="lg-disponible">Libre</span>

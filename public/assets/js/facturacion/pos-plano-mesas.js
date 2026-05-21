@@ -147,6 +147,9 @@ function actualizarEstadoSidebarMovil(mesa) {
     var activo = !!(mesa && esVistaPlanoMovil());
     $('#pos-plano-layout-mapa').toggleClass('pos-plano-mesa-elegida', activo);
     $('#pos-plano-col-sidebar').toggleClass('pos-plano-sidebar--activo', activo);
+    if (posPlanoDatos) {
+        aplicarProporcionCanvasPos();
+    }
     var $hint = $('#pos-plano-detalle-hint');
     if (!$hint.length) {
         return;
@@ -261,7 +264,8 @@ function marcarMesaSeleccionadaPlano(mesaId) {
 }
 
 /**
- * Aplica ancho_referencia × alto_referencia igual que en mobiliario/mesas/plano.
+ * Mantiene la proporción ancho_referencia × alto_referencia sin deformar el canvas.
+ * En móvil calcula ancho/alto en px para caber en el modal sin romper el % de mesas/zonas.
  */
 function aplicarProporcionCanvasPos() {
     if (!posPlanoDatos) {
@@ -269,25 +273,54 @@ function aplicarProporcionCanvasPos() {
     }
     var ar = parseInt(posPlanoDatos.ancho_referencia, 10) || 100;
     var al = parseInt(posPlanoDatos.alto_referencia, 10) || 150;
+    var $scaler = $('#pos-plano-canvas-scaler');
     var $c = $('#pos-plano-canvas');
     if (!$c.length) {
         return;
     }
-    var movil = esVistaPlanoMovil();
-    var mesaElegida = $('#pos-plano-layout-mapa').hasClass('pos-plano-mesa-elegida');
-    var minH = movil
-        ? Math.min(200, Math.max(140, al * 1.4))
-        : Math.min(400, Math.max(240, al * 2.8));
-    if (movil && mesaElegida) {
-        minH = Math.min(160, Math.max(120, al * 1.1));
-    }
+
     $c.css({
-        aspectRatio: ar + ' / ' + al,
-        maxWidth: '900px',
+        '--plano-ar': ar,
+        '--plano-al': al
+    });
+
+    if (!esVistaPlanoMovil()) {
+        $scaler.css({ width: '', height: '', maxWidth: '', maxHeight: '' });
+        $c.css({
+            aspectRatio: ar + ' / ' + al,
+            width: '100%',
+            maxWidth: '900px',
+            height: 'auto',
+            minHeight: '0',
+            maxHeight: 'none'
+        });
+        return;
+    }
+
+    var mesaElegida = $('#pos-plano-layout-mapa').hasClass('pos-plano-mesa-elegida');
+    var maxVh = mesaElegida ? 34 : 48;
+    var $col = $('#pos-plano-col-mapa');
+    var pad = 24;
+    var availW = Math.max(200, ($col.innerWidth() || $scaler.parent().innerWidth() || 320) - pad);
+    var maxH = Math.max(160, (window.innerHeight * maxVh) / 100);
+    var ratio = ar / al;
+    var w = Math.min(availW, maxH * ratio, 900);
+    var h = w / ratio;
+
+    $scaler.css({
         width: '100%',
-        maxHeight: movil ? (mesaElegida ? '28vh' : '40vh') : 'none',
-        height: 'auto',
-        minHeight: minH + 'px'
+        maxWidth: '900px',
+        margin: '0 auto',
+        display: 'flex',
+        justifyContent: 'center'
+    });
+    $c.css({
+        aspectRatio: 'unset',
+        width: Math.round(w) + 'px',
+        height: Math.round(h) + 'px',
+        maxWidth: '100%',
+        minHeight: '0',
+        maxHeight: 'none'
     });
 }
 
@@ -306,7 +339,6 @@ function cargarPlanoPos() {
             return;
         }
         posPlanoDatos = response.datos;
-        aplicarProporcionCanvasPos();
         renderizarZonasPos(posPlanoDatos.zonas || []);
         actualizarLayoutPlanoPos();
         if (posPlanoModo !== 'generales') {
@@ -316,6 +348,9 @@ function cargarPlanoPos() {
         renderizarResumenPlanoPos();
         actualizarAyudaPlanoPos();
         renderizarListaGeneralesPos();
+        aplicarProporcionCanvasPos();
+        setTimeout(aplicarProporcionCanvasPos, 80);
+        setTimeout(aplicarProporcionCanvasPos, 350);
     }).fail(function (jqXHR) {
         var msg = 'No se pudo cargar el mapa.';
         if (jqXHR.responseJSON && jqXHR.responseJSON.mensaje) {
@@ -569,9 +604,11 @@ function renderizarSidebarPos(mesa, ordenes) {
 }
 
 function volverSeleccionMesaPlano() {
+    posPlanoMesaSeleccionadaId = null;
     marcarMesaSeleccionadaPlano(null);
     renderizarSidebarPos(null);
     renderizarPlanoPos();
+    actualizarEstadoSidebarMovil(null);
 }
 
 function enlazarBotonesCuentaPlano($root) {
@@ -647,6 +684,8 @@ $(document).ready(function () {
     $('#mdl-pos-plano-mesas').on('shown.bs.modal', function () {
         if (posPlanoDatos) {
             aplicarProporcionCanvasPos();
+            setTimeout(aplicarProporcionCanvasPos, 60);
+            setTimeout(aplicarProporcionCanvasPos, 320);
         }
     });
 

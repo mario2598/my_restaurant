@@ -13,18 +13,27 @@
     border-radius: 8px;
 }
 
-/* Mismas proporciones que mobiliario/mesas/plano (.plano-canvas); ratio vía JS (ancho_referencia / alto_referencia) */
+/* Contenedor escala: el canvas hijo mantiene proporción exacta (ancho_referencia / alto_referencia) */
+.pos-plano-canvas-scaler {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Mismas proporciones que mobiliario/mesas/plano; tamaño final lo fija JS */
 #pos-plano-canvas {
     position: relative;
     width: 100%;
     max-width: 900px;
     margin: 0 auto;
-    min-height: 280px;
+    min-height: 0;
     background: #fff;
     border: 2px solid #dee2e6;
     box-shadow: inset 0 0 0 1px #f8f9fa;
     overflow: hidden;
     box-sizing: border-box;
+    container-type: size;
+    container-name: posplano;
 }
 
 #pos-plano-zonas,
@@ -72,19 +81,28 @@
 /* Formas: ver mesa-plano-visual.css */
 
 .pos-plano-mesa .mesa-plano-etiquetas .pos-plano-mesa-num {
-    font-size: clamp(7px, 1.1vw, 10px);
+    font-size: clamp(6px, 9cqw, 10px);
     font-weight: 800;
-    line-height: 1.2;
+    line-height: 1.15;
 }
 
 .pos-plano-mesa .mesa-plano-etiquetas .pos-plano-mesa-hint {
-    font-size: clamp(6px, 0.95vw, 8px);
+    font-size: clamp(5px, 7.5cqw, 8px);
     font-weight: 700;
     opacity: 0.98;
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+@container posplano (max-width: 320px) {
+    .pos-plano-mesa .mesa-plano-etiquetas .pos-plano-mesa-num {
+        font-size: 6px;
+    }
+    .pos-plano-mesa .mesa-plano-etiquetas .pos-plano-mesa-hint {
+        font-size: 5px;
+    }
 }
 
 .pos-plano-mesa-badge {
@@ -220,7 +238,7 @@
 
 .pos-plano-mesa.mesa-seleccionada-mapa {
     z-index: 30;
-    transform: scale(1.08);
+    transform: scale(1.05);
 }
 
 .pos-plano-mesa.mesa-seleccionada-mapa .mesa-plano-superficie {
@@ -480,9 +498,8 @@
         margin-bottom: 0.35rem;
     }
 
-    #pos-plano-layout-mapa.pos-plano-mesa-elegida #pos-plano-canvas {
-        max-height: 28vh !important;
-        min-height: 120px !important;
+    .pos-plano-mesa.mesa-seleccionada-mapa {
+        transform: none;
     }
 
     #pos-plano-layout-mapa.pos-plano-mesa-elegida .pos-plano-leyenda {
