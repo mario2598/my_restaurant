@@ -71,16 +71,16 @@
 
 /* Formas: ver mesa-plano-visual.css */
 
-.pos-plano-mesa-num {
-    font-size: 11px;
+.pos-plano-mesa .mesa-plano-etiquetas .pos-plano-mesa-num {
+    font-size: clamp(7px, 1.1vw, 10px);
     font-weight: 800;
-    line-height: 1.1;
+    line-height: 1.2;
 }
 
-.pos-plano-mesa-hint {
-    font-size: 7px;
-    font-weight: 600;
-    opacity: 0.95;
+.pos-plano-mesa .mesa-plano-etiquetas .pos-plano-mesa-hint {
+    font-size: clamp(6px, 0.95vw, 8px);
+    font-weight: 700;
+    opacity: 0.98;
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -201,14 +201,17 @@
     margin-bottom: 8px;
 }
 
+/* overflow: visible para no recortar texto ni badge de cuentas */
 #pos-plano-mesas .pos-plano-mesa {
-    overflow: hidden;
+    overflow: visible;
 }
 
-#pos-plano-mesas .pos-plano-mesa .pos-plano-mesa-hint {
-    max-width: 88%;
-    overflow: hidden;
-    text-overflow: ellipsis;
+#pos-plano-mesas .pos-plano-mesa .mesa-plano-etiquetas .pos-plano-mesa-hint {
+    max-width: 100%;
+}
+
+#pos-plano-mesas .pos-plano-mesa .pos-plano-mesa-badge {
+    z-index: 6;
 }
 
 #pos-plano-mesas .pos-plano-mesa .mesa-plano-superficie {
@@ -458,6 +461,87 @@
 
 .pos-btn-mapa-mesa--con-mesa .pos-btn-mapa-mesa__icon {
     background: rgba(40, 167, 69, 0.2);
+}
+
+/* Mapa en móvil/tablet: mapa arriba, detalle abajo; al elegir mesa se compacta el plano */
+@media (max-width: 991.98px) {
+    #mdl-pos-plano-mesas .modal-dialog {
+        margin: 0.35rem auto;
+        max-width: calc(100% - 0.5rem);
+    }
+
+    #mdl-pos-plano-mesas .modal-body {
+        max-height: calc(100vh - 7rem);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #pos-plano-layout-mapa.pos-plano-mesa-elegida #pos-plano-wrapper {
+        margin-bottom: 0.35rem;
+    }
+
+    #pos-plano-layout-mapa.pos-plano-mesa-elegida #pos-plano-canvas {
+        max-height: 28vh !important;
+        min-height: 120px !important;
+    }
+
+    #pos-plano-layout-mapa.pos-plano-mesa-elegida .pos-plano-leyenda {
+        font-size: 9px;
+        gap: 6px;
+        margin-top: 4px;
+    }
+
+    .pos-plano-detalle-hint {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        background: linear-gradient(90deg, #007bff 0%, #17a2b8 100%);
+        color: #fff;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        padding: 0.55rem 0.75rem;
+        border-radius: 8px 8px 0 0;
+        margin-top: 0.25rem;
+        box-shadow: 0 2px 10px rgba(0, 123, 255, 0.35);
+        animation: pos-plano-hint-pulse 1.2s ease 2;
+    }
+
+    .pos-plano-detalle-hint i {
+        animation: pos-plano-hint-bounce 0.8s ease infinite;
+    }
+
+    #pos-plano-col-sidebar.pos-plano-sidebar--activo #pos-plano-sidebar {
+        border: 2px solid #007bff;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 8px 24px rgba(0, 123, 255, 0.2);
+        max-height: none;
+    }
+
+    #pos-plano-col-sidebar.pos-plano-sidebar--activo #pos-plano-sidebar,
+    #pos-plano-col-sidebar.pos-plano-sidebar--activo {
+        scroll-margin-top: 0.5rem;
+    }
+
+    #pos-plano-col-sidebar.pos-plano-sidebar-flash #pos-plano-sidebar {
+        animation: pos-plano-sidebar-flash 0.55s ease 2;
+    }
+}
+
+@keyframes pos-plano-hint-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.88; }
+}
+
+@keyframes pos-plano-hint-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(3px); }
+}
+
+@keyframes pos-plano-sidebar-flash {
+    0%, 100% { box-shadow: 0 8px 24px rgba(0, 123, 255, 0.2); }
+    50% { box-shadow: 0 8px 28px rgba(0, 123, 255, 0.55); }
 }
 
 @media (max-width: 767.98px) {
