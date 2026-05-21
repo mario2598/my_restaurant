@@ -6,7 +6,7 @@ var categoriaAbierta = null;
 var menuIdSucursal = null;
 
 /** Asegura array (en prod JSON a veces llega como objeto). */
-function normalizarTipos(datos) {
+function normalizarLista(datos) {
     if (!datos) {
         return [];
     }
@@ -17,9 +17,19 @@ function normalizarTipos(datos) {
         return Object.keys(datos)
             .sort(function (a, b) { return Number(a) - Number(b); })
             .map(function (k) { return datos[k]; })
-            .filter(function (c) { return c && typeof c === 'object'; });
+            .filter(function (item) { return item && typeof item === 'object'; });
     }
     return [];
+}
+
+function normalizarTipos(datos) {
+    var cats = normalizarLista(datos);
+    cats.forEach(function (cat) {
+        if (cat && cat.productos) {
+            cat.productos = normalizarLista(cat.productos);
+        }
+    });
+    return cats;
 }
 
 var $q = function (sel) { return document.querySelector(sel); };
@@ -156,7 +166,7 @@ function resetPanelMesasMenu() {
     var contentDiv = document.getElementById('mesas-disponibles-content');
     if (contentDiv) {
         delete contentDiv.dataset.loaded;
-        contentDiv.innerHTML = '<p class="small text-muted mb-0">Toque para ver mesas libres</p>';
+        contentDiv.innerHTML = '<p class="menu-mesas-placeholder small text-muted mb-0">Toque para ver el mapa de mesas libres</p>';
     }
     var panel = document.getElementById('menu-mesas-panel');
     if (panel) panel.classList.remove('is-open');
@@ -255,7 +265,7 @@ function cargarTiposGeneral(idSucursal) {
 function todosLosProductos() {
     var lista = [];
     tipos.forEach(function (cat) {
-        (cat.productos || []).forEach(function (p) {
+        normalizarLista(cat.productos).forEach(function (p) {
             lista.push({ producto: p, categoria: cat.categoria });
         });
     });
@@ -270,7 +280,7 @@ function renderDestacados() {
 
     var picks = [];
     tipos.forEach(function (cat) {
-        (cat.productos || []).forEach(function (p) {
+        normalizarLista(cat.productos).forEach(function (p) {
             if (imagenValida(p.url_imagen) && picks.length < 8) {
                 picks.push({ producto: p, categoria: cat.categoria });
             }
@@ -278,7 +288,7 @@ function renderDestacados() {
     });
     if (picks.length < 4) {
         tipos.forEach(function (cat) {
-            (cat.productos || []).slice(0, 2).forEach(function (p) {
+            normalizarLista(cat.productos).slice(0, 2).forEach(function (p) {
                 if (picks.length < 8) {
                     picks.push({ producto: p, categoria: cat.categoria });
                 }
@@ -343,7 +353,7 @@ function abrirCategoria(cat, idx) {
     var list = $q('#item-list');
     list.innerHTML = '';
 
-    (cat.productos || []).forEach(function (p) {
+    normalizarLista(cat.productos).forEach(function (p) {
         var img = urlImagen(p.url_imagen);
         var inicial = (p.nombre || '?').trim().charAt(0).toUpperCase();
         var btn = document.createElement('button');
@@ -416,42 +426,67 @@ function configurarVistaCategoria() {
     if (back) back.onclick = cerrarCategoria;
 }
 
+var menuBusquedaInicializada = false;
+
+function setSeccionesMenuVisibles(mostrar, excepto) {
+    excepto = excepto || '';
+    document.querySelectorAll('[data-menu-section]').forEach(function (el) {
+        if (excepto && el.getAttribute('data-menu-section') === excepto) return;
+        el.hidden = !mostrar;
+    });
+    var feat = $q('#featured');
+    if (feat && excepto !== 'destacados') feat.hidden = !mostrar;
+    var navAside = $q('#menu-sidebar');
+    if (navAside) navAside.hidden = !mostrar;
+}
+
 function configurarBusqueda() {
     var input = $q('#search');
-    if (!input) return;
+    if (!input || menuBusquedaInicializada) return;
+    menuBusquedaInicializada = true;
+
     input.addEventListener('input', function (e) {
         var q = e.target.value.trim().toLowerCase();
+        var list = $q('#category-list');
+        var resultsHead = $q('#search-results-head');
+        var searchEmpty = $q('#search-empty');
+
         if (!q) {
-            $q('#search-empty').hidden = true;
-            $q('#featured').hidden = false;
-            document.querySelectorAll('#home-view .section-head').forEach(function (el) {
-                el.hidden = false;
-            });
-            $q('#category-list').hidden = false;
+            if (searchEmpty) searchEmpty.hidden = true;
+            if (resultsHead) resultsHead.hidden = true;
+            if (list) list.hidden = false;
+            setSeccionesMenuVisibles(true);
             renderDestacados();
             renderListaCategorias();
             renderNavCategorias();
             return;
         }
-        $q('#featured').hidden = true;
-        document.querySelectorAll('.section-head').forEach(function (el) { el.hidden = true; });
-        var list = $q('#category-list');
-        list.hidden = false;
-        list.innerHTML = '';
+
+        setSeccionesMenuVisibles(false);
+        if (resultsHead) resultsHead.hidden = false;
+        if (list) {
+            list.hidden = false;
+            list.innerHTML = '';
+        }
+
         var matches = [];
         tipos.forEach(function (cat) {
-            (cat.productos || []).forEach(function (p) {
-                var desc = (p.descripcion || '').toLowerCase();
-                if ((p.nombre || '').toLowerCase().indexOf(q) !== -1 || desc.indexOf(q) !== -1) {
+            normalizarLista(cat.productos).forEach(function (p) {
+                var nombre = String(p.nombre || '').toLowerCase();
+                var desc = String(p.descripcion || '').toLowerCase();
+                var catNombre = String(cat.categoria || '').toLowerCase();
+                if (nombre.indexOf(q) !== -1 || desc.indexOf(q) !== -1 || catNombre.indexOf(q) !== -1) {
                     matches.push({ producto: p, categoria: cat.categoria });
                 }
             });
         });
-        if (matches.length === 0) {
-            $q('#search-empty').hidden = false;
+
+        if (!matches.length) {
+            if (searchEmpty) searchEmpty.hidden = false;
             return;
         }
-        $q('#search-empty').hidden = true;
+        if (searchEmpty) searchEmpty.hidden = true;
+
         matches.forEach(function (item) {
             var p = item.producto;
             var img = urlImagen(p.url_imagen);
@@ -493,6 +528,11 @@ function cargarMesasDisponiblesMenu() {
     if (!contentDiv || contentDiv.dataset.loaded === '1') return;
     if (!menuIdSucursal) {
         contentDiv.innerHTML = '<p class="small text-muted mb-0">Seleccione una sucursal primero.</p>';
+        return;
+    }
+
+    if (typeof MenuPlanoPublico !== 'undefined' && MenuPlanoPublico.cargar) {
+        MenuPlanoPublico.cargar(menuIdSucursal, contentDiv);
         return;
     }
 

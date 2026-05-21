@@ -583,6 +583,7 @@ Route::get('/menu', 'UsuarioExternoController@goMenu');
 Route::post('usuarioExterno/menu/cargarTiposGeneral', 'UsuarioExternoController@cargarTiposGeneral');
 Route::post('usuarioExterno/menuMobile/cargarTiposGeneral', 'UsuarioExternoController@cargarTiposGeneralMobile');
 Route::post('usuarioExterno/menu/mesas-disponibles', 'UsuarioExternoController@obtenerMesasDisponibles');
+Route::post('usuarioExterno/menu/plano-sucursal', 'UsuarioExternoController@obtenerPlanoMenu');
 
 
 /** PRODUCTOS MENU */

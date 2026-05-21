@@ -181,6 +181,26 @@ class UsuarioExternoController extends Controller
         }
     }
 
+    public function obtenerPlanoMenu(Request $request)
+    {
+        try {
+            $idSucursal = (int) $request->input('id_sucursal');
+            if (!$this->idSucursalPermitidaMenu($idSucursal)) {
+                return $this->responseAjaxServerError('Sucursal no válida', []);
+            }
+
+            $datos = MesasController::getPlanoDataForSucursal($idSucursal);
+            return $this->responseAjaxSuccess('Plano cargado', $datos);
+        } catch (\Exception $ex) {
+            DB::table('log')->insertGetId([
+                'id' => null,
+                'documento' => 'UsuarioExternoController',
+                'descripcion' => 'obtenerPlanoMenu: ' . $ex->getMessage()
+            ]);
+            return $this->responseAjaxServerError('Error al cargar el plano: ' . $ex->getMessage(), []);
+        }
+    }
+
     /**
      * Sucursales activas visibles en el menú público (excluye bodegas).
      */

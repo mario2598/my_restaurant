@@ -1,0 +1,357 @@
+/* Sala de mesas — estilo Habbo (público menú) */
+
+.menu-habbo-plano-wrap {
+    padding: 0.25rem 0 0.5rem;
+}
+
+.menu-habbo-loading {
+    text-align: center;
+    color: rgba(244, 234, 208, 0.9);
+    font-size: 0.88rem;
+    padding: 1.5rem 0;
+}
+
+.menu-habbo-stats {
+    font-size: 0.8rem;
+    color: rgba(244, 234, 208, 0.95);
+    margin-bottom: 0.65rem;
+    text-align: center;
+}
+
+.menu-habbo-stats strong {
+    color: #fff;
+    font-weight: 700;
+}
+
+.habbo-sala {
+    position: relative;
+    border-radius: 16px;
+    padding: 12px 10px 14px;
+    background: linear-gradient(180deg, #6eb5ff 0%, #4a90d9 35%, #3d7ab8 100%);
+    box-shadow:
+        0 0 0 3px #2d5a87,
+        0 12px 28px rgba(20, 63, 57, 0.35),
+        inset 0 2px 0 rgba(255, 255, 255, 0.25);
+}
+
+.habbo-sala__corners {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 28px;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.habbo-pared {
+    position: absolute;
+    top: 0;
+    width: 42%;
+    height: 22px;
+    background: linear-gradient(180deg, #9ad4ff 0%, #5a9fd4 100%);
+    border: 2px solid #2d5a87;
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+}
+
+.habbo-pared--tl { left: 4%; transform: skewX(-8deg); }
+.habbo-pared--tr { right: 4%; transform: skewX(8deg); }
+
+.habbo-sala__viewport {
+    position: relative;
+    z-index: 1;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 3px solid #1e4a6e;
+    background: #2d6b4a;
+}
+
+.habbo-sala__canvas {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.habbo-piso {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-color: #5cb87a;
+    background-image:
+        linear-gradient(45deg, rgba(255, 255, 255, 0.12) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(255, 255, 255, 0.12) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.06) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.06) 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+}
+
+.habbo-zona {
+    position: absolute;
+    z-index: 1;
+    border-radius: 8px;
+    border: 2px dashed rgba(30, 74, 110, 0.35);
+    opacity: 0.55;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 4px;
+    box-sizing: border-box;
+}
+
+.habbo-zona span {
+    font-size: 0.55rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgba(20, 63, 57, 0.75);
+    background: rgba(255, 255, 255, 0.65);
+    padding: 2px 6px;
+    border-radius: 6px;
+}
+
+#menu-habbo-mesas {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+}
+
+.habbo-mesa {
+    position: absolute;
+    box-sizing: border-box;
+    cursor: default;
+    z-index: 10;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.habbo-mesa--libre {
+    cursor: pointer;
+    z-index: 12;
+}
+
+.habbo-mesa--libre:hover {
+    transform: scale(1.08);
+    z-index: 20;
+}
+
+.habbo-mesa--pop {
+    animation: habbo-pop 0.35s ease;
+}
+
+@keyframes habbo-pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.15); }
+    100% { transform: scale(1.05); }
+}
+
+.habbo-mesa__sombra {
+    position: absolute;
+    left: 12%;
+    right: 12%;
+    bottom: 2%;
+    height: 18%;
+    background: rgba(0, 0, 0, 0.28);
+    border-radius: 50%;
+    filter: blur(3px);
+    z-index: 0;
+}
+
+.habbo-mesa__cubo {
+    position: relative;
+    width: 88%;
+    height: 82%;
+    margin: 6% auto 0;
+    z-index: 1;
+}
+
+.habbo-mesa__top {
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    top: 0;
+    height: 42%;
+    border-radius: 6px 6px 2px 2px;
+    transform: skewX(-6deg);
+    z-index: 2;
+}
+
+.habbo-mesa__front {
+    position: absolute;
+    left: 5%;
+    right: 5%;
+    top: 28%;
+    bottom: 8%;
+    border-radius: 4px;
+    z-index: 1;
+}
+
+.habbo-mesa--libre .habbo-mesa__top {
+    background: linear-gradient(145deg, #b8ffb8 0%, #5cd85c 50%, #3cb84a 100%);
+    border: 2px solid #2a8f38;
+    box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5);
+}
+
+.habbo-mesa--libre .habbo-mesa__front {
+    background: linear-gradient(180deg, #4cb85a 0%, #2d8f42 100%);
+    border: 2px solid #1e6b30;
+}
+
+.habbo-mesa--ocupada .habbo-mesa__top {
+    background: linear-gradient(145deg, #d0d0d0 0%, #9a9a9a 100%);
+    border: 2px solid #666;
+}
+
+.habbo-mesa--ocupada .habbo-mesa__front {
+    background: linear-gradient(180deg, #888 0%, #555 100%);
+    border: 2px solid #444;
+}
+
+.habbo-mesa--ocupada {
+    opacity: 0.72;
+    filter: grayscale(0.35);
+}
+
+.habbo-mesa__num {
+    position: absolute;
+    left: 50%;
+    top: 38%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    font-weight: 800;
+    font-size: clamp(0.55rem, 2.2vw, 0.75rem);
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    pointer-events: none;
+}
+
+.habbo-mesa__spark {
+    position: absolute;
+    top: -4px;
+    right: 8%;
+    width: 10px;
+    height: 10px;
+    background: #fff9c4;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #ffeb3b;
+    animation: habbo-sparkle 1.6s ease-in-out infinite;
+    z-index: 6;
+}
+
+@keyframes habbo-sparkle {
+    0%, 100% { opacity: 0.4; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+.habbo-mesa__badge {
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.45rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: #2ecc71;
+    color: #fff;
+    padding: 1px 5px;
+    border-radius: 6px;
+    border: 1px solid #1e8449;
+    white-space: nowrap;
+    z-index: 6;
+}
+
+.habbo-mesa.forma-redonda .habbo-mesa__cubo,
+.habbo-mesa.forma-cuadrada .habbo-mesa__cubo {
+    aspect-ratio: 1;
+    width: 78%;
+    height: auto;
+    max-height: 88%;
+}
+
+.habbo-mesa.forma-redonda .habbo-mesa__top {
+    border-radius: 50%;
+}
+
+.habbo-mesa.forma-redonda .habbo-mesa__front {
+    border-radius: 50%;
+    top: 22%;
+    bottom: 12%;
+}
+
+.habbo-leyenda {
+    display: flex;
+    justify-content: center;
+    gap: 1.25rem;
+    margin-top: 0.65rem;
+    font-size: 0.72rem;
+    color: rgba(244, 234, 208, 0.95);
+}
+
+.habbo-leyenda span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.habbo-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.habbo-dot--libre {
+    background: linear-gradient(145deg, #7ee081, #3cb85a);
+}
+
+.habbo-dot--ocupada {
+    background: linear-gradient(145deg, #bbb, #666);
+}
+
+.habbo-sin-pos {
+    margin-top: 0.75rem;
+}
+
+.habbo-sin-pos__title {
+    font-size: 0.72rem;
+    color: rgba(244, 234, 208, 0.85);
+    margin-bottom: 0.4rem;
+}
+
+.habbo-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.habbo-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.2);
+    color: #f4ead0;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.habbo-chip--libre {
+    background: linear-gradient(145deg, rgba(92, 216, 92, 0.45), rgba(60, 184, 74, 0.55));
+    border-color: #3cb85a;
+}
+
+.menu-mesas-panel.is-open .menu-mesas-panel__content {
+    padding-top: 0.5rem;
+}
+
+@media (min-width: 768px) {
+    .habbo-sala__canvas {
+        max-height: 420px;
+    }
+}
