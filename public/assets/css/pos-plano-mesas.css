@@ -48,17 +48,7 @@
     z-index: 20;
 }
 
-.pos-plano-mesa.forma-redonda {
-    border-radius: 50%;
-}
-
-.pos-plano-mesa.forma-cuadrada {
-    border-radius: 8px;
-}
-
-.pos-plano-mesa.forma-rectangular {
-    border-radius: 6px;
-}
+/* Formas: ver mesa-plano-visual.css */
 
 .pos-plano-mesa-num {
     font-size: 11px;

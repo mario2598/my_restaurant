@@ -9,17 +9,30 @@ function getFormaMesa(m) {
     return f;
 }
 
-function ajustarTamanoMesaPorForma(forma, w, h) {
-    w = parseFloat(w) || 7;
-    h = parseFloat(h) || 7;
-    if (forma === 'redonda' || forma === 'cuadrada') {
-        var s = Math.max(w, h, 5.5);
-        return { w: s, h: s };
+function esFormaCuadradaVisual(forma) {
+    return forma === 'redonda' || forma === 'cuadrada';
+}
+
+/** No agranda la mesa: devuelve % tal cual están en BD. */
+function dimensionesMesaGuardadas(w, h) {
+    return {
+        w: parseFloat(w) || 7,
+        h: parseFloat(h) || 7
+    };
+}
+
+/**
+ * Estilo inline para el mapa. Redonda/cuadrada: solo ancho + aspect-ratio 1 (círculo real en canvas).
+ */
+function estiloPosicionMesa(forma, x, y, w, h) {
+    var d = dimensionesMesaGuardadas(w, h);
+    var s = 'left:' + x + '%;top:' + y + '%;width:' + d.w + '%;';
+    if (esFormaCuadradaVisual(forma)) {
+        s += 'height:auto;';
+    } else {
+        s += 'height:' + d.h + '%;';
     }
-    if (forma === 'rectangular') {
-        return { w: Math.max(w, h * 1.25, 7), h: Math.max(h, 5.5) };
-    }
-    return { w: w, h: h };
+    return s;
 }
 
 function etiquetaFormaMesa(forma) {
@@ -64,11 +77,16 @@ function seleccionarFormaMesaPicker(btn) {
     if (mesaId) {
         var $el = $('.plano-mesa[data-id="' + mesaId + '"], .pos-plano-mesa[data-mesa-id="' + mesaId + '"]');
         if ($el.length) {
-            $el.removeClass('forma-rectangular forma-cuadrada forma-redonda').addClass('forma-' + forma).attr('data-forma', forma);
+            $el.removeClass('forma-rectangular forma-cuadrada forma-redonda')
+                .addClass('forma-' + forma)
+                .attr('data-forma', forma);
             var w = parseFloat(String($el[0].style.width).replace('%', '')) || 7;
             var h = parseFloat(String($el[0].style.height).replace('%', '')) || 7;
-            var dims = ajustarTamanoMesaPorForma(forma, w, h);
-            $el.css({ width: dims.w + '%', height: dims.h + '%' });
+            if (esFormaCuadradaVisual(forma)) {
+                $el.css({ height: 'auto' });
+            } else if (!esFormaCuadradaVisual(forma) && $el[0].style.height === 'auto') {
+                $el.css({ height: h + '%' });
+            }
         }
     }
 }
@@ -84,4 +102,16 @@ function construirClasesMesaPlano(m, extraClases) {
         }
     }
     return clases;
+}
+
+/** Lee tamaño real del elemento en % del canvas (para guardar sin deformar). */
+function leerPorcentajesMesaEnCanvas($el, canvas) {
+    var rect = canvas.getBoundingClientRect();
+    var elRect = $el[0].getBoundingClientRect();
+    return {
+        x: ((elRect.left - rect.left) / rect.width) * 100,
+        y: ((elRect.top - rect.top) / rect.height) * 100,
+        w: (elRect.width / rect.width) * 100,
+        h: (elRect.height / rect.height) * 100
+    };
 }

@@ -127,17 +127,7 @@
     z-index: 30;
 }
 
-.plano-mesa.forma-redonda {
-    border-radius: 50%;
-}
-
-.plano-mesa.forma-cuadrada {
-    border-radius: 8px;
-}
-
-.plano-mesa.forma-rectangular {
-    border-radius: 6px;
-}
+/* Formas: ver mesa-plano-visual.css */
 
 .plano-leyenda {
     display: flex;

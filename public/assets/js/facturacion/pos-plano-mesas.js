@@ -182,10 +182,6 @@ function renderizarPlanoPos() {
         }
 
         var forma = getFormaMesa(m);
-        var dims = ajustarTamanoMesaPorForma(forma, w, h);
-        w = dims.w;
-        h = dims.h;
-
         var ordenes = getOrdenesMesa(m.id);
         var res = resumenOrdenesMesa(ordenes);
         var extras = [];
@@ -207,7 +203,7 @@ function renderizarPlanoPos() {
             : '<span class="pos-plano-mesa-hint">' + (m.capacidad || 0) + ' p.</span>';
 
         html += '<div class="' + clases.join(' ') + '" data-mesa-id="' + m.id + '" data-forma="' + forma + '"'
-            + ' style="left:' + x + '%;top:' + y + '%;width:' + w + '%;height:' + h + '%;"'
+            + ' style="' + estiloPosicionMesa(forma, x, y, w, h) + '"'
             + ' title="' + escAttrPos(tooltipOrdenesMesa(m, ordenes)) + '">'
             + badge
             + '<span class="mesa-plano-superficie" aria-hidden="true"></span>'
