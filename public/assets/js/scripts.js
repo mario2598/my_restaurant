@@ -134,10 +134,14 @@ $(function () {
 
   // sticky header toggle function
   var toggle_sticky_header = function (sticky) {
+    var navbar = $(".main-navbar")[0];
+    if (!navbar) {
+      return;
+    }
     if (!sticky) {
-      $(".main-navbar")[0].classList.remove("sticky");
+      navbar.classList.remove("sticky");
     } else {
-      $(".main-navbar")[0].classList += " sticky";
+      navbar.classList.add("sticky");
     }
   };
 

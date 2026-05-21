@@ -1,11 +1,4 @@
 ﻿
-    @font-face {
-      font-family: 'Malvides';
-      src: url('fonts/Malvides.otf') format('opentype');
-      font-weight: 400;
-      font-style: normal;
-      font-display: swap;
-    }
     :root {
       --mostaza: #efb444;
       --menta: #74c5a8;
@@ -83,7 +76,7 @@
       animation: rose-breath 6s ease-in-out infinite;
     }
     .brand-center__name {
-      font-family: 'Malvides', 'Fraunces', serif;
+      font-family: 'Fraunces', Georgia, serif;
       font-size: clamp(2.25rem, 8vmin, 3.5rem);
       color: #eee6c8;
       line-height: 1;
@@ -835,4 +828,116 @@
 
     /* visibility helpers */
     [hidden] { display: none !important; }
+
+    /* selector de sucursal */
+    .menu-sucursal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      background: rgba(20, 63, 57, 0.72);
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+    .menu-sucursal-overlay.is-visible {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+    .menu-sucursal-picker {
+      width: min(420px, 100%);
+      max-height: min(85vh, 560px);
+      overflow-y: auto;
+      background: var(--crema);
+      border-radius: var(--radio-lg);
+      padding: 1.5rem 1.25rem 1.25rem;
+      box-shadow: var(--sombra-fuerte);
+      color: var(--texto);
+    }
+    .menu-sucursal-picker__eyebrow {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--verde);
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+    .menu-sucursal-picker h2 {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 1.45rem;
+      line-height: 1.25;
+      color: var(--verde-oscuro);
+      margin-bottom: 0.4rem;
+    }
+    .menu-sucursal-picker__hint {
+      font-size: 0.88rem;
+      color: var(--texto-suave);
+      margin-bottom: 1.1rem;
+    }
+    .menu-sucursal-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+    .menu-sucursal-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1rem;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio);
+      background: var(--blanco);
+      color: var(--texto);
+      font-size: 0.95rem;
+      font-weight: 500;
+      text-align: left;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    }
+    .menu-sucursal-btn:hover {
+      border-color: var(--menta);
+      box-shadow: var(--sombra);
+      transform: translateY(-1px);
+    }
+    .menu-sucursal-btn:active { transform: translateY(0); }
+    .menu-sucursal-btn__icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--menta) 0%, var(--verde) 100%);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .menu-sucursal-btn__text { flex: 1; }
+    .menu-sucursal-btn__arrow { color: var(--verde); opacity: 0.7; }
+    .menu-shell--pending {
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .menu-cambiar-sucursal {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.45rem 0.65rem;
+      margin-right: 0.35rem;
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      color: #f4ead0;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .menu-cambiar-sucursal:hover { background: rgba(255,255,255,0.22); }
   
