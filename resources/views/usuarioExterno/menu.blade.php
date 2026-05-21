@@ -6,6 +6,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:wght@500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('assets/css/menu-digital.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/menu-digital-responsive.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/menu-plano-habbo.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         body.menu-digital-page .loader,
@@ -90,24 +91,28 @@
 
             <div class="menu-body">
                 <div class="menu-body__main">
-                    <div class="section-head menu-section-head">
+                    <div class="section-head menu-section-head" data-menu-section="destacados">
                         <h2 id="featured-head">Destacados</h2>
                     </div>
                     <div class="featured" id="featured"></div>
 
-                    <div class="section-head menu-section-head">
+                    <div class="section-head menu-section-head" id="search-results-head" hidden>
+                        <h2>Resultados de búsqueda</h2>
+                    </div>
+
+                    <div class="section-head menu-section-head" data-menu-section="categorias">
                         <h2>Categorías</h2>
                         <span class="menu-section-hint d-none d-md-inline">Elija una sección</span>
                     </div>
                     <div class="category-list" id="category-list"></div>
 
-                    <div class="menu-mesas-panel" id="menu-mesas-panel">
+                    <div class="menu-mesas-panel" id="menu-mesas-panel" data-menu-section="mesas">
                         <div class="menu-mesas-panel__head" onclick="toggleMesasMenuPanel()">
-                            <span><i class="fas fa-chair"></i> Mesas disponibles</span>
+                            <span><i class="fas fa-chair"></i> Mapa de mesas</span>
                             <i class="fas fa-chevron-down" id="menu-mesas-chevron"></i>
                         </div>
                         <div class="menu-mesas-panel__content" id="mesas-disponibles-content">
-                            <p class="small text-muted mb-0">Toque para ver mesas libres</p>
+                            <p class="menu-mesas-placeholder small text-muted mb-0">Toque para ver el mapa de mesas libres</p>
                         </div>
                     </div>
 
@@ -122,7 +127,7 @@
                     </div>
                 </div>
 
-                <aside class="menu-body__aside" id="menu-sidebar" aria-label="Navegación por categorías">
+                <aside class="menu-body__aside" id="menu-sidebar" data-menu-section="nav" aria-label="Navegación por categorías">
                     <p class="menu-body__aside-title">Categorías</p>
                     <ul class="menu-nav-cats" id="menu-nav-cats"></ul>
                 </aside>
@@ -172,5 +177,6 @@
         window.MENU_TIPOS_INICIAL = @json($menuTipos ?? []);
         window.MENU_STORAGE_KEY = 'menu_id_sucursal';
     </script>
+    <script src="{{ asset('assets/js/usuarioExterno/menu-plano.js') }}"></script>
     <script src="{{ asset('assets/js/usuarioExterno/menu.js') }}"></script>
 @endsection
