@@ -322,15 +322,12 @@ function renderizarMesas(mesas) {
             idxSinPos++;
         }
         var forma = getFormaMesa(m);
-        var dims = ajustarTamanoMesaPorForma(forma, w, h);
-        w = dims.w;
-        h = dims.h;
         var estado = m.estado_codigo === 'MESA_OCUPADA' ? 'ocupada' : 'disponible';
         var sinPosClass = tienePosicion(m) ? '' : ' sin-posicion-en-plano';
         var clases = construirClasesMesaPlano(m, [estado, sinPosClass]);
         html += '<div class="' + clases.join(' ') + '"'
             + ' data-id="' + m.id + '" data-forma="' + forma + '"'
-            + ' style="left:' + x + '%;top:' + y + '%;width:' + w + '%;height:' + h + '%;"'
+            + ' style="' + estiloPosicionMesa(forma, x, y, w, h) + '"'
             + ' title="Mesa ' + m.numero_mesa + ' (' + etiquetaFormaMesa(forma) + ') — ' + (m.estado_nombre || '') + '">'
             + htmlContenidoMesaPlano(m.numero_mesa, m.capacidad)
             + '</div>';
@@ -653,16 +650,19 @@ function enlazarEventosMesas() {
 function guardarPosicionElemento($el) {
     var id = $el.data('id');
     var canvas = document.getElementById('plano-canvas');
-    var rect = canvas.getBoundingClientRect();
-    var elRect = $el[0].getBoundingClientRect();
     var m = (planoDatos.mesas || []).find(function (x) { return x.id == id; });
+    var forma = m ? getFormaMesa(m) : 'rectangular';
+    var pct = leerPorcentajesMesaEnCanvas($el, canvas);
+    if (esFormaCuadradaVisual(forma)) {
+        pct.h = pct.w;
+    }
     return guardarPosicionAjax(
         id,
-        ((elRect.left - rect.left) / rect.width) * 100,
-        ((elRect.top - rect.top) / rect.height) * 100,
-        (elRect.width / rect.width) * 100,
-        (elRect.height / rect.height) * 100,
-        m ? m.forma : 'rectangular',
+        pct.x,
+        pct.y,
+        pct.w,
+        pct.h,
+        forma,
         m ? m.zona : null
     );
 }
@@ -735,17 +735,18 @@ function aplicarDetalleMesa(id) {
     var elRect = $el[0].getBoundingClientRect();
     var forma = $('#detalle_forma').val() || getFormaMesa({ forma: 'rectangular' });
     var zona = $('#detalle_zona').val();
-    var w = ((elRect.width / rect.width) * 100);
-    var h = ((elRect.height / rect.height) * 100);
-    var dims = ajustarTamanoMesaPorForma(forma, w, h);
+    var pct = leerPorcentajesMesaEnCanvas($el, canvas);
     $el.removeClass('forma-rectangular forma-cuadrada forma-redonda').addClass('forma-' + forma).attr('data-forma', forma);
-    $el.css({ width: dims.w + '%', height: dims.h + '%' });
+    if (esFormaCuadradaVisual(forma)) {
+        $el.css({ width: pct.w + '%', height: 'auto' });
+        pct.h = pct.w;
+    }
     guardarPosicionAjax(
         id,
-        ((elRect.left - rect.left) / rect.width) * 100,
-        ((elRect.top - rect.top) / rect.height) * 100,
-        dims.w,
-        dims.h,
+        pct.x,
+        pct.y,
+        pct.w,
+        pct.h,
         forma,
         zona
     ).done(function (r) {
