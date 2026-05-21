@@ -22,7 +22,17 @@ class UsuarioExternoController extends Controller
 
     public function goMenu()
     {
-        return view('usuarioExterno.menuExterno');
+        $contro = new FacturacionController();
+        $categorias = $contro->getCategoriasTodosProductos(1);
+
+        return view('usuarioExterno.menu', [
+            'data' => ['categorias' => $categorias],
+            'logoUrl' => asset(app(LogInController::class)->getLogoSistema(1)),
+            'nombreNegocio' => config('app.name', 'Restaurante'),
+            'sloganNegocio' => config('app.slogan', ''),
+            'siteUrl' => url('/'),
+            'whatsappPhone' => '64499415',
+        ]);
     }
 
     public function goMenuMobile()
