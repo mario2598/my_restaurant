@@ -28,7 +28,7 @@
                 <div class="row" id="pos-plano-layout-mapa">
                     <div class="col-lg-7" id="pos-plano-col-mapa">
                         <div id="pos-plano-wrapper">
-                            <div id="pos-plano-canvas">
+                            <div id="pos-plano-canvas" class="plano-canvas">
                                 <div id="pos-plano-zonas"></div>
                                 <div id="pos-plano-mesas"></div>
                             </div>
@@ -36,6 +36,7 @@
                                 <span class="lg-disponible">Libre</span>
                                 <span class="lg-ocupada">Ocupada</span>
                                 <span class="lg-pendiente">Por cobrar</span>
+                                <span class="lg-sillas">Sillas</span>
                                 <span class="lg-actual">Mesa actual</span>
                                 <span class="lg-seleccion">Seleccionada</span>
                             </div>

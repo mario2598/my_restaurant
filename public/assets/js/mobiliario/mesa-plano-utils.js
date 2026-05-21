@@ -62,11 +62,112 @@ function etiquetaFormaMesa(forma) {
     return 'Rectangular';
 }
 
-function htmlContenidoMesaPlano(numero, capacidad, extraHtml) {
-    return '<span class="mesa-plano-superficie" aria-hidden="true"></span>'
+/**
+ * Distribución de sillas según capacidad y forma (referencia visual del plano).
+ */
+function calcularDistribucionSillasMesa(forma, capacidad, planoAncho, planoAlto) {
+    var cap = Math.max(1, Math.min(12, parseInt(capacidad, 10) || 4));
+    var lista = [];
+    var i;
+    var w = parseFloat(planoAncho) || 7;
+    var h = parseFloat(planoAlto) || 7;
+
+    if (forma === 'redonda' || forma === 'cuadrada') {
+        for (i = 0; i < cap; i++) {
+            lista.push({
+                tipo: 'arco',
+                angulo: (360 / cap) * i - 90
+            });
+        }
+        return lista;
+    }
+
+    var vertical = h > w * 1.08;
+    if (vertical) {
+        var der = Math.ceil(cap / 2);
+        var izq = cap - der;
+        for (i = 0; i < der; i++) {
+            lista.push({ tipo: 'barra', lado: 'e', indice: i, total: der });
+        }
+        for (i = 0; i < izq; i++) {
+            lista.push({ tipo: 'barra', lado: 'o', indice: i, total: izq });
+        }
+        return lista;
+    }
+
+    var arriba = Math.ceil(cap / 2);
+    var abajo = cap - arriba;
+    for (i = 0; i < arriba; i++) {
+        lista.push({ tipo: 'barra', lado: 'n', indice: i, total: arriba });
+    }
+    for (i = 0; i < abajo; i++) {
+        lista.push({ tipo: 'barra', lado: 's', indice: i, total: abajo });
+    }
+    return lista;
+}
+
+function htmlSillaMesaPlano(silla) {
+    if (silla.tipo === 'arco') {
+        var rad = (silla.angulo * Math.PI) / 180;
+        var cx = 50 + 44 * Math.cos(rad);
+        var cy = 50 + 44 * Math.sin(rad);
+        var rot = silla.angulo + 90;
+        return '<span class="mesa-silla mesa-silla--arco" style="'
+            + 'left:' + cx + '%;top:' + cy + '%;'
+            + 'transform:translate(-50%,-50%) rotate(' + rot + 'deg);" aria-hidden="true"></span>';
+    }
+    var lado = silla.lado || 'n';
+    var total = Math.max(1, silla.total || 1);
+    var slot = ((silla.indice + 1) / (total + 1)) * 100;
+    var estilo = 'left:' + slot + '%;';
+    if (lado === 'n') {
+        estilo += 'top:0;transform:translate(-50%,0);';
+    } else if (lado === 's') {
+        estilo += 'bottom:0;transform:translate(-50%,0);';
+    } else if (lado === 'e') {
+        estilo = 'right:0;top:' + slot + '%;transform:translate(0,-50%);';
+    } else if (lado === 'o') {
+        estilo = 'left:0;top:' + slot + '%;transform:translate(0,-50%);';
+    } else {
+        estilo += 'left:0;top:' + slot + '%;transform:translate(0,-50%);';
+    }
+    return '<span class="mesa-silla mesa-silla--barra mesa-silla--' + lado + '" style="' + estilo + '" aria-hidden="true"></span>';
+}
+
+function htmlSillasMesaPlano(forma, capacidad, planoAncho, planoAlto) {
+    var sillas = calcularDistribucionSillasMesa(forma, capacidad, planoAncho, planoAlto);
+    var html = '<div class="mesa-plano-sillas" aria-hidden="true">';
+    sillas.forEach(function (s) {
+        html += htmlSillaMesaPlano(s);
+    });
+    html += '</div>';
+    return html;
+}
+
+/**
+ * Vista gráfica mesa + sillas + etiqueta (mobiliario y POS).
+ */
+function htmlContenidoMesaPlano(numero, capacidad, extraHtml, forma, planoAncho, planoAlto) {
+    forma = forma || 'rectangular';
+    return '<div class="mesa-plano-grafico">'
+        + htmlSillasMesaPlano(forma, capacidad, planoAncho, planoAlto)
+        + '<span class="mesa-plano-superficie" aria-hidden="true"></span>'
         + '<span class="plano-mesa-numero">' + numero + '</span>'
         + '<span class="plano-mesa-cap">' + (capacidad || 0) + ' p.</span>'
-        + (extraHtml || '');
+        + (extraHtml || '')
+        + '</div>';
+}
+
+/** POS: número corto + hint opcional dentro del gráfico */
+function htmlContenidoMesaPlanoPos(m, extraHtml) {
+    var forma = getFormaMesa(m);
+    var numero = typeof etiquetaCortaMesa === 'function' ? etiquetaCortaMesa(m.numero_mesa, 10) : m.numero_mesa;
+    return '<div class="mesa-plano-grafico">'
+        + htmlSillasMesaPlano(forma, m.capacidad, m.plano_ancho, m.plano_alto)
+        + '<span class="mesa-plano-superficie" aria-hidden="true"></span>'
+        + '<span class="pos-plano-mesa-num">' + numero + '</span>'
+        + (extraHtml || '')
+        + '</div>';
 }
 
 function htmlSelectorFormaMesa(valorActual, inputId) {
@@ -79,7 +180,12 @@ function htmlSelectorFormaMesa(valorActual, inputId) {
         var sel = f === valorActual ? ' activa' : '';
         html += '<button type="button" class="mesa-forma-opt' + sel + '" data-forma="' + f + '" data-target="' + inputId + '"'
             + ' onclick="seleccionarFormaMesaPicker(this)" title="' + etiquetaFormaMesa(f) + '">'
-            + '<span class="mesa-forma-preview forma-' + f + '"></span>'
+            + '<span class="mesa-forma-preview-wrap">'
+            + (f === 'redonda'
+                ? '<span class="mesa-forma-preview-silla mesa-forma-preview-silla--arco" style="left:50%;top:8%;transform:translateX(-50%);"></span>'
+                : '<span class="mesa-forma-preview-silla mesa-forma-preview-silla--n"></span>'
+                    + '<span class="mesa-forma-preview-silla mesa-forma-preview-silla--s"></span>')
+            + '<span class="mesa-forma-preview forma-' + f + '"></span></span>'
             + '<span class="mesa-forma-label">' + etiquetaFormaMesa(f) + '</span>'
             + '</button>';
     });

@@ -923,6 +923,7 @@
 
 </style>
 <link rel="stylesheet" href="{{ asset('assets/css/mesa-plano-visual.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/css/mobiliario-plano.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/css/pos-plano-mesas.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/css/pos-layout.css') }}">
 

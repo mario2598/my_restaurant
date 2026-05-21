@@ -13,16 +13,18 @@
     border-radius: 8px;
 }
 
+/* Mismas proporciones que mobiliario/mesas/plano (.plano-canvas); ratio vía JS (ancho_referencia / alto_referencia) */
 #pos-plano-canvas {
     position: relative;
     width: 100%;
+    max-width: 900px;
     margin: 0 auto;
-    aspect-ratio: 2 / 3;
-    max-height: 55vh;
     min-height: 280px;
     background: #fff;
     border: 2px solid #dee2e6;
+    box-shadow: inset 0 0 0 1px #f8f9fa;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 #pos-plano-zonas,
@@ -154,6 +156,13 @@
     border-radius: 50%;
 }
 
+.pos-plano-leyenda .lg-sillas::before {
+    width: 10px;
+    height: 3px;
+    border-radius: 1px;
+    background: #7a5520;
+}
+
 .pos-plano-leyenda .lg-actual::before {
     outline: 2px solid #007bff;
     background: #a67c2a;
@@ -194,23 +203,12 @@
 
 #pos-plano-mesas .pos-plano-mesa {
     overflow: hidden;
-    min-width: 24px;
-    min-height: 24px;
 }
 
-#pos-plano-mesas .pos-plano-mesa .pos-plano-mesa-num,
 #pos-plano-mesas .pos-plano-mesa .pos-plano-mesa-hint {
-    max-width: 92%;
+    max-width: 88%;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
-    text-align: center;
-    padding: 0 2px;
-    box-sizing: border-box;
-}
-
-#pos-plano-mesas .pos-plano-mesa.forma-rectangular .pos-plano-mesa-num {
-    font-size: 9px;
 }
 
 #pos-plano-mesas .pos-plano-mesa .mesa-plano-superficie {
