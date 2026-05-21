@@ -3,7 +3,7 @@
 @section('styles')
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:wght@500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:wght@500;600&family=Press+Start+2P&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('assets/css/menu-digital.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/menu-digital-responsive.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/menu-plano-habbo.css') }}">
@@ -108,7 +108,7 @@
 
                     <div class="menu-mesas-panel" id="menu-mesas-panel" data-menu-section="mesas">
                         <div class="menu-mesas-panel__head" onclick="toggleMesasMenuPanel()">
-                            <span><i class="fas fa-chair"></i> Mapa de mesas</span>
+                            <span><i class="fas fa-gamepad"></i> Sala de mesas</span>
                             <i class="fas fa-chevron-down" id="menu-mesas-chevron"></i>
                         </div>
                         <div class="menu-mesas-panel__content" id="mesas-disponibles-content">
