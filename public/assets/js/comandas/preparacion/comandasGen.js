@@ -437,13 +437,30 @@ function marcarLineaPreparada(id_detalle_orden_comanda) {
         if (!res['estado']) {
             setError('Marcar línea', res['mensaje']);
         } else {
-            recargarOrdenes();
             var datos = res['datos'] || {};
             if (datos.orden_completa && datos.id_orden_comanda) {
-                terminarPreparacion(datos.id_orden_comanda);
+                // Última línea: terminar directamente sin confirmación
+                terminarPreparacionDirecto(datos.id_orden_comanda);
+            } else {
+                recargarOrdenes();
             }
         }
     }).fail(function () { setError('Marcar línea', 'Algo salió mal.'); });
+}
+
+function terminarPreparacionDirecto(id_orden_comanda) {
+    $.ajax({
+        url: `${base_path}/comandas/preparacion/comanda/terminarPreparacionComanda`,
+        type: 'post',
+        dataType: 'json',
+        data: $.extend({ _token: CSRF_TOKEN, id_orden_comanda: id_orden_comanda },
+            (idComanda !== '' && idComanda != null && String(idComanda).trim() !== '')
+                ? { id_comanda: idComanda } : {})
+    }).done(function (res) {
+        recargarOrdenes();
+    }).fail(function () {
+        recargarOrdenes();
+    });
 }
 
 function calcularTiempoTranscurrido(fechaInicio) {
