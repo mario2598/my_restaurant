@@ -278,7 +278,7 @@
             @if(count($ventasPorHora) > 0)
             <div class="row mb-3">
                 <div class="col-12 col-md-7 mb-3 mb-md-0">
-                    <div class="card h-100">
+                    <div class="card">
                         <div class="card-header py-2 d-flex align-items-center justify-content-between">
                             <h6 class="mb-0" style="font-weight:700;"><i class="fas fa-chart-bar mr-1"></i> Ventas por hora del día</h6>
                             <div class="btn-group btn-group-sm" role="group">
@@ -286,13 +286,13 @@
                                 <button type="button" class="btn btn-outline-primary" id="btnChartVentas" onclick="switchChart('ventas')">Ventas</button>
                             </div>
                         </div>
-                        <div class="card-body py-2">
-                            <canvas id="chartVentasHora" style="max-height:200px;"></canvas>
+                        <div class="card-body py-2" style="height:230px;position:relative;">
+                            <canvas id="chartVentasHora" style="position:absolute;inset:10px;width:calc(100% - 20px)!important;height:calc(100% - 20px)!important;"></canvas>
                         </div>
                     </div>
                 </div>
                 <div class="col-12 col-md-5">
-                    <div class="card h-100">
+                    <div class="card">
                         <div class="card-header py-2">
                             <h6 class="mb-0" style="font-weight:700;"><i class="fas fa-credit-card mr-1"></i> Métodos de pago</h6>
                         </div>
@@ -938,7 +938,7 @@
         },
         options: {
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
             plugins: { legend: { display: false },
                 tooltip: { callbacks: { title: function(i){ return i[0].label; } } }
             },
