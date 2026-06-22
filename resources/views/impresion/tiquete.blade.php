@@ -17,6 +17,9 @@ body {
     background: #fff;
     width: 100%;
     padding: 12px 10px;
+    overflow: hidden;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 .ticket-logo { text-align: center; margin-bottom: 0; }
 .ticket-logo img {
@@ -43,7 +46,7 @@ body {
     border-bottom: 1px dashed #888;
     margin-bottom: 4px;
 }
-.ticket-header div:not(.empresa) { font-size: 11.5px; color: #333; }
+.ticket-header div:not(.empresa) { font-size: 11.5px; color: #333; word-break: break-all; overflow-wrap: anywhere; }
 hr.dashed { border: none; border-top: 1px dashed #999; margin: 6px 0; }
 .ticket-info { margin-bottom: 6px; line-height: 1.6; }
 .ticket-info .lbl { font-weight: 700; }
@@ -141,8 +144,8 @@ table.detalle .extra-row td { font-size: 11px; color: #555; padding-left: 8px; }
         <thead>
             <tr>
                 <th style="width:10%;text-align:center;">Cant</th>
-                <th style="width:70%;">Producto</th>
-                <th style="width:20%;text-align:right;">Total</th>
+                <th style="width:62%;">Producto</th>
+                <th style="width:28%;text-align:right;">Total</th>
             </tr>
         </thead>
         <tbody>
