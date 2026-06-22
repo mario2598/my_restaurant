@@ -386,7 +386,7 @@
                 dom: 'Bfrtip',
                 "searching": false,
                 "paging": false,
-                'fixedHeader': { 'header': true },
+
                 buttons: [{
                     extend: 'excel',
                     title: 'SPACE REST',
