@@ -46,13 +46,15 @@ body {
     border-bottom: 1px dashed #888;
     margin-bottom: 4px;
 }
-.ticket-header div:not(.empresa) { font-size: 11.5px; color: #333; word-break: break-all; overflow-wrap: anywhere; }
+.ticket-header div:not(.empresa) { font-size: 11px; color: #333; word-break: normal; overflow-wrap: anywhere; }
 hr.dashed { border: none; border-top: 1px dashed #999; margin: 6px 0; }
 .ticket-info { margin-bottom: 6px; line-height: 1.6; }
 .ticket-info .lbl { font-weight: 700; }
-table.detalle { width: 100%; border-collapse: collapse; margin: 4px 0; font-size: 12px; }
-table.detalle th { font-weight: 700; border-bottom: 1px solid #333; padding: 2px 0; }
-table.detalle td { padding: 2px 0; vertical-align: top; }
+table.detalle { width: 100%; border-collapse: collapse; margin: 4px 0; font-size: 11px; table-layout: fixed; }
+table.detalle th { font-weight: 700; border-bottom: 1px solid #333; padding: 2px 0; white-space: nowrap; overflow: hidden; word-break: normal; }
+table.detalle td { padding: 2px 0; vertical-align: top; word-break: normal; overflow-wrap: break-word; }
+table.detalle .td-total { white-space: nowrap; word-break: normal; font-size: 10.5px; }
+table.detalle .td-qty { white-space: nowrap; word-break: normal; }
 table.detalle .extra-row td { font-size: 11px; color: #555; padding-left: 8px; }
 .totales { margin-top: 6px; }
 .totales tr td:first-child { font-weight: 700; }
@@ -143,20 +145,20 @@ table.detalle .extra-row td { font-size: 11px; color: #555; padding-left: 8px; }
     <table class="detalle">
         <thead>
             <tr>
-                <th style="width:10%;text-align:center;">Cant</th>
-                <th style="width:62%;">Producto</th>
-                <th style="width:28%;text-align:right;">Total</th>
+                <th style="width:9%;text-align:center;">Q</th>
+                <th style="width:57%;">Producto</th>
+                <th style="width:34%;text-align:right;">Total</th>
             </tr>
         </thead>
         <tbody>
         @foreach($detalles as $d)
             <tr>
-                <td style="text-align:center;">{{ $d->cantidad }}</td>
+                <td class="td-qty" style="text-align:center;">{{ $d->cantidad }}</td>
                 <td>
                     {{ $d->nombre_producto ?? $d->nombre ?? '' }}
-                    <div style="font-size:10px;color:#888;margin-top:1px;">P.U. {{ $simbolo }}{{ number_format($d->precio_unitario ?? 0, 2, '.', ',') }}</div>
+                    <div style="font-size:10px;color:#888;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">P.U. {{ $simbolo }}{{ number_format($d->precio_unitario ?? 0, 2, '.', ',') }}</div>
                 </td>
-                <td style="text-align:right;">{{ $simbolo }}{{ number_format(($d->subtotal ?? ($d->precio_unitario * $d->cantidad)), 2, '.', ',') }}</td>
+                <td class="td-total" style="text-align:right;">{{ $simbolo }}{{ number_format(($d->subtotal ?? ($d->precio_unitario * $d->cantidad)), 2, '.', ',') }}</td>
             </tr>
             @if(!empty($d->extras))
                 @foreach($d->extras as $e)
