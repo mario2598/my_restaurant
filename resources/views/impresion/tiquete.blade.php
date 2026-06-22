@@ -46,7 +46,7 @@ body {
     border-bottom: 1px dashed #888;
     margin-bottom: 4px;
 }
-.ticket-header div:not(.empresa) { font-size: 11px; color: #333; word-break: normal; overflow-wrap: anywhere; }
+.ticket-header div:not(.empresa) { font-size: 10px; color: #333; word-break: normal; overflow-wrap: break-word; }
 hr.dashed { border: none; border-top: 1px dashed #999; margin: 6px 0; }
 .ticket-info { margin-bottom: 6px; line-height: 1.6; }
 .ticket-info .lbl { font-weight: 700; }
