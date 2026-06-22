@@ -1598,7 +1598,7 @@
 <div class="modal fade" id='mdl-extras' tabindex="-1" role="dialog"
     aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
-         style="max-width:500px; margin: auto 12px;">
+         style="max-width:500px;">
         <div class="modal-content" style="border-radius:16px; overflow:hidden;">
             <div class="modal-header py-2 px-3" style="background:#4e73df; border:none;">
                 <h6 class="modal-title text-white font-weight-bold mb-0" id="mdl-extras-titulo">
@@ -2534,6 +2534,7 @@ window.seleccionarPopulares = function() {
             html = '<p class="text-muted p-3">No hay datos de la \u00faltima semana.</p>';
         }
         $('#grid-productos').html(html);
+        if (typeof actualizarBadgesProductos === 'function') actualizarBadgesProductos();
     }).fail(function() { $('#grid-productos').html('<p class="text-danger p-3">Error al cargar.</p>'); });
 };
 </script>
