@@ -46,9 +46,9 @@ body {
     border-bottom: 1px dashed #888;
     margin-bottom: 4px;
 }
-.ticket-header div:not(.empresa) { font-size: 10px; color: #333; word-break: normal; overflow-wrap: break-word; }
+.ticket-header div:not(.empresa) { font-size: 9px; color: #333; word-break: normal; overflow-wrap: break-word; }
 hr.dashed { border: none; border-top: 1px dashed #999; margin: 6px 0; }
-.ticket-info { margin-bottom: 6px; line-height: 1.6; }
+.ticket-info { margin-bottom: 6px; line-height: 1.6; font-size: 12px; }
 .ticket-info .lbl { font-weight: 700; }
 table.detalle { width: 100%; border-collapse: collapse; margin: 4px 0; font-size: 11px; table-layout: fixed; }
 table.detalle th { font-weight: 700; border-bottom: 1px solid #333; padding: 2px 0; white-space: nowrap; overflow: hidden; word-break: normal; }
