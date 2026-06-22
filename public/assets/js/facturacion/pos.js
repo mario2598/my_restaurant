@@ -1481,6 +1481,10 @@ function eliminarLineaDetalleOrden(indice) {
         return;
     }
     var detalle = detalles[indice];
+    if ((detalle.cantidad_preparada || 0) > 0) {
+        showError('"' + detalle.producto.nombre + '" ya fue enviado a cocina y no puede eliminarse.');
+        return;
+    }
     detalles.splice(indice, 1);
 
     var producto = buscarProductoCodigo(detalle.producto.codigo);
@@ -1509,6 +1513,11 @@ function actualizarDetalleOrden(indice, aumenta = true) {
         reducirCantidadProducto(detalle.producto.codigo);
     } else {
         detalle.cantidad = detalle.cantidad - 1;
+        if (detalle.cantidad < (detalle.cantidad_preparada || 0)) {
+            showError('No se puede bajar la cantidad: ya se prepararon ' + (detalle.cantidad_preparada) + ' unidad(es) de "' + detalle.producto.nombre + '" en cocina.');
+            detalle.cantidad = detalle.cantidad + 1;
+            return;
+        }
         if (detalle.cantidad <= 0) {
             detalles.splice(indice, 1);
         } else {
@@ -1832,7 +1841,8 @@ function generarHTMLProductoOrden(indice, detalle, precio, cantidad, total, codi
             ? `<div class="col-sm-6 col-md-6 col-lg-6 justify-content-center align-items-center">
                                                 <button type="button" class="btn btn-danger px-2" 
                                                     onclick="eliminarLineaDetalleOrden(${indice})" 
-                                                    ${deshabilitarCantidad ? "disabled" : ""}>
+                                                    ${(deshabilitarCantidad || cantidad_preparada > 0) ? "disabled" : ""}
+                                                    title="${cantidad_preparada > 0 ? 'Ya enviado a cocina' : 'Eliminar'}">
                                                     <i class="fas fa-trash" aria-hidden="true"></i>
                                                 </button>
                                             </div>
