@@ -651,7 +651,7 @@
     #mapa-flotante-container {
         position: fixed;
         bottom: 20px;
-        right: 88px;
+        right: 20px;
         z-index: 1055;
         display: flex;
         flex-direction: column;
@@ -914,7 +914,7 @@
         #mapa-flotante-container {
             top: auto;
             bottom: 20px;
-            right: 88px;
+            right: 20px;
         }
 
         #panel-mapa-fab {
@@ -928,8 +928,8 @@
 <link rel="stylesheet" href="{{ asset('assets/css/mesa-plano-visual.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/css/mobiliario-plano.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/css/pos-plano-mesas.css') }}">
-<link rel="stylesheet" href="{{ asset('assets/css/pos-layout.css') }}">
-<link rel="stylesheet" href="{{ asset('assets/css/pos-feedback.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/css/pos-layout.css') . '?v=20260622l' }}">
+<link rel="stylesheet" href="{{ asset('assets/css/pos-feedback.css') . '?v=20260622l' }}">
 
 <!-- Main Content -->
 
@@ -1036,69 +1036,50 @@
                                 <!-- Orden -->
                                 <div class="col-12" id="contDetalles">
                                     <div class="card">
-                                        <div class="card-header d-block" style="padding: 10px !important;">
-                                            <div class="card-title">
-                                                <div class="row">
-                                                    <div class="col-sm-12 col-md-12 col-lg-12">
-                                                        <h4 id="infoHeaderOrden">Orden Nueva</h4>
-                                                    </div>
-                                                    <div class="col-12 col-lg-6 mb-2 mb-lg-0">
-                                                        <div class="input-group">
-                                                            <input type="text" class="form-control h-75" onkeyup="changeNombreCliente(this.value,true)"
-                                                                name="txt-cliente" id="txt-cliente"
-                                                                placeholder="Nombre cliente...">
-                                                            <div class="input-group-append">
-                                                                <button class="btn btn-outline-primary" type="button"
-                                                                    onclick="abrirModalBuscarCliente()" title="Buscar Cliente">
-                                                                    <i class="fas fa-search"></i>
-                                                                </button>
-                                                            </div>
-                                                        </div>
-
-                                                    </div>
-                                                    <div class="col-12 col-lg-6">
-                                                        <div class="input-group pos-mesa-input-group">
-                                                            <label class="mr-2 pt-2 pl-1 pos-mesa-label" for="select_mesa">Mesa</label>
-                                                            <select class="form-control" onchange="cambiarMesa()"
-                                                                id="select_mesa" name="select_mesa"
-                                                                title="Use el botón flotante «Mapa» (arriba a la derecha) para elegir mesa en el plano">
-                                                                <option value="-1" selected>PARA LLEVAR</option>
-                                                                @foreach ($data['mesas'] as $i)
-                                                                <option value="{{ $i->id ?? '' }}"
-                                                                    title="{{ $i->numero_mesa ?? '' }}, Capacidad {{ $i->capacidad ?? '' }}">
-                                                                    Mesa : {{ $i->numero_mesa ?? '' }} , Capacidad
-                                                                    {{ $i->capacidad ?? '' }}
-                                                                </option>
-                                                                @endforeach
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-12">
-                                                        <!-- Panel compacto de información del cliente seleccionado -->
-                                                        <div id="cliente-info-panel-2" class="mt-1" style="display: none;">
-                                                            <div class="alert alert-success py-2 mb-0">
-                                                                <div class="d-flex justify-content-between align-items-center">
-                                                                    <div class="d-flex align-items-center">
-                                                                        <i class="fas fa-user-check text-success mr-2"></i>
-                                                                        <small class="text-muted">Cliente:</small>
-                                                                        <strong class="ml-1" id="cliente-nombre-info-2">-</strong>
-                                                                        <span class="mx-2 text-muted">|</span>
-                                                                        <small class="text-muted">Tel:</small>
-                                                                        <span class="ml-1" id="cliente-telefono-info-2">-</span>
-                                                                    </div>
-                                                                    <button type="button" class="btn btn-sm btn-outline-danger"
-                                                                        onclick="limpiarClienteSeleccionado()" title="Limpiar Cliente">
-                                                                        <i class="fas fa-times"></i>
-                                                                    </button>
-                                                                </div>
-
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
+                                        <div class="card-header pos-orden-header">
+                                            <!-- Título -->
+                                            <h5 id="infoHeaderOrden" class="pos-orden-titulo mb-2">Orden Nueva</h5>
+                                            <!-- Fila: mesa + cliente juntos -->
+                                            <div class="pos-orden-inputs-row">
+                                                <select class="form-control pos-mesa-select"
+                                                    onchange="cambiarMesa()"
+                                                    id="select_mesa" name="select_mesa"
+                                                    title="Elegir mesa (o use el botón Mapa)">
+                                                    <option value="-1" selected>🛵 Para llevar</option>
+                                                    @foreach ($data['mesas'] as $i)
+                                                    <option value="{{ $i->id ?? '' }}">
+                                                        Mesa {{ $i->numero_mesa ?? '' }}
+                                                    </option>
+                                                    @endforeach
+                                                </select>
+                                                <div class="pos-cliente-group">
+                                                    <input type="text" class="form-control pos-cliente-input"
+                                                        onkeyup="changeNombreCliente(this.value,true)"
+                                                        name="txt-cliente" id="txt-cliente"
+                                                        placeholder="Cliente...">
+                                                    <button class="btn pos-cliente-search-btn" type="button"
+                                                        onclick="abrirModalBuscarCliente()" title="Buscar Cliente">
+                                                        <i class="fas fa-search"></i>
+                                                    </button>
                                                 </div>
                                             </div>
-
+                                            <!-- Panel cliente seleccionado -->
+                                            <div id="cliente-info-panel-2" class="mt-2" style="display:none;">
+                                                <div class="alert alert-success py-1 mb-0 small">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <span>
+                                                            <i class="fas fa-user-check text-success mr-1"></i>
+                                                            <strong id="cliente-nombre-info-2">-</strong>
+                                                            <span class="text-muted mx-1">|</span>
+                                                            <span id="cliente-telefono-info-2">-</span>
+                                                        </span>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger py-0"
+                                                            onclick="limpiarClienteSeleccionado()">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
 
 
@@ -1182,155 +1163,52 @@
 @section('popup')
 <div class="modal fade" id="mdl-pago" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true"
     data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title">Procesar Pago</h4>
+            <div class="modal-header py-2">
+                <h5 class="modal-title">Procesar Pago</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body">
-                <div class="container-fluid">
+            <div class="modal-body p-0">
 
+                <!-- ═══ HERO: TOTAL ═══ -->
+                <div class="pago-hero">
+                    <div id="txt-total-seleccionado" class="pago-hero__amount">₡0,00</div>
+                    <div class="pago-hero__pills">
+                        <span id="txt-total-pagar_mdl" class="pago-hero-pill">Total Orden: 0,00</span>
+                        <span id="txt-descuento-pagar_mdl" class="pago-hero-pill">Descuento: 0,00</span>
+                        <span id="txt-mto-envio_mdl" class="pago-hero-pill">Envío: No aplica</span>
+                        <span id="txt-mto-pagado_mdl" class="pago-hero-pill">Monto Pagado: 0,00</span>
+                    </div>
+                    <div id="row-rebajar-incidentes-mdl" style="display: none;" class="mt-2">
+                        <span id="txt-rebajar-incidentes-mdl" class="pago-hero-pill pago-hero-pill--warn"></span>
+                    </div>
+                </div>
 
-                    <!-- Código de descuento -->
-                    <div class="row mb-3">
-                        <div class="col-8">
-                            <input type="text" class="form-control" name="txt_codigo_descuento"
-                                id="txt_codigo_descuento" placeholder="Código de Descuento"
-                                onkeyup="enterDescuento(event)">
-                        </div>
-                        <div class="col-4 text-right">
-                            <button class="btn btn-success mr-2" onclick="validarCodDescuento()">
-                                <i class="fas fa-check"></i>
-                            </button>
-                            <button class="btn btn-danger" onclick="eliminarCodDescuento()">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                        <div class="col-12 mt-2" id="cont-dsc_promo" style="display: none">
-                            <strong id="txt-dsc_promo"></strong>
+                <div class="pago-scroll-body">
+
+                    <!-- Alertas contextuales -->
+                    <div id="cont-incidente-orden-mdl" style="display: none;" class="px-3 pt-3">
+                        <div class="alert alert-warning py-2 mb-0 small">
+                            <strong><i class="fas fa-exclamation-triangle"></i> Incidente:</strong>
+                            <span id="incidente-descripcion-mdl"></span>
+                            <span id="incidente-monto-mdl" class="font-weight-bold ml-1"></span>
+                            <button type="button" class="btn btn-danger btn-sm ml-2 py-0"
+                                id="btn-eliminar-incidente-mdl" onclick="eliminarIncidenteOrden()"
+                                title="Eliminar incidente"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
 
-                    <!-- Información del cliente -->
-                    <div class="row mb-3">
-
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="nombreCliente"
-                                placeholder="Nombre del Cliente">
-                            <div class="input-group-append">
-                                <button class="btn btn-outline-primary" type="button"
-                                    onclick="abrirModalBuscarCliente()" title="Buscar Cliente">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </div>
-                        </div>
-
-
-                    </div>
-
-                    <div class="col-12 mb-3">
-                        <!-- Panel compacto de información del cliente seleccionado -->
-                        <div id="cliente-info-panel" class="mt-1" style="display: none;">
-                            <div class="alert alert-success py-2 mb-0" style="border-left: 3px solid #28a745;">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-user-check text-success mr-2"></i>
-                                        <small class="text-muted">Cliente:</small>
-                                        <strong class="ml-1" id="cliente-nombre-info">-</strong>
-                                        <span class="mx-2 text-muted">|</span>
-                                        <small class="text-muted">Tel:</small>
-                                        <span class="ml-1" id="cliente-telefono-info">-</span>
-                                    </div>
-                                    <button type="button" class="btn btn-sm btn-outline-danger btn-sm"
-                                        onclick="limpiarClienteSeleccionado()" title="Limpiar Cliente">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                                <div id="cliente-detalles-extra" class="mt-1" style="display: none;">
-                                    <small class="text-muted">
-                                        <i class="fas fa-envelope mr-1"></i><span id="cliente-correo-info">-</span>
-
-                                    </small>
-                                </div>
-                                <div id="cliente-fe-info" class="mt-1">
-                                    <button type="button" class="btn btn-sm badge-info border-0" id="cliente-fe-info-2" onclick="abrirModalFE()" style="cursor: pointer; font-size: 0.75rem; padding: 0.35rem 0.7rem;">
-                                        <i class="fas fa-file-invoice mr-1"></i> Factura Electrónica Disponible
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Botones de acciones adicionales -->
-                    <div class="row mb-3">
-                        <div class="col-4">
-                            <button class="btn btn-success btn-block" onclick="abrirModalEnvio()">
-                                <i class="fas fa-truck"></i> Datos Envío
-                            </button>
-                        </div>
-                        <div class="col-4">
-                            <button class="btn btn-success btn-block" id="btn_fe" onclick="changeFacturacionElectronica()">
-                                <i class="fas fa-user"></i> Factura Electrónica: NO
-                            </button>
-                        </div>
-                        <div class="col-4" id="cont-btn-incidente-pago" style="display: none;">
-                            <button type="button" class="btn btn-success btn-block" onclick="abrirModalIncidentePago()">
-                                <i class="fas fa-exclamation-triangle"></i> Agregar Incidente
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Botón principal de pago -->
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <button type="button" class="btn btn-primary btn-block" id="btnPago"
-                                onclick="procesarPagoMixto()">
-                                Pagar en diferentes metodos
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Moneda / tipo de cambio -->
-                    <div class="row mb-2 border-top pt-3">
-                        <div class="col-12 col-md-5 mb-3">
-                            <label for="pos_moneda_factura_id">Moneda del cobro</label>
-                            <select class="form-control" id="pos_moneda_factura_id" name="pos_moneda_factura_id">
-                                @foreach ($data['monedasFacturaPos'] ?? [] as $mf)
-                                    @php
-                                        $tcAttr = ($mf->es_base ?? '') === 'S' ? '1' : ($mf->tipo_cambio_vigente !== null ? (string) $mf->tipo_cambio_vigente : '');
-                                    @endphp
-                                    <option value="{{ $mf->id }}"
-                                        data-es-base="{{ $mf->es_base ?? 'N' }}"
-                                        data-cod="{{ $mf->cod_general }}"
-                                        data-simbolo="{{ $mf->simbolo }}"
-                                        data-decimales="{{ (int) ($mf->decimales ?? 2) }}"
-                                        data-tc="{{ $tcAttr }}">{{ $mf->simbolo }} {{ $mf->nombre }} ({{ $mf->cod_general }})</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-12 col-md-4 mb-3">
-                            <label for="pos_tipo_cambio_edit">Tipo de cambio (₡ por 1 unidad)</label>
-                            <input type="number" class="form-control" id="pos_tipo_cambio_edit" step="0.000001" min="0.000001"
-                                placeholder="Ej. 520" disabled>
-                            <input type="hidden" id="pos_tipo_cambio_snapshot" name="pos_tipo_cambio_snapshot" value="">
-                            <small class="text-muted" id="pos_tc_ayuda">Moneda base: TC = 1. Si cambia el TC en otra moneda, se guarda en BD automáticamente.</small>
-                        </div>
-                        <div class="col-12 col-md-3 mb-3 d-flex align-items-end">
-                            <button type="button" class="btn btn-outline-secondary btn-sm btn-block" id="pos_btn_restaurar_tc"
-                                onclick="restaurarTipoCambioPosBd()" style="display:none;">
-                                <i class="fas fa-undo"></i> TC de BD
-                            </button>
-                        </div>
-                    </div>
-                    <div class="col-12 mb-2" id="pos_aviso_solo_efectivo" style="display: none;">
+                    <div id="pos_aviso_solo_efectivo" style="display: none;" class="px-3 pt-2">
                         <div class="alert alert-info py-2 mb-0 small">
-                            Cobro en moneda extranjera: solo <strong>efectivo</strong>. Indique cuánto recibió; el vuelto se calcula automáticamente.
+                            Cobro en moneda extranjera: solo <strong>efectivo</strong>.
+                            Indique cuánto recibió; el vuelto se calcula automáticamente.
                         </div>
                     </div>
-                    <div class="col-12 mb-3" id="pos_cobro_extranjero_efectivo" style="display: none;">
+
+                    <div id="pos_cobro_extranjero_efectivo" style="display: none;" class="px-3 pt-2">
                         <div class="card border-warning">
                             <div class="card-body py-2">
                                 <h6 class="mb-2"><i class="fas fa-money-bill-wave text-warning"></i> Cobro en efectivo (moneda del cobro)</h6>
@@ -1342,18 +1220,18 @@
                                     </div>
                                     <div class="col-md-4 mb-2">
                                         <label for="pos_monto_recibido_doc" class="small">Monto recibido del cliente</label>
-                                        <input type="number" class="form-control" id="pos_monto_recibido_doc" step="any" min="0"
-                                            placeholder="0.00" oninput="actualizarPanelVueltoPos()">
+                                        <input type="number" class="form-control" id="pos_monto_recibido_doc"
+                                            step="any" min="0" placeholder="0.00" oninput="actualizarPanelVueltoPos()">
                                     </div>
                                     <div class="col-md-4 mb-2 d-flex align-items-end">
                                         <button type="button" class="btn btn-outline-primary btn-block btn-sm"
-                                            onclick="rellenarMontoRecibidoExactoPos()">
-                                            Igual al total
-                                        </button>
+                                            onclick="rellenarMontoRecibidoExactoPos()">Igual al total</button>
                                     </div>
                                 </div>
                                 <div id="pos_vuelto_panel" class="mt-2 border-top pt-2" style="display: none;">
-                                    <p class="small font-weight-bold mb-2"><i class="fas fa-hand-holding-usd text-warning"></i> Vuelto calculado</p>
+                                    <p class="small font-weight-bold mb-2">
+                                        <i class="fas fa-hand-holding-usd text-warning"></i> Vuelto calculado
+                                    </p>
                                     <div class="row">
                                         <div class="col-6 mb-2">
                                             <span class="small text-muted d-block" id="lbl_vuelto_moneda_doc">Vuelto en divisa</span>
@@ -1367,8 +1245,8 @@
                                     <p class="small text-muted mb-1" id="pos_vuelto_equiv_hint"></p>
                                     <p class="small mb-0">Queda en caja (divisa): <strong id="pos_monto_retenido_doc_display">—</strong></p>
                                     <div class="custom-control custom-checkbox mt-2" id="pos_vuelto_en_base_wrap">
-                                        <input type="checkbox" class="custom-control-input" id="pos_vuelto_en_moneda_base"
-                                            onchange="actualizarPanelVueltoPos()">
+                                        <input type="checkbox" class="custom-control-input"
+                                            id="pos_vuelto_en_moneda_base" onchange="actualizarPanelVueltoPos()">
                                         <label class="custom-control-label small" for="pos_vuelto_en_moneda_base">
                                             El vuelto se entregó en <strong>colones (moneda base)</strong>
                                         </label>
@@ -1380,149 +1258,287 @@
                                 <p id="pos_sin_vuelto_msg" class="small text-success mb-0 mt-2" style="display:none;">
                                     <i class="fas fa-check"></i> Monto exacto — no hay vuelto.
                                 </p>
-                                <button type="button" class="btn btn-success btn-block btn-lg mt-3" id="btnPagoEfectivoExtranjero"
-                                    onclick="verificarAbrirModalPagoEfectivo()">
+                                <button type="button" class="btn btn-success btn-block btn-lg mt-3"
+                                    id="btnPagoEfectivoExtranjero" onclick="verificarAbrirModalPagoEfectivo()">
                                     <i class="fas fa-money-bill-wave"></i> Cobrar en efectivo
                                 </button>
                             </div>
                         </div>
                     </div>
-                    <div class="col-12 mb-3" id="pos_tabla_vueltos_wrap" style="display: none;">
-                        <h6 class="small font-weight-bold mb-2"><i class="fas fa-list-alt"></i> Vueltos en colones — caja actual</h6>
-                        <div class="table-responsive" style="max-height: 180px; overflow-y: auto;">
-                            <table class="table table-sm table-bordered mb-1" id="pos_tabla_vueltos">
-                                <thead class="thead-light">
-                                    <tr>
-                                        <th>Hora</th>
-                                        <th>Orden</th>
-                                        <th>Recibido</th>
-                                        <th>Vuelto ₡</th>
-                                        <th>Queda divisa</th>
-                                        <th>TC</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="pos_tabla_vueltos_body">
-                                    <tr><td colspan="6" class="text-muted small text-center">Sin registros (solo vueltos en colones)</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <p class="small mb-0" id="pos_totales_vueltos_resumen"></p>
+
+                    <!-- ═══ BOTONES GRANDES DE PAGO ═══ -->
+                    <div class="pago-metodos-wrap">
+                        <button type="button" class="pago-btn-metodo pago-btn-efectivo"
+                            id="btnPagoEfectivo" onclick="verificarAbrirModalPagoEfectivo()">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Efectivo</span>
+                        </button>
+                        <button type="button" class="pago-btn-metodo pago-btn-tarjeta"
+                            id="btnPagoTarjeta" onclick="verificarAbrirModalPagoTarjeta()">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Tarjeta</span>
+                        </button>
+                        <button type="button" class="pago-btn-metodo pago-btn-sinpe"
+                            id="btnPagoSinpe" onclick="verificarAbrirModalPagoSinpe()">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span>Sinpe</span>
+                        </button>
                     </div>
 
-                    <!-- Formas de pago -->
-                    <div class="row mb-3">
-                        <div class="col-12 col-md-4 mb-3">
-                            <label for="monto_tarjeta">Monto Tarjeta (₡)</label>
-                            <input type="number" class="form-control" step="any" id="monto_tarjeta"
-                                name="monto_tarjeta" placeholder="0.00" onkeyup="enterCampoPago(event)"
-                                min="0">
-                            <button type="button" class="btn btn-primary btn-block mt-2" id="btnPagoTarjeta"
-                                onclick="verificarAbrirModalPagoTarjeta()">
-                                Pagar Todo con Tarjeta
+                    <!-- ═══ ACORDEONES ═══ -->
+                    <div class="px-3 pb-3">
+
+                        <!-- Dividir pago entre métodos -->
+                        <div class="pago-acc mb-2">
+                            <button class="pago-acc__toggle" type="button" data-toggle="collapse"
+                                data-target="#pago-dividir-collapse" aria-expanded="false">
+                                <i class="fas fa-random mr-2"></i>Dividir entre métodos
+                                <i class="fas fa-chevron-down ml-auto pago-acc__arrow"></i>
                             </button>
-                        </div>
-                        <div class="col-12 col-md-4 mb-3" id="pos_col_monto_efectivo_crc">
-                            <div id="pos_campos_efectivo_crc">
-                                <label for="monto_efectivo" id="lbl_monto_efectivo">Monto Efectivo (₡)</label>
-                                <input type="number" class="form-control" step="any" id="monto_efectivo"
-                                    name="monto_efectivo" placeholder="0.00" onkeyup="enterCampoPago(event); actualizarPanelVueltoCrcPos();"
-                                    min="0">
-                                <div id="pos_vuelto_crc_panel" class="small mt-1" style="display:none;">
-                                    <span class="text-warning font-weight-bold" id="pos_vuelto_crc_inline"></span>
+                            <div class="collapse" id="pago-dividir-collapse">
+                                <div class="pago-acc__body">
+                                    <!-- Moneda / tipo de cambio -->
+                                    <div class="row mb-2">
+                                        <div class="col-12 col-md-5 mb-2">
+                                            <label class="small mb-1">Moneda del cobro</label>
+                                            <select class="form-control form-control-sm" id="pos_moneda_factura_id"
+                                                name="pos_moneda_factura_id">
+                                                @foreach ($data['monedasFacturaPos'] ?? [] as $mf)
+                                                    @php
+                                                        $tcAttr = ($mf->es_base ?? '') === 'S' ? '1' : ($mf->tipo_cambio_vigente !== null ? (string) $mf->tipo_cambio_vigente : '');
+                                                    @endphp
+                                                    <option value="{{ $mf->id }}"
+                                                        data-es-base="{{ $mf->es_base ?? 'N' }}"
+                                                        data-cod="{{ $mf->cod_general }}"
+                                                        data-simbolo="{{ $mf->simbolo }}"
+                                                        data-decimales="{{ (int) ($mf->decimales ?? 2) }}"
+                                                        data-tc="{{ $tcAttr }}">
+                                                        {{ $mf->simbolo }} {{ $mf->nombre }} ({{ $mf->cod_general }})
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-12 col-md-4 mb-2">
+                                            <label class="small mb-1">Tipo de cambio (₡ por 1 unidad)</label>
+                                            <input type="number" class="form-control form-control-sm"
+                                                id="pos_tipo_cambio_edit" step="0.000001" min="0.000001"
+                                                placeholder="Ej. 520" disabled>
+                                            <input type="hidden" id="pos_tipo_cambio_snapshot"
+                                                name="pos_tipo_cambio_snapshot" value="">
+                                            <small class="text-muted" id="pos_tc_ayuda" style="font-size:10px;">
+                                                Moneda base: TC = 1.
+                                            </small>
+                                        </div>
+                                        <div class="col-12 col-md-3 mb-2 d-flex align-items-end">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm btn-block"
+                                                id="pos_btn_restaurar_tc" onclick="restaurarTipoCambioPosBd()"
+                                                style="display:none;">
+                                                <i class="fas fa-undo"></i> TC de BD
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <!-- Montos por método -->
+                                    <div class="row">
+                                        <div class="col-12 col-md-4 mb-2" id="pos_col_monto_efectivo_crc">
+                                            <div id="pos_campos_efectivo_crc">
+                                                <label class="small mb-0" id="lbl_monto_efectivo">Efectivo (₡)</label>
+                                                <input type="number" class="form-control form-control-sm" step="any"
+                                                    id="monto_efectivo" name="monto_efectivo" placeholder="0.00"
+                                                    onkeyup="enterCampoPago(event); actualizarPanelVueltoCrcPos();"
+                                                    min="0">
+                                                <div id="pos_vuelto_crc_panel" class="small mt-1" style="display:none;">
+                                                    <span class="text-warning font-weight-bold"
+                                                        id="pos_vuelto_crc_inline"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-md-4 mb-2">
+                                            <label class="small mb-0">Tarjeta (₡)</label>
+                                            <input type="number" class="form-control form-control-sm" step="any"
+                                                id="monto_tarjeta" name="monto_tarjeta" placeholder="0.00"
+                                                onkeyup="enterCampoPago(event)" min="0">
+                                        </div>
+                                        <div class="col-12 col-md-4 mb-2">
+                                            <label class="small mb-0">Sinpe (₡)</label>
+                                            <input type="number" class="form-control form-control-sm" step="any"
+                                                id="monto_sinpe" name="monto_sinpe" placeholder="0.00"
+                                                onkeyup="enterCampoPago(event)" min="0">
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-primary btn-block mt-2" id="btnPago"
+                                        onclick="procesarPagoMixto()">
+                                        <i class="fas fa-check-circle mr-1"></i> Procesar pago mixto
+                                    </button>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-primary btn-block mt-2" id="btnPagoEfectivo"
-                                onclick="verificarAbrirModalPagoEfectivo()">
-                                Pagar Todo con Efectivo
-                            </button>
                         </div>
-                        <div class="col-12 col-md-4 mb-3">
-                            <label for="monto_sinpe">Monto Sinpe (₡)</label>
-                            <input type="number" class="form-control" step="any" id="monto_sinpe"
-                                name="monto_sinpe" placeholder="0.00" onkeyup="enterCampoPago(event)"
-                                min="0">
-                            <button type="button" class="btn btn-primary btn-block mt-2" id="btnPagoSinpe"
-                                onclick="verificarAbrirModalPagoSinpe()">
-                                Pagar Todo con Sinpe
-                            </button>
-                        </div>
-                    </div>
 
-                    <!-- Totales -->
-                    <div class="row mb-3 text-center">
-                        <div class="col-6 col-md-3">
-                            <h6 id="txt-total-pagar_mdl" class="text-muted">Total Orden: 0,00</h6>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <h6 class="text-muted" id="txt-descuento-pagar_mdl">Descuento: 0,00</h6>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <h6 id="txt-mto-envio_mdl" class="text-muted">Envío: No aplica</h6>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <h6 id="txt-mto-pagado_mdl" class="text-muted">Monto Pagado: 0,00</h6>
-                        </div>
-                    </div>
-                    <div class="row mb-2 text-center" id="row-rebajar-incidentes-mdl" style="display: none;">
-                        <div class="col-12">
-                            <h6 id="txt-rebajar-incidentes-mdl" class="text-warning mb-0">Total a rebajar en incidentes: 0,00</h6>
-                        </div>
-                    </div>
-                    <div id="cont-incidente-orden-mdl" class="row mb-2" style="display: none;">
-                        <div class="col-12">
-                            <div class="alert alert-warning py-2 mb-0 small">
-                                <strong><i class="fas fa-exclamation-triangle"></i> Incidente:</strong>
-                                <span id="incidente-descripcion-mdl"></span>
-                                <span id="incidente-monto-mdl" class="font-weight-bold ml-1"></span>
-                                <button type="button" class="btn btn-danger btn-sm ml-2 py-0" id="btn-eliminar-incidente-mdl" onclick="eliminarIncidenteOrden()" title="Eliminar incidente"><i class="fas fa-trash"></i></button>
+                        <!-- Cliente, descuento y opciones -->
+                        <div class="pago-acc mb-2">
+                            <button class="pago-acc__toggle" type="button" data-toggle="collapse"
+                                data-target="#pago-opciones-collapse" aria-expanded="false">
+                                <i class="fas fa-cog mr-2"></i>Cliente, descuento y opciones
+                                <i class="fas fa-chevron-down ml-auto pago-acc__arrow"></i>
+                            </button>
+                            <div class="collapse" id="pago-opciones-collapse">
+                                <div class="pago-acc__body">
+                                    <!-- Código de descuento -->
+                                    <div class="row mb-3">
+                                        <div class="col-8">
+                                            <input type="text" class="form-control form-control-sm"
+                                                name="txt_codigo_descuento" id="txt_codigo_descuento"
+                                                placeholder="Código de Descuento" onkeyup="enterDescuento(event)">
+                                        </div>
+                                        <div class="col-4 d-flex justify-content-end">
+                                            <button class="btn btn-success btn-sm mr-1"
+                                                onclick="validarCodDescuento()">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button class="btn btn-danger btn-sm"
+                                                onclick="eliminarCodDescuento()">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                        <div class="col-12 mt-2" id="cont-dsc_promo" style="display: none">
+                                            <strong id="txt-dsc_promo"></strong>
+                                        </div>
+                                    </div>
+                                    <!-- Cliente -->
+                                    <div class="mb-2">
+                                        <div class="input-group input-group-sm">
+                                            <input type="text" class="form-control" id="nombreCliente"
+                                                placeholder="Nombre del Cliente">
+                                            <div class="input-group-append">
+                                                <button class="btn btn-outline-primary" type="button"
+                                                    onclick="abrirModalBuscarCliente()" title="Buscar Cliente">
+                                                    <i class="fas fa-search"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mb-2 px-0">
+                                        <div id="cliente-info-panel" class="mt-1" style="display: none;">
+                                            <div class="alert alert-success py-2 mb-0" style="border-left: 3px solid #28a745;">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div class="d-flex align-items-center flex-wrap">
+                                                        <i class="fas fa-user-check text-success mr-2"></i>
+                                                        <small class="text-muted">Cliente:</small>
+                                                        <strong class="ml-1" id="cliente-nombre-info">-</strong>
+                                                        <span class="mx-2 text-muted">|</span>
+                                                        <small class="text-muted">Tel:</small>
+                                                        <span class="ml-1" id="cliente-telefono-info">-</span>
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger btn-sm"
+                                                        onclick="limpiarClienteSeleccionado()" title="Limpiar Cliente">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                                <div id="cliente-detalles-extra" class="mt-1" style="display: none;">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-envelope mr-1"></i>
+                                                        <span id="cliente-correo-info">-</span>
+                                                    </small>
+                                                </div>
+                                                <div id="cliente-fe-info" class="mt-1">
+                                                    <button type="button" class="btn btn-sm badge-info border-0"
+                                                        id="cliente-fe-info-2" onclick="abrirModalFE()"
+                                                        style="cursor: pointer; font-size: 0.75rem; padding: 0.35rem 0.7rem;">
+                                                        <i class="fas fa-file-invoice mr-1"></i>
+                                                        Factura Electrónica Disponible
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Botones acción -->
+                                    <div class="pago-acc-acciones">
+                                        <button class="btn btn-outline-secondary btn-sm"
+                                            onclick="abrirModalEnvio()">
+                                            <i class="fas fa-truck mr-1"></i> Datos Envío
+                                        </button>
+                                        <button class="btn btn-outline-secondary btn-sm" id="btn_fe"
+                                            onclick="changeFacturacionElectronica()">
+                                            <i class="fas fa-file-invoice mr-1"></i> Factura Electrónica: NO
+                                        </button>
+                                        <div id="cont-btn-incidente-pago" style="display: none;">
+                                            <button type="button" class="btn btn-outline-warning btn-sm"
+                                                onclick="abrirModalIncidentePago()">
+                                                <i class="fas fa-exclamation-triangle mr-1"></i> Incidente
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Total seleccionado -->
-                    <div class="row mb-3">
-                        <div class="col-12 text-center">
-                            <h4 id="txt-total-seleccionado" class="text-muted">Total Seleccionado a Pagar: 0,00</h4>
+                        <!-- Detalle de líneas (pago parcial) -->
+                        <div class="pago-acc mb-2">
+                            <button class="pago-acc__toggle" type="button" data-toggle="collapse"
+                                data-target="#pago-lineas-collapse" aria-expanded="false">
+                                <i class="fas fa-receipt mr-2"></i>Dividir cuenta / Pago parcial por líneas
+                                <i class="fas fa-chevron-down ml-auto pago-acc__arrow"></i>
+                            </button>
+                            <div class="collapse" id="pago-lineas-collapse">
+                                <div class="pago-acc__body">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <button type="button" class="btn btn-link btn-sm p-0"
+                                            onclick="seleccionarTodasLasLineas(true)">Seleccionar Todas</button>
+                                        <button type="button" class="btn btn-link btn-sm p-0"
+                                            onclick="seleccionarTodasLasLineas(false)">Deseleccionar Todas</button>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-sm mb-0">
+                                            <thead class="thead-light">
+                                                <tr>
+                                                    <th>Sel.</th>
+                                                    <th>Detalle</th>
+                                                    <th>Cant.Total</th>
+                                                    <th>Cant.Pagada</th>
+                                                    <th>Cant.a Pagar</th>
+                                                    <th>Precio</th>
+                                                    <th>Total Pagar</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tabla-detalles-dividir-cuentas"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Opciones de selección de líneas -->
-                    <div class="row mb-3">
-                        <div class="col-12 d-flex justify-content-between">
-                            <button type="button" class="btn btn-link"
-                                onclick="seleccionarTodasLasLineas(true)">Seleccionar Todas</button>
-                            <button type="button" class="btn btn-link"
-                                onclick="seleccionarTodasLasLineas(false)">Deseleccionar Todas</button>
-                        </div>
-                        <div class="col-12">
-                            <div class="table-responsive">
-                                <table class="table table-bordered">
-                                    <thead>
+                        <!-- Tabla vueltos (oculta, se muestra por JS) -->
+                        <div id="pos_tabla_vueltos_wrap" style="display: none;">
+                            <h6 class="small font-weight-bold mb-2 mt-2">
+                                <i class="fas fa-list-alt"></i> Vueltos en colones — caja actual
+                            </h6>
+                            <div class="table-responsive" style="max-height: 180px; overflow-y: auto;">
+                                <table class="table table-sm table-bordered mb-1" id="pos_tabla_vueltos">
+                                    <thead class="thead-light">
                                         <tr>
-                                            <th>Seleccionar</th>
-                                            <th>Detalle</th>
-                                            <th>Cantidad Total</th>
-                                            <th>Cantidad Pagada</th>
-                                            <th>Cantidad a Pagar</th>
-                                            <th>Precio</th>
-                                            <th>Total Pagar</th>
+                                            <th>Hora</th><th>Orden</th><th>Recibido</th>
+                                            <th>Vuelto ₡</th><th>Queda divisa</th><th>TC</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="tabla-detalles-dividir-cuentas">
-                                        <!-- Los detalles se llenarán dinámicamente aquí -->
+                                    <tbody id="pos_tabla_vueltos_body">
+                                        <tr><td colspan="6" class="text-muted small text-center">Sin registros (solo vueltos en colones)</td></tr>
                                     </tbody>
                                 </table>
                             </div>
+                            <p class="small mb-0" id="pos_totales_vueltos_resumen"></p>
                         </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" onclick='cerrarMdlPago()'>Cerrar</button>
+
+                    </div><!-- /px-3 pb-3 -->
+                </div><!-- /pago-scroll-body -->
+            </div><!-- /modal-body -->
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary" onclick="cerrarMdlPago()">
+                    <i class="fas fa-times mr-1"></i> Cerrar
+                </button>
             </div>
         </div>
     </div>
 </div>
+
 
 <!-- Modal Agregar Incidente (desde modal de pago) -->
 <div class="modal fade" id="mdl-incidente-pago" role="dialog" aria-labelledby="mdlIncidentePagoLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
@@ -1637,47 +1653,32 @@
     </div>
 </div>
 
-<div class="modal fade bd-example-modal-lg" id='mdl-ordenes' role="dialog" aria-labelledby="mySmallModalLabel"
-    aria-hidden="true" data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered modal-xl">
+<div class="modal fade" id='mdl-ordenes' role="dialog" aria-hidden="true"
+    data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
-            <div class="modal-header" style="width: 100%">
-                <form class="card-header-form">
-                    <div class="input-group">
-                        <input type="text" name="" id="input_buscar_generico" class="form-control"
-                            style="width: 80%;" placeholder="Buscar..">
+            <div class="modal-header py-2">
+                <h5 class="modal-title mr-3"><i class="fas fa-list-alt"></i> Órdenes</h5>
+                <div class="input-group flex-grow-1 mr-2" style="max-width:260px;">
+                    <input type="text" id="input_buscar_generico" class="form-control form-control-sm"
+                        placeholder="Buscar orden, cliente, mesa...">
+                    <div class="input-group-append">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
                     </div>
-                </form>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                </div>
+                <button type="button" class="close ml-0" data-dismiss="modal" aria-label="Cerrar">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body" style="width: 100%;">
-                <div class="table-responsive">
-                    <table class="table" id="tbl-ordenes" style="max-height: 100%;">
-                        <thead class="thead-light">
-                            <tr>
-                                <th scope="col" style="text-align: center;">No.Orden</th>
-                                <th scope="col" style="text-align: center;">Mesa</th>
-                                <th scope="col" style="text-align: center;">Estado</th>
-                                <th scope="col" style="text-align: center;">Fecha</th>
-                                <th scope="col" style="text-align: center;">Cliente</th>
-                                <th scope="col" style="text-align: center;">Total</th>
-                                <th scope="col" style="text-align: center;">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-ordenes">
-                            <!-- Los datos de las órdenes se llenarán dinámicamente aquí -->
-                        </tbody>
-                    </table>
+            <div class="modal-body p-2" style="max-height:70vh; overflow-y:auto;">
+                <div id="tbody-ordenes">
+                    <!-- cards generadas dinámicamente -->
                 </div>
             </div>
-
-            <div class="modal-footer">
-                <div class="form-group">
-                    <a class="btn btn-secondary btn-icon" title="Cerrar" onclick='cerrarMdlOrdenes()'
-                        style="cursor: pointer;">Cerrar</a>
-                </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="cerrarMdlOrdenes()">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
             </div>
         </div>
     </div>
@@ -2160,7 +2161,7 @@
 </div>
 
 <!-- Componente flotante para gestión de mesas -->
-<div id="mesas-flotante-container">
+<div id="mesas-flotante-container" style="display:none">
     <!-- Panel de mesas -->
     <div id="panel-mesas">
         <div class="panel-header">
@@ -2196,13 +2197,43 @@
     </button>
 </div>
 
+
+<script>
+/* Mueve cliente+mesa al tope de los productos en móvil */
+(function () {
+    function posReorderHeader() {
+        var header   = document.querySelector('.pos-orden-header');
+        var prodCont = document.getElementById('contEscogerProductos');
+        var card     = document.querySelector('#contDetalles .card');
+        if (!header || !prodCont || !card) return;
+
+        if (window.innerWidth < 992) {
+            /* móvil: mover antes del buscador/tabs */
+            if (header.parentNode !== prodCont) {
+                prodCont.insertBefore(header, prodCont.firstChild);
+                header.classList.add('pos-orden-header--mobile');
+            }
+        } else {
+            /* desktop: volver dentro de la card */
+            if (header.parentNode !== card) {
+                card.insertBefore(header, card.firstChild);
+                header.classList.remove('pos-orden-header--mobile');
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', posReorderHeader);
+    window.addEventListener('resize', posReorderHeader);
+})();
+</script>
+
 @endsection
 @section('script')
 <script src="{{ asset('assets/bundles/datatables/datatables.min.js') }}"></script>
 <script src="{{ asset('assets/js/page/datatables.js') }}"></script>
 
 <script src="{{ asset('assets/js/qz-tray.js') }}"></script>
-<script src="{{ asset('assets/js/facturacion/pos.js') . '?v=20260619b' }}"></script>
+<script src="{{ asset('assets/js/facturacion/pos.js') . '?v=20260622l' }}"></script>
 <script src="{{ asset('assets/js/mobiliario/mesa-plano-utils.js') }}"></script>
 <script src="{{ asset('assets/js/facturacion/pos-plano-mesas.js') }}"></script>
 
@@ -2505,5 +2536,17 @@ window.seleccionarPopulares = function() {
         $('#grid-productos').html(html);
     }).fail(function() { $('#grid-productos').html('<p class="text-danger p-3">Error al cargar.</p>'); });
 };
+</script>
+
+<script>
+/* Auto-expande tab cliente en modal de pago si falta nombre */
+$(document).on('shown.bs.modal', '#mdl-pago', function () {
+    var nombre = $.trim($('#nombreCliente').val());
+    var clienteVisible = ($('#cliente-info-panel').css('display') !== 'none');
+    if (!nombre && !clienteVisible) {
+        $('#pago-opciones-collapse').collapse('show');
+        setTimeout(function () { $('#nombreCliente').focus(); }, 350);
+    }
+});
 </script>
 @endsection

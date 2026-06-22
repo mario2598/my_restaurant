@@ -2,153 +2,254 @@
  * POS — layout responsive (productos + orden)
  */
 
-/* Panel cobro: ancho completo siempre (evita col-md-2 estrecho en tablet) */
+/* Panel cobro: ancho completo siempre */
 #contFacturar {
     width: 100% !important;
     max-width: 100% !important;
     flex: 0 0 100% !important;
     padding: 0.75rem 1rem !important;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
     background: #f8f9fa;
 }
-
-#contFacturar .container-fluid {
-    padding: 0;
-    max-width: 100%;
-}
-
+#contFacturar .container-fluid { padding: 0; max-width: 100%; }
 #contFacturar #txt-total-pagar {
     white-space: nowrap;
     word-break: normal;
     font-size: 1.35rem;
     margin-bottom: 0.5rem;
 }
+#contFacturar .btn { white-space: normal; word-break: normal; width: 100%; max-width: 100%; }
+#contFacturar ul.nav-pills { width: 100%; margin: 0; padding: 0; list-style: none; }
+#contFacturar ul.nav-pills + ul.nav-pills { margin-top: 0.5rem; }
 
-#contFacturar .btn {
-    white-space: normal;
-    word-break: normal;
-    width: 100%;
-    max-width: 100%;
+/* Tipos de producto (Populares / Restaurante / Externos) — scroll horizontal sin wrap */
+#nv-tipos {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
 }
+#nv-tipos::-webkit-scrollbar { display: none; }
+#nv-tipos .nav-item { flex-shrink: 0; }
 
-#contFacturar ul.nav-pills {
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-#contFacturar ul.nav-pills + ul.nav-pills {
-    margin-top: 0.5rem;
-}
-
-/* Acciones superiores (caja, órdenes…) */
+/* Acciones (Nueva Orden, Ver Ordenes, Cerrar Caja) — desktop: barra derecha */
 #nv-acciones {
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 0.35rem;
     padding: 0 0.25rem;
 }
+#nv-acciones > li { margin: 0; }
+#nv-acciones .btn { white-space: nowrap; font-size: 0.8rem; padding: 0.4rem 0.65rem; }
 
-#nv-acciones > li {
-    margin: 0;
-}
+/* Cabecera orden */
+#contDetalles .card-header .card-title > .row { margin-left: 0; margin-right: 0; }
+#contDetalles .card-header .input-group { flex-wrap: nowrap; }
+#contDetalles .card-header #select_mesa { min-width: 0; }
 
-#nv-acciones .btn {
-    white-space: nowrap;
-    font-size: 0.8rem;
-    padding: 0.4rem 0.65rem;
-}
+/* Tabla detalle — solo scroll horizontal, no vertical */
+#contDetalles .card-body { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+#contDetalles .card-body .table { min-width: 280px; margin-bottom: 0; }
 
-/* Cabecera orden: cliente + mesa */
-#contDetalles .card-header .card-title > .row {
-    margin-left: 0;
-    margin-right: 0;
-}
-
-#contDetalles .card-header .input-group label.mr-4 {
-    flex: 0 0 auto;
-    min-width: 2.5rem;
-}
-
-#contDetalles .card-header .input-group {
-    flex-wrap: nowrap;
-}
-
-#contDetalles .card-header #select_mesa {
-    min-width: 0;
-}
-
-/* Tabla detalle orden — scroll horizontal en pantallas chicas */
-#contDetalles .card-body {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-#contDetalles .card-body .table {
-    min-width: 280px;
-    margin-bottom: 0;
-}
-
-/* Columnas principales: apilar hasta lg (992px) */
+/* ═══ MÓVIL (< 992 px) ════════════════════════════════════════ */
 @media (max-width: 991.98px) {
+    /* Columnas apiladas */
     #contEscogerProductos,
     #contPanelOrden {
         flex: 0 0 100%;
         max-width: 100%;
     }
+    #contPanelOrden { margin-top: 0; }
 
-    #contPanelOrden {
-        margin-top: 0.75rem;
-    }
-
-    #nv-acciones {
-        justify-content: center;
-    }
-
+    /* Productos: SIN altura máxima — fluye con la página */
     #scrl-productos {
-        max-height: 42vh !important;
-        min-height: 220px !important;
+        max-height: none !important;
+        min-height: 0 !important;
+        overflow-y: visible !important;
+        cursor: default;
     }
 
-    #contDetalles .card-header {
-        padding: 0.75rem !important;
+    /* ── Barra fija inferior: Nueva Orden / Ver Ordenes / Cerrar Caja ── */
+    #nv-acciones {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 920;
+        background: #fff;
+        border-top: 2px solid #e9ecef;
+        box-shadow: 0 -3px 14px rgba(0,0,0,.13);
+        padding: 6px 8px;
+        display: flex !important;
+        justify-content: stretch !important;
+        flex-wrap: nowrap !important;
+        gap: 5px;
+        margin: 0 !important;
     }
+    #nv-acciones > li { flex: 1 1 0; min-width: 0; }
+    #nv-acciones .btn {
+        width: 100% !important;
+        font-size: 0.72rem !important;
+        padding: 9px 3px !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* ── Barra fija intermedia: Total + botón de cobro ── */
+    #contFacturar {
+        position: fixed;
+        bottom: 52px;        /* altura de #nv-acciones */
+        left: 0;
+        right: 0;
+        z-index: 910;
+        background: #fff;
+        border-top: 1px solid #dee2e6;
+        box-shadow: none;
+        padding: 8px 12px !important;
+    }
+
+    /* Total + botón en fila horizontal */
+    #contFacturar .container-fluid {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    #contFacturar .row.mb-3 {
+        flex: 0 0 auto;
+        margin: 0 !important;
+        padding: 0;
+    }
+    #contFacturar .row.mb-2 {
+        flex: 1 1 auto;
+        margin: 0 !important;
+        padding: 0;
+    }
+    #contFacturar #txt-total-pagar {
+        font-size: 1rem !important;
+        margin: 0 !important;
+        white-space: nowrap;
+        color: #1a3a8f !important;
+        font-weight: 700 !important;
+    }
+    #contFacturar ul.nav-pills { margin: 0 !important; }
+    #contFacturar ul.nav-pills + ul.nav-pills { margin-top: 4px !important; }
+    #contFacturar .btn {
+        padding: 7px 10px !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Espacio inferior para que el contenido no quede bajo las barras fijas */
+    /* barras fijas: ~52 (acciones) + ~70 (facturar) = 122px */
+    .main-content .section .section-body {
+        padding-bottom: 130px !important;
+    }
+
+    #contDetalles .card-header { padding: 0.75rem !important; }
 }
 
 @media (max-width: 767.98px) {
-    #nv-acciones .btn {
-        font-size: 0.75rem;
-        padding: 0.35rem 0.5rem;
-    }
+    #contDetalles .card-header .pos-mesa-label { display: none; }
+    #contDetalles .card-header .pos-mesa-input-group #select_mesa { flex: 1 1 auto; min-width: 0; }
 
-    #contDetalles .card-header .pos-mesa-label {
-        display: none;
-    }
-
-    #contDetalles .card-header .pos-mesa-input-group #select_mesa {
-        flex: 1 1 auto;
-        min-width: 0;
-    }
-
-    #contDetalles .card-header .pos-mesa-input-group #select_mesa {
-        flex: 1 1 auto;
-    }
-
-    #contFacturar #txt-total-pagar {
-        font-size: 1.2rem;
-    }
-
-    #mesas-flotante-container {
-        bottom: 12px;
-        right: 12px;
-    }
+    #mesas-flotante-container { bottom: 12px; right: 12px; }
 }
 
-/* Tablet apaisada / ventana estrecha con dos columnas forzadas */
+/* Tablet apaisada / ventana estrecha */
 @media (min-width: 768px) and (max-width: 991.98px) {
     #contDetalles .card-header .card-title > .row > [class*="col-"] {
         flex: 0 0 100%;
         max-width: 100%;
     }
+}
+
+/* ── Cabecera de orden rediseñada ──────────────────────────── */
+.pos-orden-header {
+    padding: 10px 12px !important;
+    background: #fff;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0;
+}
+
+/* Título de la orden */
+.pos-orden-titulo {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0;
+}
+
+/* Fila con mesa + cliente lado a lado */
+.pos-orden-inputs-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+
+/* Select de mesa */
+.pos-mesa-select {
+    flex: 0 0 auto;
+    width: 155px !important;
+    font-size: 0.85rem !important;
+    height: 38px !important;
+    border-radius: 8px !important;
+    border-color: #ced4da;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    padding: 4px 8px !important;
+}
+.pos-mesa-select:focus {
+    border-color: #4e73df;
+    box-shadow: 0 0 0 2px rgba(78,115,223,.2);
+}
+
+/* Input cliente */
+.pos-cliente-group {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 0;
+}
+.pos-cliente-input {
+    flex: 1 1 auto;
+    border-radius: 8px !important;
+    font-size: 0.9rem;
+    height: 38px;
+}
+.pos-cliente-search-btn {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50% !important;
+    background: #4e73df;
+    color: #fff;
+    border: none;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 6px rgba(78,115,223,.4);
+    transition: background .15s, transform .1s;
+    padding: 0 !important;
+}
+.pos-cliente-search-btn:hover  { background: #3d5fc5; }
+.pos-cliente-search-btn:active { transform: scale(0.88); }
+
+@media (max-width: 480px) {
+    .pos-mesa-select { width: 120px !important; font-size: 0.78rem !important; }
+    .pos-orden-titulo { font-size: 0.88rem; }
+}
+
+/* ── Cabecera de orden en modo móvil (movida al tope de productos) ── */
+.pos-orden-header--mobile {
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    margin-bottom: 8px;
+    padding: 10px 12px !important;
 }

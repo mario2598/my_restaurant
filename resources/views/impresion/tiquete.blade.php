@@ -220,10 +220,6 @@ table.detalle .extra-row td { font-size: 11px; color: #555; padding-left: 8px; }
     <div class="ticket-footer">{{ $nota_pie }}</div>
     @endif
 
-    <div class="ticket-footer" style="margin-top:8px;">
-        Gracias por su visita
-    </div>
-
     @if(!($qz_mode ?? false))
     <button class="btn-print" onclick="window.print()">
         🖨 Imprimir

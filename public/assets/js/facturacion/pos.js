@@ -749,8 +749,8 @@ document.addEventListener('DOMContentLoaded', function () {
 $(document).ready(function () {
     $("#input_buscar_generico").on("keyup", function () {
         var value = $(this).val().toLowerCase();
-        $("#tbody-ordenes tr").filter(function () {
-            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        $("#tbody-ordenes .orden-item-card").each(function () {
+            $(this).closest(".orden-item-wrap").toggle($(this).text().toLowerCase().indexOf(value) > -1);
         });
     });
 
@@ -874,9 +874,11 @@ function generarTipos() {
  * Genera el elemento HTML correspondiente a la categoría
  */
 function generarHTMLTipo(indice, nombre, color = "#0DA8EE") {
-    // console.log("indice: " + indice + " , nombre: " + nombre + " , color: " + color);
+    var activo = (indice === tipoSeleccionado);
+    var cls = activo ? 'nav-link active' : 'nav-link';
+    var sty = activo ? 'background-color:' + color + ' !important;' : 'color:' + color + ' !important;';
     return `<li class="nav-item mr-1" onclick="seleccionarTipo(${indice})">
-                <a class="nav-link bg-white text-info" style="color:${color} !important" href="javascript:void(0);">${nombre}</a>
+                <a class="${cls}" style="${sty}" href="javascript:void(0);">${nombre}</a>
             </li>`;
 }
 
@@ -887,6 +889,7 @@ function generarHTMLTipo(indice, nombre, color = "#0DA8EE") {
 function seleccionarTipo(indice) {
     tipoSeleccionado = indice;
     categoriaSeleccionada = 0;
+    generarTipos();
     generarCategorias();
     generarProductos();
 }
@@ -911,17 +914,19 @@ function generarCategorias() {
  * Genera el elemento HTML correspondiente a la categoría
  */
 function generarHTMLCategoria(indice, nombre, color = "#0DA8EE") {
-    /* return `<div class="card card-body align-middle bg-info" style="min-width: 6rem !important; margin: .5rem .5rem !important" 
-                 onclick="seleccionarCategoria('${indice}')">
-                 <h6 class="mb-0">${nombre}</h6>
-             </div>`;*/
+    var activo = (indice === categoriaSeleccionada);
+    var cls = activo ? 'nav-link active' : 'nav-link';
+    var sty = activo
+        ? 'background-color:' + color + ' !important;'
+        : 'color:' + color + ' !important; border:1px solid ' + color + ';';
     return `<li class="nav-item mr-1" onclick="seleccionarCategoria(${indice})">
-                <a class="nav-link active" style="background-color: ${color} !important;" onclick="return false">${nombre}</a>
+                <a class="${cls}" style="${sty}" onclick="return false">${nombre}</a>
             </li>`;
 }
 
 function seleccionarCategoria(indice) {
     categoriaSeleccionada = indice;
+    generarCategorias();
     generarProductos();
 }
 
@@ -941,6 +946,10 @@ function generarProductos() {
 
     if (typeof busquedaActiva !== 'undefined' && busquedaActiva && typeof mostrarProductosFiltrados === 'function') {
         mostrarProductosFiltrados();
+    }
+
+    if (typeof actualizarBadgesProductos === 'function') {
+        actualizarBadgesProductos();
     }
 }
 
@@ -967,11 +976,21 @@ function generarHTMLProducto(nombre, codigo, precio, cantidad, tipoProd, descrip
     return '<div class="pos-card-producto" data-codigo="' + codigoEsc + '"'
          + ' onclick="posCardClick(event,\'N\',\'' + codigoEsc + '\')">'
          + stockBadge + descBtn
+         + '<span class="pos-card-qty-badge" style="display:none"></span>'
          + '<div class="pos-card-nombre' + (tieneDesc ? ' has-desc' : '') + '">' + nombre + '</div>'
-         + '<div class="pos-card-precio">' + precioFmt + '</div>'
+         + '<div class="pos-card-precio-row">'
+         + '<span class="pos-card-precio">' + precioFmt + '</span>'
+         + '<button type="button" class="pos-card-add-btn" onclick="posCardAddBtn(event,\'N\',\'' + codigoEsc + '\')" title="Agregar"><i class="fas fa-plus"></i></button>'
+         + '</div>'
          + '</div>';
 }
 
+
+
+function posCardAddBtn(event, tipo, codigo) {
+    event.stopPropagation();
+    seleccionarProducto(tipo, codigo);
+}
 
 function verDescripcionCard(btn, event) {
     event.stopPropagation();
@@ -1337,10 +1356,7 @@ function feedbackProductoAgregado(producto, detalleArrayIndex) {
             void $linea[0].offsetWidth;
             $linea.addClass('pos-orden-linea-flash');
             setTimeout(function () { $linea.removeClass('pos-orden-linea-flash'); }, 900);
-            var el = $linea[0];
-            if (el && typeof el.scrollIntoView === 'function') {
-                el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-            }
+
         }
     }, 30);
 
@@ -1614,6 +1630,22 @@ function validarVisibilidadBotonesGestion() {
 
 }
 
+
+function actualizarBadgesProductos() {
+    $('.pos-card-qty-badge').hide().text('');
+    $('.pos-card-producto').removeClass('pos-card-en-orden');
+    if (typeof detalles === 'undefined') return;
+    detalles.forEach(function(det) {
+        if (!det || !det.producto) return;
+        var cod = escAttrPos(String(det.producto.codigo || ''));
+        var $card = $('.pos-card-producto[data-codigo="' + cod + '"]');
+        if ($card.length) {
+            $card.addClass('pos-card-en-orden');
+            $card.find('.pos-card-qty-badge').text(det.cantidad).show();
+        }
+    });
+}
+
 function actualizarOrden() {
     let cards = '';
     let contador = 0;
@@ -1730,6 +1762,7 @@ function actualizarOrden() {
     }
 
     $(contenedores.get("orden")).html(cards);
+    actualizarBadgesProductos();
 
     // Actualizar el botón de Factura Electrónica
     $('#btn_fe').html(`<i class="fas fa-pay" aria-hidden="true"></i> Factura Electrónica : ${infoFE.incluyeFE ? 'SÍ' : 'NO'}`);
@@ -2520,73 +2553,70 @@ function _qzSetStatus(ok) {
 
 function generarHTMLOrdenes(ordenes) {
     var texto = "";
-    var msjTrackingWhatsp = "";
-    var contactoAux = "";
     ordenes.forEach(orden => {
-        contactoAux = "";
-        msjTrackingWhatsp = "";
-
-        if (orden.entrega != null) {
-            contactoAux = orden.entrega.contacto;
-        }
-        msjTrackingWhatsp = generarMensajeTrackingWhatsApp(orden.nombre_cliente,
+        var contactoAux = orden.entrega ? (orden.entrega.contacto || '') : '';
+        var msjWsp = generarMensajeTrackingWhatsApp(orden.nombre_cliente,
             orden.numero_orden, contactoAux,
             `${base_path}/tracking/orden/${orden.idOrdenEnc ?? ''}`);
 
-        // Estado visual
-        var anulada  = orden.cod_general === "ORD_ANULADA";
-        var pagada   = !anulada && orden.pagado == 1;
+        var anulada = orden.cod_general === "ORD_ANULADA";
+        var pagada  = !anulada && orden.pagado == 1;
 
-        var estiloFila = anulada ? "background:#fff0f0;border-left:4px solid #e74c3c;"
-                       : pagada  ? "background:#f0fff0;border-left:4px solid #27ae60;"
-                       :           "background:#fffbf0;border-left:4px solid #f39c12;";
+        var borderColor = anulada ? '#e74c3c' : pagada ? '#27ae60' : '#f39c12';
+        var bgColor     = anulada ? '#fff5f5' : pagada ? '#f0fff4' : '#fffdf0';
 
-        var badgeEstado = anulada ? '<span class="badge badge-danger">Anulada</span>'
-                        : pagada  ? '<span class="badge badge-success">Pagada</span>'
-                        :           '<span class="badge badge-warning text-dark">Pendiente</span>';
+        var badgeEstado = anulada
+            ? '<span class="badge badge-danger">Anulada</span>'
+            : pagada
+            ? '<span class="badge badge-success">Pagada</span>'
+            : '<span class="badge badge-warning text-dark">Pendiente</span>';
 
         var iconoInc = (orden.tiene_incidentes || (orden.incidentes && orden.incidentes.length > 0))
-            ? ' <i class="fas fa-exclamation-triangle text-warning" title="Tiene incidentes"></i>'
-            : '';
+            ? ' <i class="fas fa-exclamation-triangle text-warning" title="Tiene incidentes"></i>' : '';
 
-        // Acciones
-        var btnAbrir = `<button class="btn btn-sm btn-primary mr-1 mb-1"
-                                onclick="cargarOrdenGestion(${orden.id})"
-                                title="Abrir en POS">
-                            <i class="fas fa-pen"></i> Abrir
-                        </button>`;
+        var mesa    = orden.numero_mesa ? 'Mesa ' + orden.numero_mesa : '🛵 Para llevar';
+        var cliente = orden.nombre_cliente || '';
+        var fecha   = orden.fecha_inicio || '';
+        var total   = anulada ? '—' : (orden.total_con_descuento ?? 0);
 
-        var btnImprimir = `<button class="btn btn-sm btn-outline-secondary mr-1 mb-1"
-                                   onclick="imprimirTicket(${orden.id})"
-                                   title="Imprimir tiquete">
-                               <i class="fas fa-print"></i>
-                           </button>`;
+        var ticketUrl = base_path + '/impresora/tiquete/html/' + orden.id;
 
-        var btnWsp = (contactoAux && contactoAux.length > 5)
-            ? `<a class="btn btn-sm btn-outline-success mb-1"
-                  href="${msjTrackingWhatsp}" target="_blank" title="Enviar rastreo por WhatsApp">
-                   <i class="fab fa-whatsapp"></i>
-               </a>`
-            : '';
+        var acciones = `
+            <button class="btn btn-sm btn-primary" onclick="cargarOrdenGestion(${orden.id})" title="Abrir en POS">
+                <i class="fas fa-pen"></i> Abrir
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="imprimirTicket(${orden.id})" title="Imprimir tiquete">
+                <i class="fas fa-print"></i>
+            </button>
+            <a class="btn btn-sm btn-outline-info" href="${ticketUrl}" target="_blank" title="Ver factura/tiquete">
+                <i class="fas fa-eye"></i>
+            </a>` +
+            (contactoAux && contactoAux.length > 5
+                ? `<a class="btn btn-sm btn-outline-success" href="${msjWsp}" target="_blank" title="WhatsApp">
+                       <i class="fab fa-whatsapp"></i>
+                   </a>` : '');
 
-        texto += `<tr style="${estiloFila} border-bottom:1px solid #dee2e6;">
-            <td class="text-center font-weight-bold">
-                ${orden.numero_orden}${iconoInc}
-            </td>
-            <td class="text-center">${orden.numero_mesa ?? 'PARA LLEVAR'}</td>
-            <td class="text-center">${badgeEstado}</td>
-            <td class="text-center small">${orden.fecha_inicio??''}</td>
-            <td class="text-center">${orden.nombre_cliente??''}</td>
-            <td class="text-center font-weight-bold">
-                ${anulada ? '—' : (orden.total_con_descuento??0)}
-            </td>
-            <td class="text-center" style="white-space:nowrap;">
-                ${btnAbrir}${btnImprimir}${btnWsp}
-            </td>
-        </tr>`;
+        texto += `
+        <div class="orden-item-wrap mb-2">
+          <div class="orden-item-card" style="border-left:4px solid ${borderColor}; background:${bgColor}; border-radius:8px; padding:10px 12px;">
+            <div class="d-flex justify-content-between align-items-start mb-1">
+                <span class="font-weight-bold" style="font-size:.95rem;">${orden.numero_orden}${iconoInc}</span>
+                <div class="d-flex align-items-center gap-2">${badgeEstado}</div>
+            </div>
+            <div class="d-flex flex-wrap text-muted mb-2" style="font-size:.82rem; gap:10px;">
+                <span><i class="fas fa-chair"></i> ${mesa}</span>
+                ${cliente ? `<span><i class="fas fa-user"></i> ${cliente}</span>` : ''}
+                ${fecha   ? `<span><i class="fas fa-clock"></i> ${fecha}</span>`  : ''}
+                <span class="font-weight-bold" style="color:#1a3a8f;">₡${total}</span>
+            </div>
+            <div class="d-flex flex-wrap" style="gap:6px;">
+                ${acciones}
+            </div>
+          </div>
+        </div>`;
     });
 
-    $('#tbody-ordenes').html(texto);
+    $('#tbody-ordenes').html(texto || '<p class="text-muted text-center py-4">Sin órdenes</p>');
     $('#mdl-ordenes').modal('show');
 }
 

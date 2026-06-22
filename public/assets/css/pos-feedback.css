@@ -318,3 +318,235 @@ tr.pos-linea-orden.pos-orden-linea-flash {
 .pos-extra-pill.pill-selected .pos-extra-precio {
     opacity: .9;
 }
+
+
+/* ── Fila precio + botón agregar ─────────────────────────────── */
+.pos-card-precio-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-top: 5px;
+}
+
+/* Botón "+" en cada card */
+.pos-card-add-btn {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    border-radius: 50%;
+    background: #28a745;
+    color: #fff;
+    border: none;
+    font-size: .9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    line-height: 1;
+    box-shadow: 0 2px 7px rgba(40,167,69,.38);
+    transition: background .13s, transform .1s, box-shadow .1s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+.pos-card-add-btn:hover  { background: #218838; box-shadow: 0 3px 10px rgba(40,167,69,.5); }
+.pos-card-add-btn:active { transform: scale(0.83); background: #1e7e34; }
+
+/* Badge de cantidad encima de la card */
+.pos-card-qty-badge {
+    position: absolute;
+    top: -9px;
+    right: -9px;
+    min-width: 22px;
+    height: 22px;
+    border-radius: 11px;
+    background: #4e73df;
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.25);
+    z-index: 3;
+    pointer-events: none;
+    animation: pos-badge-pop .18s ease;
+    white-space: nowrap;
+}
+@keyframes pos-badge-pop {
+    from { transform: scale(0.3); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+}
+
+/* Card resaltada cuando ya hay ítems de ese producto en la orden */
+.pos-card-producto.pos-card-en-orden {
+    border-color: #4e73df !important;
+    background: #f0f4ff;
+}
+.pos-card-producto.pos-card-en-orden .pos-card-nombre { color: #1a3a8f; }
+.pos-card-producto.pos-card-en-orden .pos-card-add-btn {
+    background: #4e73df;
+    box-shadow: 0 2px 7px rgba(78,115,223,.45);
+}
+.pos-card-producto.pos-card-en-orden .pos-card-add-btn:hover { background: #3d5fc5; }
+
+/* ── Filas de orden más legibles ─────────────────────────────── */
+#tbody-orden tr td:first-child small {
+    font-size: .92rem !important;
+    font-weight: 600;
+    color: #2d3748;
+}
+#tbody-orden .button-minus,
+#tbody-orden .button-plus {
+    width: 2.2rem !important;
+    height: 2.2rem !important;
+    font-size: 1.1rem !important;
+    font-weight: 700;
+    background: #f8f9fa;
+    border-color: #ced4da !important;
+    transition: background .12s, transform .1s;
+}
+#tbody-orden .button-plus  { background: #e8f5e9; border-color: #a5d6a7 !important; color: #1b5e20; }
+#tbody-orden .button-minus { background: #fce4e4; border-color: #ef9a9a !important; color: #b71c1c; }
+#tbody-orden .button-plus:hover  { background: #c8e6c9; }
+#tbody-orden .button-minus:hover { background: #ffcdd2; }
+#tbody-orden .button-plus:active,
+#tbody-orden .button-minus:active { transform: scale(0.88); }
+
+/* Total de la orden más prominente */
+#txt-total-pagar {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    color: #1a3a8f !important;
+    letter-spacing: -.02em;
+}
+
+/* Botones de acción de orden más distinguibles */
+#btnPago     { background: #28a745 !important; border-color: #28a745 !important; font-size: 1rem !important; font-weight: 600 !important; }
+#btnPago:hover { background: #218838 !important; }
+#btnIniciarOrden { font-size: 1rem !important; font-weight: 600 !important; }
+
+/* ═══════════════════════════════════════════════════════
+   MODAL DE PAGO — REDISEÑO (v20260622l)
+   ═══════════════════════════════════════════════════════ */
+
+/* Hero con total prominente */
+.pago-hero {
+    background: linear-gradient(135deg, #1a3a8f 0%, #2e59d9 100%);
+    padding: 20px 20px 16px;
+    text-align: center;
+    color: #fff;
+}
+.pago-hero__amount {
+    font-size: 2.3rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+    margin-bottom: 10px;
+    text-shadow: 0 1px 6px rgba(0,0,0,.25);
+}
+.pago-hero__pills {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 2px;
+}
+.pago-hero-pill {
+    background: rgba(255,255,255,.18);
+    border-radius: 20px;
+    padding: 2px 11px;
+    font-size: 11px;
+    color: #dce8ff;
+    white-space: nowrap;
+    display: inline-block;
+}
+.pago-hero-pill--warn {
+    background: rgba(255,200,0,.28);
+    color: #ffe080;
+}
+
+/* Scroll del cuerpo */
+.pago-scroll-body {
+    max-height: calc(80vh - 200px);
+    overflow-y: auto;
+}
+@media (max-width: 575px) {
+    .pago-hero__amount { font-size: 1.8rem; }
+    .pago-scroll-body  { max-height: calc(90vh - 180px); }
+}
+
+/* ─── 3 botones grandes de pago ─── */
+.pago-metodos-wrap {
+    display: flex;
+    gap: 10px;
+    padding: 14px 16px 8px;
+}
+.pago-btn-metodo {
+    flex: 1;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 6px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #fff !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0,0,0,.18);
+    transition: transform .12s, box-shadow .12s, opacity .12s;
+    text-decoration: none !important;
+}
+.pago-btn-metodo:active {
+    transform: scale(.95);
+    box-shadow: 0 1px 4px rgba(0,0,0,.15);
+}
+.pago-btn-metodo i { font-size: 1.55rem; }
+.pago-btn-efectivo { background: linear-gradient(135deg, #1a7531 0%, #28a745 100%); }
+.pago-btn-tarjeta  { background: linear-gradient(135deg, #2451c7 0%, #4e73df 100%); }
+.pago-btn-sinpe    { background: linear-gradient(135deg, #53219a 0%, #7c4dcd 100%); }
+.pago-btn-metodo:hover  { opacity: .9; }
+.pago-btn-metodo:disabled,
+.pago-btn-metodo.disabled { opacity: .45; cursor: not-allowed; }
+
+/* ─── Acordeones ─── */
+.pago-acc {
+    border: 1px solid #dde3f0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.pago-acc__toggle {
+    width: 100%;
+    background: #f5f7fc;
+    border: none;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #3a4f7a;
+    display: flex;
+    align-items: center;
+    text-align: left;
+    cursor: pointer;
+    transition: background .15s;
+}
+.pago-acc__toggle:hover  { background: #eaecf8; }
+.pago-acc__toggle[aria-expanded="true"] { background: #dfe4f5; }
+.pago-acc__arrow { transition: transform .2s; }
+.pago-acc__toggle[aria-expanded="true"] .pago-acc__arrow { transform: rotate(180deg); }
+.pago-acc__body {
+    padding: 12px 14px;
+    background: #fff;
+    border-top: 1px solid #dde3f0;
+}
+
+/* Botones de acción dentro del acordeón de opciones */
+.pago-acc-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
