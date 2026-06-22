@@ -108,6 +108,10 @@
                 $ordenesAbiertas30 = $dashboard['ordenes_abiertas_30'] ?? 0;
                 $pctTickets        = $dashboard['pct_tickets'] ?? null;
                 $pctTotal          = $dashboard['pct_total'] ?? null;
+                $ventasDiarias     = $dashboard['ventas_diarias'] ?? [];
+                $ventasDiariasAnt  = $dashboard['ventas_diarias_ant'] ?? [];
+                $antesDesde        = $dashboard['antes_desde'] ?? '';
+                $antesHasta        = $dashboard['antes_hasta'] ?? '';
             @endphp
 
             <!-- Filtros de fecha -->
@@ -292,8 +296,32 @@
                         <div class="card-header py-2">
                             <h6 class="mb-0" style="font-weight:700;"><i class="fas fa-credit-card mr-1"></i> Métodos de pago</h6>
                         </div>
-                        <div class="card-body py-2 d-flex align-items-center justify-content-center">
-                            <canvas id="chartMetodosPago" style="max-height:200px;max-width:200px;"></canvas>
+                        <div class="card-body py-2 d-flex align-items-center justify-content-center" style="min-height:240px;">
+                            <canvas id="chartMetodosPago" style="height:210px;width:100%;max-width:270px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            {{-- ── Gráfica comparativa: período actual vs anterior ─────────── --}}
+            @if(count($ventasDiarias) > 0)
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header py-2 d-flex align-items-center justify-content-between flex-wrap" style="gap:6px;">
+                            <h6 class="mb-0" style="font-weight:700;"><i class="fas fa-exchange-alt mr-1 text-primary"></i> Ventas: período actual vs anterior</h6>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-primary active" id="btnCmpVentas" onclick="switchComparativa('ventas')">Ventas</button>
+                                <button type="button" class="btn btn-outline-primary" id="btnCmpTickets" onclick="switchComparativa('tickets')">Tickets</button>
+                            </div>
+                        </div>
+                        <div class="card-body py-2" style="position:relative; height:230px;">
+                            <canvas id="chartComparativa" style="position:absolute;inset:12px;width:calc(100% - 24px)!important;height:calc(100% - 24px)!important;"></canvas>
+                        </div>
+                        <div class="card-footer py-1 px-3 bg-light small text-muted d-flex flex-wrap" style="gap:12px;">
+                            <span><span style="display:inline-block;width:14px;height:3px;background:#4e73df;border-radius:2px;vertical-align:middle;margin-right:4px;"></span>Actual: {{ $dashboard['fecha_desde'] ?? '' }} — {{ $dashboard['fecha_hasta'] ?? '' }}</span>
+                            <span><span style="display:inline-block;width:14px;height:3px;background:#adb5bd;border-radius:2px;vertical-align:middle;margin-right:4px;border-top:2px dashed #adb5bd;"></span>Anterior: {{ $antesDesde }} — {{ $antesHasta }}</span>
                         </div>
                     </div>
                 </div>
@@ -890,6 +918,10 @@
     // ── Gráfica de barras: ventas por hora ──────────────────────────────────
     var ctxBar = document.getElementById('chartVentasHora');
     if (!ctxBar) return;
+    var ctxBarEl = ctxBar.getContext('2d');
+    var barGradient = ctxBarEl.createLinearGradient(0, 0, 0, 220);
+    barGradient.addColorStop(0, 'rgba(78,115,223,0.9)');
+    barGradient.addColorStop(1, 'rgba(78,115,223,0.35)');
     var barChart = new Chart(ctxBar, {
         type: 'bar',
         data: {
@@ -897,19 +929,22 @@
             datasets: [{
                 label: 'Tickets',
                 data: tickets,
-                backgroundColor: 'rgba(78,115,223,0.75)',
+                backgroundColor: barGradient,
                 borderColor: 'rgba(78,115,223,1)',
-                borderWidth: 1,
-                borderRadius: 3
+                borderWidth: 0,
+                borderRadius: 4,
+                borderSkipped: false
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: true,
-            plugins: { legend: { display: false } },
+            plugins: { legend: { display: false },
+                tooltip: { callbacks: { title: function(i){ return i[0].label; } } }
+            },
             scales: {
-                y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 } } },
-                x: { ticks: { font: { size: 9 }, maxRotation: 45 } }
+                y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { precision: 0, font: { size: 10 } } },
+                x: { grid: { display: false }, ticks: { font: { size: 9 }, maxRotation: 45 } }
             }
         }
     });
@@ -955,8 +990,8 @@
         },
         options: {
             responsive: true,
-            maintainAspectRatio: true,
-            cutout: '60%',
+            maintainAspectRatio: false,
+            cutout: '62%',
             plugins: {
                 legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } },
                 tooltip: {
@@ -970,6 +1005,97 @@
             }
         }
     });
+})();
+</script>
+
+<script>
+(function () {
+    var ventasDiarias    = @json($ventasDiarias ?? []);
+    var ventasDiariasAnt = @json($ventasDiariasAnt ?? []);
+    if (!ventasDiarias || ventasDiarias.length === 0) return;
+
+    var labelsAct = ventasDiarias.map(function(d){ return d.label; });
+    var totalAct  = ventasDiarias.map(function(d){ return d.total; });
+    var ticksAct  = ventasDiarias.map(function(d){ return d.tickets; });
+    var totalAnt  = ventasDiariasAnt.map(function(d){ return d.total; });
+    var ticksAnt  = ventasDiariasAnt.map(function(d){ return d.tickets; });
+
+    var ctxCmp = document.getElementById('chartComparativa');
+    if (!ctxCmp) return;
+
+    var cmpChart = new Chart(ctxCmp, {
+        type: 'line',
+        data: {
+            labels: labelsAct,
+            datasets: [
+                {
+                    label: 'Ventas actual',
+                    data: totalAct,
+                    borderColor: '#4e73df',
+                    backgroundColor: 'rgba(78,115,223,0.10)',
+                    borderWidth: 2.5,
+                    pointRadius: labelsAct.length > 20 ? 0 : 3,
+                    pointHoverRadius: 5,
+                    fill: true,
+                    tension: 0.35
+                },
+                {
+                    label: 'Ventas anterior',
+                    data: totalAnt,
+                    borderColor: '#adb5bd',
+                    backgroundColor: 'rgba(173,181,189,0.04)',
+                    borderWidth: 1.8,
+                    borderDash: [5, 4],
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    fill: false,
+                    tension: 0.35
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(30,40,80,0.88)',
+                    titleFont: { size: 11 }, bodyFont: { size: 11 }, padding: 8,
+                    callbacks: {
+                        label: function(ctx) {
+                            return ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('es-CR', { minimumFractionDigits: 0 });
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    ticks: { font: { size: 10 }, callback: function(v){ return v >= 1000 ? (v/1000).toFixed(0)+'K' : v; } }
+                },
+                x: { grid: { display: false }, ticks: { font: { size: 9 }, maxTicksLimit: 16, maxRotation: 45 } }
+            }
+        }
+    });
+
+    window.switchComparativa = function(modo) {
+        var btnV = document.getElementById('btnCmpVentas');
+        var btnT = document.getElementById('btnCmpTickets');
+        if (modo === 'ventas') {
+            cmpChart.data.datasets[0].data = totalAct; cmpChart.data.datasets[0].label = 'Ventas actual';
+            cmpChart.data.datasets[1].data = totalAnt; cmpChart.data.datasets[1].label = 'Ventas anterior';
+            if(btnV){btnV.classList.add('active','btn-primary');btnV.classList.remove('btn-outline-primary');}
+            if(btnT){btnT.classList.remove('active','btn-primary');btnT.classList.add('btn-outline-primary');}
+        } else {
+            cmpChart.data.datasets[0].data = ticksAct; cmpChart.data.datasets[0].label = 'Tickets actual';
+            cmpChart.data.datasets[1].data = ticksAnt; cmpChart.data.datasets[1].label = 'Tickets anterior';
+            if(btnT){btnT.classList.add('active','btn-primary');btnT.classList.remove('btn-outline-primary');}
+            if(btnV){btnV.classList.remove('active','btn-primary');btnV.classList.add('btn-outline-primary');}
+        }
+        cmpChart.update();
+    };
 })();
 </script>
 

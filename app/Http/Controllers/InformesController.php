@@ -397,6 +397,40 @@ class InformesController extends Controller
             ? round(100 * ($resumenGlobal->total_vendido - $totalAnterior) / $totalAnterior, 1)
             : null;
 
+        // ── Ventas diarias (actual vs anterior) ──────────────────────────────
+        $ventasDiariasDb = DB::table('orden')
+            ->leftJoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+            ->where('orden.sucursal', '=', $idSucursal)
+            ->where('orden.pagado', '=', 1)
+            ->where('sis_estado.cod_general', '!=', 'ORD_ANULADA')
+            ->where('orden.fecha_inicio', '>=', $desdeDate)
+            ->where('orden.fecha_inicio', '<', $modHasta)
+            ->select(DB::raw('DATE(orden.fecha_inicio) as fecha'), DB::raw('SUM(orden.total_con_descuento) as total'), DB::raw('COUNT(orden.id) as tickets'))
+            ->groupBy(DB::raw('DATE(orden.fecha_inicio)'))->orderBy('fecha')->get()->keyBy('fecha');
+        $ventasDiariasArr = [];
+        $cur = strtotime($desdeDate); $endTs = strtotime($hasta);
+        while ($cur <= $endTs) {
+            $ds = date('Y-m-d', $cur); $v = $ventasDiariasDb->get($ds);
+            $ventasDiariasArr[] = ['fecha' => $ds, 'label' => date('d/m', $cur), 'total' => $v ? (float)$v->total : 0.0, 'tickets' => $v ? (int)$v->tickets : 0];
+            $cur = strtotime('+1 day', $cur);
+        }
+        $ventasDiariasAntDb = DB::table('orden')
+            ->leftJoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+            ->where('orden.sucursal', '=', $idSucursal)
+            ->where('orden.pagado', '=', 1)
+            ->where('sis_estado.cod_general', '!=', 'ORD_ANULADA')
+            ->where('orden.fecha_inicio', '>=', $antesDesde)
+            ->where('orden.fecha_inicio', '<', $antesModHasta)
+            ->select(DB::raw('DATE(orden.fecha_inicio) as fecha'), DB::raw('SUM(orden.total_con_descuento) as total'), DB::raw('COUNT(orden.id) as tickets'))
+            ->groupBy(DB::raw('DATE(orden.fecha_inicio)'))->orderBy('fecha')->get()->keyBy('fecha');
+        $ventasDiariasAntArr = [];
+        $cur = strtotime($antesDesde); $endAntTs = strtotime($antesHasta);
+        while ($cur <= $endAntTs) {
+            $ds = date('Y-m-d', $cur); $v = $ventasDiariasAntDb->get($ds);
+            $ventasDiariasAntArr[] = ['fecha' => $ds, 'label' => date('d/m', $cur), 'total' => $v ? (float)$v->total : 0.0, 'tickets' => $v ? (int)$v->tickets : 0];
+            $cur = strtotime('+1 day', $cur);
+        }
+
         $data = [
             'panel_configuraciones' => $this->getPanelConfiguraciones(),
             'dashboard' => [
@@ -419,6 +453,12 @@ class InformesController extends Controller
                 'ordenes_abiertas_30'    => $ordenesAbiertas30,
                 'pct_tickets'            => $pctTickets,
                 'pct_total'              => $pctTotal,
+                'ventas_diarias'         => $ventasDiariasArr,
+                'ventas_diarias_ant'     => $ventasDiariasAntArr,
+                'antes_desde'            => $antesDesde,
+                'antes_hasta'            => $antesHasta,
+                'total_anterior'         => $totalAnterior,
+                'tickets_anterior'       => $ticketsAnterior,
             ],
         ];
 
