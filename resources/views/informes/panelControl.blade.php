@@ -296,8 +296,8 @@
                         <div class="card-header py-2">
                             <h6 class="mb-0" style="font-weight:700;"><i class="fas fa-credit-card mr-1"></i> Métodos de pago</h6>
                         </div>
-                        <div class="card-body py-2 d-flex align-items-center justify-content-center" style="min-height:240px;">
-                            <canvas id="chartMetodosPago" style="height:210px;width:100%;max-width:270px;"></canvas>
+                        <div class="card-body py-2 d-flex align-items-center justify-content-center">
+                            <canvas id="chartMetodosPago" style="width:200px;height:200px;"></canvas>
                         </div>
                     </div>
                 </div>
@@ -990,7 +990,7 @@
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
+            maintainAspectRatio: true,
             cutout: '62%',
             plugins: {
                 legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } },
