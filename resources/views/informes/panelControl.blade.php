@@ -64,6 +64,17 @@
         .panel-control .card .card-header h4 { font-size: .9rem; }
         .panel-control .table { font-size: .8rem; }
     }
+    /* Quick filter buttons */
+    .btn-filtro-rapido { border-radius: 20px; font-size: .78rem; padding: 3px 12px; margin: 2px 2px; }
+    .btn-filtro-rapido.active { background: #4e73df; color: #fff; border-color: #4e73df; }
+    /* Sucursal KPI cards */
+    .kpi-suc-card .card-header { background: linear-gradient(135deg, #4e73df 0%, #224abe 100%); color: #fff; border-radius: 12px 12px 0 0; }
+    .kpi-suc-card .kpi-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; border-bottom: 1px solid #f0f0f0; }
+    .kpi-suc-card .kpi-row:last-child { border-bottom: none; }
+    .kpi-suc-card .kpi-label { font-size: .75rem; color: #6c757d; }
+    .kpi-suc-card .kpi-val { font-size: .82rem; font-weight: 700; }
+    .kpi-suc-card .kpi-pago { font-size: .72rem; color: #6c757d; }
+    .kpi-suc-card .kpi-pago span { font-weight: 600; color: #444; }
 </style>
 @endsection
 
@@ -102,25 +113,36 @@
             <!-- Filtros de fecha -->
             <div class="row mb-3">
                 <div class="col-12">
-                    <form method="GET" action="{{ url('informes/panelControl') }}" class="w-100">
-                        <div class="form-row">
-                            <div class="form-group col-12 col-sm-6 col-md-3 mb-2">
-                                <label for="desde" class="mr-2 d-block">Desde</label>
-                                <input type="date" id="desde" name="desde" class="form-control form-control-sm"
-                                       value="{{ $dashboard['fecha_desde'] ?? date('Y-m-d') }}">
-                            </div>
-                            <div class="form-group col-12 col-sm-6 col-md-3 mb-2">
-                                <label for="hasta" class="mr-2 d-block">Hasta</label>
-                                <input type="date" id="hasta" name="hasta" class="form-control form-control-sm"
-                                       value="{{ $dashboard['fecha_hasta'] ?? date('Y-m-d') }}">
-                            </div>
-                            <div class="form-group col-12 col-sm-6 col-md-3 mb-2 d-flex align-items-end">
-                                <button type="submit" class="btn btn-primary btn-block btn-sm">
-                                    <i class="fas fa-sync-alt"></i> Actualizar
-                                </button>
-                            </div>
+                    <div class="card shadow-sm">
+                        <div class="card-body py-2 px-3">
+                            <form method="GET" action="{{ url('informes/panelControl') }}" class="w-100" id="frmFiltros">
+                                <div class="mb-2 d-flex flex-wrap">
+                                    <button type="button" class="btn btn-outline-primary btn-filtro-rapido" data-range="today"><i class="fas fa-sun mr-1"></i>Hoy</button>
+                                    <button type="button" class="btn btn-outline-primary btn-filtro-rapido" data-range="yesterday"><i class="fas fa-moon mr-1"></i>Ayer</button>
+                                    <button type="button" class="btn btn-outline-primary btn-filtro-rapido" data-range="week"><i class="fas fa-calendar-week mr-1"></i>Últimos 7 días</button>
+                                    <button type="button" class="btn btn-outline-primary btn-filtro-rapido" data-range="month"><i class="fas fa-calendar-alt mr-1"></i>Este mes</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-filtro-rapido" data-range="lastmonth"><i class="fas fa-history mr-1"></i>Mes anterior</button>
+                                </div>
+                                <div class="form-row align-items-end">
+                                    <div class="form-group col-12 col-sm-5 col-md-4 mb-2">
+                                        <label for="desde" class="small mb-1">Desde</label>
+                                        <input type="date" id="desde" name="desde" class="form-control form-control-sm"
+                                               value="{{ $dashboard['fecha_desde'] ?? date('Y-m-d') }}">
+                                    </div>
+                                    <div class="form-group col-12 col-sm-5 col-md-4 mb-2">
+                                        <label for="hasta" class="small mb-1">Hasta</label>
+                                        <input type="date" id="hasta" name="hasta" class="form-control form-control-sm"
+                                               value="{{ $dashboard['fecha_hasta'] ?? date('Y-m-d') }}">
+                                    </div>
+                                    <div class="form-group col-12 col-sm-2 col-md-4 mb-2">
+                                        <button type="submit" class="btn btn-primary btn-block btn-sm">
+                                            <i class="fas fa-sync-alt"></i> Actualizar
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
 
@@ -279,28 +301,42 @@
             @endif
 
             <!-- KPIs por sucursal -->
-            <div class="row">
+            @if(count($kpisSucursales) > 0)
+            <div class="row mb-1">
+                <div class="col-12 mb-2">
+                    <h5 class="section-title mb-0"><i class="fas fa-store-alt mr-1"></i> Rendimiento por sucursal</h5>
+                </div>
                 @foreach($kpisSucursales as $kpi)
-                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3 mb-2 mb-md-3">
-                        <div class="card h-100">
-                            <div class="card-header py-1 py-sm-2">
-                                <h4 class="mb-0 text-truncate" title="{{ $kpi->sucursal_nombre }}">{{ $kpi->sucursal_nombre }}</h4>
+                <div class="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3">
+                    <div class="card h-100 kpi-suc-card">
+                        <div class="card-header py-2 d-flex align-items-center">
+                            <i class="fas fa-store-alt mr-2" style="opacity:.85;"></i>
+                            <h6 class="mb-0 text-truncate font-weight-bold" title="{{ $kpi->sucursal_nombre }}">{{ $kpi->sucursal_nombre }}</h6>
+                        </div>
+                        <div class="card-body py-2 px-3">
+                            <div class="kpi-row">
+                                <span class="kpi-label"><i class="fas fa-chart-line mr-1 text-success"></i>Ventas</span>
+                                <span class="kpi-val text-success">{{ number_format($kpi->total_vendido, 0, '.', ',') }}</span>
                             </div>
-                            <div class="card-body pt-1 pb-1 pt-sm-2 pb-sm-2 small">
-                                <div><strong>Ventas:</strong> {{ number_format($kpi->total_vendido, 2, '.', ',') }} CRC</div>
-                                <div><strong>Tickets:</strong> {{ $kpi->tickets }}</div>
-                                <div><strong>Promedio:</strong> {{ number_format($kpi->ticket_promedio, 2, '.', ',') }} CRC</div>
-                                <div class="mt-1">
-                                    <strong>Medios pago:</strong><br>
-                                    Efec: {{ number_format($kpi->efectivo, 0, '.', ',') }}<br>
-                                    Tjta: {{ number_format($kpi->tarjeta, 0, '.', ',') }}<br>
-                                    SINPE: {{ number_format($kpi->sinpe, 0, '.', ',') }}
-                                </div>
+                            <div class="kpi-row">
+                                <span class="kpi-label"><i class="fas fa-receipt mr-1 text-info"></i>Tickets</span>
+                                <span class="kpi-val text-info">{{ $kpi->tickets }}</span>
+                            </div>
+                            <div class="kpi-row">
+                                <span class="kpi-label"><i class="fas fa-divide mr-1 text-primary"></i>Promedio</span>
+                                <span class="kpi-val">{{ number_format($kpi->ticket_promedio, 0, '.', ',') }}</span>
+                            </div>
+                            <div class="mt-2 pt-1" style="border-top:1px dashed #e0e0e0;">
+                                <div class="kpi-pago d-flex justify-content-between"><span><i class="fas fa-coins mr-1 text-warning"></i>Efectivo</span><span>{{ number_format($kpi->efectivo, 0, '.', ',') }}</span></div>
+                                <div class="kpi-pago d-flex justify-content-between"><span><i class="fas fa-credit-card mr-1 text-primary"></i>Tarjeta</span><span>{{ number_format($kpi->tarjeta, 0, '.', ',') }}</span></div>
+                                <div class="kpi-pago d-flex justify-content-between"><span><i class="fas fa-mobile-alt mr-1 text-secondary"></i>SINPE</span><span>{{ number_format($kpi->sinpe, 0, '.', ',') }}</span></div>
                             </div>
                         </div>
                     </div>
+                </div>
                 @endforeach
             </div>
+            @endif
 
             <!-- Tiempos operativos (preparación y entrega) -->
             @if($resumenTiempos)
@@ -796,6 +832,39 @@
             }
             $('#pvErrorTexto').text(msg);
             $('#pvError').show();
+        });
+    });
+})();
+</script>
+
+<script>
+(function () {
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    function fmt(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+    var desde = document.getElementById('desde');
+    var hasta = document.getElementById('hasta');
+    var form  = document.getElementById('frmFiltros');
+    if (!form) return;
+    var hoy = new Date();
+    // Mark active button based on current values
+    var curDesde = desde ? desde.value : '';
+    var curHasta = hasta ? hasta.value : '';
+    var todayStr = fmt(hoy);
+    document.querySelectorAll('.btn-filtro-rapido').forEach(function (btn) {
+        var r = btn.getAttribute('data-range');
+        var d, h;
+        switch (r) {
+            case 'today':    d = h = todayStr; break;
+            case 'yesterday': var y = new Date(hoy); y.setDate(y.getDate()-1); d = h = fmt(y); break;
+            case 'week':     var w = new Date(hoy); w.setDate(w.getDate()-6); d = fmt(w); h = todayStr; break;
+            case 'month':    d = fmt(new Date(hoy.getFullYear(), hoy.getMonth(), 1)); h = todayStr; break;
+            case 'lastmonth': var lm1 = new Date(hoy.getFullYear(), hoy.getMonth()-1, 1); var lm2 = new Date(hoy.getFullYear(), hoy.getMonth(), 0); d = fmt(lm1); h = fmt(lm2); break;
+        }
+        if (curDesde === d && curHasta === h) btn.classList.add('active');
+        btn.addEventListener('click', function () {
+            if (desde) desde.value = d;
+            if (hasta) hasta.value = h;
+            form.submit();
         });
     });
 })();
