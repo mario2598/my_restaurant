@@ -199,8 +199,67 @@ function generarHTMLOrdenes(ordenes) {
 
 
 function imprimirTicket(id) {
-    $("#btn-pdf").prop('href', `${base_path}/impresora/tiquete/${id}`);
-    document.getElementById('btn-pdf').click();
+    var modo = (typeof ticketModo !== 'undefined') ? ticketModo : 'html';
+    if (modo === 'qz' && typeof qz !== 'undefined') {
+        _qzPrint(id);
+        return;
+    }
+    var url = base_path + '/impresora/tiquete/html/' + id;
+    window.open(url, '_blank', 'width=380,height=600,scrollbars=yes');
+}
+
+function _qzPrint(id) {
+    var pdfUrl  = base_path + '/impresora/tiquete/' + id;
+    var ancho   = (typeof ticketAncho !== 'undefined' && parseInt(ticketAncho) > 0) ? parseInt(ticketAncho) : 80;
+    var printer = (typeof ticketImpresora !== 'undefined') ? ticketImpresora : '';
+    try {
+    qz.security.setCertificatePromise(function(resolve, reject) {
+        fetch(base_path + '/qz-cert').then(function(r) { return r.text(); })
+            .then(resolve).catch(reject);
+    });
+    qz.security.setSignatureAlgorithm('SHA512');
+    qz.security.setSignaturePromise(function(toSign) {
+        return function(resolve, reject) {
+            fetch(base_path + '/qz-sign?request=' + encodeURIComponent(toSign))
+                .then(function(r) { return r.text(); }).then(resolve).catch(reject);
+        };
+    });
+    var doConnect = (qz.websocket.isActive && qz.websocket.isActive())
+        ? Promise.resolve()
+        : qz.websocket.connect({ retries: 1, delay: 1 });
+    doConnect.then(function() {
+        return qz.printers.find(printer);
+    }).then(function(p) {
+        var cfg = qz.configs.create(p, {
+            size: { width: ancho, units: 'mm' }, margins: 0,
+            colorType: 'blackwhite', interpolation: 'bicubic', scaleContent: false
+        });
+        return qz.print(cfg, [{ type: 'pixel', format: 'pdf', flavor: 'file', data: pdfUrl }]);
+    }).then(function() {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon:'success', title:'Imprimiendo...', timer:2500,
+                showConfirmButton:false, toast:true, position:'top-end' });
+        }
+    }).catch(function(err) {
+        var msg = (err && err.message) ? err.message : String(err);
+        var m = msg.toLowerCase();
+        var titulo = (m.indexOf('unable to establish') !== -1 || m.indexOf('websocket') !== -1
+            || m.indexOf('connection') !== -1 || m.indexOf('failed to connect') !== -1)
+            ? 'QZ Tray no esta abierto'
+            : (m.indexOf('no printer') !== -1 || m.indexOf('not found') !== -1
+               ? 'Impresora "' + printer + '" no encontrada' : 'Error QZ Tray');
+        window.open(base_path + '/impresora/tiquete/html/' + id,
+                    '_blank', 'width=380,height=600,scrollbars=yes');
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon:'warning', title: titulo,
+                text: 'El tiquete se abrio en una ventana. ' + msg,
+                confirmButtonText:'Entendido', confirmButtonColor:'#4e73df' });
+        }
+    });
+    } catch(e) {
+        console.warn('QZ Tray no disponible:', e.message || e);
+        window.open(base_path + '/impresora/tiquete/html/' + id, '_blank', 'width=380,height=600,scrollbars=yes');
+    }
 }
 
 

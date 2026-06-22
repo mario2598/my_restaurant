@@ -61,72 +61,73 @@ function generarHTMLOrdenes(ordenes) {
     var texto = "";
     ordenesGen = ordenes;
     ordenes.forEach(orden => {
+        var anulada   = orden.cod_general === 'ORD_ANULADA';
+        var pagada    = !anulada && orden.pagado == 1;
+        var pendiente = !anulada && !pagada;
+
+        var estiloFila = anulada  ? 'background:#fff0f0;border-left:4px solid #e74c3c;'
+                       : pagada   ? 'background:#f0fff0;border-left:4px solid #27ae60;'
+                       :            'background:#fffbf0;border-left:4px solid #f39c12;';
+
+        var badgePago = anulada  ? '<span class="badge badge-danger">Anulada</span>'
+                      : pagada   ? '<span class="badge badge-success">Pagada</span>'
+                      :            '<span class="badge badge-warning text-dark">Pendiente</span>';
+
         var incidentes = orden.incidentes || [];
-        var tieneIncidentes = orden.tiene_incidentes || incidentes.length > 0;
-        var celdaIncidentes = "";
-        if (tieneIncidentes) {
-            var n = incidentes.length;
-            var totalRebaja = incidentes.reduce(function (sum, inc) { return sum + (parseFloat(inc.monto_afectado) || 0); }, 0);
-            celdaIncidentes = `<td class="text-center">
-                <i class="fas fa-exclamation-triangle text-warning" title="Orden con incidente(s)"></i>
-                <a href="javascript:void(0)" onclick="verIncidentesOrden(${orden.id}, '${(orden.numero_orden || '').toString().replace(/'/g, "\\'")}')" class="ml-1" title="Ver detalle de incidentes">
-                    Sí (${n})
-                </a>
-            </td>`;
-        } else {
-            celdaIncidentes = `<td class="text-center text-muted">—</td>`;
+        var tieneInc   = orden.tiene_incidentes || incidentes.length > 0;
+        var celdaInc   = tieneInc
+            ? `<td class="text-center">
+                   <a href="javascript:void(0)"
+                      onclick="verIncidentesOrden(${orden.id},'${(orden.numero_orden||'').toString().replace(/'/g,"\\'")}')"
+                      class="text-warning font-weight-bold" title="Ver incidentes">
+                       <i class="fas fa-exclamation-triangle"></i> ${incidentes.length}
+                   </a>
+               </td>`
+            : `<td class="text-center text-muted">—</td>`;
+
+        var acciones = `<button class="btn btn-sm btn-outline-primary mr-1 mb-1"
+                                onclick="imprimirTicket(${orden.id})"
+                                title="Imprimir tiquete">
+                            <i class="fas fa-print"></i>
+                        </button>`;
+
+
+        if (pendiente) {
+            acciones += `<button class="btn btn-sm btn-outline-info mr-1 mb-1"
+                                 onclick="abrirModalCambiarCaja(${orden.id},'${(orden.numero_orden||orden.id).toString().replace(/'/g,"\\'")}')"
+                                 title="Cambiar caja">
+                             <i class="fas fa-cash-register"></i>
+                         </button>`;
         }
-        texto = texto +
-            `<tr style="border-bottom: 1px solid grey;">
-                <td class="text-center" onclick="imprimirTicket( ${orden.id})" style="cursor:pointer; text-decoration : underline; ">
-                    ${orden.numero_orden}
-                </td> 
-                <td class="text-center">
-                ${orden.nombreSucursal}
+
+        if (!anulada) {
+            acciones += `<button class="btn btn-sm btn-outline-danger mb-1"
+                                 onclick='abrirModalAnularOrden("${orden.id??0}")'
+                                 title="Anular orden">
+                             <i class="fas fa-ban"></i>
+                         </button>`;
+        }
+
+        texto += `<tr style="${estiloFila} border-bottom:1px solid #dee2e6;">
+            <td class="text-center font-weight-bold">${orden.numero_orden}</td>
+            <td class="text-center">${orden.nombreSucursal??''}</td>
+            <td class="text-center small">${orden.fecha_inicio??''}</td>
+            <td class="text-center">${orden.nombre_cliente??''}</td>
+            <td class="text-center font-weight-bold">
+                ${anulada ? '<span class="text-muted">—</span>' : (orden.total_con_descuento??0)}
             </td>
-                <td class="text-center">
-                    ${orden.fecha_inicio}
-                </td>
-                <td class="text-center">
-                    ${orden.nombre_cliente ?? ""}
-                </td>
-                <td class="text-center">
-                ${orden.total_con_descuento ?? 0}
-            </td> <td class="text-center">
-            ${orden.estadoOrden ?? ""}
-        </td>
-        <td class="text-center" title="${(orden.caja_etiqueta || '').replace(/"/g, '&quot;')}">${orden.caja_etiqueta ? orden.caja_etiqueta : '—'}</td>
-        ${celdaIncidentes}
-        <td class="text-center">
-         <a href="${base_path}/tracking/orden/${orden.idOrdenEnc ?? ''}" style="display: block;width: 100%;" target="_blank">
-               Link Rastreó                      
-        </a>
-    </td>`;
-        var puedeCambiarCaja = (orden.pagado == 0 || orden.pagado === '0') && orden.cod_general != 'ORD_ANULADA';
-        if (puedeCambiarCaja) {
-            texto = texto + `<td class="text-center">
-                <button type="button" class="btn btn-info btn-sm px-2" onclick="abrirModalCambiarCaja(${orden.id}, '${(orden.numero_orden || orden.id).toString().replace(/'/g, "\\'")}')" title="Cambiar caja">
-                    <i class="fas fa-cash-register"></i>
-                </button>
-            </td>`;
-        } else {
-            texto = texto + `<td class="text-center">—</td>`;
-        }
-        if (orden.cod_general != 'ORD_ANULADA') {
-            texto = texto + `<td class="text-center">
-                <button type="button" class="btn btn-danger px-2" onclick='abrirModalAnularOrden("${orden.id ?? 0}")' 
-                    title="Anular Orden">
-                    <i class="fas fa-trash" aria-hidden="true"></i>
-                </button>
-            </td>`;
-        } else {
-            texto = texto + `<td class="text-center"></td>`;
-        }
-        texto = texto + `</tr>`;
+            <td class="text-center">${badgePago}</td>
+            <td class="text-center small" title="${(orden.caja_etiqueta||'').replace(/"/g,'&quot;')}">
+                ${orden.caja_etiqueta||'—'}
+            </td>
+            ${celdaInc}
+            <td class="text-center" style="white-space:nowrap;">${acciones}</td>
+        </tr>`;
     });
 
     $('#tbody-ordenes').html(texto);
 }
+
 
 function verIncidentesOrden(idOrden, numeroOrden) {
     var orden = ordenesGen.find(function (o) { return o.id == idOrden; });
@@ -152,8 +153,67 @@ function verIncidentesOrden(idOrden, numeroOrden) {
 
 
 function imprimirTicket(id) {
-    $("#btn-pdf").prop('href', `${base_path}/impresora/tiquete/${id}`);
-    document.getElementById('btn-pdf').click();
+    var modo = (typeof ticketModo !== 'undefined') ? ticketModo : 'html';
+    if (modo === 'qz' && typeof qz !== 'undefined') {
+        _qzPrint(id);
+        return;
+    }
+    var url = base_path + '/impresora/tiquete/html/' + id;
+    window.open(url, '_blank', 'width=380,height=600,scrollbars=yes');
+}
+
+function _qzPrint(id) {
+    var pdfUrl  = base_path + '/impresora/tiquete/' + id;
+    var ancho   = (typeof ticketAncho !== 'undefined' && parseInt(ticketAncho) > 0) ? parseInt(ticketAncho) : 80;
+    var printer = (typeof ticketImpresora !== 'undefined') ? ticketImpresora : '';
+    try {
+    qz.security.setCertificatePromise(function(resolve, reject) {
+        fetch(base_path + '/qz-cert').then(function(r) { return r.text(); })
+            .then(resolve).catch(reject);
+    });
+    qz.security.setSignatureAlgorithm('SHA512');
+    qz.security.setSignaturePromise(function(toSign) {
+        return function(resolve, reject) {
+            fetch(base_path + '/qz-sign?request=' + encodeURIComponent(toSign))
+                .then(function(r) { return r.text(); }).then(resolve).catch(reject);
+        };
+    });
+    var doConnect = (qz.websocket.isActive && qz.websocket.isActive())
+        ? Promise.resolve()
+        : qz.websocket.connect({ retries: 1, delay: 1 });
+    doConnect.then(function() {
+        return qz.printers.find(printer);
+    }).then(function(p) {
+        var cfg = qz.configs.create(p, {
+            size: { width: ancho, units: 'mm' }, margins: 0,
+            colorType: 'blackwhite', interpolation: 'bicubic', scaleContent: false
+        });
+        return qz.print(cfg, [{ type: 'pixel', format: 'pdf', flavor: 'file', data: pdfUrl }]);
+    }).then(function() {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon:'success', title:'Imprimiendo...', timer:2500,
+                showConfirmButton:false, toast:true, position:'top-end' });
+        }
+    }).catch(function(err) {
+        var msg = (err && err.message) ? err.message : String(err);
+        var m = msg.toLowerCase();
+        var titulo = (m.indexOf('unable to establish') !== -1 || m.indexOf('websocket') !== -1
+            || m.indexOf('connection') !== -1 || m.indexOf('failed to connect') !== -1)
+            ? 'QZ Tray no esta abierto'
+            : (m.indexOf('no printer') !== -1 || m.indexOf('not found') !== -1
+               ? 'Impresora "' + printer + '" no encontrada' : 'Error QZ Tray');
+        window.open(base_path + '/impresora/tiquete/html/' + id,
+                    '_blank', 'width=380,height=600,scrollbars=yes');
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon:'warning', title: titulo,
+                text: 'El tiquete se abrio en una ventana. ' + msg,
+                confirmButtonText:'Entendido', confirmButtonColor:'#4e73df' });
+        }
+    });
+    } catch(e) {
+        console.warn('QZ Tray no disponible:', e.message || e);
+        window.open(base_path + '/impresora/tiquete/html/' + id, '_blank', 'width=380,height=600,scrollbars=yes');
+    }
 }
 
 

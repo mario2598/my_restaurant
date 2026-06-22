@@ -57,6 +57,9 @@ class MantenimientoSucursalController extends Controller
         try { 
             DB::beginTransaction();
             if($id == '-1' || $id == null){
+                $ticket_auto_imprimir = $request->input('mdl_sucursal_chk_auto_imprimir') == 'on' ? 1 : 0;
+                $ticket_ancho_mm      = (int) $request->input('mdl_sucursal_ancho_mm', 80);
+                $ticket_nota_pie      = $request->input('mdl_sucursal_nota_pie', '');
                 $idSucursal = DB::table('sucursal')->insertGetId( ['id' => null ,'descripcion'=> $descripcion,
                 'estado' => ($estado == 'on' ? 'A' : 'I') ,'nombre_factura' => $nombre_factura ?? '',
                 'cedula_factura' => $cedula_factura?? '',
@@ -66,18 +69,31 @@ class MantenimientoSucursalController extends Controller
                 'factura_iva' => 0,
                 'cod_general' => 'PP',
                 'id_sucursal_fe' => 1,
-                'tipo_identificacion_emisor' => $tipo_identificacion_emisor ?? ''] );
+                'tipo_identificacion_emisor' => $tipo_identificacion_emisor ?? '',
+                'ticket_auto_imprimir' => $ticket_auto_imprimir,
+                'ticket_ancho_mm'      => in_array($ticket_ancho_mm, [58, 80]) ? $ticket_ancho_mm : 80,
+                'ticket_nota_pie'      => substr($ticket_nota_pie, 0, 200),
+                'ticket_modo'          => in_array($request->input('mdl_sucursal_ticket_modo'), ['html','qz']) ? $request->input('mdl_sucursal_ticket_modo') : 'html',
+                'ticket_impresora'     => substr($request->input('mdl_sucursal_impresora', ''), 0, 200)] );
 
                 DB::table('sucursal')->where('id', '=', $idSucursal)->update([
                     'cod_general' => 'S-' . $idSucursal,
                 ]);
             }else{
+                $ticket_auto_imprimir = $request->input('mdl_sucursal_chk_auto_imprimir') == 'on' ? 1 : 0;
+                $ticket_ancho_mm      = (int) $request->input('mdl_sucursal_ancho_mm', 80);
+                $ticket_nota_pie      = $request->input('mdl_sucursal_nota_pie', '');
                 DB::table('sucursal')
                     ->where('id', '=', $id)
                     ->update(['descripcion' => $descripcion,'estado' => ($estado == 'on' ? 'A' : 'I') ,
                     'nombre_factura' => $nombre_factura ?? '','cedula_factura' => $cedula_factura?? '',
                     'correo_factura' => $correo_factura ?? '',
-                    'tipo_identificacion_emisor' => $tipo_identificacion_emisor ?? '']);
+                    'tipo_identificacion_emisor' => $tipo_identificacion_emisor ?? '',
+                    'ticket_auto_imprimir' => $ticket_auto_imprimir,
+                    'ticket_ancho_mm'      => in_array($ticket_ancho_mm, [58, 80]) ? $ticket_ancho_mm : 80,
+                    'ticket_nota_pie'      => substr($ticket_nota_pie, 0, 200),
+                    'ticket_modo'          => in_array($request->input('mdl_sucursal_ticket_modo'), ['html','qz']) ? $request->input('mdl_sucursal_ticket_modo') : 'html',
+                    'ticket_impresora'     => substr($request->input('mdl_sucursal_impresora', ''), 0, 200)]);
             }
             DB::commit();
             

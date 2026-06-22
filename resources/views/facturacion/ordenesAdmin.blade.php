@@ -82,17 +82,15 @@
                                 <table class="table table-striped" id="tbl-ordenes" style="max-height: 100%;">
                                     <thead class="thead-light">
                                         <tr>
-                                            <th scope="col" style="text-align: center">No.Orden</th>
-                                            <th scope="col" style="text-align: center">Sucursal</th>
-                                            <th scope="col" style="text-align: center">Fecha</th>
-                                            <th scope="col" style="text-align: center">Cliente</th>
-                                            <th scope="col" style="text-align: center">Total pagado</th>
-                                            <th scope="col" style="text-align: center">Estado</th>
-                                            <th scope="col" style="text-align: center">Caja</th>
-                                            <th scope="col" style="text-align: center">Incidentes</th>
-                                            <th scope="col" style="text-align: center"></th>
-                                            <th scope="col" style="text-align: center">Cambiar caja</th>
-                                            <th scope="col" style="text-align: center"></th>
+                                            <th style="text-align:center">No. Orden</th>
+                                            <th style="text-align:center">Sucursal</th>
+                                            <th style="text-align:center">Fecha</th>
+                                            <th style="text-align:center">Cliente</th>
+                                            <th style="text-align:center">Total</th>
+                                            <th style="text-align:center">Estado</th>
+                                            <th style="text-align:center">Caja</th>
+                                            <th style="text-align:center">Incidentes</th>
+                                            <th style="text-align:center">Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tbody-ordenes">
@@ -218,7 +216,15 @@
 
 
 @section('script')
+<script>
+    var ticketModo      = "{{ $data['ticketModo'] ?? 'html' }}";
+    var ticketImpresora = "{{ $data['ticketImpresora'] ?? '' }}";
+    var ticketAncho     = {{ $data['ticketAncho'] ?? 80 }};
+</script>
+@if(isset($data['ticketModo']) && $data['ticketModo'] === 'qz')
+<script src="{{ asset('assets/js/qz-tray.js') }}"></script>
+@endif
     <script src="{{ asset('assets/bundles/datatables/datatables.min.js') }}"></script>
     <script src="{{ asset('assets/js/page/datatables.js') }}"></script>
-    <script src="{{ asset('assets/js/facturacion/ordenesAdmin.js') }}"></script>
+    <script src="{{ asset('assets/js/facturacion/ordenesAdmin.js') . '?v=20260619' }}"></script>
 @endsection

@@ -30,10 +30,14 @@ class FacturacionController extends Controller
             return redirect('/');
         }
 
+        $sucursalFactura = \App\Http\Controllers\MantenimientoSucursalController::getSucursalById($this->getUsuarioSucursal());
         $data = [
             'sucursales' => $this->getSucursales(),
             'clientes' => $this->getClientes(),
-            'panel_configuraciones' => $this->getPanelConfiguraciones()
+            'panel_configuraciones' => $this->getPanelConfiguraciones(),
+            'ticketModo'      => $sucursalFactura->ticket_modo ?? 'html',
+            'ticketImpresora' => $sucursalFactura->ticket_impresora ?? '',
+            'ticketAncho'     => $sucursalFactura->ticket_ancho_mm ?? 80,
         ];
 
         return view("facturacion.ordenesAdmin", compact("data"));
@@ -197,6 +201,9 @@ class FacturacionController extends Controller
     {
 
         $sucursalFactura = MantenimientoSucursalController::getSucursalById($this->getUsuarioSucursal());
+        if (!$sucursalFactura) {
+            $sucursalFactura = (object)['factura_iva'=>0,'ticket_modo'=>'html','ticket_impresora'=>'','ticket_ancho_mm'=>80];
+        }
         $monedasFacturaPos = collect();
         try {
             $monedasFacturaPos = DB::table('sis_moneda')
@@ -230,6 +237,9 @@ class FacturacionController extends Controller
             'cajaAbierta' =>  CajaController::tieneCajaAbierta(session('usuario')['id'], $this->getUsuarioSucursal()),
             'panel_configuraciones' => $this->getPanelConfiguraciones(),
             'monedasFacturaPos' => $monedasFacturaPos,
+            'ticketModo'      => $sucursalFactura->ticket_modo ?? 'html',
+            'ticketImpresora' => $sucursalFactura->ticket_impresora ?? '',
+            'ticketAncho'     => $sucursalFactura->ticket_ancho_mm ?? 80,
         ];
 
         return view("facturacion.pos", compact("data"));
@@ -3699,6 +3709,64 @@ class FacturacionController extends Controller
         } catch (QueryException $ex) {
             DB::rollBack();
             return $this->responseAjaxServerError("Algo salió mal.", $orden['id']);
+        }
+    }
+    public function getPopularesPosAjax()
+    {
+        try {
+            $hace7dias = date('Y-m-d', strtotime('-7 days'));
+            $sucursal = $this->getUsuarioSucursal();
+            $topCodigos = \DB::table('detalle_orden as od')
+                ->join('orden as o', 'o.id', '=', 'od.orden')
+                ->join('sis_estado as se', 'se.id', '=', 'o.estado')
+                ->where('se.cod_general', '!=', 'ORD_ANULADA')
+                ->where('o.fecha_inicio', '>=', $hace7dias)
+                ->select('od.codigo_producto', \DB::raw('COUNT(*) as veces'))
+                ->groupBy('od.codigo_producto')
+                ->orderByDesc('veces')
+                ->limit(10)
+                ->pluck('veces', 'codigo_producto');
+            $codigos = $topCodigos->keys()->toArray();
+            if (empty($codigos)) {
+                return $this->responseAjaxSuccess("", []);
+            }
+            $menu = \DB::table('producto_menu')
+                ->join('pm_x_sucursal', function($j) use ($sucursal) {
+                    $j->on('pm_x_sucursal.producto_menu', '=', 'producto_menu.id')
+                      ->where('pm_x_sucursal.sucursal', '=', $sucursal);
+                })
+                ->whereIn('producto_menu.codigo', $codigos)
+                ->where('producto_menu.estado', 'A')
+                ->select('producto_menu.nombre', 'producto_menu.codigo',
+                         'producto_menu.precio', \DB::raw("0 as cantidad"),
+                         \DB::raw("'R' as tipoProducto"), 'producto_menu.descripcion')
+                ->get()->keyBy('codigo');
+            $ext = \DB::table('producto_externo')
+                ->join('pe_x_sucursal', function($j) use ($sucursal) {
+                    $j->on('pe_x_sucursal.producto_externo', '=', 'producto_externo.id')
+                      ->where('pe_x_sucursal.sucursal', '=', $sucursal);
+                })
+                ->whereIn('producto_externo.codigo_barra', $codigos)
+                ->where('producto_externo.estado', 'A')
+                ->select('producto_externo.nombre', 'producto_externo.codigo_barra as codigo',
+                         'producto_externo.precio', 'pe_x_sucursal.cantidad',
+                         \DB::raw("'E' as tipoProducto"), \DB::raw("'' as descripcion"))
+                ->get()->keyBy('codigo');
+            $populares = collect();
+            foreach ($codigos as $cod) {
+                if (isset($menu[$cod])) {
+                    $p = clone $menu[$cod];
+                    $p->veces = $topCodigos[$cod];
+                    $populares->push($p);
+                } elseif (isset($ext[$cod])) {
+                    $p = clone $ext[$cod];
+                    $p->veces = $topCodigos[$cod];
+                    $populares->push($p);
+                }
+            }
+            return $this->responseAjaxSuccess("", $populares->take(10)->values());
+        } catch (\Illuminate\Database\QueryException $ex) {
+            return $this->responseAjaxServerError("Algo salió mal.", "");
         }
     }
 }

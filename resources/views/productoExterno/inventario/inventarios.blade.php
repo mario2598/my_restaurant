@@ -61,6 +61,10 @@
 
                             </div>
                         </form>
+                        <div class="alert alert-info alert-sm py-2 px-3 mb-2" style="border-left:4px solid #17a2b8;background:#f0f9ff;">
+                            <i class="fas fa-info-circle"></i>
+                            <small>Usa <strong>[-] [+]</strong> para ajuste r&#225;pido de stock &bull; Bot&#243;n <i class="fas fa-sliders-h"></i> para ajuste manual con cantidad personalizada.</small>
+                        </div>
                         <div id="contenedor_productos" class="row">
                             <div class="table-responsive">
                                 <table class="table table-striped" id="tablaInventarios">
@@ -69,39 +73,54 @@
 
                                         <tr>
                                             <th class="text-center">Código</th>
-
                                             <th class="text-center">Producto</th>
-                                            <th class="text-center">
-                                                Categoría
-                                            </th>
-                                            <th class="text-center">
-                                                Cantidad
-                                            </th>
-                                            <th class="text-center">
-                                                Comanda
-                                            </th>
-
+                                            <th class="text-center d-none d-md-table-cell">Categoría</th>
+                                            <th class="text-center">Cantidad</th>
+                                            <th class="text-center d-none d-sm-table-cell">Comanda</th>
+                                            <th class="text-center">Ajuste</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tbody_generico">
                                         @foreach ($data['inventarios'] as $i)
-                                            <tr style="cursor: pointer"
-                                                onclick='editarProductoInventario("{{ $i->pe_id }}","{{ $i->id }}","{{ $i->cantidad }}","{{ $i->comanda }}","{{ $i->nombre }}")'>
-                                                <td class="text-center">
-                                                    {{ strtoupper($i->codigo_barra ?? '') }}
+                                            @php
+                                                $cant_disp = $i->cantidad ?? 0;
+                                                $badge_c = $cant_disp <= 0 ? 'danger' : ($cant_disp <= 5 ? 'warning' : 'success');
+                                            @endphp
+                                            <tr>
+                                                <td class="text-center align-middle">
+                                                    <span class="badge badge-secondary" style="font-size:0.85rem;">{{ strtoupper($i->codigo_barra ?? '') }}</span>
                                                 </td>
-                                                <td class="text-center">
-                                                    {{ $i->nombre ?? '' }}
+                                                <td class="align-middle"><strong>{{ $i->nombre ?? '' }}</strong></td>
+                                                <td class="text-center align-middle d-none d-md-table-cell">
+                                                    <span class="badge badge-light border" style="font-size:0.8rem;">{{ $i->categoria ?? '' }}</span>
                                                 </td>
-                                                <td class="text-center">
-                                                    {{ $i->categoria ?? '' }}
+                                                <td class="text-center align-middle" onclick="event.stopPropagation()" style="min-width:140px;">
+                                                    <div class="d-flex align-items-center justify-content-center">
+                                                        <button class="btn btn-danger btn-sm" style="width:32px;height:32px;padding:0;border-radius:50%;"
+                                                            data-pe-id="{{ $i->pe_id }}" data-id="{{ $i->id }}" data-comanda="{{ $i->comanda }}"
+                                                            onclick="ajusteRapido(this,'disminuir',1)" title="Quitar 1">
+                                                            <i class="fas fa-minus" style="font-size:0.7rem;"></i>
+                                                        </button>
+                                                        <span class="badge badge-{{ $badge_c }} mx-2" id="cant_{{ $i->id }}" style="font-size:1rem;min-width:38px;padding:6px 10px;">{{ $cant_disp }}</span>
+                                                        <button class="btn btn-success btn-sm" style="width:32px;height:32px;padding:0;border-radius:50%;"
+                                                            data-pe-id="{{ $i->pe_id }}" data-id="{{ $i->id }}" data-comanda="{{ $i->comanda }}"
+                                                            onclick="ajusteRapido(this,'aumentar',1)" title="Agregar 1">
+                                                            <i class="fas fa-plus" style="font-size:0.7rem;"></i>
+                                                        </button>
+                                                    </div>
                                                 </td>
-                                                <td class="text-center">
-                                                    {{ $i->cantidad ?? '' }}
+                                                <td class="text-center align-middle d-none d-sm-table-cell">
+                                                    @if($i->nombreComanda ?? false)
+                                                        <span class="badge badge-warning text-dark" style="font-size:0.8rem;">{{ $i->nombreComanda }}</span>
+                                                    @endif
                                                 </td>
-
-                                                <td class="text-center">
-                                                    {{ $i->nombreComanda ?? '' }}
+                                                <td class="text-center align-middle" onclick="event.stopPropagation()">
+                                                    <button class="btn btn-primary btn-sm" onclick="abrirAjusteDirecto(this)"
+                                                        data-pe-id="{{ $i->pe_id }}" data-id="{{ $i->id }}"
+                                                        data-cantidad="{{ $i->cantidad ?? 0 }}" data-comanda="{{ $i->comanda }}"
+                                                        data-nombre="{{ $i->nombre }}" title="Ajuste manual">
+                                                        <i class="fas fa-sliders-h"></i>
+                                                    </button>
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -200,35 +219,86 @@
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <!-- Cambiado a modal-lg para darle un tamaño más grande controlado -->
             <div class="modal-content">
-                <div class="modal-header">
-                    <div class="spinner-border" id="modal_spinner" style="margin-right: 3%; display: none;"
-                        role="status"></div>
-                    <h5 class="modal-title mt-0" id="lbl_ajustar_cant_producto"><i class="fas fa-cog"></i>
-                        Aumentar/Disminuir Cantidad Inventario</h5>
-                    <button type="button" id="btnSalirFact" class="close" aria-hidden="true"
-                        data-dismiss="modal">x</button>
+                <div class="modal-header py-2" style="background:#f8f9fa;border-bottom:2px solid #dee2e6;">
+                    <div class="d-flex align-items-center" style="flex:1;">
+                        <div class="spinner-border spinner-border-sm mr-2" id="modal_spinner" style="display:none;" role="status"></div>
+                        <div>
+                            <div class="text-muted" style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Ajuste de inventario</div>
+                            <h5 class="modal-title mb-0" id="lbl_ajustar_cant_producto" style="font-size:1rem;font-weight:700;">
+                                <i class="fas fa-box-open mr-1 text-primary"></i>
+                                <span id="lbl_nombre_producto">—</span>
+                            </h5>
+                        </div>
+                    </div>
+                    <button type="button" id="btnSalirFact" class="close ml-2" data-dismiss="modal" aria-hidden="true">&times;</button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-3">
                     <div class="row">
+                        <!-- Stock actual compacto -->
+                        <div class="col-12 mb-3">
+                            <div class="d-flex align-items-center justify-content-between rounded px-3 py-2" style="background:#f1f3f5;border-left:4px solid #28a745;">
+                                <span class="text-muted" style="font-size:0.875rem;"><i class="fas fa-cubes mr-1"></i>Stock actual</span>
+                                <span class="font-weight-bold text-dark" style="font-size:1.15rem;" id="lbl_cantidad_actual">—</span>
+                            </div>
+                        </div>
+                        <!-- Comanda con Guardar inline -->
+                        <div class="col-12 mb-3">
+                            <label class="font-weight-bold text-muted mb-1" style="font-size:0.78rem;text-transform:uppercase;letter-spacing:.5px;">
+                                <i class="fas fa-utensils mr-1"></i>Comanda
+                            </label>
+                            <div class="input-group">
+                                <select class="form-control" id="comanda_ajuste">
+                                    <option value="-1">Comanda General</option>
+                                    @foreach ($data['comandas'] as $c)
+                                        <option value="{{ $c->id ?? '' }}">{{ $c->nombre ?? '' }}</option>
+                                    @endforeach
+                                </select>
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-primary" type="button" onclick="guardarSoloComanda()" title="Guardar solo la comanda">
+                                        <i class="fas fa-save mr-1"></i>Guardar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Cantidad con botones +/- inline -->
                         <div class="col-12">
-                            <div class="form-group form-float">
-                                <label for="cantidad_ajustar" class="form-label">Cantidad a Ajustar</label>
-                                <input type="number" class="form-control space_input_modal" id="cantidad_ajustar"
-                                    name="cantidad_ajustar" required min="1">
+                            <label class="font-weight-bold text-muted mb-1" style="font-size:0.78rem;text-transform:uppercase;letter-spacing:.5px;">
+                                <i class="fas fa-sort-numeric-up-alt mr-1"></i>Cantidad a Ajustar
+                            </label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="cambiarCantModal(-1)">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                </div>
+                                <input type="number" class="form-control text-center font-weight-bold space_input_modal"
+                                    id="cantidad_ajustar" name="cantidad_ajustar" required min="1" value="1"
+                                    style="font-size:1.1rem;">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="cambiarCantModal(1)">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div id="footerContiner" class="modal-footer">
-                    <div class="d-flex justify-content-between w-100">
-                        <!-- Clase para que los botones estén distribuidos de forma uniforme -->
-                        <a href="#" class="btn btn-secondary" data-dismiss="modal">Volver</a>
-                        <input type="button" class="btn btn-primary" onclick="aumentarInventario()"
-                            id="btn_aumenta_inventario" value="Aumentar Inventario" />
-                        <input type="button" class="btn btn-primary" onclick="disminuirInventario('N')"
-                            id="btn_disminuye_inventario" value="Disminuir Inventario" />
-                        <input type="button" class="btn btn-primary" onclick="desecharInventario()"
-                            id="btn_sacar_desecho" value="Sacar Desecho" />
+                <div id="footerContiner" class="modal-footer py-2" style="background:#f8f9fa;border-top:2px solid #dee2e6;">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <a href="#" class="btn btn-light" data-dismiss="modal" style="border:1px solid #ced4da;">
+                            <i class="fas fa-times mr-1"></i>Cerrar
+                        </a>
+                        <div class="btn-group">
+                            <button class="btn btn-success" onclick="aumentarInventario()" id="btn_aumenta_inventario">
+                                <i class="fas fa-plus mr-1"></i>Aumentar
+                            </button>
+                            <button class="btn btn-danger" onclick="disminuirInventario('N')" id="btn_disminuye_inventario">
+                                <i class="fas fa-minus mr-1"></i>Disminuir
+                            </button>
+                            <button class="btn btn-warning text-dark" onclick="desecharInventario()" id="btn_sacar_desecho">
+                                <i class="fas fa-trash mr-1"></i>Desecho
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div><!-- /.modal-content -->
@@ -341,6 +411,13 @@
                 }]
             });
 
+            if ($('#sucursal').val() == '-1') {
+                var firstSuc = $('#sucursal option:not([value="-1"])').first();
+                if (firstSuc.length) {
+                    $('#sucursal').val(firstSuc.val());
+                    cambiarSucursal(document.getElementById('form_cargar_menu'));
+                }
+            }
         }
     </script>
 @endsection

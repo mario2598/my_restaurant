@@ -1,3 +1,23 @@
+<style>
+.nav-home-label {
+    font-size: .72rem;
+    font-weight: 700;
+    color: #4e73df;
+    margin-left: 4px;
+    vertical-align: middle;
+    letter-spacing: .02em;
+}
+nav .nav-link:has(.nav-home-label) {
+    background: rgba(78,115,223,.08);
+    border-radius: 8px;
+    margin: 4px 2px;
+    padding: 6px 10px !important;
+    transition: background .18s;
+}
+nav .nav-link:has(.nav-home-label):hover {
+    background: rgba(78,115,223,.18);
+}
+</style>
 <div class="navbar-bg"></div>
 <nav class="navbar navbar-expand-lg main-navbar sticky space-navbar" style="">
     <div class="form-inline mr-auto">
@@ -8,6 +28,14 @@
             <li><a href="#" class="nav-link nav-link-lg fullscreen-btn">
                     <i data-feather="maximize"></i>
                 </a></li>
+            <li>
+                <a href="{{ url('/') }}" class="nav-link nav-link-lg"
+                   title="Ir al inicio"
+                   style="position:relative;">
+                    <i data-feather="home"></i>
+                    <span class="nav-home-label">Inicio</span>
+                </a>
+            </li>
 
         </ul>
     </div>

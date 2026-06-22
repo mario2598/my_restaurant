@@ -99,54 +99,45 @@
 
                                         <tr>
                                             <th class="text-center">Código</th>
-
                                             <th class="text-center">Producto</th>
-                                            <th class="text-center">
-                                                Categoría
-                                            </th>
-                                            <th class="text-center">
-                                                Impuestos %
-                                            </th>
+                                            <th class="text-center d-none d-md-table-cell">Categoría</th>
+                                            <th class="text-center d-none d-lg-table-cell">Impuestos %</th>
                                             <th class="text-center">Precio</th>
-                                            <th class="text-center">Posicion Menú</th>
-                                            <th class="text-center">Materia Prima</th>
-
+                                            <th class="text-center d-none d-lg-table-cell">Pos. Menú</th>
+                                            <th class="text-center">Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tbody_generico">
 
                                         @foreach ($data['productos'] as $g)
-                                            <tr class="space_row_table" style="cursor: pointer;"
-                                                >
-
-                                                <td onclick='clickProducto("{{ $g->id }}")' class="text-center">{{ $g->codigo_barra ?? '' }}</td>
-                                                <td onclick='clickProducto("{{ $g->id }}")' class="text-center">
-                                                    {{ $g->nombre }}
+                                            <tr>
+                                                <td class="text-center align-middle">{{ $g->codigo_barra ?? '' }}</td>
+                                                <td class="align-middle"><strong>{{ $g->nombre }}</strong></td>
+                                                <td class="text-center align-middle d-none d-md-table-cell">
+                                                    <span class="badge badge-info" style="font-size:0.8rem;">{{ $g->nombre_categoria ?? '' }}</span>
                                                 </td>
-                                                <td onclick='clickProducto("{{ $g->id }}")' class="text-center">
-                                                    {{ $g->nombre_categoria ?? '' }}
-                                                </td>
-                                                <td onclick='clickProducto("{{ $g->id }}")' class="text-center">
+                                                <td class="text-center align-middle d-none d-lg-table-cell">
                                                     {{ $g->porcentaje_impuesto ?? '0' }} %
                                                 </td>
-
-                                                <td onclick='clickProducto("{{ $g->id }}")' class="text-center">
-                                                    CRC {{ number_format($g->precio ?? '0.00', 2, '.', ',') }}
+                                                <td class="text-center align-middle">
+                                                    <strong>&#8353; {{ number_format($g->precio ?? '0.00', 2, '.', ',') }}</strong>
                                                 </td>
-                                                <td onclick='clickProducto("{{ $g->id }}")' class="text-center">
-                                                    {{ $g->posicion_menu ?? 0}}
+                                                <td class="text-center align-middle d-none d-lg-table-cell">
+                                                    {{ $g->posicion_menu ?? 0 }}
                                                 </td>
-
-                                                <td class="text-center">
-                                                    <a class="btn btn-primary btn-icon" title="Composición del producto"
-                                                        onclick='event.stopPropagation(); clickMateriaPrima("{{ $g->id }}")'
-                                                        style="cursor: pointer;"><i class="fas fa-cog"></i></a>
-                                                    <a class="btn btn-info btn-icon ml-1" title="Configuración de Facturación Electrónica"
-                                                        onclick='event.stopPropagation(); clickConfigFE("{{ $g->id }}")'
-                                                        style="cursor: pointer;"><i class="fas fa-file-invoice"></i></a>
-                                                    <a class="btn btn-danger btn-icon ml-1" title="Inactivar producto"
-                                                        onclick='event.stopPropagation(); eliminarProducto("{{ $g->id }}")'
-                                                        style="cursor: pointer;"><i class="fas fa-trash-alt"></i></a>
+                                                <td class="text-center align-middle" style="white-space:nowrap;">
+                                                    <a class="btn btn-warning btn-sm" title="Editar producto"
+                                                        onclick='clickProducto("{{ $g->id }}")'
+                                                        style="cursor:pointer;color:white;"><i class="fas fa-edit"></i></a>
+                                                    <a class="btn btn-primary btn-sm ml-1" title="Composición del producto"
+                                                        onclick='clickMateriaPrima("{{ $g->id }}")'
+                                                        style="cursor:pointer;"><i class="fas fa-cog"></i></a>
+                                                    <a class="btn btn-info btn-sm ml-1" title="Configuración de Facturación Electrónica"
+                                                        onclick='clickConfigFE("{{ $g->id }}")'
+                                                        style="cursor:pointer;"><i class="fas fa-file-invoice"></i></a>
+                                                    <a class="btn btn-danger btn-sm ml-1" title="Inactivar producto"
+                                                        onclick='eliminarProducto("{{ $g->id }}")'
+                                                        style="cursor:pointer;"><i class="fas fa-trash-alt"></i></a>
                                                 </td>
                                             </tr>
                                         @endforeach

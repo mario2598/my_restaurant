@@ -1043,4 +1043,102 @@ class ProductosExternosController extends Controller
             return $this->responseAjaxServerError("Algo salió mal...", []);
         }
     }
+
+    public function goPlanCompras()
+    {
+        if (!$this->validarSesion('plan_compras')) {
+            $this->setMsjSeguridad();
+            return redirect('/');
+        }
+
+        $data = [
+            'filtros'               => ['sucursal' => '-1', 'dias' => 30],
+            'plan'                  => [],
+            'tendencia'             => [],
+            'sucursales'            => $this->getSucursalesAndBodegas(),
+            'panel_configuraciones' => $this->getPanelConfiguraciones()
+        ];
+
+        return view('productoExterno.planCompras.planCompras', compact('data'));
+    }
+
+    public function goPlanComprasFiltro(Request $request)
+    {
+        if (!$this->validarSesion('plan_compras')) {
+            $this->setMsjSeguridad();
+            return redirect('/');
+        }
+
+        $sucursal = intval($request->input('sucursal', -1));
+        $dias     = max(1, intval($request->input('dias', 30)));
+
+        $plan = [];
+        if ($sucursal > 0) {
+            $plan = DB::select("
+                SELECT
+                    pe.id,
+                    pe.nombre,
+                    pe.codigo_barra,
+                    COALESCE(cat.categoria, 'Sin categoría') AS categoria,
+                    COALESCE(prov.nombre, 'Sin proveedor')   AS proveedor,
+                    COALESCE(pe.precio_compra, 0)            AS precio_compra,
+                    COALESCE(pxs.cantidad, 0)                AS stock_actual,
+                    COALESCE(cons.total_consumo, 0)          AS consumo_periodo,
+                    ROUND(COALESCE(cons.total_consumo, 0) / ?, 2) AS promedio_diario,
+                    CASE
+                        WHEN COALESCE(cons.total_consumo, 0) = 0 THEN 9999
+                        ELSE ROUND(COALESCE(pxs.cantidad, 0) * ? / COALESCE(cons.total_consumo, 0), 1)
+                    END AS dias_restantes,
+                    GREATEST(0, CEIL(
+                        COALESCE(cons.total_consumo, 0) / ? * 30
+                        - COALESCE(pxs.cantidad, 0)
+                    )) AS sugerido_comprar
+                FROM producto_externo pe
+                INNER JOIN pe_x_sucursal pxs
+                    ON pxs.producto_externo = pe.id AND pxs.sucursal = ?
+                LEFT JOIN categoria cat  ON cat.id  = pe.categoria
+                LEFT JOIN proveedor prov ON prov.id = pe.proveedor
+                LEFT JOIN (
+                    SELECT producto,
+                           SUM(cantidad_anterior - cantidad_nueva) AS total_consumo
+                    FROM   bit_inv_producto_externo
+                    WHERE  sucursal    = ?
+                      AND  devolucion  = 'N'
+                      AND  cantidad_nueva < cantidad_anterior
+                      AND  fecha >= DATE_SUB(NOW(), INTERVAL ? DAY)
+                    GROUP BY producto
+                ) cons ON cons.producto = pe.id
+                WHERE pe.estado = 'A'
+                ORDER BY dias_restantes ASC, consumo_periodo DESC
+            ", [$dias, $dias, $dias, $sucursal, $sucursal, $dias]);
+        }
+
+        $tendencia = [];
+        if ($sucursal > 0) {
+            $tendencia = DB::select("
+                SELECT
+                    YEARWEEK(fecha, 1)              AS semana_num,
+                    DATE_FORMAT(MIN(fecha),'%d/%m') AS inicio_semana,
+                    SUM(cantidad_anterior - cantidad_nueva) AS consumo_semana
+                FROM bit_inv_producto_externo
+                WHERE sucursal   = ?
+                  AND devolucion = 'N'
+                  AND cantidad_nueva < cantidad_anterior
+                  AND fecha >= DATE_SUB(NOW(), INTERVAL ? DAY)
+                GROUP BY YEARWEEK(fecha, 1)
+                ORDER BY semana_num ASC
+            ", [$sucursal, $dias]);
+        }
+
+        $data = [
+            'filtros'               => ['sucursal' => $sucursal, 'dias' => $dias],
+            'plan'                  => $plan,
+            'tendencia'             => $tendencia,
+            'sucursales'            => $this->getSucursalesAndBodegas(),
+            'panel_configuraciones' => $this->getPanelConfiguraciones()
+        ];
+
+        return view('productoExterno.planCompras.planCompras', compact('data'));
+    }
+
 }
