@@ -1045,12 +1045,12 @@ class TicketesImpresosController extends Controller
         $monedaBase = DB::table('sis_moneda')->where('es_base', 'S')->first();
         $simbolo    = $monedaBase->simbolo ?? '₡';
 
-        // Logo
+        // Logo — usa url_logo_factura igual que el PDF; sistema como fallback
         $logo_url = null;
-        if (!empty($sucursal->url_logo_sistema)) {
-            $logo_url = asset($sucursal->url_logo_sistema);
-        } elseif (!empty($sucursal->url_logo_factura)) {
+        if (!empty($sucursal->url_logo_factura)) {
             $logo_url = asset($sucursal->url_logo_factura);
+        } elseif (!empty($sucursal->url_logo_sistema)) {
+            $logo_url = asset($sucursal->url_logo_sistema);
         }
 
         $qz_mode = request()->has('qz');
