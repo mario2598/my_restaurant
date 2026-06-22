@@ -36,6 +36,64 @@
                 <div class="alert alert-warning">No hay módulos disponibles para tu perfil.</div>
             @else
                 <div class="row" id="accesos-rapidos">
+
+            {{-- ============================================================ --}}
+            {{-- AUXILIAR POS - Acceso rápido al Punto de Venta               --}}
+            {{-- ============================================================ --}}
+            @php
+                $posFacGrupo = collect($menusSide)->firstWhere('codigo_grupo', 'fac');
+                $ordenesActivas = 0;
+                if ($posFacGrupo) {
+                    $sucursalUsuario = session('usuario.sucursal') ?? session('usuario')['sucursal'] ?? null;
+                    $qOrdenes = \Illuminate\Support\Facades\DB::table('orden')
+                        ->where('pagado', 0)
+                        ->where('activo', 1);
+                    if ($sucursalUsuario) {
+                        $qOrdenes->where('sucursal', $sucursalUsuario);
+                    }
+                    $ordenesActivas = $qOrdenes->count();
+                }
+            @endphp
+
+            @if($posFacGrupo ?? null)
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="aux-pos-wrap">
+                        <div class="aux-pos-ident">
+                            <div class="aux-pos-ico"><i class="fas fa-cash-register"></i></div>
+                            <div>
+                                <div class="aux-pos-name">Punto de Venta</div>
+                                @if($ordenesActivas > 0)
+                                    <div class="aux-pos-chip">
+                                        <i class="fas fa-circle" style="font-size:7px;vertical-align:middle;color:#fbbf24;margin-right:4px;"></i>
+                                        {{ $ordenesActivas }} orden{{ $ordenesActivas != 1 ? 'es' : '' }} abierta{{ $ordenesActivas != 1 ? 's' : '' }} en tu sucursal
+                                    </div>
+                                @else
+                                    <div class="aux-pos-chip aux-pos-chip--muted">Sin órdenes abiertas en tu sucursal</div>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="aux-pos-btns">
+                            @php
+                                $posIcons = ['fas fa-desktop', 'fas fa-truck', 'fas fa-list-alt', 'fas fa-receipt'];
+                            @endphp
+                            @foreach($posFacGrupo->submenus as $pIdx => $pSub)
+                                @php
+                                    $pRuta = Str::startsWith($pSub->ruta ?? '', 'http') ? $pSub->ruta : url($pSub->ruta ?? '#');
+                                @endphp
+                                <a href="{{ $pRuta }}"
+                                   class="aux-pos-btn {{ $pIdx === 0 ? 'aux-pos-btn--primary' : 'aux-pos-btn--ghost' }}">
+                                    <i class="{{ $posIcons[$pIdx % count($posIcons)] }}"></i>
+                                    <span>{{ $pSub->titulo }}</span>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+            {{-- ============================================================ --}}
+
                 @foreach($menusSide as $grupo)
                     <?php
                         $key    = $grupo->codigo_grupo ?? '';
@@ -110,6 +168,66 @@
 #accesos-rapidos .row {
     margin-left: -8px;
     margin-right: -8px;
+}
+</style>
+
+<style>
+/* === Auxiliar POS === */
+.aux-pos-wrap {
+    background: linear-gradient(135deg, #1a3a8f 0%, #2e59d9 100%);
+    border-radius: 14px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    box-shadow: 0 4px 18px rgba(46,89,217,.28);
+}
+.aux-pos-ident { display: flex; align-items: center; gap: 14px; }
+.aux-pos-ico {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: rgba(255,255,255,.15);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.aux-pos-ico i { color: #fff; font-size: 1.3rem; }
+.aux-pos-name { color: #fff; font-size: 1.05rem; font-weight: 700; }
+.aux-pos-chip {
+    margin-top: 3px;
+    display: inline-block;
+    background: rgba(255,255,255,.15);
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 11px;
+    color: #dce8ff;
+}
+.aux-pos-chip--muted { color: rgba(255,255,255,.45); background: transparent; padding-left: 0; }
+.aux-pos-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.aux-pos-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    border-radius: 24px; padding: 8px 18px;
+    font-size: .88rem; font-weight: 600;
+    text-decoration: none !important;
+    transition: all .18s ease;
+    white-space: nowrap;
+}
+.aux-pos-btn--primary {
+    background: #fff;
+    color: #1a3a8f !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,.12);
+}
+.aux-pos-btn--primary:hover { box-shadow: 0 4px 14px rgba(0,0,0,.2); transform: translateY(-1px); }
+.aux-pos-btn--ghost {
+    background: rgba(255,255,255,.14);
+    border: 1px solid rgba(255,255,255,.28);
+    color: #fff !important;
+}
+.aux-pos-btn--ghost:hover { background: rgba(255,255,255,.24); transform: translateY(-1px); }
+@media (max-width: 576px) {
+    .aux-pos-wrap { flex-direction: column; align-items: flex-start; }
+    .aux-pos-btns { width: 100%; }
+    .aux-pos-btn { flex: 1; justify-content: center; }
 }
 </style>
 @endsection
