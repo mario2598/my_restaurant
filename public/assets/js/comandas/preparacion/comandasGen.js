@@ -1,9 +1,34 @@
 window.addEventListener("load", initialice, false);
 var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
 
+function esc(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 let anteriorCantidadDetalle = null;
 // Luego, configura un intervalo para seguir consultando cada 5 segundos
 const intervalo = setInterval(recargarOrdenes, 10000);
+
+// Live timer — update every second without a full reload
+setInterval(function () {
+    document.querySelectorAll('.cmd-timer[data-inicio]').forEach(function (el) {
+        var iso = el.getAttribute('data-inicio');
+        if (!iso) return;
+        var d = new Date(iso);
+        if (isNaN(d.getTime())) return;
+        var mins = Math.floor((new Date() - d) / 60000);
+        var valEl = el.querySelector('.cmd-timer-val');
+        if (valEl) valEl.textContent = calcularTiempoTranscurrido(d);
+        el.classList.remove('timer-ok', 'timer-warn', 'timer-alert');
+        el.classList.add(mins < 10 ? 'timer-ok' : (mins < 15 ? 'timer-warn' : 'timer-alert'));
+        // Also update header bg
+        var header = el.closest('.cmd-header');
+        if (header) {
+            header.style.background = mins < 10 ? '#4338ca' : (mins < 15 ? '#b45309' : '#b91c1c');
+        }
+    });
+}, 1000);
 
 let usuarioInteraccion = false; // Variable para indicar si el usuario ya ha interactuado
 /** Últimas métricas recibidas (para el modal de peores líneas). */
@@ -311,134 +336,91 @@ function imprimirTicket(id) {
 
 function crearHtmlComanda(comandasRes) {
     let contenedor = $('#contenedor_comandas');
-    contenedor.empty(); // Limpiar el contenedor
+    contenedor.empty();
     let nuevaCantidadDetalle = 0;
 
-    if (comandasRes == null || comandasRes === '') {
-        contenedor.append('<div class="alert alert-info">No hay comandas para mostrar.</div>');
-        if (anteriorCantidadDetalle != null) {
-            if (nuevaCantidadDetalle > anteriorCantidadDetalle) {
-                reproducirSonidoNotificacionNuevaOrden();
-            } else if (nuevaCantidadDetalle < anteriorCantidadDetalle) {
-                reproducirSonidoNotificacionMenosOrden();
-            }
-        }
-        anteriorCantidadDetalle = nuevaCantidadDetalle;
+    let comandas = (comandasRes == null || comandasRes === '')
+        ? [] : (Array.isArray(comandasRes) ? comandasRes : Object.values(comandasRes));
+
+    if (comandas.length === 0) {
+        contenedor.append('<div class="col-12"><div class="alert alert-info"><i class="fas fa-utensils mr-2"></i>No hay comandas para mostrar.</div></div>');
+        anteriorCantidadDetalle = 0;
         return;
     }
 
-    // Verificar si response.datos es un objeto y convertirlo en un arreglo si es necesario
-    let comandas = Array.isArray(comandasRes) ? comandasRes : Object.values(comandasRes);
+    comandas.forEach(p => {
+        if (!p.detalles || p.detalles.length === 0) return;
+        const lenDet = p.detalles.length;
+        nuevaCantidadDetalle += lenDet;
 
-    // Verificar si comandas es un arreglo y tiene elementos
-    if (Array.isArray(comandas) && comandas.length > 0) {
+        let fechaInicio = p.fecha_inicio ? new Date(p.fecha_inicio) : null;
+        let mins = fechaInicio ? Math.floor((new Date() - fechaInicio) / 60000) : 0;
+        let timerClass = mins < 10 ? 'timer-ok' : (mins < 15 ? 'timer-warn' : 'timer-alert');
+        let tiempoStr = fechaInicio ? calcularTiempoTranscurrido(fechaInicio) : '—';
+        let mesaInfo = p.mesa != null ? 'Mesa ' + esc(p.numero_mesa) : 'Para llevar';
+        let clienteInfo = p.nombre_cliente ? ' &middot; ' + esc(p.nombre_cliente) : '';
+        let headerBg = mins < 10 ? '#4338ca' : (mins < 15 ? '#b45309' : '#b91c1c');
+        let isoInicio = fechaInicio ? fechaInicio.toISOString() : '';
 
-        comandas.forEach(p => {
-            const lenDet = (p.detalles && p.detalles.length) ? p.detalles.length : 0;
-            nuevaCantidadDetalle += lenDet;
-            if (p.detalles && p.detalles.length > 0) {
-                let mesaInfo = p.mesa != null ? `Mesa: ${p.numero_mesa}` : 'Para llevar';
-                let fechaInicio = p.fecha_inicio ? new Date(p.fecha_inicio) : null;
-                let tiempoTranscurrido = calcularTiempoTranscurrido(fechaInicio);
-                let headerClass = p.mesa != null ? 'bg-primary' : 'bg-success';
+        let itemsHtml = '';
+        p.detalles.forEach(d => {
+            const idDoc = d.id_detalle_orden_comanda != null ? d.id_detalle_orden_comanda : '';
+            const yaListo = d.fecha_fin_comanda != null;
 
-                let cardHtml = `
-                <div class="col-md-6 col-xs-12 col-sm-12 col-xl-4 mb-3">
-                    <div class="card shadow-sm">
-                        <div onclick="imprimirTicket(${p.id})" class="card-header ${headerClass} text-white" style="padding: 10px !important; cursor:pointer;">
-                            <h4 class="mb-0 text-white">${p.numero_orden} : ${p.nombre_cliente || ''}</h4>
-                            <small class="text-light">Estado: ${p.descEstado || ''}</small>
-                        </div>
-                        <div class="card-body p-2">
-                            <div class="row">
-                                <div class="col-12">
-                                    <p><strong>${mesaInfo}</strong></p>
-                                    <p><small>Fecha de Inicio: ${fechaInicio ? fechaInicio.toLocaleString() : ''}</small></p>
-                                    <p><small>Tiempo Transcurrido: ${tiempoTranscurrido}</small></p>
-                                </div>
-                                <div class="col-12 mb-2">
-                                    <button class="btn btn-outline-success btn-block"
-                                        onclick="terminarPreparacion(${p.id_orden_comanda})">
-                                        <i class="fas fa-check"></i> Terminar Preparación
-                                    </button>
-                                </div>
-                                <div class="col-12">
-                                    <h5>Detalle de la Orden</h5>
-                                    <div class="table-responsive">
-                                        <table class="table table-striped mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th>Producto</th>
-                                                    <th>Cantidad</th>
-                                                    <th>Observación</th>
-                                                    <th></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>`;
-
-                p.detalles.forEach(d => {
-                    const idDoc = d.id_detalle_orden_comanda != null ? d.id_detalle_orden_comanda : '';
-                    const yaPreparado =  d.fecha_fin_comanda != null;
-                    const btnLinea = yaPreparado
-                        ? '<span class="text-success"><i class="fas fa-check-circle"></i> Listo</span>'
-                        : `<button type="button" class="btn btn-sm btn-outline-success" onclick="event.stopPropagation(); marcarLineaPreparada(${idDoc});" title="Marcar como preparado"><i class="fas fa-check"></i> Listo</button>`;
-                    cardHtml += `
-                                                <tr  style="cursor: pointer;"
-                                                    onclick="mostrarReceta(\`${d.receta || ''}\`,\`${d.composicion || ''}\`,\`${d.nombre_producto || ''}\`)">
-                                                    <td>${d.nombre_producto || ''}</td>
-                                                    <td>${d.cantidad_comanda || '0'}</td>
-                                                    <td><strong>${d.observacion || ''}</strong></td>
-                                                    <td class="text-center">${btnLinea}</td>
-                                                </tr>`;
-
-                    if (d.tieneExtras) {
-                        cardHtml += `
-                                                <tr>
-                                                    <td colspan="4" class="p-0">
-                                                        <div class="bg-light p-2">
-                                                            <strong>Extras:</strong>
-                                                            <ul class="list-unstyled mb-0">`;
-                        d.extras.forEach(e => {
-                            cardHtml += `
-                                                                <li>${e.descripcion_extra || ''}</li>`;
-                        });
-                        cardHtml += `
-                                                            </ul>
-                                                        </div>
-                                                    </td>
-                                                </tr>`;
-                    }
-                });
-
-
-                cardHtml += `
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-footer text-muted" style="padding: 10px !important;">
-                            <small>Iniciado: ${fechaInicio ? fechaInicio.toLocaleTimeString() : ''}</small>
-                        </div>
-                    </div>
-                </div>`;
-
-                // Añadir la tarjeta generada al contenedor
-                contenedor.append(cardHtml);
+            let obsHtml = d.observacion
+                ? '<div class="cmd-obs"><i class="fas fa-comment-alt"></i> ' + esc(d.observacion) + '</div>'
+                : '';
+            let extrasHtml = '';
+            if (d.tieneExtras && d.extras && d.extras.length) {
+                extrasHtml = '<div class="cmd-extras">'
+                    + d.extras.map(e => '<span class="cmd-extra-tag">' + esc(e.descripcion_extra || '') + '</span>').join('')
+                    + '</div>';
             }
+            let accionHtml = yaListo
+                ? '<div class="cmd-listo-done"><i class="fas fa-check-circle"></i></div>'
+                : '<button type="button" class="cmd-btn-listo" onclick="event.stopPropagation();marcarLineaPreparada(' + idDoc + ')"><i class="fas fa-check"></i><span>Listo</span></button>';
 
+            let rowCls = yaListo ? 'cmd-item cmd-item-done' : 'cmd-item';
+            let receta = (d.receta || '').replace(/`/g,"'");
+            let composicion = (d.composicion || '').replace(/`/g,"'");
+            let nomProd = (d.nombre_producto || '').replace(/`/g,"'");
+
+            itemsHtml += '<div class="' + rowCls + '" onclick="mostrarReceta(`' + receta + '`,`' + composicion + '`,`' + nomProd + '`)">'
+                + '<div class="cmd-item-dot"></div>'
+                + '<div class="cmd-item-body">'
+                +   '<div class="cmd-nombre">' + esc(d.nombre_producto || '') + '</div>'
+                +   obsHtml + extrasHtml
+                + '</div>'
+                + '<div class="cmd-qty">' + esc(String(d.cantidad_comanda || 1)) + '</div>'
+                + '<div class="cmd-action">' + accionHtml + '</div>'
+                + '</div>';
         });
-    } else {
-        // Mostrar un mensaje si no hay comandas o la variable no es un arreglo
-        contenedor.append('<div class="alert alert-info">No hay comandas para mostrar.</div>');
-    }
+
+        let cardHtml = '<div class="col-12 col-md-6 col-xl-4 mb-3">'
+            + '<div class="card cmd-card shadow-sm">'
+            + '<div class="cmd-header" style="background:' + headerBg + ';" onclick="imprimirTicket(' + p.id + ')">'
+            +   '<div class="cmd-header-left">'
+            +     '<div class="cmd-orden">' + esc(p.numero_orden || '') + '</div>'
+            +     '<div class="cmd-meta">' + mesaInfo + clienteInfo + ' &nbsp;<small>' + esc(p.descEstado || '') + '</small></div>'
+            +   '</div>'
+            +   '<div class="cmd-timer ' + timerClass + '" data-inicio="' + isoInicio + '">'
+            +     '<i class="fas fa-clock"></i> <span class="cmd-timer-val">' + tiempoStr + '</span>'
+            +   '</div>'
+            + '</div>'
+            + '<div class="cmd-items">' + itemsHtml + '</div>'
+            + '<div class="cmd-footer">'
+            +   '<button class="cmd-btn-terminar" onclick="terminarPreparacion(' + p.id_orden_comanda + ')">'
+            +     '<i class="fas fa-check-double"></i> Terminar Preparación'
+            +   '</button>'
+            + '</div>'
+            + '</div></div>';
+
+        contenedor.append(cardHtml);
+    });
+
     if (anteriorCantidadDetalle != null) {
-        if (nuevaCantidadDetalle > anteriorCantidadDetalle) {
-            reproducirSonidoNotificacionNuevaOrden();
-        } else if (nuevaCantidadDetalle < anteriorCantidadDetalle) {
-            reproducirSonidoNotificacionMenosOrden();
-        }
+        if (nuevaCantidadDetalle > anteriorCantidadDetalle) reproducirSonidoNotificacionNuevaOrden();
+        else if (nuevaCantidadDetalle < anteriorCantidadDetalle) reproducirSonidoNotificacionMenosOrden();
     }
     anteriorCantidadDetalle = nuevaCantidadDetalle;
 }
@@ -446,43 +428,22 @@ function crearHtmlComanda(comandasRes) {
 
 function marcarLineaPreparada(id_detalle_orden_comanda) {
     if (id_detalle_orden_comanda == null || id_detalle_orden_comanda < 1) return;
-    swal({
-        type: 'warning',
-        text: '¿Confirmar que esta línea está preparada?',
-        showCancelButton: true,
-        confirmButtonText: 'Confirmar',
-        cancelButtonText: 'Cancelar',
-        allowOutsideClick: false,
-        allowEscapeKey: false
-    }).then(function (result) {
-        if (result) {
-            $('#loader').fadeIn();
-            $.ajax({
-                url: `${base_path}/comandas/preparacion/comanda/marcarLineaPreparada`,
-                type: 'post',
-                dataType: "json",
-                data: {
-                    _token: CSRF_TOKEN,
-                    id_detalle_orden_comanda: id_detalle_orden_comanda
-                }
-            }).done(function (res) {
-                $('#loader').fadeOut();
-                if (!res['estado']) {
-                    setError('Marcar línea preparada', res['mensaje']);
-                } else {
-                    setSuccess('Línea preparada', 'Se marcó como preparado.');
-                    recargarOrdenes();
-                    var datos = res['datos'] || {};
-                    if (datos.orden_completa && datos.id_orden_comanda) {
-                        terminarPreparacion(datos.id_orden_comanda);
-                    }
-                }
-            }).fail(function () {
-                $('#loader').fadeOut();
-                setError('Marcar línea preparada', 'Algo salió mal.');
-            });
+    $.ajax({
+        url: `${base_path}/comandas/preparacion/comanda/marcarLineaPreparada`,
+        type: 'post',
+        dataType: 'json',
+        data: { _token: CSRF_TOKEN, id_detalle_orden_comanda: id_detalle_orden_comanda }
+    }).done(function (res) {
+        if (!res['estado']) {
+            setError('Marcar línea', res['mensaje']);
+        } else {
+            recargarOrdenes();
+            var datos = res['datos'] || {};
+            if (datos.orden_completa && datos.id_orden_comanda) {
+                terminarPreparacion(datos.id_orden_comanda);
+            }
         }
-    });
+    }).fail(function () { setError('Marcar línea', 'Algo salió mal.'); });
 }
 
 function calcularTiempoTranscurrido(fechaInicio) {
