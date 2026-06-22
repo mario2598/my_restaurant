@@ -57,6 +57,13 @@ function cargarHtmlSucursal(sucursal) {
   } else {
     $('#mdl_sucursal_chk_activa').prop('checked', false);
   }
+
+  // Config impresión
+  $('#mdl_sucursal_ancho_mm').val(sucursal.ticket_ancho_mm ?? 80);
+  $('#mdl_sucursal_chk_auto_imprimir').prop('checked', (sucursal.ticket_auto_imprimir ?? 1) == 1);
+  $('#mdl_sucursal_nota_pie').val(sucursal.ticket_nota_pie ?? '');
+  setTicketModo(sucursal.ticket_modo ?? 'html');
+
   $('#mdl_sucursal').modal('show');
 }
 
@@ -77,5 +84,27 @@ function nuevaSucursal() {
   $('#mdl_sucursal_ipt_correo_factura').val("");
   $('#tipo_identificacion_emisor').val("");
   $('#mdl_sucursal_chk_activa').prop('checked', true);
+  // Config impresión - defaults
+  $('#mdl_sucursal_ancho_mm').val(80);
+  $('#mdl_sucursal_chk_auto_imprimir').prop('checked', true);
+  $('#mdl_sucursal_nota_pie').val('');
+  $('#mdl_sucursal_impresora').val('');
+  setTicketModo('html');
   $('#mdl_sucursal').modal('show');
+}
+
+function seleccionarTicketModo(modo) {
+  $('#mdl_sucursal_ticket_modo').val(modo);
+  $('#ticket-modo-cards .ticket-modo-card').each(function() {
+    var esSel = $(this).data('modo') === modo;
+    $(this).css({
+      'border-color':   esSel ? '#4e73df' : '#dee2e6',
+      'background':     esSel ? '#f0f4ff' : '#fff',
+      'box-shadow':     esSel ? '0 2px 8px rgba(78,115,223,.22)' : 'none'
+    });
+  });
+}
+
+function setTicketModo(modo) {
+  seleccionarTicketModo(modo);
 }

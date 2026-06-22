@@ -851,7 +851,7 @@ function limpiar() {
 
 function inicializarMapaContenedores() {
     contenedores.set("categorias", $("#scrl-categorias"));
-    contenedores.set("productos", $("#tbody-productos"));
+    contenedores.set("productos", $("#grid-productos"));
     contenedores.set("tipos", $("#nv-tipos"));
     contenedores.set("orden", $("#tbody-orden"));
 }
@@ -936,157 +936,218 @@ function generarProductos() {
     });
 
     $(contenedores.get("productos")).html(cards);
+
+    if (typeof busquedaActiva !== 'undefined' && busquedaActiva && typeof mostrarProductosFiltrados === 'function') {
+        mostrarProductosFiltrados();
+    }
 }
 
 /**
  * Genera el elemento HTML correspondiente a la categoría
  */
 function generarHTMLProducto(nombre, codigo, precio, cantidad, tipoProd, descripcion = '') {
-    var text = `<tr class="filaProductos pos-fila-producto" data-codigo="${escAttrPos(codigo)}">
-    <td width="40%">
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-            <span onclick="seleccionarProducto('N','${codigo}')" style="cursor: pointer; flex: 1;">${nombre}</span>`;
-    
-    // Agregar botón para ver descripción solo si existe
-    if (descripcion && descripcion.trim() !== '') {
-        // Escapar correctamente para atributos HTML usando base64
-        var descripcionBase64 = btoa(unescape(encodeURIComponent(descripcion)));
-        var nombreBase64 = btoa(unescape(encodeURIComponent(nombre)));
-        text += `<button type="button" 
-                    class="btn btn-sm btn-link p-0 ml-2 btn-ver-descripcion" 
-                    style="color: #6c757d; font-size: 0.85em; min-width: auto; padding: 2px 4px !important;"
-                    data-descripcion="${descripcionBase64}"
-                    data-nombre="${nombreBase64}"
-                    title="Ver descripción">
-                    <i class="fas fa-info-circle"></i>
-                </button>`;
+    var codigoEsc = escAttrPos(codigo);
+    var tieneDesc = descripcion && descripcion.trim() !== '';
+    var stockBadge = '';
+    if (tipoProd === 'E') {
+        var stockColor = cantidad < 5 ? 'badge-danger' : cantidad < 15 ? 'badge-warning text-dark' : 'badge-success';
+        stockBadge = '<span class="pos-card-stock-badge badge ' + stockColor + '">' + cantidad + '</span>';
     }
-    
-    text += `</div>`;
-    if (tipoProd == "E") {
-        text += `<br> <small `;
-        if (cantidad < 15) {
-            text += `style="color:red;"`;
-        }
-        text += `> Cantidad : <strong> ${cantidad}</strong></small>`;
+    var descBtn = '';
+    if (tieneDesc) {
+        var descB64 = btoa(unescape(encodeURIComponent(descripcion)));
+        var nombreB64 = btoa(unescape(encodeURIComponent(nombre)));
+        descBtn = '<button type="button" class="pos-card-info-btn btn-ver-descripcion"'
+                + ' data-descripcion="' + descB64 + '" data-nombre="' + nombreB64 + '"'
+                + ' onclick="verDescripcionCard(this,event)"><i class="fas fa-info-circle"></i></button>';
     }
-    text += `</td><td width="30%" style="text-align: center" onclick="seleccionarProducto('N','${codigo}')" style="cursor: pointer;">${parseFloat(precio).toFixed(2)}</td></tr>`;
-
-    return text;
+    var precioFmt = '₡' + parseFloat(precio).toLocaleString('es-CR', {minimumFractionDigits:0, maximumFractionDigits:2});
+    return '<div class="pos-card-producto" data-codigo="' + codigoEsc + '"'
+         + ' onclick="posCardClick(event,\'N\',\'' + codigoEsc + '\')">'
+         + stockBadge + descBtn
+         + '<div class="pos-card-nombre' + (tieneDesc ? ' has-desc' : '') + '">' + nombre + '</div>'
+         + '<div class="pos-card-precio">' + precioFmt + '</div>'
+         + '</div>';
 }
 
-function generarHTMLExtras() {
-    let texto = ``;
-    let cont = 0;
-    productoSeleccionado.extras.forEach(extra => {
 
-        texto += `<div class="col-sm-12 col-md-12 col-xl-12" >
-                    <div class="col-sm-12 col-md-12 col-xl-12">
-                      <h5 class="modal-title">${extra.dsc_grupo} ${extra.requerido == 1 ? "<small>(Requerido)</small>" : ""}</h5>
-                    </div>
-                    <div class="col-sm-12 col-md-12 col-xl-12">
-                        <div class="form-group">`;
+function verDescripcionCard(btn, event) {
+    event.stopPropagation();
+    var desc   = decodeURIComponent(escape(atob(btn.getAttribute('data-descripcion'))));
+    var nombre = decodeURIComponent(escape(atob(btn.getAttribute('data-nombre'))));
+    if (typeof mostrarDescripcionProducto === 'function') {
+        mostrarDescripcionProducto(desc, nombre);
+    }
+}
+
+function posCardClick(event, tipo, codigo) {
+    var card = event.currentTarget;
+    seleccionarProducto(tipo, codigo);
+    card.classList.add('pos-card-flash');
+    setTimeout(function() { card.classList.remove('pos-card-flash'); }, 380);
+}
+
+
+function toggleExtraPillChk(inputId, extraId) {
+    var inp = document.getElementById(inputId);
+    if (!inp) return;
+    inp.checked = !inp.checked;
+    var btn = inp.nextElementSibling;
+    if (btn && btn.tagName === 'BUTTON') {
+        inp.checked ? btn.classList.add('pill-selected') : btn.classList.remove('pill-selected');
+    }
+    seleccionarExtraCheck(inp, extraId);
+}
+
+function toggleExtraPillRadio(inputId, grupo, multiple, extraId) {
+    var inp = document.getElementById(inputId);
+    if (!inp) return;
+    var cont = document.getElementById('cont-extras');
+    if (cont) {
+        var radios = cont.querySelectorAll('input[type="radio"]');
+        for (var i = 0; i < radios.length; i++) {
+            var r = radios[i];
+            if (r.name !== inp.name) continue;
+            var isTarget = (r === inp);
+            r.checked = isTarget;
+            var btn = r.nextElementSibling;
+            if (btn && btn.tagName === 'BUTTON') {
+                isTarget ? btn.classList.add('pill-selected') : btn.classList.remove('pill-selected');
+            }
+        }
+    }
+    seleccionarExtraRadio(inp, grupo, multiple, extraId === -1 ? -1 : parseInt(extraId));
+}
+
+
+function generarHTMLExtras() {
+    var texto = '<div class="pos-extras-wrap">';
+    productoSeleccionado.extras.forEach(function(extra) {
+        var badge = extra.requerido == 1
+            ? '<span class="badge badge-danger" style="font-size:.68rem;">Requerido</span>'
+            : '<span class="badge badge-secondary" style="font-size:.68rem;">Opcional</span>';
+        texto += '<div class="pos-extras-grupo">';
+        texto += '<div class="pos-extras-grupo-titulo">' + extra.dsc_grupo + ' ' + badge + '</div>';
+        texto += '<div class="pos-extras-opciones">';
 
         if (extra.multiple == 1) {
-            extra.extras.forEach(extra1 => {
-                texto += `<label style="margin-left:10px;">
-                            <input type="checkbox" name="${extra.dsc_grupo}" 
-                            onchange="seleccionarExtraCheck(this, ${extra1.id})"
-                            value="${extra1.id}">${extra1.descripcion} ₡${extra1.precio}
-                        </label>
-                        `;
-                cont++;
+            extra.extras.forEach(function(extra1) {
+                var iid = 'xchk_' + extra1.id;
+                var precioStr = extra1.precio > 0
+                    ? '<span class="pos-extra-precio">+\u20a1' + parseFloat(extra1.precio).toLocaleString('es-CR',{minimumFractionDigits:0,maximumFractionDigits:2}) + '</span>'
+                    : '';
+                texto += '<input type="checkbox" id="' + iid + '" class="d-none"'
+                       + ' name="' + extra.dsc_grupo + '" value="' + extra1.id + '"'
+                       + ' onchange="seleccionarExtraCheck(this,' + extra1.id + ')">';
+                texto += '<button type="button" class="pos-extra-pill"'
+                       + ' data-extra-id="' + extra1.id + '"'
+                       + ' onclick="toggleExtraPillChk(\'' + iid + '\',' + extra1.id + ')">'
+                       + extra1.descripcion + precioStr + '</button>';
             });
         } else {
-            extra.extras.forEach(extra1 => {
-                texto += `<label style="margin-left:10px;">
-                            <input type="radio" name="${extra.dsc_grupo}"
-                            onchange="seleccionarExtraRadio(this, '${extra.dsc_grupo}', ${extra.multiple}, ${extra1.id})"
-                            value="${extra1.id}">${extra1.descripcion} ₡${extra1.precio}
-                        </label>
-                        `;
-                cont++;
+            extra.extras.forEach(function(extra1) {
+                var grpSlug = extra.dsc_grupo.replace(/\s/g,'_');
+                var iid = 'xrad_' + grpSlug + '_' + extra1.id;
+                var precioStr = extra1.precio > 0
+                    ? '<span class="pos-extra-precio">+\u20a1' + parseFloat(extra1.precio).toLocaleString('es-CR',{minimumFractionDigits:0,maximumFractionDigits:2}) + '</span>'
+                    : '';
+                texto += '<input type="radio" id="' + iid + '" class="d-none"'
+                       + ' name="' + extra.dsc_grupo + '" value="' + extra1.id + '"'
+                       + ' onchange="seleccionarExtraRadio(this,\'' + extra.dsc_grupo + '\',' + extra.multiple + ',' + extra1.id + ')">';
+                texto += '<button type="button" class="pos-extra-pill"'
+                       + ' data-extra-id="' + extra1.id + '"'
+                       + ' data-radio-grupo="' + extra.dsc_grupo + '"'
+                       + ' onclick="toggleExtraPillRadio(\'' + iid + '\',\'' + extra.dsc_grupo + '\',' + extra.multiple + ',' + extra1.id + ')">'
+                       + extra1.descripcion + precioStr + '</button>';
             });
             if (extra.requerido == 0) {
-                texto += `<label style="margin-left:10px;">
-                            <input type="radio" name="${extra.dsc_grupo}" checked
-                            onchange="seleccionarExtraRadio(this, '${extra.dsc_grupo}', ${extra.multiple}, -1)"
-                            value="null">Ninguno
-                        </label>
-                        `;
+                var grpSlug = extra.dsc_grupo.replace(/\s/g,'_');
+                var iidNone = 'xrad_' + grpSlug + '_ninguno';
+                texto += '<input type="radio" id="' + iidNone + '" class="d-none" checked'
+                       + ' name="' + extra.dsc_grupo + '" value="null"'
+                       + ' onchange="seleccionarExtraRadio(this,\'' + extra.dsc_grupo + '\',' + extra.multiple + ',-1)">';
+                texto += '<button type="button" class="pos-extra-pill pill-selected"'
+                       + ' data-radio-grupo="' + extra.dsc_grupo + '"'
+                       + ' data-extra-id="ninguno"'
+                       + ' onclick="toggleExtraPillRadio(\'' + iidNone + '\',\'' + extra.dsc_grupo + '\',' + extra.multiple + ',-1)">Ninguno</button>';
             }
-
         }
-
-        texto += `</div>
-        </div></div>`;
+        texto += '</div></div>';
     });
-
-
+    texto += '</div>';
     $('#cont-extras').html(texto);
+    if (productoSeleccionado && productoSeleccionado.nombre) {
+        $('#mdl-extras-titulo').html('<i class="fas fa-utensils mr-2"></i>' + productoSeleccionado.nombre);
+    }
 }
 
 
 function generarHTMLExtrasDetalle() {
-    let texto = ``;
-    let cont = 0;
-    productoSeleccionado.extras.forEach(extra => {
-
-        texto += `<div class="col-sm-12 col-md-12 col-xl-12" >
-                    <div class="col-sm-12 col-md-12 col-xl-12">
-                      <h5 class="modal-title">${extra.dsc_grupo} ${extra.requerido == 1 ? "<small>(Requerido)</small>" : ""}</h5>
-                    </div>
-                    <div class="col-sm-12 col-md-12 col-xl-12">
-                        <div class="form-group">`;
+    var texto = '<div class="pos-extras-wrap">';
+    productoSeleccionado.extras.forEach(function(extra) {
+        var badge = extra.requerido == 1
+            ? '<span class="badge badge-danger" style="font-size:.68rem;">Requerido</span>'
+            : '<span class="badge badge-secondary" style="font-size:.68rem;">Opcional</span>';
+        texto += `<div class="pos-extras-grupo">
+            <div class="pos-extras-grupo-titulo">${extra.dsc_grupo} ${badge}</div>
+            <div class="pos-extras-opciones">`;
 
         if (extra.multiple == 1) {
-            extra.extras.forEach(extra1 => {
-                const found = detalleSeleccionado.extras.find(s => s.id == extra1.id);
-                if (found != null && found != undefined) {
-                    extra1.seleccionado = true;
-                }
-                texto += `<label style="margin-left:10px;">
-                            <input type="checkbox" name="${extra.dsc_grupo}" ${(found == null || found == undefined) ? "" : "checked"} 
-                            onchange="seleccionarExtraCheck(this, ${extra1.id})"
-                            value="${extra1.id}">${extra1.descripcion} ₡${extra1.precio}
-                        </label>
-                        `;
-                cont++;
+            extra.extras.forEach(function(extra1) {
+                var found = detalleSeleccionado.extras.find(function(s) { return s.id == extra1.id; });
+                if (found) extra1.seleccionado = true;
+                var iid = 'xdchk_' + extra1.id;
+                var chk = found ? 'checked' : '';
+                var sel = found ? ' pill-selected' : '';
+                var precioStr = extra1.precio > 0 ? `<span class="pos-extra-precio">+₡${parseFloat(extra1.precio).toLocaleString('es-CR',{minimumFractionDigits:0,maximumFractionDigits:2})}</span>` : '';
+                texto += `<input type="checkbox" id="${iid}" class="d-none" ${chk}
+                               name="${extra.dsc_grupo}" value="${extra1.id}"
+                               onchange="seleccionarExtraCheck(this,${extra1.id})">
+                          <button type="button" class="pos-extra-pill${sel}"
+                                  data-extra-id="${extra1.id}"
+                                  onclick="toggleExtraPillChk('${iid}',${extra1.id})">
+                              ${extra1.descripcion}${precioStr}
+                          </button>`;
             });
         } else {
             var selecciono = false;
-            extra.extras.forEach(extra1 => {
-                const found = detalleSeleccionado.extras.find(s => s.id == extra1.id);
-                if (found != null && found != undefined) {
-                    extra1.seleccionado = true;
-                    selecciono = true;
-                }
-                texto += `<label style="margin-left:10px;">
-                            <input type="radio" name="${extra.dsc_grupo}"  ${(found == null || found == undefined) ? "" : "checked"} 
-                            onchange="seleccionarExtraRadio(this, '${extra.dsc_grupo}', ${extra.multiple}, ${extra1.id})"
-                            value="${extra1.id}">${extra1.descripcion} ₡${extra1.precio}
-                        </label>
-                        `;
-                cont++;
+            extra.extras.forEach(function(extra1) {
+                var found = detalleSeleccionado.extras.find(function(s) { return s.id == extra1.id; });
+                if (found) { extra1.seleccionado = true; selecciono = true; }
+                var iid = 'xdrad_' + extra.dsc_grupo.replace(/\s/g,'_') + '_' + extra1.id;
+                var chk = found ? 'checked' : '';
+                var sel = found ? ' pill-selected' : '';
+                var precioStr = extra1.precio > 0 ? `<span class="pos-extra-precio">+₡${parseFloat(extra1.precio).toLocaleString('es-CR',{minimumFractionDigits:0,maximumFractionDigits:2})}</span>` : '';
+                texto += `<input type="radio" id="${iid}" class="d-none" ${chk}
+                               name="${extra.dsc_grupo}" value="${extra1.id}"
+                               onchange="seleccionarExtraRadio(this,'${extra.dsc_grupo}',${extra.multiple},${extra1.id})">
+                          <button type="button" class="pos-extra-pill${sel}"
+                                  data-extra-id="${extra1.id}"
+                                  data-radio-grupo="${extra.dsc_grupo}"
+                                  onclick="toggleExtraPillRadio('${iid}','${extra.dsc_grupo}',${extra.multiple},${extra1.id})">
+                              ${extra1.descripcion}${precioStr}
+                          </button>`;
             });
             if (extra.requerido == 0) {
-                texto += `<label style="margin-left:10px;">
-                            <input type="radio" name="${extra.dsc_grupo}" ${(!selecciono) ? "checked" : ""} 
-                            onchange="seleccionarExtraRadio(this, '${extra.dsc_grupo}', ${extra.multiple}, -1)"
-                            value="null">Ninguno
-                        </label>
-                        `;
+                var iidNone = 'xdrad_' + extra.dsc_grupo.replace(/\s/g,'_') + '_ninguno';
+                var noneChk = !selecciono ? 'checked' : '';
+                var noneSel = !selecciono ? ' pill-selected' : '';
+                texto += `<input type="radio" id="${iidNone}" class="d-none" ${noneChk}
+                               name="${extra.dsc_grupo}" value="null"
+                               onchange="seleccionarExtraRadio(this,'${extra.dsc_grupo}',${extra.multiple},-1)">
+                          <button type="button" class="pos-extra-pill${noneSel}"
+                                  data-radio-grupo="${extra.dsc_grupo}"
+                                  data-extra-id="ninguno"
+                                  onclick="toggleExtraPillRadio('${iidNone}','${extra.dsc_grupo}',${extra.multiple},-1)">
+                              Ninguno
+                          </button>`;
             }
-
         }
-
-        texto += `</div>
-        </div></div>`;
+        texto += '</div></div>';
     });
-
+    texto += '</div>';
     $('#cont-extras-detalle').html(texto);
 }
-
 
 function seleccionarExtraRadio(radio, grupo, multiple, extra1) {
     const found = productoSeleccionado.extras.find(s => s.dsc_grupo == grupo && s.multiple == multiple);
@@ -2360,10 +2421,57 @@ function recargarOrdenes() {
 }
 
 function imprimirTicket(id) {
+    if (typeof ticketImpresora !== 'undefined' && ticketImpresora
+            && typeof qz !== 'undefined') {
+        imprimirConQZTray(id);
+        return;
+    }
+    if (typeof ticketModo !== 'undefined' && ticketModo === 'pdf') {
+        $("#btn-pdf").prop('href', `${base_path}/impresora/tiquete/${id}`);
+        document.getElementById('btn-pdf').click();
+    } else {
+        var url = `${base_path}/impresora/tiquete/html/${id}`;
+        window.open(url, '_blank', 'width=380,height=600,scrollbars=yes');
+    }
+}
 
+function imprimirConQZTray(id) {
+    var protocol = window.location.protocol + '//';
+    var host     = window.location.host;
+    var ticketUrl = protocol + host + base_path + '/impresora/tiquete/html/' + id;
 
-    $("#btn-pdf").prop('href', `${base_path}/impresora/tiquete/${id}`);
-    document.getElementById('btn-pdf').click();
+    var doConnect = (qz.websocket.isActive && qz.websocket.isActive())
+        ? Promise.resolve()
+        : qz.websocket.connect({ retries: 1, delay: 0.5 });
+
+    doConnect.then(function() {
+        return qz.printers.find(ticketImpresora);
+    }).then(function(printer) {
+        var ancho = (typeof ticketAncho !== 'undefined' && parseInt(ticketAncho) > 0)
+            ? parseInt(ticketAncho) : 80;
+        var cfg = qz.configs.create(printer, {
+            size:      { width: ancho, units: 'mm' },
+            margins:   0,
+            colorType: 'blackwhite',
+            interpolation: 'bicubic'
+        });
+        return qz.print(cfg, [{ type: 'pixel', format: 'html', flavor: 'file', data: ticketUrl }]);
+    }).catch(function(err) {
+        console.warn('QZ Tray error:', err.message || err);
+        // Fallback: abre ventana normal
+        if (typeof ticketModo !== 'undefined' && ticketModo === 'pdf') {
+            $("#btn-pdf").prop('href', `${base_path}/impresora/tiquete/${id}`);
+            document.getElementById('btn-pdf').click();
+        } else {
+            window.open(`${base_path}/impresora/tiquete/html/${id}`, '_blank',
+                        'width=380,height=600,scrollbars=yes');
+        }
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon: 'warning', title: 'QZ Tray no disponible',
+                text: 'Se abrió el tiquete. Para impresión silenciosa instale QZ Tray.',
+                timer: 5000, showConfirmButton: false, toast: true, position: 'top-end' });
+        }
+    });
 }
 
 function generarHTMLOrdenes(ordenes) {
@@ -2373,24 +2481,6 @@ function generarHTMLOrdenes(ordenes) {
     ordenes.forEach(orden => {
         contactoAux = "";
         msjTrackingWhatsp = "";
-        var lineas = "";
-        var tablaDetalles = "";
-        orden.detalles.forEach(detalle => {
-            tablaDetalles = tablaDetalles + `<tr style='border-bottom: 1px solid grey;'>
-                                                <td class='text-center' >
-                                                    ${detalle.nombre_producto}
-                                                </td> 
-                                                <td class='text-center'>
-                                                    ${detalle.cantidad}
-                                                </td>
-                                                <td class='text-center'>
-                                                    ${detalle.total ?? 0}
-                                                </td>
-                                                <td class='text-center'>
-                                                    <input type='checkbox' id='elemento${detalle.id ?? 0}' class='elemento' value='${detalle.id ?? 0}'> 
-                                                </td>
-                                            </tr>`;
-        });
 
         if (orden.entrega != null) {
             contactoAux = orden.entrega.contacto;
@@ -2399,70 +2489,57 @@ function generarHTMLOrdenes(ordenes) {
             orden.numero_orden, contactoAux,
             `${base_path}/tracking/orden/${orden.idOrdenEnc ?? ''}`);
 
-        lineas.slice(0, -1);
+        // Estado visual
+        var anulada  = orden.cod_general === "ORD_ANULADA";
+        var pagada   = !anulada && orden.pagado == 1;
 
-        // Determinar el estilo y icono según el estado de la orden
-        let estiloFila = "";
-        let iconoEstado = "";
-        let colorEstado = "";
+        var estiloFila = anulada ? "background:#fff0f0;border-left:4px solid #e74c3c;"
+                       : pagada  ? "background:#f0fff0;border-left:4px solid #27ae60;"
+                       :           "background:#fffbf0;border-left:4px solid #f39c12;";
 
-        if (orden.cod_general == "ORD_ANULADA") {
-            estiloFila = "background-color: #ffebee; border-left: 5px solid #f44336;";
-            iconoEstado = "fas fa-ban";
-            colorEstado = "#f44336";
-        } else if (orden.pagado == 1) {
-            estiloFila = "background-color: #e8f5e8; border-left: 5px solid #4caf50;";
-            iconoEstado = "fas fa-check-circle";
-            colorEstado = "#4caf50";
-        } else {
-            estiloFila = "background-color: #fff3e0; border-left: 5px solid #ff9800;";
-            iconoEstado = "fas fa-clock";
-            colorEstado = "#ff9800";
-        }
+        var badgeEstado = anulada ? '<span class="badge badge-danger">Anulada</span>'
+                        : pagada  ? '<span class="badge badge-success">Pagada</span>'
+                        :           '<span class="badge badge-warning text-dark">Pendiente</span>';
 
-        var iconoIncidente = (orden.tiene_incidentes || (orden.incidentes && orden.incidentes.length > 0))
-            ? ' <i class="fas fa-exclamation-triangle text-warning" title="Orden con incidente(s)"></i>'
+        var iconoInc = (orden.tiene_incidentes || (orden.incidentes && orden.incidentes.length > 0))
+            ? ' <i class="fas fa-exclamation-triangle text-warning" title="Tiene incidentes"></i>'
             : '';
-        texto = texto +
-            `<tr style="${estiloFila} border-bottom: 1px solid grey;">
-                <td class="text-center"  onclick="cargarOrdenGestion(${orden.id})" style="cursor:pointer; text-decoration : underline; ">
-                   <i class="fas fa-cog" aria-hidden="true"> </i> ${orden.numero_orden}${iconoIncidente}
-                </td> 
-                 <td class="text-center">
-                    ${orden.numero_mesa ?? 'PARA LLEVAR'}
-                </td>
-                 <td class="text-center">
-                <i class="${iconoEstado}" style="color: ${colorEstado}; margin-right: 5px;"></i>
-                ${orden.cod_general == "ORD_ANULADA" ? "Anulada" : (orden.pagado == 1 ? "Pagado" : "Pendiente de Pagar")}
-                </td>
-                <td class="text-center">
-                    ${orden.fecha_inicio}
-                </td>
-                <td class="text-center">
-                    ${orden.nombre_cliente ?? ""}
-                </td>
-                 <td class="text-center">
-                ${orden.estadoOrden ?? ""}
-            </td>
-            
-                <td class="text-center">
-                ${orden.cod_general == "ORD_ANULADA" ? 0 : (orden.total_con_descuento ?? 0)}
-            </td> 
-             <td class="text-center">
-                ${orden.cod_general == "ORD_ANULADA" ? 0 : (orden.mto_pagado ?? 0)}
-            </td>
-                <td class="text-center">
-                ${orden.cod_general == "ORD_ANULADA" ? 0 : ((orden.total_con_descuento ?? 0) - (orden.mto_pagado ?? 0))}
-            </td> 
-               
-           
-            <td class="text-center" style="cursor:pointer; text-decoration : underline;" onclick="imprimirTicket( ${orden.id})"> 
-                <i class="fas fa-print" aria-hidden="true"> </i> Imprimir Tiquete
-            </td>
-           `;
 
+        // Acciones
+        var btnAbrir = `<button class="btn btn-sm btn-primary mr-1 mb-1"
+                                onclick="cargarOrdenGestion(${orden.id})"
+                                title="Abrir en POS">
+                            <i class="fas fa-pen"></i> Abrir
+                        </button>`;
 
-        texto = texto + `</tr>`;
+        var btnImprimir = `<button class="btn btn-sm btn-outline-secondary mr-1 mb-1"
+                                   onclick="imprimirTicket(${orden.id})"
+                                   title="Imprimir tiquete">
+                               <i class="fas fa-print"></i>
+                           </button>`;
+
+        var btnWsp = (contactoAux && contactoAux.length > 5)
+            ? `<a class="btn btn-sm btn-outline-success mb-1"
+                  href="${msjTrackingWhatsp}" target="_blank" title="Enviar rastreo por WhatsApp">
+                   <i class="fab fa-whatsapp"></i>
+               </a>`
+            : '';
+
+        texto += `<tr style="${estiloFila} border-bottom:1px solid #dee2e6;">
+            <td class="text-center font-weight-bold">
+                ${orden.numero_orden}${iconoInc}
+            </td>
+            <td class="text-center">${orden.numero_mesa ?? 'PARA LLEVAR'}</td>
+            <td class="text-center">${badgeEstado}</td>
+            <td class="text-center small">${orden.fecha_inicio??''}</td>
+            <td class="text-center">${orden.nombre_cliente??''}</td>
+            <td class="text-center font-weight-bold">
+                ${anulada ? '—' : (orden.total_con_descuento??0)}
+            </td>
+            <td class="text-center" style="white-space:nowrap;">
+                ${btnAbrir}${btnImprimir}${btnWsp}
+            </td>
+        </tr>`;
     });
 
     $('#tbody-ordenes').html(texto);
