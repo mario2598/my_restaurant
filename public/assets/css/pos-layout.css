@@ -97,24 +97,25 @@
         text-overflow: ellipsis;
     }
 
-    /* ── Barra fija intermedia: Total + botón de cobro ── */
+    /* ── Barra fija intermedia: Total + botones en UNA sola fila compacta ── */
     #contFacturar {
         position: fixed;
-        bottom: 52px;        /* altura de #nv-acciones */
+        bottom: 52px;
         left: 0;
         right: 0;
         z-index: 910;
         background: #fff;
         border-top: 1px solid #dee2e6;
         box-shadow: none;
-        padding: 8px 12px !important;
+        padding: 6px 10px !important;
     }
 
-    /* Total + botón en fila horizontal */
+    /* Total [izq] + botones [der] en fila horizontal */
     #contFacturar .container-fluid {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
+        flex-wrap: nowrap;
     }
     #contFacturar .row.mb-3 {
         flex: 0 0 auto;
@@ -126,24 +127,37 @@
         margin: 0 !important;
         padding: 0;
     }
+    /* Botones en fila horizontal dentro del panel */
+    #contFacturar .row.mb-2 > .col-12 {
+        display: flex;
+        gap: 5px;
+        padding: 0;
+    }
+    #contFacturar ul.nav-pills {
+        flex: 1;
+        margin: 0 !important;
+        display: block;
+    }
+    #contFacturar ul.nav-pills + ul.nav-pills { margin: 0 !important; }
     #contFacturar #txt-total-pagar {
-        font-size: 1rem !important;
+        font-size: .88rem !important;
         margin: 0 !important;
         white-space: nowrap;
         color: #1a3a8f !important;
         font-weight: 700 !important;
     }
-    #contFacturar ul.nav-pills { margin: 0 !important; }
-    #contFacturar ul.nav-pills + ul.nav-pills { margin-top: 4px !important; }
     #contFacturar .btn {
-        padding: 7px 10px !important;
-        font-size: 0.8rem !important;
+        width: 100% !important;
+        padding: 7px 5px !important;
+        font-size: 0.72rem !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    /* Espacio inferior para que el contenido no quede bajo las barras fijas */
-    /* barras fijas: ~52 (acciones) + ~70 (facturar) = 122px */
+    /* padding-bottom: barra acciones (~52) + barra facturar (~52) + margen */
     .main-content .section .section-body {
-        padding-bottom: 130px !important;
+        padding-bottom: 112px !important;
     }
 
     #contDetalles .card-header { padding: 0.75rem !important; }
