@@ -46,8 +46,7 @@
                 if ($posFacGrupo) {
                     $sucursalUsuario = session('usuario.sucursal') ?? session('usuario')['sucursal'] ?? null;
                     $qOrdenes = \Illuminate\Support\Facades\DB::table('orden')
-                        ->where('pagado', 0)
-                        ->where('activo', 1);
+                        ->where('pagado', 0);
                     if ($sucursalUsuario) {
                         $qOrdenes->where('sucursal', $sucursalUsuario);
                     }
