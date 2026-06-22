@@ -42,16 +42,6 @@
             {{-- ============================================================ --}}
             @php
                 $posFacGrupo = collect($menusSide)->firstWhere('codigo_grupo', 'fac');
-                $ordenesActivas = 0;
-                if ($posFacGrupo) {
-                    $sucursalUsuario = session('usuario.sucursal') ?? session('usuario')['sucursal'] ?? null;
-                    $qOrdenes = \Illuminate\Support\Facades\DB::table('orden')
-                        ->where('pagado', 0);
-                    if ($sucursalUsuario) {
-                        $qOrdenes->where('sucursal', $sucursalUsuario);
-                    }
-                    $ordenesActivas = $qOrdenes->count();
-                }
             @endphp
 
             @if($posFacGrupo ?? null)
@@ -62,14 +52,7 @@
                             <div class="aux-pos-ico"><i class="fas fa-cash-register"></i></div>
                             <div>
                                 <div class="aux-pos-name">Punto de Venta</div>
-                                @if($ordenesActivas > 0)
-                                    <div class="aux-pos-chip">
-                                        <i class="fas fa-circle" style="font-size:7px;vertical-align:middle;color:#fbbf24;margin-right:4px;"></i>
-                                        {{ $ordenesActivas }} orden{{ $ordenesActivas != 1 ? 'es' : '' }} abierta{{ $ordenesActivas != 1 ? 's' : '' }} en tu sucursal
-                                    </div>
-                                @else
-                                    <div class="aux-pos-chip aux-pos-chip--muted">Sin órdenes abiertas en tu sucursal</div>
-                                @endif
+                                <div class="aux-pos-chip--muted">Facturación y órdenes</div>
                             </div>
                         </div>
                         <div class="aux-pos-btns">
