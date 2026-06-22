@@ -92,6 +92,11 @@
                 $totalMontoRebajado = $dashboard['total_monto_rebajado'] ?? 0;
                 $promediosPorComanda = $dashboard['promedios_por_comanda'] ?? [];
                 $comandasMayorDuracion = $dashboard['comandas_mayor_duracion'] ?? [];
+                $ventasPorHora     = $dashboard['ventas_por_hora'] ?? [];
+                $horaPico          = $dashboard['hora_pico'] ?? null;
+                $ordenesAbiertas30 = $dashboard['ordenes_abiertas_30'] ?? 0;
+                $pctTickets        = $dashboard['pct_tickets'] ?? null;
+                $pctTotal          = $dashboard['pct_total'] ?? null;
             @endphp
 
             <!-- Filtros de fecha -->
@@ -118,6 +123,48 @@
                     </form>
                 </div>
             </div>
+
+
+            {{-- ── Alertas operacionales ─────────────────────────────────── --}}
+            @if($ordenesAbiertas30 > 0)
+            <div class="alert alert-warning py-2 px-3 mb-2" role="alert">
+                <i class="fas fa-hourglass-half mr-1"></i>
+                <strong>{{ $ordenesAbiertas30 }}</strong> {{ $ordenesAbiertas30 == 1 ? 'orden lleva' : 'órdenes llevan' }} más de 30 min abierta{{ $ordenesAbiertas30 == 1 ? '' : 's' }} sin cobrar.
+            </div>
+            @endif
+            @if($horaPico && $horaPico['tickets'] > 0)
+            <div class="alert alert-info py-2 px-3 mb-2" role="alert">
+                <i class="fas fa-clock mr-1"></i>
+                Hora pico: <strong>{{ $horaPico['hora'] }}</strong> con <strong>{{ $horaPico['tickets'] }}</strong> tickets.
+            </div>
+            @endif
+
+            {{-- ── Comparativa vs período anterior ──────────────────────── --}}
+            @if($pctTickets !== null || $pctTotal !== null)
+            <div class="card mb-3">
+                <div class="card-body py-2">
+                    <h6 class="mb-2" style="font-weight:700;"><i class="fas fa-balance-scale mr-1"></i> Comparativa vs período anterior</h6>
+                    <div class="row text-center">
+                        @if($pctTickets !== null)
+                        <div class="col-6">
+                            <small class="text-muted d-block">Tickets</small>
+                            <span style="font-size:1.1rem;font-weight:700;color:{{ $pctTickets >= 0 ? '#28a745' : '#dc3545' }}">
+                                {{ $pctTickets >= 0 ? '+' : '' }}{{ $pctTickets }}% {{ $pctTickets >= 0 ? '▲' : '▼' }}
+                            </span>
+                        </div>
+                        @endif
+                        @if($pctTotal !== null)
+                        <div class="col-6">
+                            <small class="text-muted d-block">Total vendido</small>
+                            <span style="font-size:1.1rem;font-weight:700;color:{{ $pctTotal >= 0 ? '#28a745' : '#dc3545' }}">
+                                {{ $pctTotal >= 0 ? '+' : '' }}{{ $pctTotal }}% {{ $pctTotal >= 0 ? '▲' : '▼' }}
+                            </span>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            @endif
 
             <!-- Resumen global -->
             @if($resumenGlobal)
@@ -198,6 +245,37 @@
                         </div>
                     </div>
                 </div>
+            @endif
+
+
+            {{-- ── Gráficas: Ventas por hora + Métodos de pago ──────────── --}}
+            @if(count($ventasPorHora) > 0)
+            <div class="row mb-3">
+                <div class="col-12 col-md-7 mb-3 mb-md-0">
+                    <div class="card h-100">
+                        <div class="card-header py-2 d-flex align-items-center justify-content-between">
+                            <h6 class="mb-0" style="font-weight:700;"><i class="fas fa-chart-bar mr-1"></i> Ventas por hora del día</h6>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-primary active" id="btnChartTickets" onclick="switchChart('tickets')">Tickets</button>
+                                <button type="button" class="btn btn-outline-primary" id="btnChartVentas" onclick="switchChart('ventas')">Ventas</button>
+                            </div>
+                        </div>
+                        <div class="card-body py-2">
+                            <canvas id="chartVentasHora" style="max-height:200px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-5">
+                    <div class="card h-100">
+                        <div class="card-header py-2">
+                            <h6 class="mb-0" style="font-weight:700;"><i class="fas fa-credit-card mr-1"></i> Métodos de pago</h6>
+                        </div>
+                        <div class="card-body py-2 d-flex align-items-center justify-content-center">
+                            <canvas id="chartMetodosPago" style="max-height:200px;max-width:200px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
             @endif
 
             <!-- KPIs por sucursal -->
@@ -722,4 +800,108 @@
     });
 })();
 </script>
+
+<script src="{{ asset('assets/bundles/chartjs/chart.min.js') }}"></script>
+<script>
+(function () {
+    // ── Datos desde PHP ─────────────────────────────────────────────────────
+    var ventasPorHora = @json($ventasPorHora ?? []);
+    var resumenGlobal = {
+        efectivo: {{ $resumenGlobal->efectivo ?? 0 }},
+        tarjeta:  {{ $resumenGlobal->tarjeta ?? 0 }},
+        sinpe:    {{ $resumenGlobal->sinpe ?? 0 }}
+    };
+
+    if (!ventasPorHora || ventasPorHora.length === 0) return;
+
+    var labels   = ventasPorHora.map(function(v){ return v.hora; });
+    var tickets  = ventasPorHora.map(function(v){ return v.tickets; });
+    var ventas   = ventasPorHora.map(function(v){ return v.total; });
+
+    // ── Gráfica de barras: ventas por hora ──────────────────────────────────
+    var ctxBar = document.getElementById('chartVentasHora');
+    if (!ctxBar) return;
+    var barChart = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Tickets',
+                data: tickets,
+                backgroundColor: 'rgba(78,115,223,0.75)',
+                borderColor: 'rgba(78,115,223,1)',
+                borderWidth: 1,
+                borderRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 } } },
+                x: { ticks: { font: { size: 9 }, maxRotation: 45 } }
+            }
+        }
+    });
+
+    window.switchChart = function(modo) {
+        if (modo === 'tickets') {
+            barChart.data.datasets[0].label = 'Tickets';
+            barChart.data.datasets[0].data  = tickets;
+            barChart.options.scales.y.ticks.callback = undefined;
+            document.getElementById('btnChartTickets').classList.add('active');
+            document.getElementById('btnChartTickets').classList.remove('btn-outline-primary');
+            document.getElementById('btnChartTickets').classList.add('btn-primary');
+            document.getElementById('btnChartVentas').classList.remove('active');
+            document.getElementById('btnChartVentas').classList.add('btn-outline-primary');
+            document.getElementById('btnChartVentas').classList.remove('btn-primary');
+        } else {
+            barChart.data.datasets[0].label = 'Ventas (CRC)';
+            barChart.data.datasets[0].data  = ventas;
+            document.getElementById('btnChartVentas').classList.add('active');
+            document.getElementById('btnChartVentas').classList.remove('btn-outline-primary');
+            document.getElementById('btnChartVentas').classList.add('btn-primary');
+            document.getElementById('btnChartTickets').classList.remove('active');
+            document.getElementById('btnChartTickets').classList.add('btn-outline-primary');
+            document.getElementById('btnChartTickets').classList.remove('btn-primary');
+        }
+        barChart.update();
+    };
+
+    // ── Gráfica de dona: métodos de pago ────────────────────────────────────
+    var ctxPie = document.getElementById('chartMetodosPago');
+    if (!ctxPie) return;
+    var totalPago = resumenGlobal.efectivo + resumenGlobal.tarjeta + resumenGlobal.sinpe;
+    if (totalPago <= 0) return;
+    new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+            labels: ['Efectivo', 'Tarjeta', 'SINPE'],
+            datasets: [{
+                data: [resumenGlobal.efectivo, resumenGlobal.tarjeta, resumenGlobal.sinpe],
+                backgroundColor: ['#28a745', '#4e73df', '#fd7e14'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: '60%',
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            var pct = totalPago > 0 ? (ctx.parsed / totalPago * 100).toFixed(1) : 0;
+                            return ctx.label + ': ' + pct + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+})();
+</script>
+
 @endsection

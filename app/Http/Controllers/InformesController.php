@@ -332,6 +332,71 @@ class InformesController extends Controller
             $c->duracion_minutos = (int) $c->duracion_minutos;
         }
 
+
+        // ── Ventas por hora del día ──────────────────────────────────────────
+        $ventasPorHora = DB::table('orden')
+            ->leftJoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+            ->where('orden.sucursal', '=', $idSucursal)
+            ->where('orden.pagado', '=', 1)
+            ->where('sis_estado.cod_general', '!=', 'ORD_ANULADA')
+            ->where('orden.fecha_inicio', '>=', $desdeDate)
+            ->where('orden.fecha_inicio', '<', $modHasta)
+            ->select(
+                DB::raw('HOUR(orden.fecha_inicio) as hora'),
+                DB::raw('COUNT(orden.id) as tickets'),
+                DB::raw('SUM(orden.total_con_descuento) as total')
+            )
+            ->groupBy(DB::raw('HOUR(orden.fecha_inicio)'))
+            ->orderBy('hora')
+            ->get()
+            ->keyBy('hora');
+
+        $ventasPorHoraArr = [];
+        for ($h = 0; $h < 24; $h++) {
+            $v = $ventasPorHora->get($h);
+            $ventasPorHoraArr[] = [
+                'hora'    => sprintf('%02d:00', $h),
+                'tickets' => $v ? (int) $v->tickets : 0,
+                'total'   => $v ? (float) $v->total : 0.0,
+            ];
+        }
+        $horaPico = collect($ventasPorHoraArr)->sortByDesc('tickets')->first();
+
+        // ── Alertas: órdenes abiertas > 30 min sin cobrar ────────────────────
+        $ordenesAbiertas30 = DB::table('orden')
+            ->where('orden.sucursal', '=', $idSucursal)
+            ->where('orden.pagado', '=', 0)
+            ->whereRaw('TIMESTAMPDIFF(MINUTE, orden.fecha_inicio, NOW()) > 30')
+            ->count();
+
+        // ── Comparativa vs período anterior ──────────────────────────────────
+        $diasRango = max(1, (int) round((strtotime($hasta) - strtotime($desdeDate)) / 86400) + 1);
+        $antesHasta = date('Y-m-d', strtotime($desdeDate . ' -1 day'));
+        $antesDesde = date('Y-m-d', strtotime($antesHasta . ' -' . ($diasRango - 1) . ' days'));
+        $antesModHasta = date('Y-m-d', strtotime($antesHasta . ' +1 day'));
+
+        $kpisAnterior = DB::table('orden')
+            ->leftJoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
+            ->where('orden.sucursal', '=', $idSucursal)
+            ->where('orden.pagado', '=', 1)
+            ->where('sis_estado.cod_general', '!=', 'ORD_ANULADA')
+            ->where('orden.fecha_inicio', '>=', $antesDesde)
+            ->where('orden.fecha_inicio', '<', $antesModHasta)
+            ->select(
+                DB::raw('COUNT(orden.id) as tickets'),
+                DB::raw('SUM(orden.total_con_descuento) as total_vendido')
+            )
+            ->first();
+
+        $ticketsAnterior = (int) ($kpisAnterior->tickets ?? 0);
+        $totalAnterior   = (float) ($kpisAnterior->total_vendido ?? 0);
+        $pctTickets = $ticketsAnterior > 0
+            ? round(100 * ($resumenGlobal->tickets - $ticketsAnterior) / $ticketsAnterior, 1)
+            : null;
+        $pctTotal   = $totalAnterior > 0
+            ? round(100 * ($resumenGlobal->total_vendido - $totalAnterior) / $totalAnterior, 1)
+            : null;
+
         $data = [
             'panel_configuraciones' => $this->getPanelConfiguraciones(),
             'dashboard' => [
@@ -349,6 +414,11 @@ class InformesController extends Controller
                 'total_monto_rebajado' => $totalMontoRebajado,
                 'promedios_por_comanda' => $promediosPorComanda,
                 'comandas_mayor_duracion' => $comandasMayorDuracion,
+                'ventas_por_hora'        => $ventasPorHoraArr,
+                'hora_pico'              => $horaPico,
+                'ordenes_abiertas_30'    => $ordenesAbiertas30,
+                'pct_tickets'            => $pctTickets,
+                'pct_total'              => $pctTotal,
             ],
         ];
 
