@@ -30,9 +30,13 @@
 
 
 
+<style>
+body.sidebar-gone .main-content { padding-left: 30px !important; }
+body.sidebar-gone .navbar { left: 0 !important; }
+</style>
 </head>
 
-<body style="sidebar-gone">
+<body class="sidebar-gone">
     <input type="hidden" value="{{ url('/') }}" id="base_path">
     <input type="hidden" value="{{ $data['panel_configuraciones']->color_fondo ?? 1 }}" id="cp_color_fondo">
     <input type="hidden" value="{{ $data['panel_configuraciones']->color_sidebar ?? 1 }}" id="cp_color_sidebar">
@@ -123,6 +127,19 @@
     </form>
 
 
+
+<script>
+$(function() {
+    if (localStorage.getItem('sidebarOpen') === '1') {
+        $('body').removeClass('sidebar-gone');
+    }
+    $(document).on('click', '[data-toggle="sidebar"]', function() {
+        setTimeout(function() {
+            localStorage.setItem('sidebarOpen', $('body').hasClass('sidebar-gone') ? '0' : '1');
+        }, 50);
+    });
+});
+</script>
 </body>
 
 

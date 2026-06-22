@@ -32,9 +32,13 @@ class FeController extends Controller
             return redirect('/');
         }
 
+        $sucursalFactura = \App\Http\Controllers\MantenimientoSucursalController::getSucursalById($this->getUsuarioSucursal());
         $data = [
             'sucursales' => $this->getSucursales(),
-            'panel_configuraciones' => $this->getPanelConfiguraciones()
+            'panel_configuraciones' => $this->getPanelConfiguraciones(),
+            'ticketModo'      => $sucursalFactura->ticket_modo ?? 'html',
+            'ticketImpresora' => $sucursalFactura->ticket_impresora ?? '',
+            'ticketAncho'     => $sucursalFactura->ticket_ancho_mm ?? 80,
         ];
 
         return view("fe.facturas", compact("data"));

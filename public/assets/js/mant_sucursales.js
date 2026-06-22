@@ -62,6 +62,7 @@ function cargarHtmlSucursal(sucursal) {
   $('#mdl_sucursal_ancho_mm').val(sucursal.ticket_ancho_mm ?? 80);
   $('#mdl_sucursal_chk_auto_imprimir').prop('checked', (sucursal.ticket_auto_imprimir ?? 1) == 1);
   $('#mdl_sucursal_nota_pie').val(sucursal.ticket_nota_pie ?? '');
+  $('#mdl_sucursal_impresora').val(sucursal.ticket_impresora ?? '');
   setTicketModo(sucursal.ticket_modo ?? 'html');
 
   $('#mdl_sucursal').modal('show');

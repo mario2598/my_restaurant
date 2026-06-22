@@ -24,6 +24,9 @@
         "totalRebajarIncidentes": 0
     };
     var sucursalFacturaIva = "{{ $data['sucursalFacturaIva'] ?? false }}";
+    var ticketModo = "{{ $data['ticketModo'] ?? 'html' }}";
+    var ticketImpresora = "{{ $data['ticketImpresora'] ?? '' }}";
+    var ticketAncho = "{{ $data['ticketAncho'] ?? 80 }}";
     var cajaAbierta = "{{ $data['cajaAbierta'] ?? false }}";
 </script>
 <style>
@@ -984,15 +987,7 @@
                                     <div id="scrl-productos"
                                         class="col-12 d-flex flex-column justify-content-space-between card-body draggable-scroller"
                                         style="max-height: 450px;min-height: 450px; overflow-y: auto; cursor:grab;padding: 5px !important;">
-                                        <table class="table table-borderless" style="background-color: white">
-                                            <thead>
-                                                <th>Producto</th>
-                                                <th class="text-center">Precio</th>
-                                            </thead>
-                                            <tbody id="tbody-productos">
-                                                <!-- Lista dinámica de productos -->
-                                            </tbody>
-                                        </table>
+                                        <div id="grid-productos"></div>
                                     </div>
                                 </div>
                             </div>
@@ -1177,6 +1172,11 @@
 
 
 <a href="" target='_blank' class="btn btn-primary" id='btn-pdf' style="display:none"></a>
+@if(isset($data['ticketModo']) && $data['ticketModo'] === 'qz')
+<span id="qz-status-badge"
+      style="display:none;position:fixed;bottom:14px;right:16px;z-index:9999;font-size:0.78rem;padding:5px 9px;border-radius:12px;cursor:default;box-shadow:0 2px 6px rgba(0,0,0,.25);"
+      title="Estado QZ Tray"></span>
+@endif
 @endsection
 
 @section('popup')
@@ -1579,23 +1579,28 @@
     </div>
 </div>
 
-<div class="modal fade bs-example-modal-center" id='mdl-extras' tabindex="-1" role="dialog"
-    aria-labelledby="mySmallModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header" style="width: 100%">
-                <div class="row" id="cont-extras" style="width: 100%">
-
-                </div>
-
+<div class="modal fade" id='mdl-extras' tabindex="-1" role="dialog"
+    aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
+         style="max-width:500px; margin: auto 12px;">
+        <div class="modal-content" style="border-radius:16px; overflow:hidden;">
+            <div class="modal-header py-2 px-3" style="background:#4e73df; border:none;">
+                <h6 class="modal-title text-white font-weight-bold mb-0" id="mdl-extras-titulo">
+                    <i class="fas fa-utensils mr-2"></i>Personalizar pedido
+                </h6>
+                <button type="button" class="close text-white" onclick="cerrarExtras()" style="opacity:.8;">
+                    <span>&times;</span>
+                </button>
             </div>
-            <div class="modal-footer">
-                <div class="form-group">
-                    <a class="btn btn-primary" title="Guardar " onclick="seleccionarExtrasProd()"
-                        style="color:white;cursor:pointer;">Agregar</a>
-                    <a class="btn btn-secondary btn-icon" title="Cerrar" onclick='cerrarExtras()'
-                        style="cursor: pointer;">Cerrar</a>
-                </div>
+            <div class="modal-body py-3 px-2" style="max-height:60vh; overflow-y:auto;">
+                <div id="cont-extras"></div>
+            </div>
+            <div class="modal-footer py-2 px-3" style="border-top:1px solid #eee;">
+                <button class="btn btn-secondary btn-sm" onclick="cerrarExtras()">Cancelar</button>
+                <button class="btn btn-primary btn-sm font-weight-bold px-4"
+                        onclick="seleccionarExtrasProd()">
+                    <i class="fas fa-plus mr-1"></i>Agregar
+                </button>
             </div>
         </div>
     </div>
@@ -1654,14 +1659,11 @@
                             <tr>
                                 <th scope="col" style="text-align: center;">No.Orden</th>
                                 <th scope="col" style="text-align: center;">Mesa</th>
-                                <th scope="col" style="text-align: center;">Estado Pago</th>
+                                <th scope="col" style="text-align: center;">Estado</th>
                                 <th scope="col" style="text-align: center;">Fecha</th>
                                 <th scope="col" style="text-align: center;">Cliente</th>
-                                <th scope="col" style="text-align: center;">Estado</th>
-                                <th scope="col" style="text-align: center;">Total Pago</th>
-                                <th scope="col" style="text-align: center;">Pagado</th>
-                                <th scope="col" style="text-align: center;">Pendiente</th>
-                                <th scope="col" style="text-align: center;">Tiquete</th>
+                                <th scope="col" style="text-align: center;">Total</th>
+                                <th scope="col" style="text-align: center;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-ordenes">
@@ -2199,7 +2201,8 @@
 <script src="{{ asset('assets/bundles/datatables/datatables.min.js') }}"></script>
 <script src="{{ asset('assets/js/page/datatables.js') }}"></script>
 
-<script src="{{ asset('assets/js/facturacion/pos.js') }}"></script>
+<script src="{{ asset('assets/js/qz-tray.js') }}"></script>
+<script src="{{ asset('assets/js/facturacion/pos.js') . '?v=20260619b' }}"></script>
 <script src="{{ asset('assets/js/mobiliario/mesa-plano-utils.js') }}"></script>
 <script src="{{ asset('assets/js/facturacion/pos-plano-mesas.js') }}"></script>
 
@@ -2251,7 +2254,7 @@
         var html = '';
         
         if (productosFiltrados.length === 0) {
-            html = '<tr><td colspan="2" class="text-center text-muted"><i class="fas fa-search"></i> No se encontraron productos</td></tr>';
+            html = '<div class="text-center text-muted p-3"><i class="fas fa-search"></i> No se encontraron productos</div>';
         } else {
             productosFiltrados.forEach(function(producto) {
                 html += generarHTMLProducto(
@@ -2265,7 +2268,7 @@
             });
         }
 
-        $('#tbody-productos').html(html);
+        $('#grid-productos').html(html);
     }
 
     /**
@@ -2461,5 +2464,46 @@
         // Opcional: cargar mesas después de 1 segundo de carga la página
         // setTimeout(cargarMesas, 1000);
     });
+</script>
+
+<script>
+(function() {
+    var _origGenTipos = window.generarTipos;
+    window.generarTipos = function() {
+        _origGenTipos.apply(this, arguments);
+        if (!document.getElementById('li-populares')) {
+            var li = document.createElement('li');
+            li.className = 'nav-item mr-1';
+            li.id = 'li-populares';
+            li.innerHTML = '<a class="nav-link" href="javascript:void(0);" id="a-populares" style="background:#e67e00;color:#fff;font-weight:600;" onclick="seleccionarPopulares()">&#11088; Populares</a>';
+            var nv = document.getElementById('nv-tipos');
+            if (nv) nv.insertBefore(li, nv.firstChild);
+        }
+    };
+    var _origSelTipo = window.seleccionarTipo;
+    window.seleccionarTipo = function(i) {
+        var a = document.getElementById('a-populares');
+        if (a) { a.style.opacity = '0.7'; a.style.fontWeight = '400'; }
+        _origSelTipo(i);
+    };
+})();
+window.seleccionarPopulares = function() {
+    var a = document.getElementById('a-populares');
+    if (a) { a.style.opacity = '1'; a.style.fontWeight = '700'; }
+    $('#scrl-categorias').html('<li class="nav-item"><span class="text-muted small ml-2">&#11088; Populares de la semana</span></li>');
+    $('#grid-productos').html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-warning"></i><p class="text-muted mt-2 small">Cargando...</p></div>');
+    $.getJSON(base_path + '/facturacion/pos/populares', function(res) {
+        if (!res.estado) { $('#grid-productos').html('<p class="text-danger p-3">Error al cargar.</p>'); return; }
+        var html = '';
+        if (res.datos && res.datos.length) {
+            res.datos.forEach(function(p) {
+                html += generarHTMLProducto(p.nombre, p.codigo, p.precio, p.cantidad || 0, p.tipoProducto, p.descripcion || '');
+            });
+        } else {
+            html = '<p class="text-muted p-3">No hay datos de la \u00faltima semana.</p>';
+        }
+        $('#grid-productos').html(html);
+    }).fail(function() { $('#grid-productos').html('<p class="text-danger p-3">Error al cargar.</p>'); });
+};
 </script>
 @endsection

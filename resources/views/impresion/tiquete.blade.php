@@ -10,22 +10,40 @@
 body {
     font-family: 'Courier New', Courier, monospace;
     font-size: 13px;
-    background: #f0f0f0;
-    display: flex;
-    justify-content: center;
-    padding: 20px;
+    margin: 0;
+    padding: 0;
 }
 .ticket {
     background: #fff;
-    width: {{ $ancho_mm == 58 ? '200px' : '300px' }};
+    width: 100%;
     padding: 12px 10px;
-    box-shadow: 0 2px 12px rgba(0,0,0,.18);
-    border-radius: 4px;
 }
-.ticket-logo { text-align: center; margin-bottom: 6px; }
-.ticket-logo img { max-width: 80px; max-height: 60px; }
-.ticket-header { text-align: center; margin-bottom: 8px; line-height: 1.5; }
-.ticket-header .empresa { font-weight: 700; font-size: 14px; }
+.ticket-logo { text-align: center; margin-bottom: 0; }
+.ticket-logo img {
+    max-width: 130px;
+    max-height: 90px;
+    display: block;
+    margin: 0 auto;
+    object-fit: contain;
+}
+.ticket-header {
+    text-align: center;
+    margin-bottom: 10px;
+    line-height: 1.65;
+    padding: 9px 4px 6px;
+    border-top: 2px solid #222;
+}
+.ticket-header .empresa {
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    display: block;
+    padding-bottom: 5px;
+    border-bottom: 1px dashed #888;
+    margin-bottom: 4px;
+}
+.ticket-header div:not(.empresa) { font-size: 11.5px; color: #333; }
 hr.dashed { border: none; border-top: 1px dashed #999; margin: 6px 0; }
 .ticket-info { margin-bottom: 6px; line-height: 1.6; }
 .ticket-info .lbl { font-weight: 700; }
@@ -44,6 +62,25 @@ table.detalle .extra-row td { font-size: 11px; color: #555; padding-left: 8px; }
     border: none; border-radius: 4px; cursor: pointer; font-size: 14px;
 }
 .btn-print:hover { background: #2e59d9; }
+
+
+@if(!($qz_mode ?? false))
+/* ── Screen only ── */
+@media screen {
+    body {
+        background: #f0f0f0;
+        display: flex;
+        justify-content: center;
+        padding: 20px;
+    }
+    .ticket {
+        width: {{ $ancho_mm == 58 ? '200px' : '300px' }};
+        box-shadow: 0 2px 12px rgba(0,0,0,.18);
+        border-radius: 4px;
+        max-width: 100%;
+    }
+}
+@endif
 
 /* ── Print ── */
 @media print {
@@ -104,8 +141,7 @@ table.detalle .extra-row td { font-size: 11px; color: #555; padding-left: 8px; }
         <thead>
             <tr>
                 <th style="width:10%;text-align:center;">Cant</th>
-                <th style="width:50%;">Producto</th>
-                <th style="width:20%;text-align:right;">P.U.</th>
+                <th style="width:70%;">Producto</th>
                 <th style="width:20%;text-align:right;">Total</th>
             </tr>
         </thead>
@@ -113,9 +149,11 @@ table.detalle .extra-row td { font-size: 11px; color: #555; padding-left: 8px; }
         @foreach($detalles as $d)
             <tr>
                 <td style="text-align:center;">{{ $d->cantidad }}</td>
-                <td>{{ $d->nombre_producto ?? $d->nombre ?? '' }}</td>
-                <td style="text-align:right;">{{ $simbolo }}{{ number_format($d->precio_unitario ?? 0, 0, '.', ',') }}</td>
-                <td style="text-align:right;">{{ $simbolo }}{{ number_format(($d->total ?? 0), 0, '.', ',') }}</td>
+                <td>
+                    {{ $d->nombre_producto ?? $d->nombre ?? '' }}
+                    <div style="font-size:10px;color:#888;margin-top:1px;">P.U. {{ $simbolo }}{{ number_format($d->precio_unitario ?? 0, 2, '.', ',') }}</div>
+                </td>
+                <td style="text-align:right;">{{ $simbolo }}{{ number_format(($d->subtotal ?? ($d->precio_unitario * $d->cantidad)), 2, '.', ',') }}</td>
             </tr>
             @if(!empty($d->extras))
                 @foreach($d->extras as $e)
@@ -133,27 +171,33 @@ table.detalle .extra-row td { font-size: 11px; color: #555; padding-left: 8px; }
 
     {{-- Totales --}}
     <table class="totales" style="width:100%;border-collapse:collapse;">
-        @if(($orden->mto_descuento ?? 0) > 0)
+        @if(($orden->descuento ?? 0) > 0)
         <tr>
             <td>Descuento:</td>
-            <td style="text-align:right;">-{{ $simbolo }}{{ number_format($orden->mto_descuento, 0, '.', ',') }}</td>
+            <td style="text-align:right;">-{{ $simbolo }}{{ number_format($orden->descuento, 2, '.', ',') }}</td>
         </tr>
         @endif
         @if(($orden->mto_impuesto_servicio ?? 0) > 0)
         <tr>
             <td>Serv. (10%):</td>
-            <td style="text-align:right;">{{ $simbolo }}{{ number_format($orden->mto_impuesto_servicio, 0, '.', ',') }}</td>
+            <td style="text-align:right;">{{ $simbolo }}{{ number_format($orden->mto_impuesto_servicio, 2, '.', ',') }}</td>
         </tr>
         @endif
-        @if(($orden->envio ?? 0) > 0)
+        @if(($orden->monto_envio ?? 0) > 0)
         <tr>
             <td>Envío:</td>
-            <td style="text-align:right;">{{ $simbolo }}{{ number_format($orden->envio, 0, '.', ',') }}</td>
+            <td style="text-align:right;">{{ $simbolo }}{{ number_format($orden->monto_envio, 2, '.', ',') }}</td>
+        </tr>
+        @endif
+        @if(($sucursal->factura_iva ?? 0) == 1 && ($orden->impuesto ?? 0) > 0)
+        <tr>
+            <td>IVA:</td>
+            <td style="text-align:right;">{{ $simbolo }}{{ number_format($orden->impuesto, 2, '.', ',') }}</td>
         </tr>
         @endif
         <tr class="grand">
             <td>TOTAL:</td>
-            <td style="text-align:right;">{{ $simbolo }}{{ number_format($orden->total_con_descuento, 0, '.', ',') }}</td>
+            <td style="text-align:right;">{{ $simbolo }}{{ number_format($orden->total_con_descuento, 2, '.', ',') }}</td>
         </tr>
     </table>
 
@@ -164,7 +208,7 @@ table.detalle .extra-row td { font-size: 11px; color: #555; padding-left: 8px; }
         @foreach($pagos as $p)
         <div style="display:flex;justify-content:space-between;">
             <span>{{ $p->tipo_pago ?? 'Pago' }}:</span>
-            <span>{{ $simbolo }}{{ number_format($p->monto ?? 0, 0, '.', ',') }}</span>
+            <span>{{ $simbolo }}{{ number_format($p->monto ?? 0, 2, '.', ',') }}</span>
         </div>
         @endforeach
     </div>
@@ -180,9 +224,11 @@ table.detalle .extra-row td { font-size: 11px; color: #555; padding-left: 8px; }
         Gracias por su visita
     </div>
 
+    @if(!($qz_mode ?? false))
     <button class="btn-print" onclick="window.print()">
         🖨 Imprimir
     </button>
+    @endif
 </div>
 
 @if($auto_imprimir)
@@ -190,6 +236,9 @@ table.detalle .extra-row td { font-size: 11px; color: #555; padding-left: 8px; }
 window.onload = function() {
     setTimeout(function() {
         window.print();
+        // close after print: onfocus fires when print dialog closes; timeout covers kiosk mode
+        window.onfocus = function() { window.close(); };
+        setTimeout(function() { window.close(); }, 1200);
     }, 400);
 };
 </script>

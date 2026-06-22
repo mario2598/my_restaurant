@@ -705,6 +705,8 @@ window.addEventListener("load", init, false);
 
 document.addEventListener('DOMContentLoaded', function () {
 
+    // Badge QZ: se actualiza al imprimir (conexion lazy)
+
     //Inicializa scroll para las dos listas
     inicializarScroller('scrl-categorias');
     inicializarScroller('scrl-productos');
@@ -2378,8 +2380,10 @@ function procesarPagoInmediato(mto_sinpe, mto_efectivo, mto_tarjeta) {
                 return;
             } else {
                 id = res['datos'];
-                imprimirTicket(id);
                 showSuccess("Orden realizada!");
+                $('#mdl-loader-pago').modal("hide");
+                imprimirTicket(id, function() { location.reload(); });
+                return;
             }
             $('#mdl-loader-pago').modal("hide");
             location.reload();
@@ -2390,10 +2394,8 @@ function procesarPagoInmediato(mto_sinpe, mto_efectivo, mto_tarjeta) {
             $('#mdl-loader-pago').modal("hide");
         });
 
-        $('#mdl-loader-pago').modal("hide");
     } else {
         showError("La suma de los pagos no coincide con el total de la orden.");
-        $('#mdl-loader-pago').modal("hide");
         return;
     }
 }
@@ -2420,58 +2422,100 @@ function recargarOrdenes() {
     });
 }
 
-function imprimirTicket(id) {
-    if (typeof ticketImpresora !== 'undefined' && ticketImpresora
-            && typeof qz !== 'undefined') {
-        imprimirConQZTray(id);
+function imprimirTicket(id, onDone) {
+    var modo = (typeof ticketModo !== 'undefined') ? ticketModo : 'html';
+    if (modo === 'qz' && typeof qz !== 'undefined') {
+        imprimirConQZTray(id, onDone);
         return;
     }
-    if (typeof ticketModo !== 'undefined' && ticketModo === 'pdf') {
-        $("#btn-pdf").prop('href', `${base_path}/impresora/tiquete/${id}`);
-        document.getElementById('btn-pdf').click();
-    } else {
-        var url = `${base_path}/impresora/tiquete/html/${id}`;
-        window.open(url, '_blank', 'width=380,height=600,scrollbars=yes');
-    }
+    var url = base_path + '/impresora/tiquete/html/' + id;
+    window.open(url, '_blank', 'width=380,height=600,scrollbars=yes');
+    if (onDone) onDone();
 }
 
-function imprimirConQZTray(id) {
-    var protocol = window.location.protocol + '//';
-    var host     = window.location.host;
-    var ticketUrl = protocol + host + base_path + '/impresora/tiquete/html/' + id;
+function imprimirConQZTray(id, onDone) {
+    var pdfUrl = base_path + '/impresora/tiquete/' + id;
+    var htmlUrl = base_path + '/impresora/tiquete/html/' + id;
 
-    var doConnect = (qz.websocket.isActive && qz.websocket.isActive())
-        ? Promise.resolve()
-        : qz.websocket.connect({ retries: 1, delay: 0.5 });
+    function _fallbackHtml(titulo, texto) {
+        _qzSetStatus(false);
+        window.open(htmlUrl, '_blank', 'width=380,height=600,scrollbars=yes');
+        if (titulo && typeof Swal !== 'undefined') {
+            Swal.fire({ icon: 'info', title: titulo, text: texto,
+                confirmButtonText: 'Entendido', confirmButtonColor: '#4e73df' });
+        }
+        if (onDone) onDone();
+    }
 
-    doConnect.then(function() {
-        return qz.printers.find(ticketImpresora);
-    }).then(function(printer) {
-        var ancho = (typeof ticketAncho !== 'undefined' && parseInt(ticketAncho) > 0)
-            ? parseInt(ticketAncho) : 80;
-        var cfg = qz.configs.create(printer, {
-            size:      { width: ancho, units: 'mm' },
-            margins:   0,
-            colorType: 'blackwhite',
-            interpolation: 'bicubic'
+    try {
+        qz.security.setCertificatePromise(function(resolve, reject) {
+            fetch(base_path + '/qz-cert').then(function(r) { return r.text(); })
+                .then(resolve).catch(reject);
         });
-        return qz.print(cfg, [{ type: 'pixel', format: 'html', flavor: 'file', data: ticketUrl }]);
-    }).catch(function(err) {
-        console.warn('QZ Tray error:', err.message || err);
-        // Fallback: abre ventana normal
-        if (typeof ticketModo !== 'undefined' && ticketModo === 'pdf') {
-            $("#btn-pdf").prop('href', `${base_path}/impresora/tiquete/${id}`);
-            document.getElementById('btn-pdf').click();
-        } else {
-            window.open(`${base_path}/impresora/tiquete/html/${id}`, '_blank',
-                        'width=380,height=600,scrollbars=yes');
-        }
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({ icon: 'warning', title: 'QZ Tray no disponible',
-                text: 'Se abrió el tiquete. Para impresión silenciosa instale QZ Tray.',
-                timer: 5000, showConfirmButton: false, toast: true, position: 'top-end' });
-        }
-    });
+        qz.security.setSignatureAlgorithm('SHA512');
+        qz.security.setSignaturePromise(function(toSign) {
+            return function(resolve, reject) {
+                fetch(base_path + '/qz-sign?request=' + encodeURIComponent(toSign))
+                    .then(function(r) { return r.text(); })
+                    .then(resolve).catch(reject);
+            };
+        });
+
+        var doConnect = (qz.websocket.isActive && qz.websocket.isActive())
+            ? Promise.resolve()
+            : qz.websocket.connect({ retries: 1, delay: 1 });
+
+        doConnect.then(function() {
+            _qzSetStatus(true);
+            return qz.printers.find(ticketImpresora);
+        }).then(function(printer) {
+            var ancho = (typeof ticketAncho !== 'undefined' && parseInt(ticketAncho) > 0)
+                ? parseInt(ticketAncho) : 80;
+            var cfg = qz.configs.create(printer, {
+                size:         { width: ancho, units: 'mm' },
+                margins:      0,
+                colorType:    'blackwhite',
+                interpolation:'bicubic',
+                scaleContent: false
+            });
+            return qz.print(cfg, [{ type: 'pixel', format: 'pdf', flavor: 'file', data: pdfUrl }]);
+        }).then(function() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'success', title: 'Imprimiendo...', timer: 2500,
+                    showConfirmButton: false, toast: true, position: 'top-end' });
+            }
+            if (onDone) onDone();
+        }).catch(function(err) {
+            var msg = (err && err.message) ? err.message : String(err);
+            console.warn('QZ Tray error:', msg);
+            var m = msg.toLowerCase();
+            var titulo, texto;
+            if (m.indexOf('unable to establish') !== -1 || m.indexOf('websocket') !== -1
+                    || m.indexOf('connection') !== -1 || m.indexOf('failed to connect') !== -1) {
+                titulo = 'QZ Tray no disponible';
+                texto  = 'Abriendo ticket en ventana del navegador.';
+            } else if (m.indexOf('no printer') !== -1 || m.indexOf('not found') !== -1
+                    || m.indexOf('unable to find') !== -1 || m.indexOf('could not find') !== -1) {
+                titulo = 'Impresora no encontrada';
+                texto  = 'Nombre configurado: "' + ticketImpresora + '". Abriendo ticket en ventana.';
+            } else {
+                titulo = 'QZ Tray sin conexión';
+                texto  = 'Abriendo ticket en ventana del navegador.';
+            }
+            _fallbackHtml(titulo, texto);
+        });
+    } catch(e) {
+        console.warn('QZ Tray no disponible:', e.message || e);
+        _fallbackHtml(null, null);
+    }
+}
+function _qzSetStatus(ok) {
+    var el = document.getElementById('qz-status-badge');
+    if (!el) return;
+    el.style.display = 'inline-block';
+    el.className = 'badge badge-' + (ok ? 'success' : 'danger');
+    el.textContent = ok ? '✔ Impresora lista' : '✖ QZ Tray sin conexión';
+    el.title = ok ? 'QZ Tray conectado a ' + ticketImpresora : 'QZ Tray no disponible';
 }
 
 function generarHTMLOrdenes(ordenes) {
@@ -4187,12 +4231,8 @@ function realizarPagoDividido(montoSinpe, montoEfectivo, montoTarjeta) {
                 data = res['datos'];
                 showSuccess("Se generó el pago");
                 if (data.pago_completo) {
-                    if (!data.variasFacturas) {
-                        imprimirTicket(data.idOrden);
-                    } else {
-                        imprimirTicket(data.numFactura);
-                    }
-                    location.reload();
+                    var ticketId = data.variasFacturas ? data.numFactura : data.idOrden;
+                    imprimirTicket(ticketId, function() { location.reload(); });
                 } else {
                     imprimirTicket(data.numFactura);
                     cerrarMdlPago();

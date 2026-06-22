@@ -35,35 +35,26 @@
                             <div class="col-sm-12 col-md-12 col-xl-12">
                                 <form id="form_cargar_menu" action="{{ URL::to('menu/menus/filtro') }}" method="POST">
                                     {{ csrf_field() }}
-                                    <div class="row" style="width: 100%">
-
-                                        <div class="col-sm-12 col-md-4 col-xl-4">
-                                            <div class="form-group">
-                                                <label>Sucursal</label>
-                                                <select class="form-control" id="sucursal" name="sucursal" required onchange="this.form.submit()">
-                                                    <option value="-1" selected>Seleccione una sucursal</option>
-                                                    @foreach ($data['sucursales'] as $i)
-                                                        <option value="{{ $i->id ?? '' }}"
-                                                            title="{{ $i->descripcion ?? '' }}"
-                                                            @if ($i->id == $data['filtros']['sucursal']) selected @endif>
-                                                            {{ $i->descripcion ?? '' }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
+                                    <div class="row align-items-end">
+                                        <div class="col-sm-12 col-md-6 col-xl-5">
+                                            <label class="font-weight-bold text-muted mb-1" style="font-size:0.78rem;text-transform:uppercase;letter-spacing:.5px;">
+                                                <i class="fas fa-store mr-1"></i>Sucursal
+                                            </label>
+                                            <select class="form-control form-control-sm" id="sucursal" name="sucursal" required onchange="this.form.submit()">
+                                                <option value="-1">Seleccione una sucursal</option>
+                                                @foreach ($data['sucursales'] as $i)
+                                                    <option value="{{ $i->id ?? '' }}"
+                                                        title="{{ $i->descripcion ?? '' }}"
+                                                        @if ($i->id == $data['filtros']['sucursal']) selected @endif>
+                                                        {{ $i->descripcion ?? '' }}</option>
+                                                @endforeach
+                                            </select>
                                         </div>
-
-                                        <div class="col-sm-12 col-md-2 col-xl-4">
-                                            <div class="form-group">
-                                                <label>Agregar producto menú</label>
-                                                <a class="btn btn-success btn-icon form-control"
-                                                    style="cursor: pointer;color:white;"
-                                                    onclick="$('#mdl_generico').modal('show');"><i class="fas fa-plus"></i>
-                                                    Agregar
-                                                    menú</a>
-                                            </div>
-
+                                        <div class="col-sm-12 col-md-auto mt-2 mt-md-0">
+                                            <button type="button" class="btn btn-success btn-sm" onclick="$('#mdl_generico').modal('show');">
+                                                <i class="fas fa-plus mr-1"></i>Agregar menú
+                                            </button>
                                         </div>
-
                                     </div>
                                 </form>
                             </div>
@@ -74,58 +65,52 @@
 
 
                                             <tr>
-                                                <th class="text-center">Código</th>
-
+                                                <th class="text-center" style="width:75px;">Código</th>
                                                 <th class="text-center">Nombre</th>
-                                                <th class="text-center">
-                                                    Descripción
-                                                </th>
-                                                <th class="text-center">
-                                                    Categoría
-                                                </th>
+                                                <th class="text-center d-none d-lg-table-cell">Descripción</th>
+                                                <th class="text-center d-none d-md-table-cell">Categoría</th>
                                                 <th class="text-center">Precio</th>
-                                                <th class="text-center">Comanda Asignada</th>
-                                                <th class="text-center">Acciones</th>
-
+                                                <th class="text-center">Comanda</th>
+                                                <th class="text-center" style="width:90px;">Acciones</th>
                                             </tr>
                                         </thead>
                                         <tbody id="tbody_generico">
                                             @foreach ($data['menusSucursal'] as $g)
-                                                <tr class="space_row_table" style="cursor: pointer;"
-                                                    onclick='clickProducto("{{ $g->id }}")'>
-
-                                                    <td class="text-center">{{ $g->codigo ?? '' }}</td>
-                                                    <td class="text-center">
-                                                        {{ $g->nombre }}
+                                                <tr class="space_row_table" style="cursor:pointer;" onclick='clickProducto("{{ $g->id }}")'>
+                                                    <td class="text-center align-middle">
+                                                        <span class="badge badge-dark" style="font-size:0.78rem;">{{ $g->codigo ?? '' }}</span>
                                                     </td>
-                                                    <td class="text-center">
-                                                        {{ $g->descripcion ?? '' }}
+                                                    <td class="align-middle"><strong>{{ $g->nombre }}</strong></td>
+                                                    <td class="align-middle d-none d-lg-table-cell" style="max-width:160px;">
+                                                        <span class="d-block text-truncate text-muted" style="font-size:0.82rem;max-width:160px;" title="{{ $g->descripcion ?? '' }}">
+                                                            {{ $g->descripcion ?? '—' }}
+                                                        </span>
                                                     </td>
-                                                    <td class="text-center">
-                                                        {{ $g->nombre_categoria ?? '' }}
+                                                    <td class="text-center align-middle d-none d-md-table-cell">
+                                                        <span class="badge badge-info" style="font-size:0.78rem;">{{ $g->nombre_categoria ?? '—' }}</span>
                                                     </td>
-
-                                                    <td class="text-center">
-                                                        CRC {{ number_format($g->precio ?? '0.00', 2, '.', ',') }}
+                                                    <td class="text-center align-middle">
+                                                        <span class="font-weight-bold" style="font-size:0.9rem;">₡{{ number_format($g->precio ?? '0.00', 2, '.', ',') }}</span>
                                                     </td>
-
-                                                    <td class="text-center">
-                                                        <a style="cursor: pointer; color: white;" class="btn btn-success"
+                                                    <td class="text-center align-middle" onclick="event.stopPropagation()">
+                                                        <button class="btn btn-outline-success btn-sm" style="font-size:0.78rem;"
                                                             onclick="cambiarComandera('{{ $g->id }}','{{ $g->nombreComanda }}',' {{ $g->nombre }}')"
-                                                            title="Cambiar Comanda">{{ $g->nombreComanda ?? 'Comanda General' }}</a>
+                                                            title="Cambiar Comanda">
+                                                            <i class="fas fa-utensils mr-1"></i>{{ $g->nombreComanda ?? 'General' }}
+                                                        </button>
                                                     </td>
-
-                                                    <td class="text-center">
-                                                        <a style="cursor: pointer; color: white;" class="btn btn-info btn-sm mr-1"
-                                                            onclick="event.stopPropagation(); gestionarHorarios('{{ $g->id_pm_x_sucursal ?? $g->id }}', '{{ $g->nombre }}')"
+                                                    <td class="text-center align-middle" onclick="event.stopPropagation()">
+                                                        <button class="btn btn-info btn-sm mr-1"
+                                                            onclick="gestionarHorarios('{{ $g->id_pm_x_sucursal ?? $g->id }}', '{{ $g->nombre }}')"
                                                             title="Gestionar Horarios">
-                                                            <i class="fas fa-clock"></i> Horarios
-                                                        </a>
-                                                        <a style="cursor: pointer; color: white;" class="btn btn-primary btn-sm"
-                                                            onclick="event.stopPropagation(); eliminarProdcutoDeMenu('{{ $g->id }}')">Eliminar
-                                                            del menú</a>
+                                                            <i class="fas fa-clock"></i>
+                                                        </button>
+                                                        <button class="btn btn-danger btn-sm"
+                                                            onclick="eliminarProdcutoDeMenu('{{ $g->id }}')"
+                                                            title="Eliminar del menú">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
                                                     </td>
-
                                                 </tr>
                                             @endforeach
 
@@ -308,6 +293,13 @@
         window.addEventListener("load", initialice, false);
 
         function initialice() {
+            // Auto-seleccionar primera sucursal si ninguna está seleccionada
+            var sucSelect = document.getElementById('sucursal');
+            if (sucSelect && sucSelect.value == '-1' && sucSelect.options.length > 1) {
+                sucSelect.value = sucSelect.options[1].value;
+                document.getElementById('form_cargar_menu').submit();
+                return;
+            }
             // Obtener la fecha actual en formato deseado
             var currentDate = new Date().toLocaleDateString('es-CR', {
                 year: 'numeric',

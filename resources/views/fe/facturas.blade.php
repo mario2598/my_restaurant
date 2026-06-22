@@ -335,7 +335,15 @@
 
 
 @section('script')
+<script>
+    var ticketModo      = "{{ $data['ticketModo'] ?? 'html' }}";
+    var ticketImpresora = "{{ $data['ticketImpresora'] ?? '' }}";
+    var ticketAncho     = {{ $data['ticketAncho'] ?? 80 }};
+</script>
+@if(isset($data['ticketModo']) && $data['ticketModo'] === 'qz')
+<script src="{{ asset('assets/js/qz-tray.js') }}"></script>
+@endif
     <script src="{{ asset('assets/bundles/datatables/datatables.min.js') }}"></script>
     <script src="{{ asset('assets/js/page/datatables.js') }}"></script>
-    <script src="{{ asset('assets/js/fe/facturas.js') }}"></script>
+    <script src="{{ asset('assets/js/fe/facturas.js') . '?v=20260619' }}"></script>
 @endsection

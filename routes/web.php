@@ -168,6 +168,7 @@ Route::group(['middleware' => 'autorizated:facFac,posBarra'], function () {
     Route::post('facturacion/pos/actualizarOrden', 'FacturacionController@actualizarOrden');
     Route::post('facturacion/pos/pagarOrden', 'FacturacionController@pagarOrden');
     Route::get('facturacion/pos/cargarPosProductos', 'FacturacionController@cargarPosProductosAjax');
+    Route::get('facturacion/pos/populares', 'FacturacionController@getPopularesPosAjax');
     Route::get('facturacion/pos', 'FacturacionController@goPos');
     Route::post('facturacion/mesas/cambiar-estado', 'MesasController@cambiarEstadoMesa');
     Route::post('facturacion/mesas/obtener-mesas', 'MesasController@obtenerMesasSucursal');
@@ -517,6 +518,8 @@ Route::post('productoExterno/editar', 'ProductosExternosController@goEditarProdu
 Route::post('productoExterno/productos/filtro', 'ProductosExternosController@goProductosExternosFiltro');
 Route::post('productoExterno/producto/guardar', 'ProductosExternosController@guardarProducto');
 Route::post('productoExterno/producto/eliminar', 'ProductosExternosController@eliminarProductoExterno');
+Route::get('productoExterno/planCompras', 'ProductosExternosController@goPlanCompras');
+Route::post('productoExterno/planCompras/filtro', 'ProductosExternosController@goPlanComprasFiltro');
 Route::get('productoExterno/inventario/inventarios', 'ProductosExternosController@goInventarios');
 Route::post('productoExterno/inventario/inventarios/filtro', 'ProductosExternosController@goInventariosFiltro');
 Route::get('productoExterno/productos/cargarMpProd', 'ProductosExternosController@cargarMpProd');
@@ -557,8 +560,23 @@ Route::post('cocina/facturar/ordenes/actualizarOrden', 'OrdenesController@actual
 Route::post('cocina/facturar/ordenes/facturarOrden', 'OrdenesFacturarController@facturarOrden');
 Route::post('cocina/facturar/ordenes/prePagarOrden', 'OrdenesFacturarController@prePagarOrden');
 
+
+/** QZ Tray certificate + signing (no auth needed) */
+Route::get('qz-cert', function() {
+    $path = storage_path('app/qz-cert.pem');
+    return response(file_get_contents($path), 200, ['Content-Type' => 'text/plain']);
+});
+Route::get('qz-sign', function(\Illuminate\Http\Request $request) {
+    $toSign = $request->input('request', '');
+    $key    = file_get_contents(storage_path('app/qz-private.pem'));
+    openssl_sign($toSign, $sig, $key, OPENSSL_ALGO_SHA512);
+    return response(base64_encode($sig), 200, ['Content-Type' => 'text/plain']);
+});
+
 /** Impresora */
 Route::get('impresora/tiquete/{id_orden}', 'TicketesImpresosController@generarFacturacionOrdenPdf');
+Route::get('impresora/tiquete/html/{id_orden}', 'TicketesImpresosController@generarFacturacionOrdenHtml');
+
 Route::get('impresora/tiquete/ruta/{id_orden}', 'TicketesImpresosController@generarFacturacionOrdenRutaPdf');
 Route::get('impresora/tiquete/ruta/parcial/pago/{id_pago}', 'TicketesImpresosController@generarFacturaPagoParcialRutaPdf');
 

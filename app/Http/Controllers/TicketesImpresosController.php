@@ -304,9 +304,9 @@ class TicketesImpresosController extends Controller
             $correo_empresa_fe = $sucursalFactura->correo_factura ?? '';
         }
 
-        $tamPdf = 120;
+        $tamPdf = 145;
 
-        $aumento = (count($detalles) + count($detallesAdicionales)) * 10;
+        $aumento = (count($detalles) + count($detallesAdicionales)) * 13;
         $aumento2 = 0;
         foreach ($detalles as $d) {
             $aumento2 = $aumento2 + count($d->extras) * 5;
@@ -330,186 +330,229 @@ class TicketesImpresosController extends Controller
         $titulo4 = $this->toLatin1( 'Cédula : ' . $cedula_empresa_fe ?? '---');
         $titulo5 = $this->toLatin1( 'Correo : ' . $correo_empresa_fe ?? '---');
         $sucursal = $this->toLatin1( 'Sucursal : ' . $orden->nombre_sucursal);
-        $detalleMesa = $this->toLatin1( $orden->mesa == null ?  'Tipo : PARA LLEVAR' : 'Mesa : ' . $orden->numero_mesa);
-        $numero_orden = $this->toLatin1( 'No.Orden : ' . $orden->numero_orden);
-        if ($cantidadPagosOrden > 1) {
-            $cliente = null;
-        } elseif ($orden->nombre_cliente == null || $orden->nombre_cliente == "") {
-            $cliente = null;
-        } else {
-            $cliente = $this->toLatin1( 'Cliente : ' . $orden->nombre_cliente);
-        }
-
-        $fecha = $this->toLatin1( 'Fecha : ' . $this->fechaFormat($orden->fecha_fin));
 
         $path = $this->getLogoFacturaPath($sucursalFactura);
 
         $this->pdf->__construct('P', 'mm', array(80, $tamPdf));
         $this->pdf->AcceptPageBreak(true);
         $this->pdf->SetAutoPageBreak(false);
+        $this->pdf->SetMargins(6, 10, 6);
         $this->pdf->AddPage();
 
-        $this->pdf->SetFont('Arial', 'B', 10);
         $logoType = $this->getLogoImageType($path);
         if ($logoType !== null) {
-            $this->pdf->Image($path, 15, -5, 50, 50, $logoType);
-            $this->pdf->Ln(28);
+            $this->pdf->Image($path, 15, 2, 50, 0, $logoType);
+            $this->pdf->Ln(24);
         } else {
-            $this->pdf->Ln(5);
+            $this->pdf->Ln(4);
         }
+        // Línea superior del encabezado
+        $this->pdf->SetLineWidth(0.5);
+        $this->pdf->setX(4);
+        $this->pdf->Cell(64, 0, '', 'T');
+        $this->pdf->Ln(3);
+        // Nombre empresa: grande, negrita, centrado
+        $this->pdf->SetFont('Helvetica', 'B', 13);
+        $this->pdf->setX(4);
+        $this->pdf->MultiCell(64, 6, $titulo3, 0, 'C');
+        // Línea inferior bajo el nombre
+        $this->pdf->SetLineWidth(0.2);
+        $this->pdf->SetDrawColor(120, 120, 120);
+        $this->pdf->setX(4);
+        $this->pdf->Cell(64, 0, '', 'T');
+        $this->pdf->Ln(2);
+        // Datos empresa: pequeños, centrados
+        $this->pdf->SetDrawColor(0, 0, 0);
+        $this->pdf->SetLineWidth(0.2);
         $this->pdf->SetFont('Helvetica', '', 7);
-        $this->pdf->setX(6);
-        $this->pdf->MultiCell(63, 4, $titulo3, 0);
-        $this->pdf->setX(6);
-        $this->pdf->MultiCell(63, 4, $titulo4, 0);
-        $this->pdf->setX(6);
-        $this->pdf->MultiCell(63, 4, $titulo5, 0);
-        $this->pdf->setX(6);
-        $this->pdf->MultiCell(63, 4, $sucursal, 0);
+        if (!empty(trim($cedula_empresa_fe))) {
+            $this->pdf->setX(4);
+            $this->pdf->MultiCell(64, 4, $titulo4, 0, 'C');
+        }
+        if (!empty(trim($correo_empresa_fe))) {
+            $this->pdf->setX(4);
+            $this->pdf->MultiCell(64, 4, $titulo5, 0, 'C');
+        }
+        $this->pdf->setX(4);
+        $this->pdf->MultiCell(64, 4, $sucursal, 0, 'C');
+        $this->pdf->Ln(2);
+
+        // Datos adicionales
+        $monedaBase = DB::table('sis_moneda')->where('es_base', 'S')->first();
+        $sim = $this->toLatin1($monedaBase->simbolo ?? '');
+        $nota_pie = $sucursalFactura->ticket_nota_pie ?? '';
+        $pagosRaw = DB::table('pago_orden')->where('orden', '=', $idOrden)->get();
+
+        $this->pdf->SetFont('Courier', '', 7);
+        $this->pdf->setX(4);
+        $this->pdf->Cell(64, 3, str_repeat('.', 43), 0, 1, 'C');
         $this->pdf->Ln(1);
 
-        $this->pdf->SetFont('Helvetica', '', 7);
-        $this->pdf->Ln(1);
-        $this->pdf->setX(6);
-        $this->pdf->MultiCell(63, 4, $numero_orden, 0);
-        $this->pdf->setX(6);
-        $this->pdf->MultiCell(63, 4, $detalleMesa, 0);
-        if ($cliente != null && $cliente != "") {
-            $this->pdf->setX(6);
-            $this->pdf->MultiCell(63, 4, $cliente, 0);
+        $this->pdf->SetFont('Courier', 'B', 8);
+        $this->pdf->setX(4);
+        $this->pdf->Cell(18, 5, 'No. Orden:', 0, 0, 'L');
+        $this->pdf->SetFont('Courier', '', 8);
+        $this->pdf->Cell(46, 5, $this->toLatin1($orden->numero_orden ?? ''), 0, 1, 'L');
+
+        $labelMesa = $orden->mesa == null ? 'Tipo:' : 'Mesa:';
+        $valorMesa = $this->toLatin1($orden->mesa == null ? 'PARA LLEVAR' : ($orden->numero_mesa ?? ''));
+        $this->pdf->SetFont('Courier', 'B', 8);
+        $this->pdf->setX(4);
+        $this->pdf->Cell(18, 5, $labelMesa, 0, 0, 'L');
+        $this->pdf->SetFont('Courier', '', 8);
+        $this->pdf->Cell(46, 5, $valorMesa, 0, 1, 'L');
+
+        if (($cantidadPagosOrden <= 1) && !empty($orden->nombre_cliente)) {
+            $this->pdf->SetFont('Courier', 'B', 8);
+            $this->pdf->setX(4);
+            $this->pdf->Cell(18, 5, 'Cliente:', 0, 0, 'L');
+            $this->pdf->SetFont('Courier', '', 8);
+            $this->pdf->Cell(46, 5, $this->toLatin1($orden->nombre_cliente), 0, 1, 'L');
         }
-        $this->pdf->setX(6);
-        $this->pdf->MultiCell(63, 4, $fecha, 0);
 
-        $this->pdf->Ln(5);
-        $this->pdf->SetFont('Helvetica', 'B', 10);
-        $this->pdf->setX(21);
-        $this->pdf->Cell(63, 3, $this->toLatin1( 'Detalle de la orden'), 0);
-        $this->pdf->Ln(4);
-        $this->pdf->setX(6);
-        $this->pdf->Cell(63, 0, '', 'T');
-        $this->pdf->SetFont('Helvetica', 'B', 9);
-        $this->pdf->setX(6);
-        $this->pdf->SetFont('Arial', 'B', 8);    //Letra Arial, negrita (Bold), tam. 20
-        $this->pdf->Cell(63, 4, 'Cantidad', 0);
-        $this->pdf->setX(32);
-        $this->pdf->Cell(63, 4, 'Precio U', 0);
-        $this->pdf->setX(55);
-        $this->pdf->Cell(63, 4, 'SubTotal', 0);
-        $this->pdf->Ln(4);
-        $this->pdf->setX(6);
-        $this->pdf->Cell(63, 0, '', 'T');
-        $this->pdf->SetFont('Helvetica', '', 8);
+        $fechaValor = \Carbon\Carbon::parse($orden->fecha_fin)->format('d/m/Y H:i');
+        $this->pdf->SetFont('Courier', 'B', 8);
+        $this->pdf->setX(4);
+        $this->pdf->Cell(18, 5, 'Fecha:', 0, 0, 'L');
+        $this->pdf->SetFont('Courier', '', 8);
+        $this->pdf->Cell(46, 5, $fechaValor, 0, 1, 'L');
 
+        $this->pdf->Ln(1);
+        $this->pdf->SetFont('Courier', '', 7);
+        $this->pdf->setX(4);
+        $this->pdf->Cell(64, 3, str_repeat('.', 43), 0, 1, 'C');
+
+        // Tabla: Cant(7)+Producto(29)+P.U.(14)+Total(14)=64mm
+        $this->pdf->SetFont('Courier', 'B', 8);
+        $this->pdf->setX(4);
+        $this->pdf->Cell(7,  5, 'Cant',     0, 0, 'C');
+        $this->pdf->Cell(29, 5, 'Producto', 0, 0, 'L');
+        $this->pdf->Cell(14, 5, 'P.U.',     0, 0, 'R');
+        $this->pdf->Cell(14, 5, 'Total',    0, 1, 'R');
+        $this->pdf->SetLineWidth(0.3);
+        $this->pdf->setX(4);
+        $this->pdf->Cell(64, 0, '', 'T');
+
+        $this->pdf->SetFont('Courier', '', 8);
         foreach ($detalles as $d) {
             $this->pdf->Ln(1);
-            $this->pdf->setX(6);
-            $producto = $d->nombre_producto;
-            if ($d->monto_servicio > 0) {
-                $producto .= ' ( + 10% )';
-            }
+            $producto   = $d->nombre_producto ?? '';
             $totalExtra = 0;
-            $this->pdf->MultiCell(63, 4, $this->toLatin1( $producto), 0);
+            foreach ($d->extras as $e) { $totalExtra += ($e->total ?? 0); }
+            $subtotalItem = ($d->precio_unidad * $d->cantidad) + $totalExtra;
+
+            $y0 = $this->pdf->GetY();
+            $this->pdf->setX(4);
+            $this->pdf->Cell(7, 5, $d->cantidad, 0, 0, 'C');
+            $this->pdf->MultiCell(29, 5, $this->toLatin1($producto), 0, 'L');
+            $y1 = $this->pdf->GetY();
+            $h  = max(5, $y1 - $y0);
+
+            $this->pdf->SetXY(40, $y0);
+            $this->pdf->Cell(14, $h, $sim . number_format($d->precio_unidad, 2, '.', ','), 0, 0, 'R');
+            $this->pdf->Cell(14, $h, $sim . number_format($subtotalItem,    0, '.', ','), 0, 1, 'R');
+            if ($y1 > $y0 + 5) { $this->pdf->SetY($y1); }
+
             foreach ($d->extras as $e) {
-                $this->pdf->Ln(1);
-                $this->pdf->setX(10);
-                $this->pdf->Cell(63, 4,  $this->toLatin1( $e->descripcion_extra), 0);
-                $this->pdf->setX(32);
-                $this->pdf->Cell(63, 4, "", 0);
-                $this->pdf->setX(56);
-                $this->pdf->Cell(63, 4, number_format($e->total, 2, ".", ","), 0);
-                $this->pdf->Ln(4);
-                $totalExtra = $totalExtra  + $e->total;
+                $this->pdf->setX(11);
+                $this->pdf->Cell(57, 5, $this->toLatin1('+ ' . ($e->descripcion_extra ?? '')), 0, 1, 'L');
             }
-            $this->pdf->Ln(1);
-            $this->pdf->setX(10);
-            $this->pdf->Cell(63, 4,  $d->cantidad, 0);
-            $this->pdf->setX(32);
-            $this->pdf->Cell(63, 4, number_format($d->precio_unidad, 2, ".", ","), 0);
-            $this->pdf->setX(56);
-            $this->pdf->Cell(63, 4, number_format(($d->precio_unidad * $d->cantidad) + $totalExtra, 2, ".", ","), 0);
-            $this->pdf->Ln(4);
-            $this->pdf->setX(6);
-            $this->pdf->Cell(63, 0, '', 'T');
+            $this->pdf->SetFont('Courier', '', 6);
+            $this->pdf->setX(4);
+            $this->pdf->Cell(64, 3, str_repeat('.', 50), 0, 1, 'C');
+            $this->pdf->SetFont('Courier', '', 8);
         }
 
         foreach ($detallesAdicionales as $d) {
             $this->pdf->Ln(1);
-            $this->pdf->setX(6);
-            $producto = $d->dsc_linea;
-
-            $this->pdf->MultiCell(63, 4, $this->toLatin1( $producto), 0);
-
-            $this->pdf->Ln(1);
-            $this->pdf->setX(10);
-            $this->pdf->Cell(63, 4,  $d->cantidad_pagada, 0);
-            $this->pdf->setX(32);
-            $this->pdf->Cell(63, 4, number_format($d->total / $d->cantidad_pagada, 2, ".", ","), 0);
-            $this->pdf->setX(53);
-            $this->pdf->Cell(63, 4, number_format(($d->total), 2, ".", ","), 0);
-            $this->pdf->Ln(4);
-            $this->pdf->setX(6);
-            $this->pdf->Cell(63, 0, '', 'T');
-        }
-        $this->pdf->SetFont('Arial', '', 8);    //Letra Arial, negrita (Bold), tam. 20
-        if (($sucursalFactura->factura_iva ?? 0) == 1) {
-            $this->pdf->Ln(4);
-            $this->pdf->setX(6);
-            $this->pdf->Cell(63, 4, 'SubTotal', 0);
-            $this->pdf->setX(55);
-            $this->pdf->Cell(63, 4, number_format(($orden->subtotal + $orden->descuento) - $orden->mto_impuesto_servicio, 2, ".", ","), 0);
-        } else {
-            $this->pdf->Ln(4);
-            $this->pdf->setX(6);
-            $this->pdf->Cell(63, 4, 'SubTotal', 0);
-            $this->pdf->setX(55);
-            $this->pdf->Cell(63, 4, number_format((($orden->subtotal + $orden->impuesto) + $orden->descuento) - $orden->mto_impuesto_servicio, 2, ".", ","), 0);
+            $y0 = $this->pdf->GetY();
+            $this->pdf->setX(4);
+            $this->pdf->Cell(7, 5, $d->cantidad_pagada, 0, 0, 'C');
+            $this->pdf->MultiCell(29, 5, $this->toLatin1($d->dsc_linea ?? ''), 0, 'L');
+            $y1 = $this->pdf->GetY();
+            $h  = max(5, $y1 - $y0);
+            $pu = $d->cantidad_pagada > 0 ? $d->total / $d->cantidad_pagada : 0;
+            $this->pdf->SetXY(40, $y0);
+            $this->pdf->Cell(14, $h, $sim . number_format($pu,       0, '.', ','), 0, 0, 'R');
+            $this->pdf->Cell(14, $h, $sim . number_format($d->total, 2, '.', ','), 0, 1, 'R');
+            if ($y1 > $y0 + 5) { $this->pdf->SetY($y1); }
+            $this->pdf->SetFont('Courier', '', 6);
+            $this->pdf->setX(4);
+            $this->pdf->Cell(64, 3, str_repeat('.', 50), 0, 1, 'C');
+            $this->pdf->SetFont('Courier', '', 8);
         }
 
-        if ($orden->mto_impuesto_servicio > 0) {
-            $this->pdf->Ln(4);
-            $this->pdf->setX(6);
-            $this->pdf->Cell(63, 4, 'Servicio a la Mesa (10%)', 0);
-            $this->pdf->setX(55);
-            $this->pdf->Cell(63, 4, number_format($orden->mto_impuesto_servicio, 2, ".", ","), 0);
-        }
-
+        // Totales: Label(46)+Monto(18)=64mm
+        $this->pdf->Ln(1);
         if ($orden->descuento > 0) {
-            $this->pdf->Ln(4);
-            $this->pdf->setX(6);
-            $this->pdf->Cell(63, 4, 'Descuento', 0);
-            $this->pdf->setX(55);
-            $this->pdf->Cell(63, 4, number_format($orden->descuento, 2, ".", ","), 0);
+            $this->pdf->setX(4);
+            $this->pdf->Cell(46, 5, 'Descuento:', 0, 0, 'L');
+            $this->pdf->Cell(18, 5, '-' . $sim . number_format($orden->descuento, 2, '.', ','), 0, 1, 'R');
         }
-
-        if (($sucursalFactura->factura_iva ?? 0) == 1) {
-            $this->pdf->Ln(4);
-            $this->pdf->setX(6);
-            $this->pdf->Cell(63, 4, 'Impuesto (IVA)', 0);
-            $this->pdf->setX(55);
-            $this->pdf->Cell(63, 4, number_format($orden->impuesto, 2, ".", ","), 0);
+        if ($orden->mto_impuesto_servicio > 0) {
+            $this->pdf->setX(4);
+            $this->pdf->Cell(46, 5, 'Serv. (10%):', 0, 0, 'L');
+            $this->pdf->Cell(18, 5, $sim . number_format($orden->mto_impuesto_servicio, 2, '.', ','), 0, 1, 'R');
+        }
+        if (($orden->monto_envio ?? 0) > 0) {
+            $this->pdf->setX(4);
+            $this->pdf->Cell(46, 5, 'Envio:', 0, 0, 'L');
+            $this->pdf->Cell(18, 5, $sim . number_format($orden->monto_envio, 2, '.', ','), 0, 1, 'R');
+        }
+        if (($sucursalFactura->factura_iva ?? 0) == 1 && ($orden->impuesto ?? 0) > 0) {
+            $this->pdf->setX(4);
+            $this->pdf->Cell(46, 5, 'IVA:', 0, 0, 'L');
+            $this->pdf->Cell(18, 5, $sim . number_format($orden->impuesto, 2, '.', ','), 0, 1, 'R');
         }
 
         $this->escribirResumenPagosMonedaOrden((int) $idOrden);
+        $this->pdf->SetFont('Courier', '', 8);
 
-        $this->pdf->SetFont('Arial', 'B', 11);    //Letra Arial, negrita (Bold), tam. 20
-        $this->pdf->Ln(6);
-        $this->pdf->setX(6);
-        $this->pdf->Cell(63, 4, 'Total', 0);
-        $this->pdf->setX(55);
-        $this->pdf->Cell(63, 4, number_format($orden->total_con_descuento, 2, ".", ","), 0);
+        // TOTAL: Label(34)+Monto(30)=64mm
+        $this->pdf->SetFont('Courier', '', 7);
+        $this->pdf->setX(4);
+        $this->pdf->Cell(64, 3, str_repeat('.', 43), 0, 1, 'C');
+        $this->pdf->SetFont('Courier', 'B', 11);
+        $this->pdf->setX(4);
+        $this->pdf->Cell(34, 6, 'TOTAL:', 0, 0, 'L');
+        $this->pdf->Cell(30, 6, $sim . number_format($orden->total_con_descuento, 2, '.', ','), 0, 1, 'R');
 
-        $this->pdf->Ln(10);
-        $this->pdf->setX(14);
+        // Pagos: Label(46)+Monto(18)=64mm
+        $this->pdf->SetFont('Courier', '', 7);
+        $this->pdf->setX(4);
+        $this->pdf->Cell(64, 3, str_repeat('.', 43), 0, 1, 'C');
+        $this->pdf->SetFont('Courier', '', 8);
+        foreach ($pagosRaw as $pago) {
+            if (($pago->monto_efectivo ?? 0) > 0) {
+                $this->pdf->setX(4);
+                $this->pdf->Cell(46, 5, 'Efectivo:', 0, 0, 'L');
+                $this->pdf->Cell(18, 5, $sim . number_format($pago->monto_efectivo, 2, '.', ','), 0, 1, 'R');
+            }
+            if (($pago->monto_tarjeta ?? 0) > 0) {
+                $this->pdf->setX(4);
+                $this->pdf->Cell(46, 5, 'Tarjeta:', 0, 0, 'L');
+                $this->pdf->Cell(18, 5, $sim . number_format($pago->monto_tarjeta, 2, '.', ','), 0, 1, 'R');
+            }
+            if (($pago->monto_sinpe ?? 0) > 0) {
+                $this->pdf->setX(4);
+                $this->pdf->Cell(46, 5, 'SINPE:', 0, 0, 'L');
+                $this->pdf->Cell(18, 5, $sim . number_format($pago->monto_sinpe, 2, '.', ','), 0, 1, 'R');
+            }
+        }
 
-        $this->pdf->SetFont('Arial', 'B', 9);
-        $this->pdf->MultiCell(63, 4, 'GRACIAS POR PREFERIRNOS ');
-
-        $this->pdf->SetFont('Helvetica', 'B', 6);
-        $this->pdf->setX(32);
-        $this->pdf->Cell(63, 4, env('APP_NAME', 'SPACE SOFTWARE CR'));
-        $this->pdf->Ln(10);
-        // $this->footer();
+        // Footer
+        $this->pdf->Ln(2);
+        if (!empty(trim($nota_pie))) {
+            $this->pdf->SetFont('Courier', '', 7);
+            $this->pdf->setX(4);
+            $this->pdf->Cell(64, 3, str_repeat('.', 43), 0, 1, 'C');
+            $this->pdf->setX(4);
+            $this->pdf->MultiCell(64, 4, $this->toLatin1($nota_pie), 0, 'C');
+        }
+        $this->pdf->SetFont('Courier', '', 8);
+        $this->pdf->setX(4);
+        $this->pdf->MultiCell(64, 5, $this->toLatin1('Gracias por su visita'), 0, 'C');
+        $this->pdf->Ln(8);
 
         $this->pdf->Output('ordenNo-' . $orden->numero_orden . '.pdf', 'I');
 
@@ -590,26 +633,46 @@ class TicketesImpresosController extends Controller
         $this->pdf->__construct('P', 'mm', array(80, $tamPdf));
         $this->pdf->AcceptPageBreak(true);
         $this->pdf->SetAutoPageBreak(false);
+        $this->pdf->SetMargins(6, 10, 6);
         $this->pdf->AddPage();
 
-        $this->pdf->SetFont('Arial', 'B', 10);
         $logoType = $this->getLogoImageType($path);
         if ($logoType !== null) {
-            $this->pdf->Image($path, 15, -5, 50, 50, $logoType);
-            $this->pdf->Ln(28);
+            $this->pdf->Image($path, 15, 2, 50, 0, $logoType);
+            $this->pdf->Ln(24);
         } else {
-            $this->pdf->Ln(5);
+            $this->pdf->Ln(4);
         }
+        // Línea superior del encabezado
+        $this->pdf->SetLineWidth(0.5);
+        $this->pdf->setX(6);
+        $this->pdf->Cell(68, 0, '', 'T');
+        $this->pdf->Ln(3);
+        // Nombre empresa: grande, negrita, centrado
+        $this->pdf->SetFont('Helvetica', 'B', 13);
+        $this->pdf->setX(6);
+        $this->pdf->MultiCell(68, 6, $titulo3, 0, 'C');
+        // Línea inferior bajo el nombre
+        $this->pdf->SetLineWidth(0.2);
+        $this->pdf->SetDrawColor(120, 120, 120);
+        $this->pdf->setX(6);
+        $this->pdf->Cell(68, 0, '', 'T');
+        $this->pdf->Ln(2);
+        // Datos empresa: pequeños, centrados
+        $this->pdf->SetDrawColor(0, 0, 0);
+        $this->pdf->SetLineWidth(0.2);
         $this->pdf->SetFont('Helvetica', '', 7);
+        if (!empty(trim($cedula_empresa_fe))) {
+            $this->pdf->setX(6);
+            $this->pdf->MultiCell(68, 4, $titulo4, 0, 'C');
+        }
+        if (!empty(trim($correo_empresa_fe))) {
+            $this->pdf->setX(6);
+            $this->pdf->MultiCell(68, 4, $titulo5, 0, 'C');
+        }
         $this->pdf->setX(6);
-        $this->pdf->MultiCell(63, 4, $titulo3, 0);
-        $this->pdf->setX(6);
-        $this->pdf->MultiCell(63, 4, $titulo4, 0);
-        $this->pdf->setX(6);
-        $this->pdf->MultiCell(63, 4, $titulo5, 0);
-        $this->pdf->setX(6);
-        $this->pdf->MultiCell(63, 4, $sucursal, 0);
-        $this->pdf->Ln(1);
+        $this->pdf->MultiCell(68, 4, $sucursal, 0, 'C');
+        $this->pdf->Ln(2);
 
         $this->pdf->SetFont('Helvetica', '', 8);
         $this->pdf->Ln(1);
@@ -801,6 +864,7 @@ class TicketesImpresosController extends Controller
         $this->pdf->__construct('P', 'mm', array(80, $tamPdf));
         $this->pdf->AcceptPageBreak(true);
         $this->pdf->SetAutoPageBreak(false);
+        $this->pdf->SetMargins(6, 10, 6);
         $this->pdf->AddPage();
 
         $this->pdf->SetFont('Arial', 'B', 10);
@@ -925,4 +989,77 @@ class TicketesImpresosController extends Controller
 
         exit;
     }
+    public function generarFacturacionOrdenHtml($idOrden)
+    {
+        // Si el id trae ':', es un pago parcial — usamos el id de orden real
+        $ordenId = $idOrden;
+        if (strpos($idOrden, ':') !== false) {
+            list(, $idPago) = explode(':', $idOrden);
+            $pago = DB::table('pago_orden')->where('id', $idPago)->first();
+            if (!$pago) {
+                return response('Pago no encontrado', 404);
+            }
+            $ordenId = $pago->orden;
+        }
+
+        $res = OrdenesController::getOrden($ordenId);
+        if (!$res['estado']) {
+            return response('Orden no encontrada: ' . ($res['mensaje'] ?? ''), 404);
+        }
+
+        $orden    = $res['orden'];
+        $detalles = $orden->detalles;
+
+        // Normalizar nombres de campo para la vista
+        foreach ($detalles as $d) {
+            $d->precio_unitario = $d->precio_unidad ?? 0;
+            $d->nombre          = $d->nombre_producto ?? '';
+            $d->subtotal        = ($d->precio_unidad ?? 0) * ($d->cantidad ?? 1);
+            foreach ($d->extras as $e) {
+                $e->nombre    = $e->descripcion_extra ?? '';
+                $d->subtotal += ($e->total ?? 0);
+            }
+        }
+
+        // Construir lista de pagos desde las columnas de pago_orden
+        $pagosRaw = DB::table('pago_orden')->where('orden', $ordenId)->get();
+        $pagos = [];
+        foreach ($pagosRaw as $p) {
+            if (($p->monto_efectivo ?? 0) > 0) {
+                $pagos[] = (object)['tipo_pago' => 'Efectivo', 'monto' => $p->monto_efectivo];
+            }
+            if (($p->monto_tarjeta ?? 0) > 0) {
+                $pagos[] = (object)['tipo_pago' => 'Tarjeta',  'monto' => $p->monto_tarjeta];
+            }
+            if (($p->monto_sinpe ?? 0) > 0) {
+                $pagos[] = (object)['tipo_pago' => 'SINPE',    'monto' => $p->monto_sinpe];
+            }
+        }
+
+        $sucursal      = MantenimientoSucursalController::getSucursalById($orden->sucursal);
+        $ancho_mm      = (int) ($sucursal->ticket_ancho_mm ?? 80);
+        $nota_pie      = $sucursal->ticket_nota_pie ?? '';
+        $auto_imprimir = !request()->has('qz') && (bool) ($sucursal->ticket_auto_imprimir ?? true);
+
+        // Símbolo de moneda base
+        $monedaBase = DB::table('sis_moneda')->where('es_base', 'S')->first();
+        $simbolo    = $monedaBase->simbolo ?? '₡';
+
+        // Logo
+        $logo_url = null;
+        if (!empty($sucursal->url_logo_sistema)) {
+            $logo_url = asset($sucursal->url_logo_sistema);
+        } elseif (!empty($sucursal->url_logo_factura)) {
+            $logo_url = asset($sucursal->url_logo_factura);
+        }
+
+        $qz_mode = request()->has('qz');
+
+        return view('impresion.tiquete', compact(
+            'orden', 'detalles', 'pagos', 'sucursal',
+            'ancho_mm', 'nota_pie', 'auto_imprimir', 'simbolo', 'logo_url',
+            'qz_mode'
+        ));
+    }
+
 }
