@@ -273,8 +273,9 @@ function aplicarProporcionCanvasPos() {
     if (!posPlanoDatos) {
         return;
     }
-    var ar = parseInt(posPlanoDatos.ancho_referencia, 10) || 100;
-    var al = parseInt(posPlanoDatos.alto_referencia, 10) || 150;
+    var pisoCurrent = (posPlanoPisos || []).find(function(p){ return p.id === posPisoActivo; });
+    var ar = (pisoCurrent && pisoCurrent.ancho) ? parseInt(pisoCurrent.ancho, 10) : (parseInt(posPlanoDatos.ancho_referencia, 10) || 100);
+    var al = (pisoCurrent && pisoCurrent.alto)  ? parseInt(pisoCurrent.alto, 10)  : (parseInt(posPlanoDatos.alto_referencia, 10)  || 150);
     var $scaler = $('#pos-plano-canvas-scaler');
     var $c = $('#pos-plano-canvas');
     if (!$c.length) {
@@ -756,6 +757,7 @@ function renderizarTabsPisosPos() {
         posPlanoMesaSeleccionadaId = null;
         renderizarTabsPisosPos();
         renderizarZonasPos(zonasParaPisoPos(posPisoActivo));
+        aplicarProporcionCanvasPos();
         renderizarPlanoPos();
         renderizarSidebarPos(null);
         actualizarAyudaPlanoPos();
