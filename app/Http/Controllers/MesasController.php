@@ -290,6 +290,7 @@ class MesasController extends Controller
                     'plano_alto' => isset($z['h']) ? round((float) $z['h'], 2) : null,
                     'orden' => $orden++,
                     'activo' => 'S',
+                    'piso_id' => isset($z['piso_id']) && (int)$z['piso_id'] > 0 ? (int)$z['piso_id'] : 1,
                 ];
 
                 if ($existenteArea != null) {

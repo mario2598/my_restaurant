@@ -75,9 +75,11 @@ function aplicarEstiloZona($el, x, y, w, h) {
 }
 
 function leerZonaDesdeElemento($el) {
+    var pisoid = $el.data('piso-id');
     return {
         id: $el.data('id'),
         area_id: $el.data('area-id') || null,
+        piso_id: (pisoid !== '' && pisoid !== undefined) ? parseInt(pisoid) : pisoActivo,
         nombre: $el.data('nombre') || $el.find('.plano-zona-label').text(),
         x: parsePct($el[0].style.left),
         y: parsePct($el[0].style.top),
@@ -259,7 +261,11 @@ function leerZonasDesdeDom() {
 }
 
 function sincronizarZonasEnMemoria() {
-    planoDatos.zonas = leerZonasDesdeDom();
+    var domZonas = leerZonasDesdeDom();
+    var otrasZonas = (planoDatos.zonas || []).filter(function(z) {
+        return parseInt(z.piso_id) !== pisoActivo;
+    });
+    planoDatos.zonas = otrasZonas.concat(domZonas);
 }
 
 function cargarPlano() {
@@ -305,7 +311,7 @@ function cargarPlano() {
 function renderizarZonas(zonas) {
     var html = '';
     zonas.forEach(function (z, idx) {
-        html += '<div class="plano-zona" data-id="' + (z.id || '') + '" data-area-id="' + (z.area_id || '') + '" data-nombre="' + escAttr(z.nombre || z.id) + '"'
+        html += '<div class="plano-zona" data-id="' + (z.id || '') + '" data-area-id="' + (z.area_id || '') + '" data-piso-id="' + (z.piso_id || '') + '" data-nombre="' + escAttr(z.nombre || z.id) + '"'
             + ' data-color="' + escAttr(z.color || '#eee') + '"'
             + ' style="left:' + z.x + '%;top:' + z.y + '%;width:' + z.w + '%;height:' + z.h + '%;'
             + 'z-index:' + (idx + 1) + ';'
