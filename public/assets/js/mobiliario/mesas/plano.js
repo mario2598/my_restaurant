@@ -1105,6 +1105,7 @@ function aplicarTamanoCanvas() {
     ancho = Math.max(50, Math.min(500, ancho));
     alto  = Math.max(50, Math.min(500, alto));
     cambiarTamanoCanvas(ancho, alto);
+    guardarPisosAjax();
 }
 
 function toggleNuevaMesaForm() {
