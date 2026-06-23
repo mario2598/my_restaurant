@@ -276,17 +276,20 @@ function cargarPlano() {
             return;
         }
         planoDatos = response.datos;
-        var ar = planoDatos.ancho_referencia || 100;
-        var al = planoDatos.alto_referencia || 150;
-        $('#plano-ref-dimensiones').text(ar + ' × ' + al + ' (referencia)');
-        $('#plano-canvas').css('aspect-ratio', ar + ' / ' + al);
-        $('#canvas_ancho').val(ar);
-        $('#canvas_alto').val(al);
         planoDatos.areas_catalogo = planoDatos.areas_catalogo || [];
         planoPisos = (planoDatos.pisos && planoDatos.pisos.length) ? planoDatos.pisos : [{ id: 1, nombre: 'Área 1' }];
         if (!planoPisos.find(function(p) { return p.id === pisoActivo; })) {
             pisoActivo = planoPisos[0].id;
         }
+        var pisoCurrent = planoPisos.find(function(p){ return p.id === pisoActivo; }) || planoPisos[0];
+        var ar = pisoCurrent.ancho || planoDatos.ancho_referencia || 100;
+        var al = pisoCurrent.alto || planoDatos.alto_referencia || 150;
+        planoDatos.ancho_referencia = ar;
+        planoDatos.alto_referencia = al;
+        $('#plano-ref-dimensiones').text(ar + ' × ' + al + ' (referencia)');
+        $('#plano-canvas').css('aspect-ratio', ar + ' / ' + al);
+        $('#canvas_ancho').val(ar);
+        $('#canvas_alto').val(al);
         renderizarTabsPisos();
         renderizarZonas(zonasParaPiso(pisoActivo));
         renderizarMesas(planoDatos.mesas || []);
@@ -616,20 +619,7 @@ function guardarZonasPlano() {
 }
 
 function guardarDimensionesPlano() {
-    var sucursal = $('#select_sucursal_plano').val();
-    if (!sucursal) return;
-    $.ajax({
-        url: base_path + '/mobiliario/mesas/guardar-plano',
-        type: 'post',
-        dataType: 'json',
-        data: {
-            _token: CSRF_TOKEN,
-            idSucursal: sucursal,
-            ancho_referencia: planoDatos.ancho_referencia || 100,
-            alto_referencia: planoDatos.alto_referencia || 150,
-            zonas: []
-        }
-    });
+    guardarPisosAjax();
 }
 
 function guardarCambiosPlano() {
@@ -972,6 +962,8 @@ function renderizarTabsPisos() {
 
     $('.btn-piso-tab').on('click', function () {
         pisoActivo = parseInt($(this).data('piso-id'));
+        var pisoCurrent = planoPisos.find(function(p){ return p.id === pisoActivo; });
+        if (pisoCurrent) { cambiarTamanoCanvas(pisoCurrent.ancho || 100, pisoCurrent.alto || 150); }
         mesaSeleccionadaId = null;
         zonaSeleccionadaId = null;
         $('#panel-mesa-detalle').html('<p class="text-muted small">Haga clic en una mesa del plano.</p>');
@@ -1099,6 +1091,8 @@ function moverAreaOrden(id, delta) {
 function cambiarTamanoCanvas(ancho, alto) {
     planoDatos.ancho_referencia = ancho;
     planoDatos.alto_referencia = alto;
+    var pisoEntry = planoPisos.find(function(p){ return p.id === pisoActivo; });
+    if (pisoEntry) { pisoEntry.ancho = ancho; pisoEntry.alto = alto; }
     $('#plano-canvas').css('aspect-ratio', ancho + ' / ' + alto);
     $('#plano-ref-dimensiones').text(ancho + ' x ' + alto + ' (referencia)');
     $('#canvas_ancho').val(ancho);
