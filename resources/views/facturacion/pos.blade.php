@@ -1689,14 +1689,16 @@
                         </div>
                     </div>
                 </div>
-                <button type="button" class="close ml-3" data-dismiss="modal" aria-label="Cerrar">
-                    <span aria-hidden="true">&times;</span>
-                </button>
             </div>
-            <div class="modal-body p-3" style="max-height:78vh; overflow-y:auto; background:#f8f9fa;">
+            <div class="modal-body p-3" style="max-height:72vh; overflow-y:auto; background:#f8f9fa;">
                 <div id="tbody-ordenes">
                     <!-- cards generadas dinámicamente -->
                 </div>
+            </div>
+            <div class="modal-footer py-2 px-3" style="border-top:1px solid #dee2e6;">
+                <button type="button" class="btn btn-secondary btn-sm px-4" onclick="cerrarMdlOrdenes()">
+                    <i class="fas fa-times mr-1"></i> Cerrar
+                </button>
             </div>
         </div>
     </div>
