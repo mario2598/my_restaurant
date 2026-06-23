@@ -1895,7 +1895,7 @@ class FacturacionController extends Controller
         $ordenes = DB::table('orden')
             ->leftjoin('sis_estado', 'sis_estado.id', '=', 'orden.estado')
             ->leftjoin('mesa', 'mesa.id', '=', 'orden.mesa')
-            ->select('orden.*', 'sis_estado.nombre as estadoOrden', 'sis_estado.cod_general', 'mesa.numero_mesa')
+            ->select('orden.*', 'sis_estado.nombre as estadoOrden', 'sis_estado.cod_general', 'mesa.numero_mesa', 'mesa.piso as mesa_piso')
             ->where('orden.cierre_caja', '=', CajaController::getIdCaja(session('usuario')['id'], $this->getUsuarioSucursal()))
             ->orderBy('orden.fecha_inicio', 'DESC')->get();
 

@@ -1691,6 +1691,7 @@
                 </div>
             </div>
             <div class="modal-body p-3" style="max-height:72vh; overflow-y:auto; background:#f8f9fa;">
+                <div id="ordenes-filtros-piso" class="mb-2 d-flex flex-wrap" style="gap:4px;"></div>
                 <div id="tbody-ordenes">
                     <!-- cards generadas dinámicamente -->
                 </div>

@@ -2623,7 +2623,7 @@ function generarHTMLOrdenes(ordenes) {
 
         var totalFmt = anulada ? '—' : currencyCRFormat(total);
         texto += `
-        <div class="orden-item-wrap mb-2">
+        <div class="orden-item-wrap mb-2" data-piso="${orden.mesa_piso || 0}">
           <div class="orden-item-card" style="border-left:5px solid ${borderColor}; background:#fff; border-radius:10px; padding:14px 16px; box-shadow:0 1px 6px rgba(0,0,0,.07);">
             <!-- Fila 1: número + badge + total -->
             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -2658,7 +2658,36 @@ function generarHTMLOrdenes(ordenes) {
     });
 
     $('#tbody-ordenes').html(texto || '<p class="text-muted text-center py-4">Sin órdenes</p>');
+
+    // Build piso filter chips from the actual orders
+    var pisosEnOrdenes = {};
+    ordenes.forEach(function(o) {
+        var p = o.mesa_piso || 0;
+        if (!pisosEnOrdenes[p]) {
+            pisosEnOrdenes[p] = p === 0 ? 'Para llevar' : ('Área ' + p);
+        }
+    });
+    var chipsHtml = '<button class="btn btn-sm btn-primary mr-1 mb-1 filtro-piso-btn active" data-piso="all" onclick="filtrarOrdenesPorPiso(this)">Todas</button>';
+    if (pisosEnOrdenes[0]) chipsHtml += '<button class="btn btn-sm btn-outline-secondary mr-1 mb-1 filtro-piso-btn" data-piso="0" onclick="filtrarOrdenesPorPiso(this)">🛵 Para llevar</button>';
+    Object.keys(pisosEnOrdenes).filter(function(k){ return k != 0; }).sort().forEach(function(p) {
+        chipsHtml += '<button class="btn btn-sm btn-outline-secondary mr-1 mb-1 filtro-piso-btn" data-piso="' + p + '" onclick="filtrarOrdenesPorPiso(this)">' + pisosEnOrdenes[p] + '</button>';
+    });
+    $('#ordenes-filtros-piso').html(chipsHtml);
+
     $('#mdl-ordenes').modal('show');
+}
+
+function filtrarOrdenesPorPiso(btn) {
+    var piso = $(btn).data('piso');
+    $('.filtro-piso-btn').removeClass('active btn-primary').addClass('btn-outline-secondary');
+    $(btn).removeClass('btn-outline-secondary').addClass('active btn-primary');
+    if (piso === 'all') {
+        $('.orden-item-wrap').show();
+    } else {
+        $('.orden-item-wrap').each(function() {
+            $(this).toggle(String($(this).data('piso')) === String(piso));
+        });
+    }
 }
 
 function generarMensajeTrackingWhatsApp(nombreUsuario, numeroOrden, telefono, url) {
