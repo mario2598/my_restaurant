@@ -615,10 +615,28 @@ function guardarZonasPlano() {
     });
 }
 
+function guardarDimensionesPlano() {
+    var sucursal = $('#select_sucursal_plano').val();
+    if (!sucursal) return;
+    $.ajax({
+        url: base_path + '/mobiliario/mesas/guardar-plano',
+        type: 'post',
+        dataType: 'json',
+        data: {
+            _token: CSRF_TOKEN,
+            idSucursal: sucursal,
+            ancho_referencia: planoDatos.ancho_referencia || 100,
+            alto_referencia: planoDatos.alto_referencia || 150,
+            zonas: []
+        }
+    });
+}
+
 function guardarCambiosPlano() {
     if (getModoPlano() === 'zonas') {
         guardarZonasPlano();
     } else {
+        guardarDimensionesPlano();
         guardarTodasPosiciones();
     }
 }
