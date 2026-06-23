@@ -2053,6 +2053,12 @@ function abrirModalPago() {
         }
     }
 
+    // Auto-llenar nombre si está vacío
+    if (!ordenGestion.cliente || ordenGestion.cliente.trim() === '') {
+        ordenGestion.cliente = 'Cliente';
+        $('#txt-cliente').val('Cliente');
+    }
+
     // Sincronizar el input del modal con el estado del cliente seleccionado
     const inputClienteModal = document.getElementById('nombreCliente');
     const inputClientePrincipal = document.getElementById('txt-cliente');
