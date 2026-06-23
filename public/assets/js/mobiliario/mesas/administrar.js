@@ -49,10 +49,10 @@ function generarHTMLMesas(mesas) {
     mesasGeneral.forEach(mesa => {
         var forma = (mesa.forma || 'rectangular').toLowerCase();
         var formaLabel = typeof etiquetaFormaMesa === 'function' ? etiquetaFormaMesa(forma) : forma;
-        var aplica10 = (mesa.aplica_impuesto_servicio == null || parseInt(mesa.aplica_impuesto_servicio) === 1);
+        var aplica10 = (mesa.aplica_impuesto_servicio == null || parseInt(mesa.aplica_impuesto_servicio) !== 0);
         var badge10 = aplica10
-            ? '<span class="badge badge-success">Sí</span>'
-            : '<span class="badge badge-secondary">No</span>';
+            ? '<span style="color:#28a745;font-weight:600">&#10003; Sí</span>'
+            : '<span style="color:#6c757d">&#10007; No</span>';
         texto += `
             <tr > 
               <td class="text-center">${mesa.numero_mesa ?? "S/A"}</td>
