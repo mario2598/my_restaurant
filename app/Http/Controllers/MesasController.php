@@ -166,6 +166,22 @@ class MesasController extends Controller
             ->orderBy('mesa.numero_mesa', 'ASC')
             ->get();
 
+        // Pisos
+        $pisosJson = $plano ? ($plano->pisos_json ?? null) : null;
+        $pisos = $pisosJson ? json_decode($pisosJson, true) : [['id' => 1, 'nombre' => 'Piso 1']];
+        if (!is_array($pisos) || count($pisos) === 0) {
+            $pisos = [['id' => 1, 'nombre' => 'Piso 1']];
+        }
+        $pisosIds = array_column($pisos, 'id');
+        foreach ($mesas as $m) {
+            $pid = (int)($m->piso ?? 1);
+            if ($pid > 0 && !in_array($pid, $pisosIds, true)) {
+                $pisos[] = ['id' => $pid, 'nombre' => 'Piso ' . $pid];
+                $pisosIds[] = $pid;
+            }
+        }
+        usort($pisos, function($a, $b) { return ($a['id'] ?? 0) - ($b['id'] ?? 0); });
+
         return [
             'plano' => $plano,
             'zonas' => $zonas,
@@ -173,6 +189,7 @@ class MesasController extends Controller
             'ancho_referencia' => $anchoRef,
             'alto_referencia' => $altoRef,
             'mesas' => $mesas,
+            'pisos' => $pisos,
         ];
     }
 
@@ -205,6 +222,7 @@ class MesasController extends Controller
             $planoAlto = $request->input('plano_alto');
             $forma = $request->input('forma', 'rectangular');
             $zona = $request->input('zona');
+            $piso = max(1, (int) $request->input('piso', 1));
 
             if ($id < 1) {
                 return $this->responseAjaxServerError("ID de mesa inválido", []);
@@ -222,6 +240,7 @@ class MesasController extends Controller
                 'plano_alto' => $planoAlto !== null && $planoAlto !== '' ? round((float) $planoAlto, 2) : 7,
                 'forma' => $forma,
                 'zona' => $zona,
+                'piso' => $piso,
             ]);
 
             return $this->responseAjaxSuccess("Posición guardada", []);
@@ -479,6 +498,45 @@ class MesasController extends Controller
         } catch (QueryException $ex) {
             DB::table('log')->insertGetId(['id' => null, 'documento' => 'MesasController', 'descripcion' => $ex]);
             return $this->responseAjaxServerError("Error cargando las mesas", []);
+        }
+    }
+
+    public function guardarPisos(Request $request)
+    {
+        try {
+            $idSucursal = (int) $request->input('idSucursal');
+            $pisos = $request->input('pisos', []);
+            if ($idSucursal < 1) {
+                return $this->responseAjaxServerError("Sucursal requerida", []);
+            }
+            if (!is_array($pisos)) $pisos = [];
+            // Sanitize
+            $pisosSave = [];
+            foreach ($pisos as $p) {
+                $id = (int)($p['id'] ?? 0);
+                $nombre = trim($p['nombre'] ?? '');
+                if ($id > 0 && $nombre !== '') {
+                    $pisosSave[] = ['id' => $id, 'nombre' => $nombre];
+                }
+            }
+            if (empty($pisosSave)) {
+                $pisosSave = [['id' => 1, 'nombre' => 'Piso 1']];
+            }
+            $plano = DB::table('sucursal_plano')->where('sucursal', $idSucursal)->first();
+            if ($plano) {
+                DB::table('sucursal_plano')->where('sucursal', $idSucursal)->update(['pisos_json' => json_encode($pisosSave)]);
+            } else {
+                DB::table('sucursal_plano')->insert([
+                    'sucursal' => $idSucursal,
+                    'nombre' => 'Plano principal',
+                    'pisos_json' => json_encode($pisosSave),
+                    'activo' => 'S',
+                ]);
+            }
+            return $this->responseAjaxSuccess("Pisos guardados", []);
+        } catch (\Exception $ex) {
+            DB::table('log')->insertGetId(['id' => null, 'documento' => 'MesasController', 'descripcion' => 'guardarPisos: ' . $ex->getMessage()]);
+            return $this->responseAjaxServerError("Error al guardar pisos", []);
         }
     }
 

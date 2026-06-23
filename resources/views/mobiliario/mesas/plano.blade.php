@@ -65,6 +65,8 @@
                             </div>
                         </div>
 
+                        <div id="plano-tabs-pisos" class="mb-2 d-flex flex-wrap align-items-center gap-1" style="display:none!important"></div>
+
                         <div class="row">
                             <div class="col-lg-9">
                                 <div id="plano-wrapper" class="plano-wrapper">

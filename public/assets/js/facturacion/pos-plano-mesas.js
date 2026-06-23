@@ -4,6 +4,8 @@
 var posPlanoDatos = null;
 var posPlanoModo = 'mapa';
 var posPlanoMesaSeleccionadaId = null;
+var posPisoActivo = 1;
+var posPlanoPisos = [{ id: 1, nombre: 'Piso 1' }];
 
 /**
  * Acceso directo: abre el modal del mapa sin pasar por el panel de opciones.
@@ -339,6 +341,11 @@ function cargarPlanoPos() {
             return;
         }
         posPlanoDatos = response.datos;
+        posPlanoPisos = (posPlanoDatos.pisos && posPlanoDatos.pisos.length) ? posPlanoDatos.pisos : [{ id: 1, nombre: 'Piso 1' }];
+        if (!posPlanoPisos.find(function(p) { return p.id === posPisoActivo; })) {
+            posPisoActivo = posPlanoPisos[0].id;
+        }
+        renderizarTabsPisosPos();
         renderizarZonasPos(posPlanoDatos.zonas || []);
         actualizarLayoutPlanoPos();
         if (posPlanoModo !== 'generales') {
@@ -393,7 +400,7 @@ function tooltipOrdenesMesa(m, ordenes) {
 }
 
 function renderizarPlanoPos() {
-    var mesas = posPlanoDatos.mesas || [];
+    var mesas = (posPlanoDatos.mesas || []).filter(function(m) { return (parseInt(m.piso) || 1) === posPisoActivo; });
     var idxSin = 0;
     var mesaActual = typeof ordenGestion !== 'undefined' ? String(ordenGestion.mesa) : '-1';
     var html = '';
@@ -725,3 +732,30 @@ $(document).ready(function () {
             setModoPlanoPos('mapa');
         });
 });
+
+function renderizarTabsPisosPos() {
+    if (!posPlanoPisos || posPlanoPisos.length <= 1) {
+        $('#pos-plano-tabs-pisos').hide();
+        return;
+    }
+    var html = '';
+    posPlanoPisos.forEach(function (p) {
+        var isActive = p.id === posPisoActivo;
+        html += '<button type="button" class="btn btn-sm ' + (isActive ? 'btn-primary' : 'btn-outline-primary') + ' pos-piso-tab-btn" data-piso-id="' + p.id + '">'
+            + escHtmlPos(p.nombre) + '</button>';
+    });
+    $('#pos-plano-tabs-pisos').html(html).show().css('display', 'flex');
+    $('.pos-piso-tab-btn').on('click', function () {
+        posPisoActivo = parseInt($(this).data('piso-id'));
+        posPlanoMesaSeleccionadaId = null;
+        renderizarTabsPisosPos();
+        renderizarPlanoPos();
+        renderizarSidebarPos(null);
+        actualizarAyudaPlanoPos();
+    });
+}
+
+function escHtmlPos(s) {
+    if (typeof s !== 'string') s = String(s || '');
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}

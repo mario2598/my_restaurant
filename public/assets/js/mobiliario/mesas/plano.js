@@ -3,6 +3,8 @@ var planoDatos = { mesas: [], zonas: [], areas_catalogo: [], ancho_referencia: 1
 var mesaSeleccionadaId = null;
 var zonaSeleccionadaId = null;
 var arrastre = null;
+var pisoActivo = 1;
+var planoPisos = [{ id: 1, nombre: 'Piso 1' }];
 
 var ZONAS_DEFAULT = [
     { id: 'cocina', nombre: 'Cocina', x: 2, y: 2, w: 40, h: 44, color: '#e9ecef' },
@@ -270,6 +272,11 @@ function cargarPlano() {
         $('#plano-ref-dimensiones').text(ar + ' × ' + al + ' (referencia)');
         $('#plano-canvas').css('aspect-ratio', ar + ' / ' + al);
         planoDatos.areas_catalogo = planoDatos.areas_catalogo || [];
+        planoPisos = (planoDatos.pisos && planoDatos.pisos.length) ? planoDatos.pisos : [{ id: 1, nombre: 'Piso 1' }];
+        if (!planoPisos.find(function(p) { return p.id === pisoActivo; })) {
+            pisoActivo = planoPisos[0].id;
+        }
+        renderizarTabsPisos();
         renderizarZonas(planoDatos.zonas || []);
         renderizarMesas(planoDatos.mesas || []);
         renderizarSinPosicion(planoDatos.mesas || []);
@@ -316,7 +323,8 @@ function tienePosicion(m) {
 function renderizarMesas(mesas) {
     var html = '';
     var idxSinPos = 0;
-    mesas.forEach(function (m) {
+    var mesasFiltradas = mesas.filter(function (m) { return (parseInt(m.piso) || 1) === pisoActivo; });
+    mesasFiltradas.forEach(function (m) {
         var x, y, w, h;
         if (tienePosicion(m)) {
             x = parseFloat(m.plano_x);
@@ -349,7 +357,7 @@ function renderizarMesas(mesas) {
 }
 
 function renderizarSinPosicion(mesas) {
-    var sin = mesas.filter(function (m) { return !tienePosicion(m); });
+    var sin = mesas.filter(function (m) { return !tienePosicion(m) && (parseInt(m.piso) || 1) === pisoActivo; });
     if (sin.length === 0) {
         $('#lista-mesas-sin-posicion').html('<p class="text-success small mb-0">Todas las mesas tienen posición.</p>');
         return;
@@ -751,11 +759,12 @@ function guardarPosicionElemento($el) {
         pct.w,
         pct.h,
         forma,
-        m ? m.zona : null
+        m ? m.zona : null,
+        m ? (m.piso || pisoActivo) : pisoActivo
     );
 }
 
-function guardarPosicionAjax(id, x, y, w, h, forma, zona) {
+function guardarPosicionAjax(id, x, y, w, h, forma, zona, piso) {
     return $.ajax({
         url: base_path + '/mobiliario/mesas/guardar-posicion',
         type: 'post',
@@ -768,7 +777,8 @@ function guardarPosicionAjax(id, x, y, w, h, forma, zona) {
             plano_ancho: w.toFixed(2),
             plano_alto: h.toFixed(2),
             forma: forma || 'rectangular',
-            zona: zona
+            zona: zona,
+            piso: piso || pisoActivo
         }
     });
 }
@@ -811,6 +821,8 @@ function seleccionarMesa(id) {
         + htmlSelectorFormaMesa(formaActual, 'detalle_forma')
         + htmlControlesTamanoMesa(m)
         + '<p class="mb-2 mt-2">Zona: <select id="detalle_zona" class="form-control form-control-sm">' + optionsZonaMesaSelect(m.zona || '') + '</select></p>'
+        + '<div class="form-group mb-2"><label class="small mb-1 font-weight-bold">Piso</label>'
+        + '<select id="detalle_piso" class="form-control form-control-sm">' + optionsPisoSelect(m.piso || 1) + '</select></div>'
         + '<button type="button" class="btn btn-sm btn-primary btn-block" onclick="aplicarDetalleMesa(' + id + ')">Guardar mesa</button>'
         + '<button type="button" class="btn btn-sm btn-outline-' + (m.estado_codigo === 'MESA_DISPONIBLE' ? 'danger' : 'success') + ' btn-block mt-1" onclick="toggleEstadoMesa(' + id + ', \'' + (m.estado_codigo === 'MESA_DISPONIBLE' ? 'MESA_OCUPADA' : 'MESA_DISPONIBLE') + '\')">'
         + (m.estado_codigo === 'MESA_DISPONIBLE' ? 'Marcar ocupada' : 'Marcar disponible') + '</button>';
@@ -851,6 +863,7 @@ function aplicarDetalleMesa(id) {
     var canvas = document.getElementById('plano-canvas');
     var tam = leerTamanoDesdePanel(id);
     var zona = $('#detalle_zona').val();
+    var pisoDet = parseInt($('#detalle_piso').val()) || pisoActivo;
     var pct = leerPorcentajesMesaEnCanvas($el, canvas);
     $el.removeClass('forma-rectangular forma-cuadrada forma-redonda').addClass('forma-' + tam.forma).attr('data-forma', tam.forma);
     aplicarTamanoMesaEnDom($el, tam.forma, tam.w, tam.h);
@@ -863,7 +876,8 @@ function aplicarDetalleMesa(id) {
         pct.w,
         pct.h,
         tam.forma,
-        zona
+        zona,
+        pisoDet
     ).done(function (r) {
         if (r.estado) {
             showSuccess('Actualizado.');
@@ -883,5 +897,107 @@ function toggleEstadoMesa(id, nuevoEstado) {
             showSuccess(r.mensaje || 'Estado actualizado');
             cargarPlano();
         } else showError(r.mensaje);
+    });
+}
+
+function optionsPisoSelect(pisoActualMesa) {
+    var html = '';
+    planoPisos.forEach(function (p) {
+        var sel = (parseInt(pisoActualMesa) === p.id) ? ' selected' : '';
+        html += '<option value="' + p.id + '"' + sel + '>' + escHtml(p.nombre) + '</option>';
+    });
+    return html;
+}
+
+function renderizarTabsPisos() {
+    var html = '';
+    planoPisos.forEach(function (p) {
+        var count = (planoDatos.mesas || []).filter(function (m) { return (parseInt(m.piso) || 1) === p.id; }).length;
+        var isActive = p.id === pisoActivo;
+        html += '<button type="button" class="btn btn-sm mr-1 mb-1 btn-piso-tab ' + (isActive ? 'btn-primary' : 'btn-outline-primary') + '" data-piso-id="' + p.id + '">'
+            + '<span class="piso-tab-nombre">' + escHtml(p.nombre) + '</span>'
+            + ' <span class="badge ' + (isActive ? 'badge-light' : 'badge-primary') + ' badge-piso-count">' + count + '</span>'
+            + '</button>';
+    });
+    if (planoPisos.length < 6) {
+        html += ' <button type="button" class="btn btn-sm btn-outline-secondary mb-1" onclick="agregarNuevoPiso()" title="Agregar piso"><i class="fas fa-plus"></i> Piso</button>';
+    }
+    if (planoPisos.length > 1) {
+        html += ' <button type="button" class="btn btn-sm btn-outline-danger mb-1" onclick="eliminarPisoActivo()" title="Eliminar piso activo"><i class="fas fa-trash"></i></button>';
+    }
+    html += ' <button type="button" class="btn btn-sm btn-link mb-1 text-muted" onclick="renombrarPisoActivo()" title="Renombrar"><i class="fas fa-pen fa-xs"></i></button>';
+    $('#plano-tabs-pisos').html(html).show();
+
+    $('.btn-piso-tab').on('click', function () {
+        pisoActivo = parseInt($(this).data('piso-id'));
+        mesaSeleccionadaId = null;
+        zonaSeleccionadaId = null;
+        $('#panel-mesa-detalle').html('<p class="text-muted small">Haga clic en una mesa del plano.</p>');
+        renderizarTabsPisos();
+        renderizarMesas(planoDatos.mesas || []);
+        renderizarSinPosicion(planoDatos.mesas || []);
+        aplicarModoPlano();
+    });
+}
+
+function guardarPisosAjax(callback) {
+    $.ajax({
+        url: base_path + '/mobiliario/mesas/guardar-pisos',
+        type: 'post',
+        dataType: 'json',
+        data: { _token: CSRF_TOKEN, idSucursal: $('#select_sucursal_plano').val(), pisos: planoPisos }
+    }).done(function (r) {
+        if (r.estado) {
+            if (callback) callback();
+        } else {
+            showError(r.mensaje || 'Error al guardar pisos');
+        }
+    }).fail(function () {
+        showError('Error al guardar pisos');
+    });
+}
+
+function agregarNuevoPiso() {
+    var nextId = Math.max.apply(Math, planoPisos.map(function (p) { return p.id; })) + 1;
+    var nombre = 'Piso ' + nextId;
+    planoPisos.push({ id: nextId, nombre: nombre });
+    pisoActivo = nextId;
+    guardarPisosAjax(function () {
+        renderizarTabsPisos();
+        renderizarMesas(planoDatos.mesas || []);
+        renderizarSinPosicion(planoDatos.mesas || []);
+        showSuccess('Piso "' + nombre + '" creado. Asigne mesas desde el panel derecho.');
+    });
+}
+
+function renombrarPisoActivo() {
+    var p = planoPisos.find(function (x) { return x.id === pisoActivo; });
+    if (!p) return;
+    var nuevo = prompt('Nuevo nombre para "' + p.nombre + '":', p.nombre);
+    if (nuevo && nuevo.trim() && nuevo.trim() !== p.nombre) {
+        p.nombre = nuevo.trim();
+        guardarPisosAjax(function () {
+            renderizarTabsPisos();
+            showSuccess('Piso renombrado a "' + p.nombre + '".');
+        });
+    }
+}
+
+function eliminarPisoActivo() {
+    if (planoPisos.length <= 1) {
+        showError('Debe existir al menos un piso.');
+        return;
+    }
+    var p = planoPisos.find(function (x) { return x.id === pisoActivo; });
+    var count = (planoDatos.mesas || []).filter(function (m) { return (parseInt(m.piso) || 1) === pisoActivo; }).length;
+    var msg = '¿Eliminar "' + (p ? p.nombre : 'Piso ' + pisoActivo) + '"?';
+    if (count > 0) msg += ' Las ' + count + ' mesas de este piso quedarán sin piso asignado (Piso 1).';
+    swal({ title: msg, icon: 'warning', buttons: true, dangerMode: true }).then(function (ok) {
+        if (!ok) return;
+        planoPisos = planoPisos.filter(function (x) { return x.id !== pisoActivo; });
+        pisoActivo = planoPisos[0].id;
+        guardarPisosAjax(function () {
+            cargarPlano();
+        });
     });
 }

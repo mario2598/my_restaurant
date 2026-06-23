@@ -25,6 +25,8 @@
                     <div class="tab-pane fade show active" id="pos-plano-tab-mapa" role="tabpanel"></div>
                     <div class="tab-pane fade" id="pos-plano-tab-generales" role="tabpanel"></div>
                 </div>
+                <div id="pos-plano-tabs-pisos" class="d-flex flex-wrap align-items-center mb-2" style="gap:4px;display:none!important"></div>
+
                 <div class="row" id="pos-plano-layout-mapa">
                     <div class="col-12 col-lg-7" id="pos-plano-col-mapa">
                         <div id="pos-plano-wrapper">

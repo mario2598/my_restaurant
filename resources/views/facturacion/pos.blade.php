@@ -1046,10 +1046,19 @@
                                                     id="select_mesa" name="select_mesa"
                                                     title="Elegir mesa (o use el botón Mapa)">
                                                     <option value="-1" selected>🛵 Para llevar</option>
-                                                    @foreach ($data['mesas'] as $i)
-                                                    <option value="{{ $i->id ?? '' }}" data-aplica-impuesto="{{ $i->aplica_impuesto_servicio ?? 1 }}">
+                                                    @php $mesasPorPiso = $data['mesas']->groupBy('piso'); @endphp
+                                                    @foreach ($mesasPorPiso as $pisoNum => $mesasGrupo)
+                                                    @if($mesasPorPiso->count() > 1)
+                                                    <optgroup label="Piso {{ $pisoNum }}">
+                                                    @endif
+                                                    @foreach ($mesasGrupo as $i)
+                                                    <option value="{{ $i->id ?? '' }}" data-aplica-impuesto="{{ $i->aplica_impuesto_servicio ?? 1 }}" data-piso="{{ $i->piso ?? 1 }}">
                                                         Mesa {{ $i->numero_mesa ?? '' }}
                                                     </option>
+                                                    @endforeach
+                                                    @if($mesasPorPiso->count() > 1)
+                                                    </optgroup>
+                                                    @endif
                                                     @endforeach
                                                 </select>
                                                 <div class="pos-cliente-group">
