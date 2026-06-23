@@ -549,7 +549,10 @@ class MesasController extends Controller
                 $id = (int)($p['id'] ?? 0);
                 $nombre = trim($p['nombre'] ?? '');
                 if ($id > 0 && $nombre !== '') {
-                    $pisosSave[] = ['id' => $id, 'nombre' => $nombre];
+                    $entry = ['id' => $id, 'nombre' => $nombre];
+                    if (!empty($p['ancho'])) $entry['ancho'] = (int)$p['ancho'];
+                    if (!empty($p['alto']))  $entry['alto']  = (int)$p['alto'];
+                    $pisosSave[] = $entry;
                 }
             }
             if (empty($pisosSave)) {
