@@ -1072,6 +1072,12 @@
                                                     </button>
                                                 </div>
                                             </div>
+                                            <!-- Indicador sin cargo de servicio -->
+                                            <div id="pos-badge-sin-serv" class="mt-1" style="display:none;">
+                                                <span class="badge badge-warning" style="font-size:0.72rem; opacity:0.85;">
+                                                    <i class="fas fa-info-circle mr-1"></i>Sin cargo servicio (10%)
+                                                </span>
+                                            </div>
                                             <!-- Panel cliente seleccionado -->
                                             <div id="cliente-info-panel-2" class="mt-2" style="display:none;">
                                                 <div class="alert alert-success py-1 mb-0 small">

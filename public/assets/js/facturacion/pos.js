@@ -1780,6 +1780,7 @@ function actualizarOrden() {
 
     validarVisibilidadBotonesGestion();
     mtoDescuentoGen = descuentoAplicado;
+    actualizarIndicadorServicio();
 }
 
 
@@ -3889,6 +3890,17 @@ function transformarExtras(extras) {
             seleccionado: false
         }))
     }));
+}
+
+function actualizarIndicadorServicio() {
+    var mesaVal = $('#select_mesa').val();
+    var $opt = $('#select_mesa option[value="' + mesaVal + '"]');
+    var aplica = parseInt($opt.data('aplica-impuesto') ?? 1);
+    if (mesaVal == -1 || mesaVal == null || aplica !== 0) {
+        $('#pos-badge-sin-serv').hide();
+    } else {
+        $('#pos-badge-sin-serv').show();
+    }
 }
 
 function cambiarMesa() {
