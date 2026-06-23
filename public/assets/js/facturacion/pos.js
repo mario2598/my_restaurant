@@ -1664,8 +1664,10 @@ function actualizarOrden() {
     $('#txt-id-cliente').val("");
 
 
+    var $mesaOptSel = $('#select_mesa option[value="' + ordenGestion.mesa + '"]');
+    var mesaAplicaImpuesto = parseInt($mesaOptSel.data('aplica-impuesto') ?? 1);
     detalles.forEach(d => {
-        if (ordenGestion.mesa != null && ordenGestion.mesa != -1) {
+        if (ordenGestion.mesa != null && ordenGestion.mesa != -1 && mesaAplicaImpuesto !== 0) {
             d.impuestoServicio = 'S';
         } else {
             d.impuestoServicio = 'N';

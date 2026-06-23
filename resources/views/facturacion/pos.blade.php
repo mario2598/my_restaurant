@@ -1047,7 +1047,7 @@
                                                     title="Elegir mesa (o use el botón Mapa)">
                                                     <option value="-1" selected>🛵 Para llevar</option>
                                                     @foreach ($data['mesas'] as $i)
-                                                    <option value="{{ $i->id ?? '' }}">
+                                                    <option value="{{ $i->id ?? '' }}" data-aplica-impuesto="{{ $i->aplica_impuesto_servicio ?? 1 }}">
                                                         Mesa {{ $i->numero_mesa ?? '' }}
                                                     </option>
                                                     @endforeach
