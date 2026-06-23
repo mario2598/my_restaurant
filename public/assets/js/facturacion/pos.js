@@ -1903,6 +1903,12 @@ function limpiarOrden() {
         "incidentes": [],
         "totalRebajarIncidentes": 0
     };
+    var _nombreActual = $('#txt-cliente').val();
+    if (!_nombreActual || _nombreActual.trim() === '') {
+        $('#txt-cliente').val('Cliente');
+        changeNombreCliente('Cliente', true);
+    }
+
     $('#monto_sinpe').val(""); // Supongo que txt-sinpe es el campo para el pago con SINPE
     $('#monto_tarjeta').val(""); // Supongo que txt-tarjeta es el campo para el pago con tarjeta
     $('#monto_efectivo').val("");
