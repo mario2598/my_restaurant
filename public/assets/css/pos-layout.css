@@ -97,7 +97,7 @@
         text-overflow: ellipsis;
     }
 
-    /* ── Barra fija intermedia: Total + botones en UNA sola fila compacta ── */
+    /* ── Barra fija intermedia: Total (arriba) + Botones (abajo) ── */
     #contFacturar {
         position: fixed;
         bottom: 52px;
@@ -105,65 +105,65 @@
         right: 0;
         z-index: 910;
         background: #fff;
-        border-top: 1px solid #dee2e6;
-        box-shadow: none;
-        padding: 6px 10px !important;
+        border-top: 2px solid #e9ecef;
+        box-shadow: 0 -2px 10px rgba(0,0,0,.08);
+        padding: 6px 10px 8px !important;
     }
 
-    /* Total [izq] + botones [der] en fila horizontal */
+    /* Columna: total arriba, botones abajo */
     #contFacturar .container-fluid {
         display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: nowrap;
+        flex-direction: column;
+        gap: 6px;
     }
     #contFacturar .row.mb-3 {
-        flex: 0 0 auto;
         margin: 0 !important;
         padding: 0;
     }
     #contFacturar .row.mb-2 {
-        flex: 1 1 0;
-        min-width: 0;
         margin: 0 !important;
         padding: 0;
-        overflow: hidden;
     }
-    /* Botones en fila horizontal dentro del panel */
+    /* Botones en fila horizontal, ancho completo */
     #contFacturar .row.mb-2 > .col-12 {
         display: flex;
-        gap: 5px;
+        gap: 8px;
         padding: 0;
-        min-width: 0;
-        overflow: hidden;
     }
     #contFacturar ul.nav-pills {
         flex: 1 1 0;
         min-width: 0;
         margin: 0 !important;
+        padding: 0 !important;
         display: block;
-        overflow: hidden;
+        list-style: none;
     }
     #contFacturar ul.nav-pills + ul.nav-pills { margin: 0 !important; }
     #contFacturar #txt-total-pagar {
-        font-size: .88rem !important;
+        font-size: 1rem !important;
         margin: 0 !important;
         white-space: nowrap;
-        color: #1a3a8f !important;
-        font-weight: 700 !important;
+        color: #2c3e9e !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.01em;
     }
     #contFacturar .btn {
         width: 100% !important;
-        padding: 7px 5px !important;
-        font-size: 0.72rem !important;
+        padding: 10px 8px !important;
+        font-size: 0.8rem !important;
+        font-weight: 600 !important;
+        border-radius: 10px !important;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        box-shadow: 0 2px 6px rgba(0,0,0,.12);
     }
+    #contFacturar .btn-success { background: #1ab567 !important; border-color: #1ab567 !important; }
+    #contFacturar .btn-info    { background: #4e73df !important; border-color: #4e73df !important; }
 
-    /* padding-bottom: barra acciones (~52) + barra facturar (~52) + margen */
+    /* padding-bottom: acciones(~52) + facturar(~88) + margen */
     .main-content .section .section-body {
-        padding-bottom: 112px !important;
+        padding-bottom: 148px !important;
     }
 
     #contDetalles .card-header { padding: 0.75rem !important; }

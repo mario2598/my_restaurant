@@ -961,6 +961,7 @@
                                                 id="buscador-productos" 
                                                 placeholder="Buscar producto por nombre, código o categoría..."
                                                 style="border-left: none;"
+                                                autocomplete="off"
                                                 onkeyup="filtrarProductos(this.value)"
                                                 onfocus="this.select()">
                                             <div class="input-group-append">
