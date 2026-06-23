@@ -87,8 +87,56 @@
                                     <strong>Mesas:</strong> arrastre cada mesa y pulse Guardar.
                                     Referencia: <span id="plano-ref-dimensiones">—</span>.
                                 </p>
+                                <div class="mt-2 d-flex flex-wrap align-items-center" id="canvas-resize-controls" style="gap:4px">
+                                    <small class="text-muted mr-1"><i class="fas fa-expand-arrows-alt"></i></small>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1" style="font-size:11px" onclick="cambiarTamanoCanvas(100,100)">Cuadrado</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1" style="font-size:11px" onclick="cambiarTamanoCanvas(100,150)">Vertical</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1" style="font-size:11px" onclick="cambiarTamanoCanvas(150,100)">Horizontal</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1" style="font-size:11px" onclick="cambiarTamanoCanvas(200,100)">Panorámico</button>
+                                    <div class="d-flex align-items-center" style="gap:2px">
+                                        <input type="number" id="canvas_ancho" class="form-control form-control-sm py-0" style="width:58px;height:24px" placeholder="W" min="50" max="500">
+                                        <span class="text-muted small">x</span>
+                                        <input type="number" id="canvas_alto" class="form-control form-control-sm py-0" style="width:58px;height:24px" placeholder="H" min="50" max="500">
+                                        <button type="button" class="btn btn-outline-primary btn-sm py-0 px-1" style="font-size:11px;height:24px" onclick="aplicarTamanoCanvas()">OK</button>
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-lg-3">
+                                <div class="card card-light mb-2">
+                                    <div class="card-header d-flex justify-content-between align-items-center py-2">
+                                        <h6 class="mb-0">Nueva mesa</h6>
+                                        <button type="button" class="btn btn-sm btn-outline-primary px-2" onclick="toggleNuevaMesaForm()" title="Agregar mesa">
+                                            <i class="fas fa-plus" id="icon-nueva-mesa"></i>
+                                        </button>
+                                    </div>
+                                    <div class="card-body p-2 d-none" id="form-nueva-mesa">
+                                        <div class="form-group mb-1">
+                                            <label class="small mb-0">Nro. de mesa</label>
+                                            <input type="text" class="form-control form-control-sm" id="nueva_mesa_numero" placeholder="Ej. 10">
+                                        </div>
+                                        <div class="form-row mb-1">
+                                            <div class="col">
+                                                <label class="small mb-0">Capacidad</label>
+                                                <input type="number" class="form-control form-control-sm" id="nueva_mesa_capacidad" value="4" min="1" max="50">
+                                            </div>
+                                            <div class="col">
+                                                <label class="small mb-0">Forma</label>
+                                                <select class="form-control form-control-sm" id="nueva_mesa_forma">
+                                                    <option value="rectangular">Rectangular</option>
+                                                    <option value="cuadrada">Cuadrada</option>
+                                                    <option value="redonda">Redonda</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="custom-control custom-checkbox mb-2">
+                                            <input type="checkbox" class="custom-control-input" id="nueva_mesa_impuesto" checked>
+                                            <label class="custom-control-label small" for="nueva_mesa_impuesto">Aplica 10% servicio</label>
+                                        </div>
+                                        <button type="button" class="btn btn-primary btn-sm btn-block" onclick="agregarMesaRapida()">
+                                            <i class="fas fa-plus"></i> Agregar
+                                        </button>
+                                    </div>
+                                </div>
                                 <div class="card card-light">
                                     <div class="card-header">
                                         <h6 class="mb-0">Mesas sin posición</h6>

@@ -280,6 +280,8 @@ function cargarPlano() {
         var al = planoDatos.alto_referencia || 150;
         $('#plano-ref-dimensiones').text(ar + ' × ' + al + ' (referencia)');
         $('#plano-canvas').css('aspect-ratio', ar + ' / ' + al);
+        $('#canvas_ancho').val(ar);
+        $('#canvas_alto').val(al);
         planoDatos.areas_catalogo = planoDatos.areas_catalogo || [];
         planoPisos = (planoDatos.pisos && planoDatos.pisos.length) ? planoDatos.pisos : [{ id: 1, nombre: 'Área 1' }];
         if (!planoPisos.find(function(p) { return p.id === pisoActivo; })) {
@@ -1074,4 +1076,66 @@ function moverAreaOrden(id, delta) {
     renderizarZonas(zonasParaPiso(pisoActivo));
     renderListaAreasConfig();
     if (getModoPlano() === 'zonas') enlazarEventosZonas();
+}
+
+function cambiarTamanoCanvas(ancho, alto) {
+    planoDatos.ancho_referencia = ancho;
+    planoDatos.alto_referencia = alto;
+    $('#plano-canvas').css('aspect-ratio', ancho + ' / ' + alto);
+    $('#plano-ref-dimensiones').text(ancho + ' x ' + alto + ' (referencia)');
+    $('#canvas_ancho').val(ancho);
+    $('#canvas_alto').val(alto);
+}
+
+function aplicarTamanoCanvas() {
+    var ancho = parseInt($('#canvas_ancho').val()) || planoDatos.ancho_referencia || 100;
+    var alto  = parseInt($('#canvas_alto').val())  || planoDatos.alto_referencia  || 150;
+    ancho = Math.max(50, Math.min(500, ancho));
+    alto  = Math.max(50, Math.min(500, alto));
+    cambiarTamanoCanvas(ancho, alto);
+}
+
+function toggleNuevaMesaForm() {
+    var $form = $('#form-nueva-mesa');
+    var $icon = $('#icon-nueva-mesa');
+    if ($form.hasClass('d-none')) {
+        $form.removeClass('d-none');
+        $icon.removeClass('fa-plus').addClass('fa-minus');
+    } else {
+        $form.addClass('d-none');
+        $icon.removeClass('fa-minus').addClass('fa-plus');
+    }
+}
+
+function agregarMesaRapida() {
+    var numero = $('#nueva_mesa_numero').val().trim();
+    if (!numero) { showError('Indique el numero de mesa.'); return; }
+    var sucursal = $('#select_sucursal_plano').val();
+    if (!sucursal) { showError('Seleccione la sucursal primero.'); return; }
+    $('#loader').fadeIn();
+    $.ajax({
+        url: base_path + '/mobiliario/mesas/guardarMesa',
+        type: 'post',
+        dataType: 'json',
+        data: {
+            _token: CSRF_TOKEN,
+            mesa: {
+                id: null,
+                sucursal: sucursal,
+                numero_mesa: numero,
+                capacidad: parseInt($('#nueva_mesa_capacidad').val()) || 4,
+                forma: $('#nueva_mesa_forma').val(),
+                aplica_impuesto_servicio: $('#nueva_mesa_impuesto').is(':checked') ? 1 : 0
+            }
+        }
+    }).done(function(r) {
+        if (!r.estado) { showError(r.mensaje || 'Error'); return; }
+        showSuccess('Mesa ' + numero + ' agregada.');
+        $('#nueva_mesa_numero').val('');
+        cargarPlano();
+    }).fail(function(jqXHR) {
+        showError(mensajeErrorAjax(jqXHR, 'Error al agregar mesa'));
+    }).always(function() {
+        $('#loader').fadeOut();
+    });
 }
