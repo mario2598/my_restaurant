@@ -123,15 +123,19 @@
         padding: 0;
     }
     #contFacturar .row.mb-2 {
-        flex: 1 1 auto;
+        flex: 1 1 0;
+        min-width: 0;
         margin: 0 !important;
         padding: 0;
+        overflow: hidden;
     }
     /* Botones en fila horizontal dentro del panel */
     #contFacturar .row.mb-2 > .col-12 {
         display: flex;
         gap: 5px;
         padding: 0;
+        min-width: 0;
+        overflow: hidden;
     }
     #contFacturar ul.nav-pills {
         flex: 1 1 0;
