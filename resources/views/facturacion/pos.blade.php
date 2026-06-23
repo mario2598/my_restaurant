@@ -1671,30 +1671,32 @@
 
 <div class="modal fade" id='mdl-ordenes' role="dialog" aria-hidden="true"
     data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width:min(96vw,820px);">
         <div class="modal-content">
-            <div class="modal-header py-2">
-                <h5 class="modal-title mr-3"><i class="fas fa-list-alt"></i> Órdenes</h5>
-                <div class="input-group flex-grow-1 mr-2" style="max-width:260px;">
-                    <input type="text" id="input_buscar_generico" class="form-control form-control-sm"
-                        placeholder="Buscar orden, cliente, mesa...">
-                    <div class="input-group-append">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <div class="modal-header py-3 px-4" style="border-bottom:2px solid #e9ecef;">
+                <div class="d-flex align-items-center flex-grow-1" style="gap:12px; min-width:0;">
+                    <h5 class="modal-title mb-0" style="white-space:nowrap; font-weight:700; font-size:1.05rem;">
+                        <i class="fas fa-list-alt mr-1"></i> Órdenes
+                    </h5>
+                    <div class="input-group flex-grow-1" style="max-width:340px;">
+                        <input type="text" id="input_buscar_generico" class="form-control"
+                            placeholder="Buscar orden, cliente, mesa..." autocomplete="off"
+                            style="border-radius:8px 0 0 8px !important; font-size:.9rem;">
+                        <div class="input-group-append">
+                            <span class="input-group-text" style="background:#f4f6f9; border-radius:0 8px 8px 0 !important;">
+                                <i class="fas fa-search text-muted"></i>
+                            </span>
+                        </div>
                     </div>
                 </div>
-                <button type="button" class="close ml-0" data-dismiss="modal" aria-label="Cerrar">
+                <button type="button" class="close ml-3" data-dismiss="modal" aria-label="Cerrar">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body p-2" style="max-height:70vh; overflow-y:auto;">
+            <div class="modal-body p-3" style="max-height:78vh; overflow-y:auto; background:#f8f9fa;">
                 <div id="tbody-ordenes">
                     <!-- cards generadas dinámicamente -->
                 </div>
-            </div>
-            <div class="modal-footer py-2">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="cerrarMdlOrdenes()">
-                    <i class="fas fa-times"></i> Cerrar
-                </button>
             </div>
         </div>
     </div>

@@ -2621,21 +2621,37 @@ function generarHTMLOrdenes(ordenes) {
                        <i class="fab fa-whatsapp"></i>
                    </a>` : '');
 
+        var totalFmt = anulada ? '—' : currencyCRFormat(total);
         texto += `
         <div class="orden-item-wrap mb-2">
-          <div class="orden-item-card" style="border-left:4px solid ${borderColor}; background:${bgColor}; border-radius:8px; padding:10px 12px;">
-            <div class="d-flex justify-content-between align-items-start mb-1">
-                <span class="font-weight-bold" style="font-size:.95rem;">${orden.numero_orden}${iconoInc}</span>
-                <div class="d-flex align-items-center gap-2">${badgeEstado}</div>
+          <div class="orden-item-card" style="border-left:5px solid ${borderColor}; background:#fff; border-radius:10px; padding:14px 16px; box-shadow:0 1px 6px rgba(0,0,0,.07);">
+            <!-- Fila 1: número + badge + total -->
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="d-flex align-items-center" style="gap:8px;">
+                <span style="font-size:1.05rem; font-weight:800; color:#2d3748; letter-spacing:-.02em;">${orden.numero_orden}</span>
+                ${iconoInc}
+                ${badgeEstado}
+              </div>
+              <span style="font-size:1.1rem; font-weight:800; color:${anulada ? '#999' : borderColor};">${totalFmt}</span>
             </div>
-            <div class="d-flex flex-wrap text-muted mb-2" style="font-size:.82rem; gap:10px;">
-                <span><i class="fas fa-chair"></i> ${mesa}</span>
-                ${cliente ? `<span><i class="fas fa-user"></i> ${cliente}</span>` : ''}
-                ${fecha   ? `<span><i class="fas fa-clock"></i> ${fecha}</span>`  : ''}
-                <span class="font-weight-bold" style="color:#1a3a8f;">₡${total}</span>
+            <!-- Fila 2: meta info -->
+            <div class="d-flex flex-wrap mb-3" style="gap:12px; font-size:.85rem; color:#555;">
+              <span><i class="fas fa-chair mr-1" style="color:#aaa;"></i>${mesa}</span>
+              ${cliente ? `<span><i class="fas fa-user mr-1" style="color:#aaa;"></i>${cliente}</span>` : ''}
+              ${fecha   ? `<span><i class="fas fa-clock mr-1" style="color:#aaa;"></i>${fecha}</span>` : ''}
             </div>
+            <!-- Fila 3: acciones -->
             <div class="d-flex flex-wrap" style="gap:6px;">
-                ${acciones}
+              <button class="btn btn-primary btn-sm px-3" onclick="cargarOrdenGestion(${orden.id})" title="Abrir en POS">
+                <i class="fas fa-pen mr-1"></i>Abrir
+              </button>
+              <button class="btn btn-outline-secondary btn-sm px-3" onclick="imprimirTicket(${orden.id})" title="Imprimir tiquete">
+                <i class="fas fa-print mr-1"></i>Imprimir
+              </button>
+              <a class="btn btn-outline-info btn-sm px-3" href="${ticketUrl}" target="_blank" title="Ver factura/tiquete">
+                <i class="fas fa-eye mr-1"></i>Ver
+              </a>
+              ${contactoAux && contactoAux.length > 5 ? `<a class="btn btn-outline-success btn-sm px-3" href="${msjWsp}" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp mr-1"></i>WhatsApp</a>` : ''}
             </div>
           </div>
         </div>`;
