@@ -2659,12 +2659,17 @@ function generarHTMLOrdenes(ordenes) {
 
     $('#tbody-ordenes').html(texto || '<p class="text-muted text-center py-4">Sin órdenes</p>');
 
-    // Build piso filter chips from the actual orders
+    // Build piso filter chips from the actual orders using real area names from posPlanoPisos
     var pisosEnOrdenes = {};
     ordenes.forEach(function(o) {
         var p = o.mesa_piso || 0;
         if (!pisosEnOrdenes[p]) {
-            pisosEnOrdenes[p] = p === 0 ? 'Para llevar' : ('Área ' + p);
+            if (p === 0) {
+                pisosEnOrdenes[p] = 'Para llevar';
+            } else {
+                var pisoInfo = (typeof posPlanoPisos !== 'undefined' ? posPlanoPisos : []).find(function(x){ return x.id === p; });
+                pisosEnOrdenes[p] = pisoInfo ? pisoInfo.nombre : ('Área ' + p);
+            }
         }
     });
     var chipsHtml = '<button class="btn btn-sm btn-primary mr-1 mb-1 filtro-piso-btn active" data-piso="all" onclick="filtrarOrdenesPorPiso(this)">Todas</button>';
