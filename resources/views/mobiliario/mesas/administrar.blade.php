@@ -92,6 +92,7 @@
                                                     Capacidad
                                                 </th>
                                                 <th class="text-center">Forma</th>
+                                                <th class="text-center">10% Servicio</th>
                                                 <th class="text-center">Acciones</th>
 
                                             </tr>
@@ -134,6 +135,14 @@
                         <input type="number" class="form-control" id="capacidadMesa" name="capacidadMesa" required>
                     </div>
                     <div class="mb-0" id="contenedor-forma-mesa"></div>
+                    <div class="mb-3 mt-3">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="chkAplicaImpuesto" checked>
+                            <label class="custom-control-label" for="chkAplicaImpuesto">
+                                Aplica 10% de servicio de mesa
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <input type="hidden" id="comanda_id" name="comanda_id">

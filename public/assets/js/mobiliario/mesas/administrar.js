@@ -49,11 +49,16 @@ function generarHTMLMesas(mesas) {
     mesasGeneral.forEach(mesa => {
         var forma = (mesa.forma || 'rectangular').toLowerCase();
         var formaLabel = typeof etiquetaFormaMesa === 'function' ? etiquetaFormaMesa(forma) : forma;
+        var aplica10 = (mesa.aplica_impuesto_servicio == null || parseInt(mesa.aplica_impuesto_servicio) === 1);
+        var badge10 = aplica10
+            ? '<span class="badge badge-success">Sí</span>'
+            : '<span class="badge badge-secondary">No</span>';
         texto += `
             <tr > 
               <td class="text-center">${mesa.numero_mesa ?? "S/A"}</td>
               <td class="text-center">${mesa.capacidad ?? "S/A"}</td>
               <td class="text-center"><span class="mesa-forma-badge forma-${forma}">${formaLabel}</span></td>
+              <td class="text-center">${badge10}</td>
                <td class="text-center"><a title="Eliminar" 
                     class="btn btn-primary" onclick="eliminarMesaAction(${mesa.id ?? null})"  style="color:white;cursor:pointer;">
                     <i class="fas fa-trash"></i></a>
@@ -79,6 +84,7 @@ function cargarMesaModal(idMesa) {
     if (typeof htmlSelectorFormaMesa === 'function') {
         $('#contenedor-forma-mesa').html(htmlSelectorFormaMesa(getFormaMesa(mesaGestion), 'formaMesaAdmin'));
     }
+    $('#chkAplicaImpuesto').prop('checked', mesaGestion.aplica_impuesto_servicio == null || parseInt(mesaGestion.aplica_impuesto_servicio) === 1);
     $('#mdl_gestiona_mesa').modal('show');
 }
 
@@ -90,6 +96,7 @@ function addMesaModal() {
     if (typeof htmlSelectorFormaMesa === 'function') {
         $('#contenedor-forma-mesa').html(htmlSelectorFormaMesa('redonda', 'formaMesaAdmin'));
     }
+    $('#chkAplicaImpuesto').prop('checked', true);
     $('#mdl_gestiona_mesa').modal('show');
 }
 
@@ -107,7 +114,8 @@ function guardarMesa() {
         "numero_mesa": $('#numeroMesa').val(),
         "sucursal": $('#select_sucursal').val(),
         "capacidad": $('#capacidadMesa').val(),
-        "forma": $('#formaMesaAdmin').val() || 'rectangular'
+        "forma": $('#formaMesaAdmin').val() || 'rectangular',
+        "aplica_impuesto_servicio": $('#chkAplicaImpuesto').is(':checked') ? 1 : 0
     }
 
     $('#loader').fadeIn();

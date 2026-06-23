@@ -492,6 +492,7 @@ class MesasController extends Controller
             $numero_mesa = $mesa['numero_mesa'];
             $capacidad = $mesa['capacidad'];
             $forma = $mesa['forma'] ?? 'rectangular';
+            $aplica_impuesto_servicio = isset($mesa['aplica_impuesto_servicio']) ? (int)$mesa['aplica_impuesto_servicio'] : 1;
             $formasValidas = ['rectangular', 'cuadrada', 'redonda'];
             if (!in_array($forma, $formasValidas, true)) {
                 $forma = 'rectangular';
@@ -534,6 +535,7 @@ class MesasController extends Controller
                     'numero_mesa' => $numero_mesa,
                     'capacidad' => $capacidad,
                     'forma' => $forma,
+                    'aplica_impuesto_servicio' => $aplica_impuesto_servicio,
                 ];
                 if (array_key_exists('plano_x', $mesa)) {
                     $updateData['plano_x'] = $mesa['plano_x'] ?? null;
@@ -558,7 +560,8 @@ class MesasController extends Controller
                         'numero_mesa' => $numero_mesa,
                         'capacidad' => $capacidad,
                         'forma' => $forma,
-                        'estado' => SisEstadoController::getIdEstadoByCodGeneral("MESA_DISPONIBLE")
+                        'estado' => SisEstadoController::getIdEstadoByCodGeneral("MESA_DISPONIBLE"),
+                        'aplica_impuesto_servicio' => $aplica_impuesto_servicio,
                     ]);
             }
 
