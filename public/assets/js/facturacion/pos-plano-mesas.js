@@ -346,7 +346,7 @@ function cargarPlanoPos() {
             posPisoActivo = posPlanoPisos[0].id;
         }
         renderizarTabsPisosPos();
-        renderizarZonasPos(posPlanoDatos.zonas || []);
+        renderizarZonasPos(zonasParaPisoPos(posPisoActivo));
         actualizarLayoutPlanoPos();
         if (posPlanoModo !== 'generales') {
             renderizarPlanoPos();
@@ -366,6 +366,12 @@ function cargarPlanoPos() {
         showError(msg);
         $('#pos-plano-sidebar').html('<p class="text-danger small p-3">' + escHtmlPos(msg) + '</p>');
         $('#pos-plano-lista-generales').html('<p class="text-danger small mb-0">' + escHtmlPos(msg) + '</p>');
+    });
+}
+
+function zonasParaPisoPos(pisoId) {
+    return (posPlanoDatos.zonas || []).filter(function(z) {
+        return !z.piso_id || parseInt(z.piso_id) === pisoId;
     });
 }
 
@@ -749,6 +755,7 @@ function renderizarTabsPisosPos() {
         posPisoActivo = parseInt($(this).data('piso-id'));
         posPlanoMesaSeleccionadaId = null;
         renderizarTabsPisosPos();
+        renderizarZonasPos(zonasParaPisoPos(posPisoActivo));
         renderizarPlanoPos();
         renderizarSidebarPos(null);
         actualizarAyudaPlanoPos();
