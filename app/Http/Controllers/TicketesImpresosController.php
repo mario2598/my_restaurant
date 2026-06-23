@@ -1048,9 +1048,11 @@ class TicketesImpresosController extends Controller
         // Logo — usa url_logo_factura igual que el PDF; sistema como fallback
         $logo_url = null;
         if (!empty($sucursal->url_logo_factura)) {
-            $logo_url = asset($sucursal->url_logo_factura);
+            $logoPath = public_path($sucursal->url_logo_factura);
+            $logo_url = asset($sucursal->url_logo_factura) . (is_file($logoPath) ? '?v=' . filemtime($logoPath) : '');
         } elseif (!empty($sucursal->url_logo_sistema)) {
-            $logo_url = asset($sucursal->url_logo_sistema);
+            $logoPath = public_path($sucursal->url_logo_sistema);
+            $logo_url = asset($sucursal->url_logo_sistema) . (is_file($logoPath) ? '?v=' . filemtime($logoPath) : '');
         }
 
         $qz_mode = request()->has('qz');
