@@ -129,6 +129,7 @@ function abrirFormNuevaArea() {
     $('#area_config_codigo').val('');
     $('#area_config_color').val('#e9ecef');
     $('#area_config_colocar').prop('checked', true);
+    refreshPisoSelectForm(pisoActivo);
     $('#form-area-config').removeClass('d-none');
 }
 
@@ -140,6 +141,7 @@ function editarAreaConfig(id) {
     $('#area_config_codigo').val(a.codigo);
     $('#area_config_color').val(a.color || '#e9ecef');
     $('#area_config_colocar').prop('checked', false);
+    refreshPisoSelectForm(a.piso_id || 1);
     $('#form-area-config').removeClass('d-none');
 }
 
@@ -166,7 +168,7 @@ function guardarAreaConfig() {
             codigo: $('#area_config_codigo').val().trim(),
             color: $('#area_config_color').val(),
             colocar_en_plano: $('#area_config_colocar').is(':checked') ? 1 : 0,
-            piso_id: pisoActivo
+            piso_id: parseInt($('#area_config_piso').val()) || pisoActivo
         }
     }).done(function (r) {
         if (!r.estado) {
@@ -908,6 +910,18 @@ function toggleEstadoMesa(id, nuevoEstado) {
     });
 }
 
+function refreshPisoSelectForm(selectedPisoId) {
+    var row = $('#area_config_piso_row');
+    if (!planoPisos || planoPisos.length <= 1) { row.hide(); return; }
+    row.show();
+    var html = '';
+    planoPisos.forEach(function(p) {
+        var sel = (parseInt(selectedPisoId) === p.id) ? ' selected' : '';
+        html += '<option value="' + p.id + '"' + sel + '>' + escHtml(p.nombre) + '</option>';
+    });
+    $('#area_config_piso').html(html);
+}
+
 function optionsPisoSelect(pisoActualMesa) {
     var html = '';
     planoPisos.forEach(function (p) {
@@ -975,8 +989,10 @@ function agregarNuevoPiso() {
     pisoActivo = nextId;
     guardarPisosAjax(function () {
         renderizarTabsPisos();
+        renderizarZonas(zonasParaPiso(pisoActivo));
         renderizarMesas(planoDatos.mesas || []);
         renderizarSinPosicion(planoDatos.mesas || []);
+        renderListaAreasConfig();
         showSuccess('Área "' + nombre + '" creada. Asigne mesas con el selector en el panel derecho.');
     });
 }

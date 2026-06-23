@@ -139,6 +139,10 @@
                                                 <label class="small mb-0">Color</label>
                                                 <input type="color" class="form-control form-control-sm" id="area_config_color" value="#e9ecef">
                                             </div>
+                                            <div class="form-group mb-2" id="area_config_piso_row" style="display:none">
+                                                <label class="small mb-0">Pertenece a área</label>
+                                                <select class="form-control form-control-sm" id="area_config_piso"></select>
+                                            </div>
                                             <div class="custom-control custom-checkbox mb-2">
                                                 <input type="checkbox" class="custom-control-input" id="area_config_colocar" checked>
                                                 <label class="custom-control-label small" for="area_config_colocar">Colocar en el plano al guardar</label>
