@@ -276,9 +276,9 @@ function htmlControlesTamanoMesa(m) {
     } else {
         html += '<div class="form-row">'
             + '<div class="col-6"><label class="small mb-0">Ancho %</label>'
-            + '<input type="number" class="form-control form-control-sm" id="mesa_ancho_pct" min="4" max="25" step="0.5" value="' + w.toFixed(1) + '" onchange="vistaPreviaTamanoMesa(' + m.id + ')"></div>'
+            + '<input type="number" class="form-control form-control-sm" id="mesa_ancho_pct" min="4" max="90" step="0.5" value="' + w.toFixed(1) + '" onchange="vistaPreviaTamanoMesa(' + m.id + ')"></div>'
             + '<div class="col-6"><label class="small mb-0">Alto %</label>'
-            + '<input type="number" class="form-control form-control-sm" id="mesa_alto_pct" min="4" max="25" step="0.5" value="' + h.toFixed(1) + '" onchange="vistaPreviaTamanoMesa(' + m.id + ')"></div>'
+            + '<input type="number" class="form-control form-control-sm" id="mesa_alto_pct" min="4" max="90" step="0.5" value="' + h.toFixed(1) + '" onchange="vistaPreviaTamanoMesa(' + m.id + ')"></div>'
             + '</div>';
     }
     html += '<p class="small text-muted mt-1 mb-0">Arrastre la esquina azul de la mesa o use los controles.</p></div>';

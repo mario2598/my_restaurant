@@ -15,7 +15,7 @@ var ZONAS_DEFAULT = [
 
 var MIN_ZONA_PCT = 4;
 var MIN_MESA_PCT = 4;
-var MAX_MESA_PCT = 25;
+var MAX_MESA_PCT = 90;
 
 function mensajeErrorAjax(jqXHR, mensajePorDefecto) {
     if (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.mensaje) {
