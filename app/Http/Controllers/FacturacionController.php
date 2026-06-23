@@ -842,6 +842,7 @@ class FacturacionController extends Controller
                     ->join('pm_x_sucursal', 'producto_menu.id', '=', 'pm_x_sucursal.producto_menu')
                     ->where('producto_menu.estado', "A")
                     ->where('det_grupo_promocion.grupo_promocion', $promo->id)
+                    ->where('det_grupo_promocion.tipo', "R")
                     ->where('pm_x_sucursal.sucursal', $this->getUsuarioSucursal())
                     ->select(
                         'det_grupo_promocion.id',

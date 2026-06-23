@@ -79,23 +79,31 @@ function filtrar() {
 function generarHTMLPromos() {
     var texto = "";
     promociones.forEach(p => {
-        texto = texto +
-            `<tr style="border-bottom: 1px solid grey;" onclick="editarPromocion('${p.id}')">
-                <td class="text-center" >
-                    ${p.id}
-                </td> 
-                <td class="text-center">
-                    ${p.descripcion}
-            </td>
-                <td class="text-center">
-                    ${currencyCRFormat(p.precio)}
-                </td>
-                <td class="text-center">
-                ${p.estado == 1 ? "Activa" : "Inactiva"}
-            </td>
-               </tr>`;
-    });
+        var productosHtml = (p.detalles || []).map(d =>
+            `<span class="badge badge-secondary mr-1" style="font-size:0.78rem;">${d.cantidad}× ${d.prod ? d.prod.nombre : '?'}</span>`
+        ).join('');
+        if (!productosHtml) productosHtml = '<span class="text-muted small">Sin productos</span>';
 
+        var estadoBadge = p.estado == 1
+            ? '<span class="badge badge-success px-2 py-1">Activa</span>'
+            : '<span class="badge badge-danger px-2 py-1">Inactiva</span>';
+
+        texto += `<tr style="border-bottom: 1px solid #dee2e6;">
+            <td class="text-center align-middle" style="width:40px;">${p.id}</td>
+            <td class="align-middle"><strong>${p.descripcion}</strong></td>
+            <td class="text-center align-middle" style="white-space:nowrap;">${currencyCRFormat(p.precio)}</td>
+            <td class="align-middle">${productosHtml}</td>
+            <td class="text-center align-middle">${estadoBadge}</td>
+            <td class="text-center align-middle">
+                <button class="btn btn-sm btn-primary" onclick="editarPromocion('${p.id}')" title="Editar">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm ${p.estado==1?'btn-warning':'btn-success'} ml-1" onclick="toggleEstadoPromo('${p.id}', ${p.estado})" title="${p.estado==1?'Desactivar':'Activar'}">
+                    <i class="fas fa-${p.estado==1?'pause':'play'}"></i>
+                </button>
+            </td>
+        </tr>`;
+    });
     $('#tbody-promos').html(texto);
 }
 
@@ -139,23 +147,22 @@ function cargarModalPromo() {
 function generarHTMLdetallePromos() {
     var texto = "";
     promocionSeleccionada.detalles.forEach(d => {
-        texto = texto +
-            `<tr >
-                <td class="text-center" >
-                    ${d.prod.nombre}
-                </td> 
-                <td class="text-center">
-                    ${d.cantidad}
+        var tipoBadge = d.tipo === 'E'
+            ? '<span class="badge badge-info">Externo</span>'
+            : '<span class="badge badge-warning">Menú</span>';
+        texto += `<tr>
+            <td class="align-middle">
+                ${tipoBadge} ${d.prod ? d.prod.nombre : '?'}
             </td>
-            <td class="text-center">
-                <button type="button" class="btn btn-danger px-2" onclick='eliminarDetallePromocion("${d.id}")' 
-                    title="Eliminar producto">
-                    <i class="fas fa-trash" aria-hidden="true"></i>
+            <td class="text-center align-middle">${d.cantidad}</td>
+            <td class="text-center align-middle">
+                <button type="button" class="btn btn-sm btn-danger" onclick='eliminarDetallePromocion("${d.id}")'
+                    title="Eliminar">
+                    <i class="fas fa-trash"></i>
                 </button>
             </td>
-               </tr>`;
+        </tr>`;
     });
-
     $('#tbody-detalles').html(texto);
 }
 
@@ -293,6 +300,26 @@ function cargarModalDetalle() {
         detalle.producto = $('#producto_externo').val();
         detalle.cantidad = $('#cantidad_agregar').val();
     }
+}
+
+
+function toggleEstadoPromo(id, estadoActual) {
+    const found = promociones.find(p => p.id == id);
+    if (!found) return;
+    var nuevoEstado = estadoActual == 1 ? "0" : "1";
+    var formData = new FormData();
+    formData.append('_token', CSRF_TOKEN);
+    var promoMod = Object.assign({}, found, { estado: nuevoEstado });
+    formData.append('promocion', JSON.stringify(promoMod));
+    $.ajax({
+        url: `${base_path}/mant/grupoPromocion/guardarPromocion`,
+        type: 'post', dataType: "json", data: formData,
+        contentType: false, processData: false
+    }).done(function (response) {
+        if (!response['estado']) { showError(response['mensaje']); return; }
+        filtrar();
+        showSuccess(nuevoEstado == "1" ? "Promoción activada" : "Promoción desactivada");
+    }).fail(function () { showError("Algo salió mal"); });
 }
 
 function mdlNuevaPromocion() {

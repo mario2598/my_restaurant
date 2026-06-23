@@ -50,9 +50,11 @@
                                     <thead class="thead-light">
                                         <tr>
                                             <th scope="col" style="text-align: center">#</th>
-                                            <th scope="col" style="text-align: center">Descripción</th>
+                                            <th scope="col">Descripción</th>
                                             <th scope="col" style="text-align: center">Precio</th>
+                                            <th scope="col">Productos incluidos</th>
                                             <th scope="col" style="text-align: center">Estado</th>
+                                            <th scope="col" style="text-align: center">Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tbody-promos" class="trIngreso" style="cursor: pointer">
