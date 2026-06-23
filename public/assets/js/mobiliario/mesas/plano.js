@@ -920,7 +920,7 @@ function renderizarTabsPisos() {
             + '</button>';
     });
     if (planoPisos.length < 6) {
-        html += ' <button type="button" class="btn btn-sm btn-outline-secondary mb-1" onclick="agregarNuevoPiso()" title="Agregar piso"><i class="fas fa-plus"></i> Piso</button>';
+        html += ' <button type="button" class="btn btn-sm btn-outline-secondary mb-1" onclick="agregarNuevoPiso()" title="Nueva área"><i class="fas fa-plus"></i> Área</button>';
     }
     if (planoPisos.length > 1) {
         html += ' <button type="button" class="btn btn-sm btn-outline-danger mb-1" onclick="eliminarPisoActivo()" title="Eliminar área activa"><i class="fas fa-trash"></i></button>';
