@@ -134,9 +134,11 @@
         padding: 0;
     }
     #contFacturar ul.nav-pills {
-        flex: 1;
+        flex: 1 1 0;
+        min-width: 0;
         margin: 0 !important;
         display: block;
+        overflow: hidden;
     }
     #contFacturar ul.nav-pills + ul.nav-pills { margin: 0 !important; }
     #contFacturar #txt-total-pagar {
