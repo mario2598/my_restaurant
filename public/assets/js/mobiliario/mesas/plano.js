@@ -92,20 +92,26 @@ function getAreasCatalogo() {
 }
 
 function renderListaAreasConfig() {
-    var areas = getAreasCatalogo();
+    var areas = getAreasCatalogo().filter(function(a) {
+        return !a.piso_id || parseInt(a.piso_id) === pisoActivo;
+    });
     if (!areas.length) {
-        $('#lista-areas-config').html('<p class="text-muted small mb-0">Sin áreas. Pulse + para crear.</p>');
+        $('#lista-areas-config').html('<p class="text-muted small mb-0">Sin sub-áreas. Pulse + para crear.</p>');
         return;
     }
     var html = '<ul class="list-group list-group-flush">';
-    areas.forEach(function (a) {
+    areas.forEach(function (a, idx) {
         var enPlano = a.plano_x !== null && a.plano_x !== '' && a.plano_y !== null && a.plano_y !== '';
-        html += '<li class="list-group-item px-1 py-2">'
+        html += '<li class="list-group-item px-1 py-1">'
             + '<div class="d-flex align-items-center">'
+            + '<div class="d-flex flex-column mr-1">'
+            + '<button type="button" class="btn btn-link p-0 text-muted" style="line-height:1;font-size:10px" onclick="moverAreaOrden(' + a.id + ',-1)" title="Al frente"><i class="fas fa-caret-up"></i></button>'
+            + '<button type="button" class="btn btn-link p-0 text-muted" style="line-height:1;font-size:10px" onclick="moverAreaOrden(' + a.id + ',1)" title="Detrás"><i class="fas fa-caret-down"></i></button>'
+            + '</div>'
             + '<span class="area-color-badge mr-2" style="background:' + escAttr(a.color || '#eee') + '"></span>'
             + '<div class="flex-grow-1 min-w-0">'
             + '<strong class="d-block text-truncate small">' + escHtml(a.nombre) + '</strong>'
-            + '<span class="text-muted" style="font-size:10px">' + escHtml(a.codigo) + (enPlano ? ' · en plano' : ' · sin ubicar') + '</span>'
+            + '<span class="text-muted" style="font-size:10px">' + (enPlano ? '· en plano' : '· sin ubicar') + '</span>'
             + '</div>'
             + '<div class="btn-group btn-group-sm flex-shrink-0">'
             + (enPlano ? '' : '<button type="button" class="btn btn-outline-primary btn-sm" onclick="colocarAreaEnPlano(' + a.id + ')" title="Ubicar"><i class="fas fa-map-pin"></i></button>')
@@ -159,7 +165,8 @@ function guardarAreaConfig() {
             nombre: nombre,
             codigo: $('#area_config_codigo').val().trim(),
             color: $('#area_config_color').val(),
-            colocar_en_plano: $('#area_config_colocar').is(':checked') ? 1 : 0
+            colocar_en_plano: $('#area_config_colocar').is(':checked') ? 1 : 0,
+            piso_id: pisoActivo
         }
     }).done(function (r) {
         if (!r.estado) {
@@ -277,7 +284,7 @@ function cargarPlano() {
             pisoActivo = planoPisos[0].id;
         }
         renderizarTabsPisos();
-        renderizarZonas(planoDatos.zonas || []);
+        renderizarZonas(zonasParaPiso(pisoActivo));
         renderizarMesas(planoDatos.mesas || []);
         renderizarSinPosicion(planoDatos.mesas || []);
         renderListaAreasConfig();
@@ -290,10 +297,11 @@ function cargarPlano() {
 
 function renderizarZonas(zonas) {
     var html = '';
-    zonas.forEach(function (z) {
+    zonas.forEach(function (z, idx) {
         html += '<div class="plano-zona" data-id="' + (z.id || '') + '" data-area-id="' + (z.area_id || '') + '" data-nombre="' + escAttr(z.nombre || z.id) + '"'
             + ' data-color="' + escAttr(z.color || '#eee') + '"'
             + ' style="left:' + z.x + '%;top:' + z.y + '%;width:' + z.w + '%;height:' + z.h + '%;'
+            + 'z-index:' + (idx + 1) + ';'
             + 'background:' + (z.color || '#eee') + ';">'
             + '<span class="plano-zona-label">' + escHtml(z.nombre || z.id) + '</span>'
             + '<span class="plano-zona-handle plano-zona-handle-nw" data-handle="nw"></span>'
@@ -933,9 +941,12 @@ function renderizarTabsPisos() {
         mesaSeleccionadaId = null;
         zonaSeleccionadaId = null;
         $('#panel-mesa-detalle').html('<p class="text-muted small">Haga clic en una mesa del plano.</p>');
+        $('#panel-zona-detalle').html('<p class="text-muted small">Seleccione un área en el plano.</p>');
         renderizarTabsPisos();
+        renderizarZonas(zonasParaPiso(pisoActivo));
         renderizarMesas(planoDatos.mesas || []);
         renderizarSinPosicion(planoDatos.mesas || []);
+        renderListaAreasConfig();
         aplicarModoPlano();
     });
 }
@@ -1000,4 +1011,51 @@ function eliminarPisoActivo() {
             cargarPlano();
         });
     });
+}
+
+function zonasParaPiso(pisoId) {
+    return (planoDatos.zonas || []).filter(function(z) {
+        return !z.piso_id || parseInt(z.piso_id) === pisoId;
+    });
+}
+
+function moverAreaOrden(id, delta) {
+    var areas = getAreasCatalogo().filter(function(a) {
+        return !a.piso_id || parseInt(a.piso_id) === pisoActivo;
+    });
+    var idx = areas.findIndex(function(a) { return a.id === id; });
+    if (idx < 0) return;
+    var newIdx = idx + delta;
+    if (newIdx < 0 || newIdx >= areas.length) return;
+    // Swap orden values
+    var tmpOrden = areas[idx].orden;
+    areas[idx].orden = areas[newIdx].orden;
+    areas[newIdx].orden = tmpOrden;
+    // Also swap in planoDatos.areas_catalogo
+    var allAreas = planoDatos.areas_catalogo;
+    var ai = allAreas.findIndex(function(a){ return a.id === areas[idx].id; });
+    var bi = allAreas.findIndex(function(a){ return a.id === areas[newIdx].id; });
+    if (ai >= 0) allAreas[ai].orden = areas[idx].orden;
+    if (bi >= 0) allAreas[bi].orden = areas[newIdx].orden;
+    // Re-sort areas_catalogo by orden
+    allAreas.sort(function(a,b){ return (a.orden||0)-(b.orden||0); });
+    planoDatos.areas_catalogo = allAreas;
+    // Re-derive zonas from sorted catalog
+    planoDatos.zonas = allAreas
+        .filter(function(a){ return a.plano_x !== null && a.plano_x !== undefined && a.plano_y !== null && a.plano_y !== undefined; })
+        .map(function(a){ return { id: a.codigo, area_id: a.id, nombre: a.nombre, x: parseFloat(a.plano_x), y: parseFloat(a.plano_y), w: parseFloat(a.plano_ancho||10), h: parseFloat(a.plano_alto||10), color: a.color||'#e9ecef', piso_id: a.piso_id||1, orden: a.orden||0 }; });
+    // Save to server
+    var itemsOrden = allAreas.map(function(a){ return { id: a.id, orden: a.orden||0 }; });
+    $.ajax({
+        url: base_path + '/mobiliario/mesas/reordenar-areas',
+        type: 'post',
+        dataType: 'json',
+        data: { _token: CSRF_TOKEN, idSucursal: $('#select_sucursal_plano').val(), orden: itemsOrden }
+    }).done(function(r) {
+        if (!r.estado) showError(r.mensaje || 'Error al reordenar');
+    });
+    // Re-render
+    renderizarZonas(zonasParaPiso(pisoActivo));
+    renderListaAreasConfig();
+    if (getModoPlano() === 'zonas') enlazarEventosZonas();
 }

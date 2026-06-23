@@ -153,6 +153,7 @@ Route::group(['middleware' => 'autorizated:mesasAdmin,mesasPlano'], function () 
     Route::post('mobiliario/mesas/eliminarMesa', 'MesasController@eliminarMesa');
     Route::post('mobiliario/mesas/cambiar-estado', 'MesasController@cambiarEstadoMesa');
     Route::post('mobiliario/mesas/guardar-pisos', 'MesasController@guardarPisos');
+    Route::post('mobiliario/mesas/reordenar-areas', 'MesasController@reordenarAreasPlano');
     Route::post('mobiliario/mesas/obtener-mesas', 'MesasController@obtenerMesasSucursal');
 });
 

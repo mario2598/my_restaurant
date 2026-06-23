@@ -128,6 +128,8 @@ class MesasController extends Controller
                 'w' => (float) ($a->plano_ancho ?? 10),
                 'h' => (float) ($a->plano_alto ?? 10),
                 'color' => $a->color ?? '#e9ecef',
+                'piso_id' => isset($a->piso_id) ? (int) $a->piso_id : 1,
+                'orden' => (int) ($a->orden ?? 0),
             ];
         }
         return $zonas;
@@ -357,10 +359,13 @@ class MesasController extends Controller
                 $codigo = self::slugCodigoArea($codigo);
             }
 
+            $pisoId = (int) $request->input('piso_id', 1);
+            if ($pisoId < 1) $pisoId = 1;
             $datos = [
                 'nombre' => $nombre,
                 'color' => $color !== '' ? $color : '#e9ecef',
                 'activo' => 'S',
+                'piso_id' => $pisoId,
             ];
 
             self::asegurarAreasSucursal($idSucursal);
@@ -413,6 +418,34 @@ class MesasController extends Controller
         } catch (\Exception $ex) {
             $this->registrarLogMesas('guardarAreaPlano', $ex->getMessage());
             return $this->responseAjaxServerError("Error al guardar el área", []);
+        }
+    }
+
+    public function reordenarAreasPlano(Request $request)
+    {
+        try {
+            $idSucursal = (int) $request->input('idSucursal');
+            $items = $request->input('orden', []); // [{id, orden}]
+            if ($idSucursal < 1 || !is_array($items)) {
+                return $this->responseAjaxServerError("Datos inválidos", []);
+            }
+            DB::beginTransaction();
+            foreach ($items as $item) {
+                $id = (int)($item['id'] ?? 0);
+                $ord = (int)($item['orden'] ?? 0);
+                if ($id > 0) {
+                    DB::table('sucursal_plano_area')
+                        ->where('id', $id)
+                        ->where('sucursal', $idSucursal)
+                        ->update(['orden' => $ord]);
+                }
+            }
+            DB::commit();
+            return $this->responseAjaxSuccess("Orden guardado", []);
+        } catch (\Exception $ex) {
+            DB::rollBack();
+            $this->registrarLogMesas('reordenarAreasPlano', $ex->getMessage());
+            return $this->responseAjaxServerError("Error al reordenar", []);
         }
     }
 
