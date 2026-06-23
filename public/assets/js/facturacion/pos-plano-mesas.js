@@ -5,7 +5,7 @@ var posPlanoDatos = null;
 var posPlanoModo = 'mapa';
 var posPlanoMesaSeleccionadaId = null;
 var posPisoActivo = 1;
-var posPlanoPisos = [{ id: 1, nombre: 'Piso 1' }];
+var posPlanoPisos = [{ id: 1, nombre: 'Área 1' }];
 
 /**
  * Acceso directo: abre el modal del mapa sin pasar por el panel de opciones.
@@ -341,7 +341,7 @@ function cargarPlanoPos() {
             return;
         }
         posPlanoDatos = response.datos;
-        posPlanoPisos = (posPlanoDatos.pisos && posPlanoDatos.pisos.length) ? posPlanoDatos.pisos : [{ id: 1, nombre: 'Piso 1' }];
+        posPlanoPisos = (posPlanoDatos.pisos && posPlanoDatos.pisos.length) ? posPlanoDatos.pisos : [{ id: 1, nombre: 'Área 1' }];
         if (!posPlanoPisos.find(function(p) { return p.id === posPisoActivo; })) {
             posPisoActivo = posPlanoPisos[0].id;
         }

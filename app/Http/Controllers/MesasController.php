@@ -168,15 +168,15 @@ class MesasController extends Controller
 
         // Pisos
         $pisosJson = $plano ? ($plano->pisos_json ?? null) : null;
-        $pisos = $pisosJson ? json_decode($pisosJson, true) : [['id' => 1, 'nombre' => 'Piso 1']];
+        $pisos = $pisosJson ? json_decode($pisosJson, true) : [['id' => 1, 'nombre' => 'Área 1']];
         if (!is_array($pisos) || count($pisos) === 0) {
-            $pisos = [['id' => 1, 'nombre' => 'Piso 1']];
+            $pisos = [['id' => 1, 'nombre' => 'Área 1']];
         }
         $pisosIds = array_column($pisos, 'id');
         foreach ($mesas as $m) {
             $pid = (int)($m->piso ?? 1);
             if ($pid > 0 && !in_array($pid, $pisosIds, true)) {
-                $pisos[] = ['id' => $pid, 'nombre' => 'Piso ' . $pid];
+                $pisos[] = ['id' => $pid, 'nombre' => 'Área ' . $pid];
                 $pisosIds[] = $pid;
             }
         }
@@ -520,7 +520,7 @@ class MesasController extends Controller
                 }
             }
             if (empty($pisosSave)) {
-                $pisosSave = [['id' => 1, 'nombre' => 'Piso 1']];
+                $pisosSave = [['id' => 1, 'nombre' => 'Área 1']];
             }
             $plano = DB::table('sucursal_plano')->where('sucursal', $idSucursal)->first();
             if ($plano) {
