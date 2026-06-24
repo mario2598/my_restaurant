@@ -2584,17 +2584,26 @@ function generarHTMLOrdenes(ordenes) {
             orden.numero_orden, contactoAux,
             `${base_path}/tracking/orden/${orden.idOrdenEnc ?? ''}`);
 
-        var anulada = orden.cod_general === "ORD_ANULADA";
-        var pagada  = !anulada && orden.pagado == 1;
+        var estado = orden.cod_general || '';
+        var anulada   = estado === "ORD_ANULADA";
+        var pagada    = !anulada && orden.pagado == 1;
+        var enPrep    = !anulada && !pagada && estado === "ORD_EN_PREPARACION";
+        var paraEntrg = !anulada && !pagada && estado === "ORD_PARA_ENTREGA";
+        var entregada = !anulada && estado === "ORD_ENTREGADA";
 
-        var borderColor = anulada ? '#e74c3c' : pagada ? '#27ae60' : '#f39c12';
-        var bgColor     = anulada ? '#fff5f5' : pagada ? '#f0fff4' : '#fffdf0';
+        var borderColor = anulada   ? '#e74c3c'
+                        : pagada    ? '#27ae60'
+                        : entregada ? '#27ae60'
+                        : paraEntrg ? '#00bcd4'
+                        : enPrep    ? '#ff9800'
+                        :             '#f39c12';
 
-        var badgeEstado = anulada
-            ? '<span class="badge badge-danger">Anulada</span>'
-            : pagada
-            ? '<span class="badge badge-success">Pagada</span>'
-            : '<span class="badge badge-warning text-dark">Pendiente</span>';
+        var badgeEstado = anulada   ? '<span class="badge badge-danger">Anulada</span>'
+                        : pagada    ? '<span class="badge badge-success">Pagada</span>'
+                        : entregada ? '<span class="badge badge-success">Entregado</span>'
+                        : paraEntrg ? '<span class="badge" style="background:#00bcd4;color:#fff;">Listo para entregar</span>'
+                        : enPrep    ? '<span class="badge badge-warning text-dark">En preparación</span>'
+                        :             '<span class="badge badge-warning text-dark">Pendiente</span>';
 
         var iconoInc = (orden.tiene_incidentes || (orden.incidentes && orden.incidentes.length > 0))
             ? ' <i class="fas fa-exclamation-triangle text-warning" title="Tiene incidentes"></i>' : '';
@@ -2606,28 +2615,25 @@ function generarHTMLOrdenes(ordenes) {
 
         var ticketUrl = base_path + '/impresora/tiquete/html/' + orden.id;
 
-        var acciones = `
-            <button class="btn btn-sm btn-primary" onclick="cargarOrdenGestion(${orden.id})" title="Abrir en POS">
-                <i class="fas fa-pen"></i> Abrir
-            </button>
-            <button class="btn btn-sm btn-outline-secondary" onclick="imprimirTicket(${orden.id})" title="Imprimir tiquete">
-                <i class="fas fa-print"></i>
-            </button>
-            <a class="btn btn-sm btn-outline-info" href="${ticketUrl}" target="_blank" title="Ver factura/tiquete">
-                <i class="fas fa-eye"></i>
-            </a>` +
-            (contactoAux && contactoAux.length > 5
-                ? `<a class="btn btn-sm btn-outline-success" href="${msjWsp}" target="_blank" title="WhatsApp">
-                       <i class="fab fa-whatsapp"></i>
-                   </a>` : '');
+        // Botones de acción según estado de preparación
+        var botonesEstado = '';
+        if (enPrep) {
+            botonesEstado = `<button class="btn btn-sm btn-warning text-dark px-3" onclick="posAlistarOrden(${orden.id})" title="Marcar como alistado">
+                <i class="fas fa-check mr-1"></i>Alistado
+            </button>`;
+        } else if (paraEntrg) {
+            botonesEstado = `<button class="btn btn-sm px-3" style="background:#00bcd4;color:#fff;border:none;" onclick="posEntregarOrden(${orden.id})" title="Marcar como entregado al cliente">
+                <i class="fas fa-bell mr-1"></i>Entregar
+            </button>`;
+        }
 
         var totalFmt = anulada ? '—' : currencyCRFormat(total);
         texto += `
         <div class="orden-item-wrap mb-2" data-piso="${orden.mesa_piso || 0}">
           <div class="orden-item-card" style="border-left:5px solid ${borderColor}; background:#fff; border-radius:10px; padding:14px 16px; box-shadow:0 1px 6px rgba(0,0,0,.07);">
-            <!-- Fila 1: número + badge + total -->
+            <!-- Fila 1: número + badges + total -->
             <div class="d-flex justify-content-between align-items-center mb-2">
-              <div class="d-flex align-items-center" style="gap:8px;">
+              <div class="d-flex align-items-center flex-wrap" style="gap:6px;">
                 <span style="font-size:1.05rem; font-weight:800; color:#2d3748; letter-spacing:-.02em;">${orden.numero_orden}</span>
                 ${iconoInc}
                 ${badgeEstado}
@@ -2642,6 +2648,7 @@ function generarHTMLOrdenes(ordenes) {
             </div>
             <!-- Fila 3: acciones -->
             <div class="d-flex flex-wrap" style="gap:6px;">
+              ${botonesEstado}
               <button class="btn btn-primary btn-sm px-3" onclick="cargarOrdenGestion(${orden.id})" title="Abrir en POS">
                 <i class="fas fa-pen mr-1"></i>Abrir
               </button>
@@ -2681,6 +2688,33 @@ function generarHTMLOrdenes(ordenes) {
 
     $('#mdl-ordenes').modal('show');
 }
+
+function posAlistarOrden(idOrden) {
+    if (!confirm('¿Marcar la orden como alistada (lista para entregar)?')) return;
+    $.ajax({
+        url: base_path + '/facturacion/pos/marcarOrdenAlistada',
+        type: 'post', dataType: 'json',
+        data: { _token: CSRF_TOKEN, id_orden: idOrden }
+    }).done(function(res) {
+        if (!res.estado) { showError(res.mensaje || 'Error'); return; }
+        showSuccess('Orden alistada');
+        recargarOrdenes();
+    }).fail(function() { showError('Error al conectar con el servidor'); });
+}
+
+function posEntregarOrden(idOrden) {
+    if (!confirm('¿Confirmar entrega al cliente?')) return;
+    $.ajax({
+        url: base_path + '/facturacion/pos/marcarOrdenEntregada',
+        type: 'post', dataType: 'json',
+        data: { _token: CSRF_TOKEN, id_orden: idOrden }
+    }).done(function(res) {
+        if (!res.estado) { showError(res.mensaje || 'Error'); return; }
+        showSuccess('Orden entregada al cliente');
+        recargarOrdenes();
+    }).fail(function() { showError('Error al conectar con el servidor'); });
+}
+
 
 function filtrarOrdenesPorPiso(btn) {
     var piso = $(btn).data('piso');

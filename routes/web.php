@@ -504,6 +504,8 @@ Route::post('facturacion/ordenesEntrega/recargar', 'OrdenesListasController@reca
 Route::post('facturacion/ordenesPreparacion/terminarEntregaOrden', 'OrdenesListasController@terminarEntregaOrden');
 Route::post('facturacion/ordenesEntrega/marcarLineaEntregada', 'OrdenesListasController@marcarLineaEntregada');
 Route::post('facturacion/pos/recargarOrdenes', 'FacturacionController@recargarOrdenes');
+Route::post('facturacion/pos/marcarOrdenAlistada', 'FacturacionController@marcarOrdenAlistadaPos');
+Route::post('facturacion/pos/marcarOrdenEntregada', 'FacturacionController@marcarOrdenEntregadaPos');
 Route::post('facturacion/pos/validarCodDescuento', 'FacturacionController@validarCodDescuento');
 
 Route::post('facturacion/pos/anularOrden', 'FacturacionController@anularOrden');

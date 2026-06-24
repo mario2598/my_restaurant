@@ -3770,4 +3770,66 @@ class FacturacionController extends Controller
             return $this->responseAjaxServerError("Algo salió mal.", "");
         }
     }
+
+    public function marcarOrdenAlistadaPos(Request $request)
+    {
+        if (!$this->validarSesion("facFac")) {
+            return $this->responseAjaxServerError("No tienes permisos.", []);
+        }
+        $id_orden = $request->input('id_orden');
+        $orden = DB::table('orden')->where('id', $id_orden)->first();
+        if (!$orden) return $this->responseAjaxServerError('No existe la orden.', []);
+        if ($orden->estado != SisEstadoController::getIdEstadoByCodGeneral('ORD_EN_PREPARACION')) {
+            return $this->responseAjaxServerError('La orden no está en preparación.', []);
+        }
+        $idNuevoEst = SisEstadoController::getIdEstadoByCodGeneral('ORD_PARA_ENTREGA');
+        try {
+            DB::beginTransaction();
+            DB::table('orden')->where('id', $id_orden)->update([
+                'estado' => $idNuevoEst,
+                'fecha_preparado' => date("Y-m-d H:i:s"),
+                'cocina_terminado' => 'S'
+            ]);
+            $servEstOrd = new EstOrdenController();
+            $res = $servEstOrd->creaEstOrden($id_orden, $idNuevoEst, $orden->estado);
+            if (!$res['estado']) { DB::rollBack(); return $this->responseAjaxServerError($res['mensaje'], []); }
+            DB::commit();
+            return $this->responseAjaxSuccess("Orden alistada.", []);
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            return $this->responseAjaxServerError('Error al actualizar la orden.', []);
+        }
+    }
+
+    public function marcarOrdenEntregadaPos(Request $request)
+    {
+        if (!$this->validarSesion("facFac")) {
+            return $this->responseAjaxServerError("No tienes permisos.", []);
+        }
+        $id_orden = $request->input('id_orden');
+        $orden = DB::table('orden')->where('id', $id_orden)->first();
+        if (!$orden) return $this->responseAjaxServerError('No existe la orden.', []);
+        $prepId   = SisEstadoController::getIdEstadoByCodGeneral('ORD_EN_PREPARACION');
+        $entrgId  = SisEstadoController::getIdEstadoByCodGeneral('ORD_PARA_ENTREGA');
+        if ($orden->estado != $prepId && $orden->estado != $entrgId) {
+            return $this->responseAjaxServerError('La orden ya fue entregada o no puede cambiar de estado.', []);
+        }
+        $idNuevoEst = SisEstadoController::getIdEstadoByCodGeneral('ORD_ENTREGADA');
+        try {
+            DB::beginTransaction();
+            DB::table('orden')->where('id', $id_orden)->update([
+                'estado' => $idNuevoEst,
+                'fecha_entregado' => date("Y-m-d H:i:s"),
+                'cocina_terminado' => 'S'
+            ]);
+            $servEstOrd = new EstOrdenController();
+            $res = $servEstOrd->creaEstOrden($id_orden, $idNuevoEst, $orden->estado);
+            if (!$res['estado']) { DB::rollBack(); return $this->responseAjaxServerError($res['mensaje'], []); }
+            DB::commit();
+            return $this->responseAjaxSuccess("Orden entregada.", []);
+        } catch (QueryException $ex) {
+            DB::rollBack();
+            return $this->responseAjaxServerError('Error al actualizar la orden.', []);
+        }
+    }
 }
