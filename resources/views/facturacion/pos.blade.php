@@ -2289,7 +2289,7 @@
         if (typeof productosGeneral !== 'undefined' && productosGeneral.length > 0) {
             productosFiltrados = productosGeneral.filter(function(producto) {
                 var nombre = (producto.nombre || '').toLowerCase();
-                var codigo = (producto.codigo || '').toLowerCase();
+                var codigo = String(producto.codigo || '').toLowerCase();
                 var categoria = (producto.categoria || '').toLowerCase();
                 return nombre.includes(termino) || codigo.includes(termino) || categoria.includes(termino);
             });
