@@ -928,8 +928,8 @@
 <link rel="stylesheet" href="{{ asset('assets/css/mesa-plano-visual.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/css/mobiliario-plano.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/css/pos-plano-mesas.css') }}">
-<link rel="stylesheet" href="{{ asset('assets/css/pos-layout.css') . '?v=20260622l' }}">
-<link rel="stylesheet" href="{{ asset('assets/css/pos-feedback.css') . '?v=20260622l' }}">
+<link rel="stylesheet" href="{{ asset('assets/css/pos-layout.css') . '?v=20260624a' }}">
+<link rel="stylesheet" href="{{ asset('assets/css/pos-feedback.css') . '?v=20260624a' }}">
 
 <!-- Main Content -->
 
@@ -2254,7 +2254,7 @@
 <script src="{{ asset('assets/js/page/datatables.js') }}"></script>
 
 <script src="{{ asset('assets/js/qz-tray.js') }}"></script>
-<script src="{{ asset('assets/js/facturacion/pos.js') . '?v=20260622l' }}"></script>
+<script src="{{ asset('assets/js/facturacion/pos.js') . '?v=20260624a' }}"></script>
 <script src="{{ asset('assets/js/mobiliario/mesa-plano-utils.js') }}"></script>
 <script src="{{ asset('assets/js/facturacion/pos-plano-mesas.js') }}"></script>
 
