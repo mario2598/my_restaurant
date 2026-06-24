@@ -2519,6 +2519,8 @@
 </script>
 
 <script>
+var popularesActivo = false;
+var popularesCachedHTML = '';
 (function() {
     var _origGenTipos = window.generarTipos;
     window.generarTipos = function() {
@@ -2534,12 +2536,29 @@
     };
     var _origSelTipo = window.seleccionarTipo;
     window.seleccionarTipo = function(i) {
+        popularesActivo = false;
+        popularesCachedHTML = '';
         var a = document.getElementById('a-populares');
         if (a) { a.style.opacity = '0.7'; a.style.fontWeight = '400'; }
         _origSelTipo(i);
     };
+    var _origGenProductos = window.generarProductos;
+    window.generarProductos = function() {
+        if (popularesActivo && popularesCachedHTML) {
+            if (typeof busquedaActiva !== 'undefined' && busquedaActiva && typeof mostrarProductosFiltrados === 'function') {
+                mostrarProductosFiltrados();
+            } else {
+                $('#grid-productos').html(popularesCachedHTML);
+            }
+            if (typeof actualizarBadgesProductos === 'function') actualizarBadgesProductos();
+            return;
+        }
+        _origGenProductos.apply(this, arguments);
+    };
 })();
 window.seleccionarPopulares = function() {
+    popularesActivo = true;
+    popularesCachedHTML = '';
     var a = document.getElementById('a-populares');
     if (a) { a.style.opacity = '1'; a.style.fontWeight = '700'; }
     $('#scrl-categorias').html('<li class="nav-item"><span class="text-muted small ml-2">&#11088; Populares de la semana</span></li>');
@@ -2554,6 +2573,7 @@ window.seleccionarPopulares = function() {
         } else {
             html = '<p class="text-muted p-3">No hay datos de la \u00faltima semana.</p>';
         }
+        popularesCachedHTML = html;
         $('#grid-productos').html(html);
         if (typeof actualizarBadgesProductos === 'function') actualizarBadgesProductos();
     }).fail(function() { $('#grid-productos').html('<p class="text-danger p-3">Error al cargar.</p>'); });
